@@ -644,8 +644,8 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
                 pred_tag_recovery.col(tag_recovery_counter).col(region_ndx).col(tag_release_event_ndx) = numbers_at_age_and_sex;
 
                 // likelihood contribution
-                nll(7) -= dpois(obs_tag_recovery.col(tag_recovery_counter).col(region_ndx).col(get_tag_release_event_ndx(release_region_ndx, tag_ndx, n_regions)).vec().sum(), numbers_at_age_and_sex.sum());
-
+                nll(7) -= dpois(obs_tag_recovery.col(tag_recovery_counter).col(region_ndx).col(tag_release_event_ndx).vec().sum(), numbers_at_age_and_sex.sum(), true);
+                std::cout << "recovery yr ndx " << year_ndx << " recovery region = " << region_ndx << " observed = " << obs_tag_recovery.col(tag_recovery_counter).col(region_ndx).col(tag_release_event_ndx).vec().sum() << " expected = " << numbers_at_age_and_sex.sum() << " ll " << dpois(obs_tag_recovery.col(tag_recovery_counter).col(region_ndx).col(tag_release_event_ndx).vec().sum(), numbers_at_age_and_sex.sum(), true) << "\n";
               }
             }
           }

@@ -64,10 +64,6 @@ Type TagIntegrated(objective_function<Type>* obj) {
   DATA_INTEGER(SrType);                             // Stock recruitment type 3=average, 2=Bholt, 1=Ricker
   DATA_VECTOR(spawning_time_proportion);            // proportion of time within a year that spawning occurs needed for each year length = n_projyears, bound between 0 and 1
 
-  // these are mainly used for unit-testing tag submodules
-  DATA_INTEGER(apply_Z_on_tagged_fish);             // 0 means no M or F applied to the tagged fish 1 = will apply M and F and contribute tagged fish to catch at age and catch at length observations
-  DATA_INTEGER(apply_fishery_tag_reporting);        // 0 means no movement is applied 1 = will apply movement
-
   // the reason I added this fixed fixed movement switch is because we use the simplex to transform parameters for the estimated movement
   // matrix. This parameterisation will cause NaNs or Inf when there is a value = 1 and the rest zeros i.e., no movement. For this scenario you
   // you should use this input functionality.
@@ -80,7 +76,7 @@ Type TagIntegrated(objective_function<Type>* obj) {
   DATA_SCALAR(F_max);                               // max F = 2.56
   DATA_INTEGER(F_iterations);                       // should be between 2-5
 
-  DATA_ARRAY(fixed_fishery_catch);                     // Observed catch for Longline fishery. dim: n_region x n_years
+  DATA_ARRAY(fixed_fishery_catch);                  // Observed catch for Longline fishery. dim: n_region x n_years
   DATA_ARRAY(trwl_fishery_catch);                   // Observed catch for Trawl fishery. dim: n_region x n_years
 
   // Selectivity indicator switches
@@ -603,19 +599,19 @@ Type TagIntegrated(objective_function<Type>* obj) {
         catchatage_trwl_f(age_ndx, region_ndx, year_ndx) = F_trwl_f(age_ndx, region_ndx, year_ndx) / Z_f(age_ndx, region_ndx, year_ndx) * natage_f(age_ndx, region_ndx, year_ndx) * (1.0 - S_f(age_ndx, region_ndx, year_ndx));
         // Account for tagged fish in Catch at age
 
-        if(apply_Z_on_tagged_fish) {
-          if(tag_year_counter > 0) {
-            for(tag_ndx = 0; tag_ndx <= n_years_to_retain_tagged_cohorts_for; ++tag_ndx) {
-              for(release_region_ndx = 0; release_region_ndx < n_regions; ++release_region_ndx) {
-                tag_release_event_ndx = get_tag_release_event_ndx(release_region_ndx, tag_ndx, n_regions);
-                catchatage_fixed_m(age_ndx, region_ndx, year_ndx) += F_fixed_m(age_ndx, region_ndx, year_ndx) / Z_m(age_ndx, region_ndx, year_ndx) * tagged_natage_m(age_ndx, region_ndx, tag_release_event_ndx) / 1000 * (1.0 - S_m(age_ndx, region_ndx, year_ndx));
-                catchatage_fixed_f(age_ndx, region_ndx, year_ndx) += F_fixed_f(age_ndx, region_ndx, year_ndx) / Z_f(age_ndx, region_ndx, year_ndx) * tagged_natage_f(age_ndx, region_ndx, tag_release_event_ndx) / 1000 * (1.0 - S_f(age_ndx, region_ndx, year_ndx));
-                catchatage_trwl_m(age_ndx, region_ndx, year_ndx) += F_trwl_m(age_ndx, region_ndx, year_ndx) / Z_m(age_ndx, region_ndx, year_ndx) * tagged_natage_m(age_ndx, region_ndx, tag_release_event_ndx) / 1000 * (1.0 - S_m(age_ndx, region_ndx, year_ndx));
-                catchatage_trwl_f(age_ndx, region_ndx, year_ndx) += F_trwl_f(age_ndx, region_ndx, year_ndx) / Z_f(age_ndx, region_ndx, year_ndx) * tagged_natage_f(age_ndx, region_ndx, tag_release_event_ndx) / 1000 * (1.0 - S_f(age_ndx, region_ndx, year_ndx));
-              }
+
+        if(tag_year_counter > 0) {
+          for(tag_ndx = 0; tag_ndx <= n_years_to_retain_tagged_cohorts_for; ++tag_ndx) {
+            for(release_region_ndx = 0; release_region_ndx < n_regions; ++release_region_ndx) {
+              tag_release_event_ndx = get_tag_release_event_ndx(release_region_ndx, tag_ndx, n_regions);
+              catchatage_fixed_m(age_ndx, region_ndx, year_ndx) += F_fixed_m(age_ndx, region_ndx, year_ndx) / Z_m(age_ndx, region_ndx, year_ndx) * tagged_natage_m(age_ndx, region_ndx, tag_release_event_ndx) / 1000 * (1.0 - S_m(age_ndx, region_ndx, year_ndx));
+              catchatage_fixed_f(age_ndx, region_ndx, year_ndx) += F_fixed_f(age_ndx, region_ndx, year_ndx) / Z_f(age_ndx, region_ndx, year_ndx) * tagged_natage_f(age_ndx, region_ndx, tag_release_event_ndx) / 1000 * (1.0 - S_f(age_ndx, region_ndx, year_ndx));
+              catchatage_trwl_m(age_ndx, region_ndx, year_ndx) += F_trwl_m(age_ndx, region_ndx, year_ndx) / Z_m(age_ndx, region_ndx, year_ndx) * tagged_natage_m(age_ndx, region_ndx, tag_release_event_ndx) / 1000 * (1.0 - S_m(age_ndx, region_ndx, year_ndx));
+              catchatage_trwl_f(age_ndx, region_ndx, year_ndx) += F_trwl_f(age_ndx, region_ndx, year_ndx) / Z_f(age_ndx, region_ndx, year_ndx) * tagged_natage_f(age_ndx, region_ndx, tag_release_event_ndx) / 1000 * (1.0 - S_f(age_ndx, region_ndx, year_ndx));
             }
           }
         }
+
 
         // Calculate expected catch per method.
         annual_fixed_catch_pred(region_ndx, year_ndx) += catchatage_fixed_f(age_ndx, region_ndx, year_ndx) * female_mean_weight_by_age(age_ndx, year_ndx) + catchatage_fixed_m(age_ndx, region_ndx, year_ndx) * male_mean_weight_by_age(age_ndx, year_ndx);
@@ -641,17 +637,11 @@ Type TagIntegrated(objective_function<Type>* obj) {
               tag_release_event_ndx = get_tag_release_event_ndx(release_region_ndx, tag_ndx, n_regions);
               if(tag_recovery_indicator_by_release_event_and_recovery_region(tag_release_event_ndx, region_ndx, tag_recovery_counter) == 1) {
                 //pred_tag_recovery
-                if(apply_fishery_tag_reporting) {
-                  temp_numbers_at_age_m = tagged_natage_m.col(tag_release_event_ndx).col(region_ndx).vec() * (1.0 - exp(- (F_fixed_m.col(year_ndx).col(region_ndx).vec())));
-                  numbers_at_age_and_sex.segment(0,n_ages) = temp_numbers_at_age_m;
-                  temp_numbers_at_age_f = tagged_natage_f.col(tag_release_event_ndx).col(region_ndx).vec() * (1.0 - exp(- (F_fixed_f.col(year_ndx).col(region_ndx).vec())));
-                  numbers_at_age_and_sex.segment(n_ages,n_ages) = temp_numbers_at_age_f;
-                } else {
-                  temp_numbers_at_age_m = tagged_natage_m.col(tag_release_event_ndx).col(region_ndx).vec();
-                  numbers_at_age_and_sex.segment(0,n_ages) = temp_numbers_at_age_m;
-                  temp_numbers_at_age_f = tagged_natage_f.col(tag_release_event_ndx).col(region_ndx).vec();
-                  numbers_at_age_and_sex.segment(n_ages,n_ages) = temp_numbers_at_age_f;
-                }
+                temp_numbers_at_age_m = tagged_natage_m.col(tag_release_event_ndx).col(region_ndx).vec() * (1.0 - exp(- (F_fixed_m.col(year_ndx).col(region_ndx).vec())));
+                numbers_at_age_and_sex.segment(0,n_ages) = temp_numbers_at_age_m;
+                temp_numbers_at_age_f = tagged_natage_f.col(tag_release_event_ndx).col(region_ndx).vec() * (1.0 - exp(- (F_fixed_f.col(year_ndx).col(region_ndx).vec())));
+                numbers_at_age_and_sex.segment(n_ages,n_ages) = temp_numbers_at_age_f;
+
                 // apply reporting rate
                 numbers_at_age_and_sex *= tag_reporting_rate(region_ndx, tag_recovery_counter);
                 pred_tag_recovery.col(tag_recovery_counter).col(region_ndx).col(tag_release_event_ndx) = numbers_at_age_and_sex;
@@ -690,42 +680,22 @@ Type TagIntegrated(objective_function<Type>* obj) {
            std::cout << "next tag-cohort coming into plus group\n";
            */
           for(age_ndx = 0; age_ndx < (n_ages - 2); age_ndx++) {
-            if(apply_Z_on_tagged_fish) {
-              tagged_natage_m(age_ndx + 1, region_ndx, tag_release_event_ndx) = temp_numbers_at_age_m(age_ndx) * S_m(age_ndx, region_ndx, year_ndx);
-              tagged_natage_f(age_ndx + 1, region_ndx, tag_release_event_ndx) = temp_numbers_at_age_f(age_ndx) * S_f(age_ndx, region_ndx, year_ndx);
-            } else {
-              tagged_natage_m(age_ndx + 1, region_ndx, tag_release_event_ndx) = temp_numbers_at_age_m(age_ndx);
-              tagged_natage_f(age_ndx + 1, region_ndx, tag_release_event_ndx) = temp_numbers_at_age_f(age_ndx);
-            }
+            tagged_natage_m(age_ndx + 1, region_ndx, tag_release_event_ndx) = temp_numbers_at_age_m(age_ndx) * S_m(age_ndx, region_ndx, year_ndx);
+            tagged_natage_f(age_ndx + 1, region_ndx, tag_release_event_ndx) = temp_numbers_at_age_f(age_ndx) * S_f(age_ndx, region_ndx, year_ndx);
           }
-          if(apply_Z_on_tagged_fish) {
-            tagged_natage_m(n_ages - 1, region_ndx, tag_release_event_ndx) =  temp_numbers_at_age_m(n_ages - 1) * S_m(n_ages - 1, region_ndx, year_ndx) + temp_numbers_at_age_m(n_ages - 2) * S_m(n_ages - 2, region_ndx, year_ndx);
-            tagged_natage_f(n_ages - 1, region_ndx, tag_release_event_ndx) =  temp_numbers_at_age_f(n_ages - 1) * S_f(n_ages - 1, region_ndx, year_ndx) + temp_numbers_at_age_f(n_ages - 2) * S_f(n_ages - 2, region_ndx, year_ndx);
-          } else {
-            tagged_natage_m(n_ages - 1, region_ndx, tag_release_event_ndx) =  temp_numbers_at_age_m(n_ages - 1) + temp_numbers_at_age_m(n_ages - 2);
-            tagged_natage_f(n_ages - 1, region_ndx, tag_release_event_ndx) =  temp_numbers_at_age_f(n_ages - 1) + temp_numbers_at_age_f(n_ages - 2);
-          }
-
+          tagged_natage_m(n_ages - 1, region_ndx, tag_release_event_ndx) =  temp_numbers_at_age_m(n_ages - 1) * S_m(n_ages - 1, region_ndx, year_ndx) + temp_numbers_at_age_m(n_ages - 2) * S_m(n_ages - 2, region_ndx, year_ndx);
+          tagged_natage_f(n_ages - 1, region_ndx, tag_release_event_ndx) =  temp_numbers_at_age_f(n_ages - 1) * S_f(n_ages - 1, region_ndx, year_ndx) + temp_numbers_at_age_f(n_ages - 2) * S_f(n_ages - 2, region_ndx, year_ndx);
           // Now bring the second to last tag-release-cohort into the accumulation tag-cohort
           temp_numbers_at_age_m = tagged_natage_m.col(get_tag_release_event_ndx(release_region_ndx, n_years_to_retain_tagged_cohorts_for - 1, n_regions)).col(region_ndx);
           temp_numbers_at_age_f = tagged_natage_f.col(get_tag_release_event_ndx(release_region_ndx, n_years_to_retain_tagged_cohorts_for - 1, n_regions)).col(region_ndx);
 
           for(age_ndx = 0; age_ndx < (n_ages - 2); age_ndx++) {
-            if(apply_Z_on_tagged_fish) {
-              tagged_natage_m(age_ndx + 1, region_ndx, tag_release_event_ndx) += temp_numbers_at_age_m(age_ndx) * S_m(age_ndx, region_ndx, year_ndx);
-              tagged_natage_f(age_ndx + 1, region_ndx, tag_release_event_ndx) += temp_numbers_at_age_f(age_ndx) * S_f(age_ndx, region_ndx, year_ndx);
-            } else {
-              tagged_natage_m(age_ndx + 1, region_ndx, tag_release_event_ndx) += temp_numbers_at_age_m(age_ndx);
-              tagged_natage_f(age_ndx + 1, region_ndx, tag_release_event_ndx) += temp_numbers_at_age_f(age_ndx);
-            }
+            tagged_natage_m(age_ndx + 1, region_ndx, tag_release_event_ndx) += temp_numbers_at_age_m(age_ndx) * S_m(age_ndx, region_ndx, year_ndx);
+            tagged_natage_f(age_ndx + 1, region_ndx, tag_release_event_ndx) += temp_numbers_at_age_f(age_ndx) * S_f(age_ndx, region_ndx, year_ndx);
           }
-          if(apply_Z_on_tagged_fish) {
-            tagged_natage_m(n_ages - 1, region_ndx, tag_release_event_ndx) +=  temp_numbers_at_age_m(n_ages - 1) * S_m(n_ages - 1, region_ndx, year_ndx) + temp_numbers_at_age_m(n_ages - 2) * S_m(n_ages - 2, region_ndx, year_ndx);
-            tagged_natage_f(n_ages - 1, region_ndx, tag_release_event_ndx) +=  temp_numbers_at_age_f(n_ages - 1) * S_f(n_ages - 1, region_ndx, year_ndx) + temp_numbers_at_age_f(n_ages - 2) * S_f(n_ages - 2, region_ndx, year_ndx);
-          } else {
-            tagged_natage_m(n_ages - 1, region_ndx, tag_release_event_ndx) +=  temp_numbers_at_age_m(n_ages - 1) + temp_numbers_at_age_m(n_ages - 2);
-            tagged_natage_f(n_ages - 1, region_ndx, tag_release_event_ndx) +=  temp_numbers_at_age_f(n_ages - 1) + temp_numbers_at_age_f(n_ages - 2);
-          }
+          tagged_natage_m(n_ages - 1, region_ndx, tag_release_event_ndx) +=  temp_numbers_at_age_m(n_ages - 1) * S_m(n_ages - 1, region_ndx, year_ndx) + temp_numbers_at_age_m(n_ages - 2) * S_m(n_ages - 2, region_ndx, year_ndx);
+          tagged_natage_f(n_ages - 1, region_ndx, tag_release_event_ndx) +=  temp_numbers_at_age_f(n_ages - 1) * S_f(n_ages - 1, region_ndx, year_ndx) + temp_numbers_at_age_f(n_ages - 2) * S_f(n_ages - 2, region_ndx, year_ndx);
+
           // Now do the rest of the tagged cohorts going backwards
           for(tag_ndx = n_years_to_retain_tagged_cohorts_for - 1; tag_ndx > 0; --tag_ndx) {
 
@@ -733,23 +703,12 @@ Type TagIntegrated(objective_function<Type>* obj) {
 
             temp_numbers_at_age_m = tagged_natage_m.col(get_tag_release_event_ndx(release_region_ndx, tag_ndx - 1, n_regions)).col(region_ndx);
             temp_numbers_at_age_f = tagged_natage_f.col(get_tag_release_event_ndx(release_region_ndx, tag_ndx - 1, n_regions)).col(region_ndx);
-
-            if(apply_Z_on_tagged_fish) {
-              for(age_ndx = 0; age_ndx < (n_ages - 2); age_ndx++) {
-                tagged_natage_m(age_ndx + 1, region_ndx, tag_release_event_ndx) = temp_numbers_at_age_m(age_ndx) * S_m(age_ndx, region_ndx, year_ndx);
-                tagged_natage_f(age_ndx + 1, region_ndx, tag_release_event_ndx) = temp_numbers_at_age_f(age_ndx) * S_f(age_ndx, region_ndx, year_ndx);
-              }
-              tagged_natage_m(n_ages - 1, region_ndx, tag_release_event_ndx) =  temp_numbers_at_age_m(n_ages - 1) * S_m(n_ages - 1, region_ndx, year_ndx) + temp_numbers_at_age_m(n_ages - 2) * S_m(n_ages - 2, region_ndx, year_ndx);
-              tagged_natage_f(n_ages - 1, region_ndx, tag_release_event_ndx) =  temp_numbers_at_age_f(n_ages - 1) * S_f(n_ages - 1, region_ndx, year_ndx) + temp_numbers_at_age_f(n_ages - 2) * S_f(n_ages - 2, region_ndx, year_ndx);
-            } else {
-              for(age_ndx = 0; age_ndx < (n_ages - 2); age_ndx++) {
-                tagged_natage_m(age_ndx + 1, region_ndx, tag_release_event_ndx) = temp_numbers_at_age_m(age_ndx);
-                tagged_natage_f(age_ndx + 1, region_ndx, tag_release_event_ndx) = temp_numbers_at_age_f(age_ndx);
-              }
-              tagged_natage_m(n_ages - 1, region_ndx, tag_release_event_ndx) =  temp_numbers_at_age_m(n_ages - 1) + temp_numbers_at_age_m(n_ages - 2);
-              tagged_natage_f(n_ages - 1, region_ndx, tag_release_event_ndx) =  temp_numbers_at_age_f(n_ages - 1) + temp_numbers_at_age_f(n_ages - 2);
-
+            for(age_ndx = 0; age_ndx < (n_ages - 2); age_ndx++) {
+              tagged_natage_m(age_ndx + 1, region_ndx, tag_release_event_ndx) = temp_numbers_at_age_m(age_ndx) * S_m(age_ndx, region_ndx, year_ndx);
+              tagged_natage_f(age_ndx + 1, region_ndx, tag_release_event_ndx) = temp_numbers_at_age_f(age_ndx) * S_f(age_ndx, region_ndx, year_ndx);
             }
+            tagged_natage_m(n_ages - 1, region_ndx, tag_release_event_ndx) =  temp_numbers_at_age_m(n_ages - 1) * S_m(n_ages - 1, region_ndx, year_ndx) + temp_numbers_at_age_m(n_ages - 2) * S_m(n_ages - 2, region_ndx, year_ndx);
+            tagged_natage_f(n_ages - 1, region_ndx, tag_release_event_ndx) =  temp_numbers_at_age_f(n_ages - 1) * S_f(n_ages - 1, region_ndx, year_ndx) + temp_numbers_at_age_f(n_ages - 2) * S_f(n_ages - 2, region_ndx, year_ndx);
           }
           // Once we have aged all tag release partition, clear the first tag releases
           tag_release_event_ndx = get_tag_release_event_ndx(release_region_ndx, 0, n_regions);

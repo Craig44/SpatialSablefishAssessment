@@ -6,3 +6,5 @@ GitBook/_main.Rmd
 .Rproj.user
 .RData
 .Rhistory
+*.dll
+*.o

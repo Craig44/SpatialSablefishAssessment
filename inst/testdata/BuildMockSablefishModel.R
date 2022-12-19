@@ -165,7 +165,7 @@ data$tag_recovery_indicator[data$years %in% tag_recovery_years] = 1
 data$tag_recovery_indicator_by_release_event_and_recovery_region = array(0, dim = c(n_regions * (data$n_years_to_retain_tagged_cohorts_for + 1), n_regions, length(tag_recovery_years)))
 data$obs_tag_recovery = array(10, dim = c(n_ages * 2, n_regions * (data$n_years_to_retain_tagged_cohorts_for + 1), n_regions, length(tag_recovery_years)))
 
-## track each tag cohort for 6 years
+## track each tag cohort for 6 years opst release
 for(y_ndx in 1:length(tag_release_years)) {
   for(r_ndx in 1:data$n_regions) {
     for(possible_recovery_years in 1:(data$n_years_to_retain_tagged_cohorts_for)) {

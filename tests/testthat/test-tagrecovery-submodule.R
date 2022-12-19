@@ -22,6 +22,29 @@ test_that("single-release-reporting-rate", {
   ##
   data$tag_reporting_rate = matrix(0.2, nrow = data$n_regions, ncol = sum(data$tag_recovery_indicator))
 
+  ## because there is no movement we need to turn off tag-recoveries in non release years
+  tag_recovery_years = 2011:2020
+  tag_release_years = data$years[which(data$tag_release_event_this_year == 1)]
+  # drop any recovery years before release years
+  #tag_recovery_years = tag_recovery_years[which(tag_recovery_years %in% (tag_release_years + 1))] ## the plus one is because we don't allow a recovery unless after a year at release
+  #
+  data$tag_recovery_indicator = rep(0, length(data$years)) ## no tag releases
+  data$tag_recovery_indicator[data$years %in% tag_recovery_years] = 1
+  data$tag_recovery_indicator_by_release_event_and_recovery_region = array(0, dim = c(data$n_regions * (data$n_years_to_retain_tagged_cohorts_for + 1), data$n_regions, length(tag_recovery_years)))
+  data$obs_tag_recovery = array(10, dim = c(length(data$ages) * 2, data$n_regions * (data$n_years_to_retain_tagged_cohorts_for + 1), data$n_regions, length(tag_recovery_years)))
+
+  ## track each tag cohort for 6 years opst release
+  for(y_ndx in 1:length(tag_release_years)) {
+    for(r_ndx in 1:data$n_regions) {
+      for(recovery_yr_ndx in 1:length(tag_recovery_years)) {
+        diff_ = tag_recovery_years[recovery_yr_ndx] - tag_release_years
+        diff_ = min(c(diff_ + 1, data$n_years_to_retain_tagged_cohorts_for + 1))
+        release_event_ndx = get_tag_release_ndx(r_ndx, diff_, data$n_regions)
+        data$tag_recovery_indicator_by_release_event_and_recovery_region[release_event_ndx, r_ndx, recovery_yr_ndx] = 1
+      }
+    }
+  }
+  sum(data$tag_recovery_indicator_by_release_event_and_recovery_region)
 
   test_model <- TMB::MakeADFun(data = data,
                                parameters = parameters,
@@ -54,12 +77,15 @@ test_that("single-release-reporting-rate", {
     init_n_age[length(init_n_age)] = temp_tag_partition[length(init_n_age) - 1] +  temp_tag_partition[length(init_n_age)]
     expected_result = init_n_age * 0.2 ## annual shedding rate
     this_recovery_year = release_year + i
-    test_data = recovery_df %>% filter(recovery_year == this_recovery_year, sex == "M") %>% dplyr::select(predicted)
+    test_data = recovery_df %>% dplyr::filter(recovery_year == this_recovery_year, sex == "M") %>% dplyr::select(predicted)
     if(nrow(test_data) > 0) {
       for(age_ndx in 1:n_ages)
         expect_equal(test_data$predicted[age_ndx], expected_result[age_ndx], tolerance = 0.001)
     }
   }
+  tmp = plt$data %>% filter(recovery_region == release_region) %>% group_by(release_event, recovery_region, recovery_year) %>% summarise(obs = sum(observed), pred = sum(predicted))
+  expect_equal(test_report$nll[8], sum(dpois(tmp$obs, tmp$pred, log = T)), tolerance = 0.0001)
+
 })
 
 
