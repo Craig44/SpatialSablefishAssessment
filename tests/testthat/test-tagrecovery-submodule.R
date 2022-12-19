@@ -2,10 +2,10 @@
 #' This unit-test will run some basic unit-tests on the tag-recovery submodule
 #'
 
-#' single-release-reporting-rate
+#' single-release-test-recovery-reporting-rate
 #' @description this will check the predicted tag-recovery observations are working as expected
 #'
-test_that("single-release-reporting-rate", {
+test_that("single-release-test-recovery-reporting-rate", {
   ## Read in mock data
   load(system.file("testdata", "MockSablefishModel.RData",package="SpatialSablefishAssessment"))
   data$model = "TagIntegratedValidate"
@@ -44,7 +44,7 @@ test_that("single-release-reporting-rate", {
       }
     }
   }
-  sum(data$tag_recovery_indicator_by_release_event_and_recovery_region)
+  #sum(data$tag_recovery_indicator_by_release_event_and_recovery_region)
 
   test_model <- TMB::MakeADFun(data = data,
                                parameters = parameters,
@@ -55,7 +55,7 @@ test_that("single-release-reporting-rate", {
 
   ## since no movement check all recoveries are in release regions
   ## no mortality or movement. So tag-recoveries n should equal releases plus ageing with reporting rate
-  plt = plot_tag_recovery_obs(test_report, region_key = region_key, sex = "both", release_ndx_to_plot = 1:5)
+  plt = plot_tag_recovery_obs(MLE_report = test_report, region_key = region_key, sex = "both", release_ndx_to_plot = 1:10)
   recovery_df = plt$data %>% dplyr::filter(recovery_region == release_region, release_event == release_event_label)
   ## with no movement the release and recovery periods should be the same
   final_year = max(data$years)
@@ -83,8 +83,9 @@ test_that("single-release-reporting-rate", {
         expect_equal(test_data$predicted[age_ndx], expected_result[age_ndx], tolerance = 0.001)
     }
   }
-  tmp = plt$data %>% filter(recovery_region == release_region) %>% group_by(release_event, recovery_region, recovery_year) %>% summarise(obs = sum(observed), pred = sum(predicted))
-  expect_equal(test_report$nll[8], sum(dpois(tmp$obs, tmp$pred, log = T)), tolerance = 0.0001)
+  tmp = plt$data  %>% group_by(release_event, recovery_region, recovery_year) %>% summarise(obs = sum(observed), pred = sum(predicted))
+  ## check that the Poisson likelihood evaluation is as expected
+  expect_equal(test_report$nll[8], -1 * sum(dpois(tmp$obs, tmp$pred, log = T)), tolerance = 0.0001)
 
 })
 
@@ -119,7 +120,7 @@ test_that("single-release-F-reporting", {
 
   ## since no movement check all recoveries are in release regions
   ## no mortality or movement. So tag-recoveries n should equal releases plus ageing with reporting rate
-  plt = plot_tag_recovery_obs(test_report, region_key = region_key, sex = "both", release_ndx_to_plot = 1:5)
+  plt = plot_tag_recovery_obs(MLE_report = test_report, region_key = region_key, sex = "both", release_ndx_to_plot = 1:5)
   recovery_df = plt$data %>% dplyr::filter(recovery_region == release_region, release_event == release_event_label)
   ## with no movement the release and recovery periods should be the same
   final_year = max(data$years)

@@ -437,3 +437,24 @@ test_that("single-release-tag-shedding", {
 
 })
 
+
+
+
+#' test-get_tag_release_ndx-method
+#' @description A fundamental utility function is get_tag_release_ndx
+#'
+test_that("test-get_tag_release_ndx-method", {
+  n_regions = 5
+  n_years_to_retain_tagged_cohorts_for = 10
+
+  result = 1:50
+  counter = 1;
+  for(tag_partition_ndx in 1:n_years_to_retain_tagged_cohorts_for) {
+    for(reg_ndx in 1:n_regions) {
+      ndx = get_tag_release_ndx(reg_ndx, tag_partition_ndx, n_regions)
+      expect_equal(ndx, result[counter])
+      counter = counter + 1
+    }
+  }
+})
+
