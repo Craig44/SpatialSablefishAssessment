@@ -1,0 +1,16 @@
+Package: SpatialSablefishAssessment
+Title: Spatial sablefish stock assessment model 
+Version: 1.0.0
+Authors@R: 
+    person("Craig", "Marsh", , "Craig.Marsh10@gmail.com", role = c("aut", "cre"))
+Description: This package contains a TMB model used in spatial sablefish research, with utility functions and unit-tests.
+License: GPL (>= 2)
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.1
+Imports: 
+    TMB (>= 1.9.1),
+    reshape2,
+    dplyr
+LinkingTo: 
+    TMB

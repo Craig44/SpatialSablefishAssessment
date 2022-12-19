@@ -1,0 +1,33 @@
+--- 
+title: "SpatialSablefishAssessment"
+author: "C.Marsh"
+date: "`r Sys.Date()`"
+site: bookdown::bookdown_site
+documentclass: book
+bibliography: [book.bib, packages.bib]
+url: https://craig44.github.io/SableFishResearch/
+# cover-image: path to the social sharing image like images/cover.jpg
+description: |
+  This book describes the spatial sablefish stock assessment model with examples of how to use it.
+link-citations: yes
+github-repo: https://github.com/Craig44/
+---
+
+# `SpatialSablefishAssessment` is an R package for conducting spatial stock assessment research
+
+
+
+```{r install_packages, results = 'hide', message=FALSE, warning=FALSE}
+library(TMB)
+
+```
+
+
+
+
+```{r include=FALSE}
+# automatically create a bib database for R packages
+knitr::write_bib(c(
+  .packages(), 'bookdown', 'knitr', 'rmarkdown'
+), 'packages.bib')
+```

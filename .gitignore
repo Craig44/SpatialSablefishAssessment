@@ -1,0 +1,8 @@
+GitBook/_book/
+GitBook/_main_files/
+GitBook/_bookdown_files/
+GitBook/_main.html
+GitBook/_main.Rmd
+.Rproj.user
+.RData
+.Rhistory

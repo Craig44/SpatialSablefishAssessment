@@ -1,0 +1,7 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+build_package.R
+/GitBook/
+^LICENSE\.md$
+/misc/
+.github
