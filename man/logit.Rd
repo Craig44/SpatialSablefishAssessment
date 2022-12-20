@@ -11,7 +11,7 @@ logit(X)
 \item{X}{scalar range \link{0,1}}
 }
 \value{
-Y to be between \link{-inf, inf}
+Y to be between -inf, inf
 }
 \description{
 logit bounds X which is between 0-1 to -inf -> inf based on the logit transformation

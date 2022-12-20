@@ -165,7 +165,7 @@ fix_pars <- function(par_list, pars_to_exclude, vec_elements_to_exclude = NULL, 
 set_pars_to_be_the_same <- function(par_list, map, base_parameters, copy_parameters) {
   if(length(base_parameters) != length(copy_parameters))
     stop("the number of elements in base_parameters must be the same as copy_parameters. Please check these")
-  if(!class(map) == "list")
+  if(!inherits(map, "list"))
     stop("map needs to be a list")
   if(!any(names(base_parameters) %in% names(par_list)))
     stop(!paste0("The parameters in base_parameters ", paste(names(base_parameters)[!names(base_parameters) %in% names(par_list)],collapse = " ")," could not be found in the 'par_list', please sort this out"))

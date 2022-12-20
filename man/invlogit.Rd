@@ -7,7 +7,7 @@
 invlogit(Y)
 }
 \arguments{
-\item{Y}{scalar between \link{-inf, inf}}
+\item{Y}{scalar between -inf, inf}
 }
 \value{
 X between \link{0,1}

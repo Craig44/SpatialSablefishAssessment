@@ -580,8 +580,8 @@ Type TagIntegrated(objective_function<Type>* obj) {
           F_trwl_f(age_ndx, region_ndx, year_ndx) = annual_F_trwl(region_ndx, year_ndx) * sel_trwl_f(age_ndx, trwl_sel_by_year_indicator(year_ndx));
           Z_f(age_ndx, region_ndx, year_ndx) = M(age_ndx, year_ndx) + F_fixed_f(age_ndx, region_ndx, year_ndx) + F_trwl_f(age_ndx, region_ndx, year_ndx);
           Z_m(age_ndx, region_ndx, year_ndx) = M(age_ndx, year_ndx) + F_fixed_m(age_ndx, region_ndx, year_ndx) + F_trwl_m(age_ndx, region_ndx, year_ndx);
-          S_f(age_ndx, region_ndx, year_ndx) = exp(-1.0 * Z_f(age_ndx, region_ndx, year_ndx));
-          S_m(age_ndx, region_ndx, year_ndx) = exp(-1.0 * Z_m(age_ndx, region_ndx, year_ndx));
+          S_f(age_ndx, region_ndx, year_ndx) = exp(-Z_f(age_ndx, region_ndx, year_ndx));
+          S_m(age_ndx, region_ndx, year_ndx) = exp(-Z_m(age_ndx, region_ndx, year_ndx));
           S_f_mid(age_ndx, region_ndx, year_ndx) = exp(-0.5 * Z_f(age_ndx, region_ndx, year_ndx));
           S_m_mid(age_ndx, region_ndx, year_ndx) = exp(-0.5 * Z_m(age_ndx, region_ndx, year_ndx));
         }

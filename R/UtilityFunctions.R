@@ -79,17 +79,17 @@ gm_mean = function(x, na.rm=TRUE){
 }
 
 #' bound_unit constrains Y from -inf -> inf to be between -1 -> 1
-#' @param Y scalar range [-inf, inf]
+#' @param Y scalar range -inf, inf
 #' @export
-#' @return X to be between [-1,1]
+#' @return X to be between -1,1
 bound_unit = function(Y) {
   return(Y / sqrt(1.0 + Y * Y))
 }
 
 #' inv_bound_unit constrains Y from -inf -> inf to be between -1 -> 1
-#' @param X scalar range [-1,1]
+#' @param X scalar range -1,1
 #' @export
-#' @return Y to be between [-inf, inf]
+#' @return Y to be between -inf, inf
 inv_bound_unit = function(X) {
   return(sqrt((X*X) / (1 - X*X)) * ifelse(X < 0, -1, 1))
 }
@@ -97,12 +97,12 @@ inv_bound_unit = function(X) {
 #' equivalent to qlogis(X)
 #' @param X scalar range [0,1]
 #' @export
-#' @return Y to be between [-inf, inf]
+#' @return Y to be between -inf, inf
 logit = function(X) {
   log(X / (1 - X))
 }
 #' invlogit Inverse logit transformation, equivalent to plogis(Y)
-#' @param Y scalar between [-inf, inf]
+#' @param Y scalar between -inf, inf
 #' @export
 #' @return X between [0,1]
 invlogit<- function(Y) {

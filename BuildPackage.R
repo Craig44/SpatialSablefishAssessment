@@ -13,8 +13,8 @@ remove.packages("SpatialSablefishAssessment")
 ## build package
 pkgbuild::compile_dll() # need to compile src first
 devtools::document()
-#devtools::build()
-
+#devtools::check()
+rcmdcheck::rcmdcheck(args = "--no-manual", error_on = "error")
 ## Run unit tests for Package
 devtools::test()
 

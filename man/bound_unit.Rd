@@ -7,10 +7,10 @@
 bound_unit(Y)
 }
 \arguments{
-\item{Y}{scalar range \link{-inf, inf}}
+\item{Y}{scalar range -inf, inf}
 }
 \value{
-X to be between \link{-1,1}
+X to be between -1,1
 }
 \description{
 bound_unit constrains Y from -inf -> inf to be between -1 -> 1

@@ -1,15 +1,26 @@
 #
 #
 #
-
-
-
-#' get_Fs
+#' plot_fishing_mortalities
 #' @param MLE_report a list that is output from obj$report() usually once an optimsation routine has been done.
 #' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
 #' @return ggplot2 object that will plot if an observation occurs in a year and region
-#'
-get_Fs = function(MLE_report, region_key = NULL) {
+#' @export
+
+plot_fishing_mortalities = function(MLE_report, region_key = NULL) {
+  F_df = get_fishing_mortalities(MLE_report = mle_report, region_key = region_key)
+  gplt = ggplot(F_df, aes(x = Year, y= F, col = Fishery, linetype = Fishery)) +
+    geom_line(linewidth = 1.1) +
+    theme_bw() +
+    facet_wrap(~Region)
+  return(gplt)
+}
+#' get_fishing_mortalities
+#' @param MLE_report a list that is output from obj$report() usually once an optimsation routine has been done.
+#' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
+#' @return data frame in long format
+#' @export
+get_fishing_mortalities = function(MLE_report, region_key = NULL) {
   years = MLE_report$years
   regions = 1:MLE_report$n_regions
   fixed_F = MLE_report$annual_F_fixed
@@ -87,7 +98,8 @@ plot_movement = function(MLE_report, region_key = NULL) {
 
   move_est_df = reshape2::melt(MLE_report$movement_matrix)
   colnames(move_est_df) = c("From","To", "Proportion")
-  #move_est_df$From = factor(move_est_df$From, levels = rev(regions), ordered = T)
+  move_est_df$From = factor(move_est_df$From, levels = rev(regions), ordered = T)
+  move_est_df$To = factor(move_est_df$To, levels = rev(regions), ordered = T)
 
   gplt = ggplot(move_est_df, aes(x = To, y = From, fill = Proportion)) +
     geom_tile() +
@@ -113,8 +125,30 @@ plot_selectivities = function(MLE_report) {
   sel_lng_df$sex = Reduce(c, lapply(sel_lng_df$name %>% str_split(pattern = "_"), function(x){x[2]}))
   gplt = ggplot(sel_lng_df, aes(x = age, y = value, col = sex, linetype = sex)) +
     geom_line(linewidth = 1.1) +
-    facet_wrap(~gear)
+    facet_wrap(~gear) +
+    theme_bw()
   return(gplt)
 }
 
 
+#' plot_recruitment
+#' @param MLE_report created from obj$report()
+#' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
+#' @return ggplot2
+#' @export
+#'
+plot_recruitment = function(MLE_report, region_key = NULL) {
+  regions = paste0("Region ", 1:data$n_regions)
+  if(!is.null(region_key))
+    regions = region_key$area[region_key$TMB_ndx + 1]
+
+  dimnames(MLE_report$recruitment_yr) = list(data$years, regions)
+
+  recruit_df = reshape2::melt(MLE_report$recruitment_yr)
+  colnames(recruit_df) = c("Year","Region", "Recruitment")
+  gplt = ggplot(recruit_df, aes(x = Year, y = Recruitment)) +
+    geom_line(linewidth = 1.1) +
+    facet_wrap(~Region) +
+    theme_bw()
+  return(gplt)
+}

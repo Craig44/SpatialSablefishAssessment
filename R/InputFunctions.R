@@ -45,9 +45,16 @@ plot_input_observations = function(data, region_key = NULL) {
   trwl_catchatlgth = reshape2::melt(data$trwl_catchatlgth_indicator)
   srv_dom_ll_catchatage = reshape2::melt(data$srv_dom_ll_catchatage_indicator)
   srv_dom_ll_bio = reshape2::melt(data$srv_dom_ll_bio_indicator)
-  tag_recovery_detailed = reshape2::melt(data$tag_recovery_indicator_by_release_event_and_recovery_region)
+  tag_recovery_detailed = NULL
+  if(sum(data$tag_recovery_indicator) != 0) {
+    tag_recovery_detailed = reshape2::melt(data$tag_recovery_indicator_by_release_event_and_recovery_region)
+    colnames(tag_recovery_detailed) = c("Tag release", "Region", "Year", "indicator")
+    tag_recovery_detailed$label = "Tag recovery"
+    ## collapse tag recoveries across release events
+    tag_recovery_detailed = tag_recovery_detailed %>% group_by(Region, Year, label) %>% summarise(indicator = ifelse(sum(indicator)>0, 1, 0))
+
+  }
   colnames(fixed_catchatage) = colnames(fixed_catchatlgth) = colnames(trwl_catchatlgth) = colnames(srv_dom_ll_catchatage) = colnames(srv_dom_ll_bio) = c("Region", "Year", "indicator")
-  colnames(tag_recovery_detailed) = c("Tag release", "Region", "Year", "indicator")
   ## tag releases
   dimnames(data$male_tagged_cohorts_by_age) = dimnames(data$female_tagged_cohorts_by_age) = list(data$ages, regions,  data$years[which(data$tag_release_event_this_year == 1)])
   tag_releases_m = reshape2::melt(data$male_tagged_cohorts_by_age)
@@ -61,9 +68,6 @@ plot_input_observations = function(data, region_key = NULL) {
   trwl_catchatlgth$label = "Fishery Trawl LF"
   srv_dom_ll_catchatage$label = "Survey LL AF"
   srv_dom_ll_bio$label = "Survey LL Biomass"
-  tag_recovery_detailed$label = "Tag recovery"
-  ## collapse tag recoveries across release events
-  tag_recovery_detailed = tag_recovery_detailed %>% group_by(Region, Year, label) %>% summarise(indicator = ifelse(sum(indicator)>0, 1, 0))
   ## combine
   full_df = rbind(fixed_catchatage, trwl_catchatlgth, srv_dom_ll_catchatage, srv_dom_ll_bio, fixed_catchatlgth, tag_recovery_detailed, tag_release_df)
   if(is.null(region_key)) {
