@@ -165,7 +165,7 @@ get_tag_recovery_obs_fitted_values = function(MLE_report, region_key = NULL, ver
   ## recovery years
   recovery_years = years[which(MLE_report$tag_recovery_indicator == 1)]
 
-  #dimnames(MLE_report$tag_recovery_indicator_by_release_event_and_recovery_region) = list(1:((data$n_years_to_retain_tagged_cohorts_for + 1) * MLE_report$n_regions), regions, recovery_years)
+  #dimnames(MLE_report$tag_recovery_indicator_by_release_event_and_recovery_region) = list(1:((MLE_report$n_years_to_retain_tagged_cohorts_for + 1) * MLE_report$n_regions), regions, recovery_years)
   #molten_indicator = reshape2::melt(MLE_report$tag_recovery_indicator_by_release_event_and_recovery_region)
   #colnames(molten_indicator) = c("release_event", "recovery_region", "recovery_year", "indicator")
   #molten_indicator$unique_recovery_id = paste0(molten_indicator$release_event,"-", molten_indicator$recovery_region, "-", molten_indicator$recovery_year)
@@ -180,12 +180,12 @@ get_tag_recovery_obs_fitted_values = function(MLE_report, region_key = NULL, ver
     for(r_ndx in 1:length(regions)) { ## recovery regions
       ## now link to release events only include release years prior to recovery year
       possible_release_years = release_years[release_years < recovery_years[y_ndx]]
-      for(release_yr_ndx in 1:(data$n_years_to_retain_tagged_cohorts_for + 1)) {
+      for(release_yr_ndx in 1:(MLE_report$n_years_to_retain_tagged_cohorts_for + 1)) {
         for(release_region_ndx in 1:length(regions)) {
-          release_event_ndx = get_tag_release_ndx(release_region_ndx, release_yr_ndx, data$n_regions)
+          release_event_ndx = get_tag_release_ndx(release_region_ndx, release_yr_ndx, MLE_report$n_regions)
           if(MLE_report$tag_recovery_indicator_by_release_event_and_recovery_region[release_event_ndx, r_ndx, y_ndx] == 1) {
             this_release_year = as.character(recovery_years[y_ndx] - (release_yr_ndx - 1))
-            if(release_yr_ndx == (data$n_years_to_retain_tagged_cohorts_for + 1))
+            if(release_yr_ndx == (MLE_report$n_years_to_retain_tagged_cohorts_for + 1))
               this_release_year = "Plus group"
             ## recovery here
             tmp_df = data.frame(sex = sex_for_report, age = age_for_rep, release_event = release_event_ndx, recovery_year = recovery_years[y_ndx], recovery_region = regions[r_ndx], release_region = regions[release_region_ndx], release_year = this_release_year, observed = MLE_report$obs_tag_recovery[, release_event_ndx, r_ndx, y_ndx], predicted = MLE_report$pred_tag_recovery[, release_event_ndx, r_ndx, y_ndx])

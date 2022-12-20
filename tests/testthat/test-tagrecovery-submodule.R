@@ -144,7 +144,7 @@ test_that("single-release-F-reporting", {
     init_n_age[length(init_n_age)] = temp_tag_partition[length(init_n_age) - 1] +  temp_tag_partition[length(init_n_age)]
     expected_result = init_n_age * (1 - exp(-test_report$F_fixed_m[,1,i])) * 0.2 ## annual shedding rate
     this_recovery_year = release_year + i
-    test_data = recovery_df %>% filter(recovery_year == this_recovery_year, sex == "M") %>% dplyr::select(predicted)
+    test_data = recovery_df %>% dplyr::filter(recovery_year == this_recovery_year, sex == "M") %>% dplyr::select(predicted)
     if(nrow(test_data) > 0) {
       for(age_ndx in 1:n_ages)
         expect_equal(test_data$predicted[age_ndx], expected_result[age_ndx], tolerance = 0.001)

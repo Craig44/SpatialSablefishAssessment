@@ -37,8 +37,10 @@ test_that("compatibility-single-release-with-movement-and-Z", {
   validate_report = validate_model$report()
   production_report = production_model$report()
 
-  validate_predicted_recoveries = plot_tag_recovery_obs(validate_report, region_key = region_key, sex = "both", release_ndx_to_plot = 1:5)$data
-  production_predicted_recoveries = plot_tag_recovery_obs(production_report, region_key = region_key, sex = "both", release_ndx_to_plot = 1:5)$data
+  validate_predicted_recoveries = plot_tag_recovery_obs(validate_report, region_key = region_key, sex = "both", release_ndx_to_plot = 1:5)
+  validate_predicted_recoveries = validate_predicted_recoveries$data
+  production_predicted_recoveries = plot_tag_recovery_obs(production_report, region_key = region_key, sex = "both", release_ndx_to_plot = 1:5)
+  production_predicted_recoveries = production_predicted_recoveries$data
   ## check they are reporting the same number of recoveries
   expect_true(nrow(validate_predicted_recoveries) == nrow(production_predicted_recoveries))
   ## check the predicted recoveries are the same
