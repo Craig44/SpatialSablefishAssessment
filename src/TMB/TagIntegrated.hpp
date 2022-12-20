@@ -196,7 +196,9 @@ Type TagIntegrated(objective_function<Type>* obj) {
   Type m_plus_group = 0.0;
   Type f_plus_group = 0.0;
   Type effective_sample_size = 0.0;
-
+  Type predicted_tags;
+  Type pen_posfun = 0; // this is passed to the utility posfun function and added to the likelihood as apenalty
+  Type eps_for_posfun = 0.00001; // used for the posfun object to scale values above zero
 
   // Note: about ln_init_rec_dev - it is the opposite order to how ADMB model is formulated. I am sorry but it was easier to code.
   //       the first init_rec_dev corresponds to recruitment for age class 2 which would have arrived in styr - 1, and so on.
@@ -393,7 +395,7 @@ Type TagIntegrated(objective_function<Type>* obj) {
 
 
 
-  vector<Type> nll(9); // slots
+  vector<Type> nll(10); // slots
   nll.setZero();
   /* nll components
    * 0 - fixed - fishery age comp
@@ -405,8 +407,8 @@ Type TagIntegrated(objective_function<Type>* obj) {
    * 6 - Trawl fishery catch contribution
    * 7 - Tag-recovery
    * 8 - Recruitment penalty/hyper prior if model is hierachical
+   * 9 - Posfun penalty for values that must be > 0 but aren't
    */
-
 
   /*
    * Initialize the partition (age structure)
@@ -654,9 +656,10 @@ Type TagIntegrated(objective_function<Type>* obj) {
                 // apply reporting rate
                 numbers_at_age_and_sex *= tag_reporting_rate(region_ndx, tag_recovery_counter);
                 pred_tag_recovery.col(tag_recovery_counter).col(region_ndx).col(tag_release_event_ndx) = numbers_at_age_and_sex;
-
+                predicted_tags = numbers_at_age_and_sex.sum();
+                predicted_tags = posfun(predicted_tags, eps_for_posfun, pen_posfun);
                 // likelihood contribution
-                nll(7) -= dpois(obs_tag_recovery.col(tag_recovery_counter).col(region_ndx).col(tag_release_event_ndx).vec().sum(), numbers_at_age_and_sex.sum(), true);
+                nll(7) -= dpois(obs_tag_recovery.col(tag_recovery_counter).col(region_ndx).col(tag_release_event_ndx).vec().sum(), predicted_tags, true);
 
               }
             }
@@ -893,6 +896,7 @@ Type TagIntegrated(objective_function<Type>* obj) {
     nll(8) += square(ln_rec_dev(year_ndx) + sigma_R_sq / 2.0)/(2.0* sigma_R_sq);
   nll(8) += (ln_rec_dev.size()) * log(sigma_R);
 
+  nll(9) = pen_posfun;
   /*
    * Report section
    */

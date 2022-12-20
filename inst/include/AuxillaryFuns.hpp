@@ -1,4 +1,11 @@
-
+// Zerofun functions see - for a discussion on this https://github.com/kaskr/adcomp/issues/7
+template<class Type>
+Type posfun(Type x, Type eps, Type &pen) {
+  pen += CppAD::CondExpLt(x,eps,Type(0.01)*pow(x-eps,2),Type(0));
+  Type xp = -(x/eps-1);
+  return CppAD::CondExpGe(x,eps,x,
+                          eps*(1/(1+xp+pow(xp,2)+pow(xp,3)+pow(xp,4)+pow(xp,5))));
+}
 // Zerofun functions
 template <class Type>
 Type ZeroFun(Type x, Type delta) {
@@ -92,16 +99,6 @@ template <class Type>
 Type geo_mean(vector<Type>& x){
   return exp((log(x).sum())/x.size());
 }
-
-/*
- *
- */
-template<class Type>
-Type posfun(Type x, Type eps, Type &pen){
-  pen += CppAD::CondExpLt(x,eps,Type(0.01)*pow(x-eps,2),Type(0));
-  return CppAD::CondExpGe(x,eps,x,eps/(Type(2)-x/eps));
-}
-
 
 template <class Type>
 void get_covar(vector<Type> theta, matrix<Type>& covar, int n, int type) {
