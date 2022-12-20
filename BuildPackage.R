@@ -16,7 +16,7 @@ devtools::document()
 #devtools::check()
 rcmdcheck::rcmdcheck(args = "--no-manual", error_on = "error")
 ## Run unit tests for Package
-devtools::test()
+result = devtools::test(stop_on_failure = TRUE)
 
 ## build Gitbook
 bookdown::render_book(input = "Gitbook")
