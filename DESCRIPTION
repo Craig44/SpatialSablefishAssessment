@@ -9,9 +9,9 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.1
 Depends:
-    Matrix,
+    Matrix (== 1.5.3),
     ggplot2,
-    TMB (>= 1.9.1),
+    TMB (== 1.9.1),
     reshape2,
     dplyr
 LinkingTo: 
