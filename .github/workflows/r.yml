@@ -47,5 +47,4 @@ jobs:
         run: rcmdcheck::rcmdcheck(args = "--no-manual", error_on = "error")
         shell: Rscript {0}
       - name: Run Tests
-        run: devtools::test()
-        #shell: Rscript {0}
+        run: Rscript -e 'devtools::test(stop_on_failure = T)'
