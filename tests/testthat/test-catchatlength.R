@@ -39,7 +39,7 @@ test_that("catch-at-length-trwl", {
   ##
   pred_full = c(m_pred_at_length, f_pred_at_length)
   ## test
-  expect_equal(pred_full / sum(pred_full), test_report$pred_trwl_catchatlgth[,1,1], tolerance = 0.001)
+  expect_equal(pred_full / sum(pred_full) + 1, test_report$pred_trwl_catchatlgth[,1,1], tolerance = 0.001)
 
   ## likelihood
 

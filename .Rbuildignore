@@ -5,3 +5,4 @@ build_package.R
 ^LICENSE\.md$
 /misc/
 .github
+^\.github$
