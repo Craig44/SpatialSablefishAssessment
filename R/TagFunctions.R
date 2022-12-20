@@ -92,7 +92,7 @@ plot_frequency_of_tag_release_and_recoveries = function(data, region_key = NULL,
     warning(paste0("you are asking to plot up to ", max(release_ndx_to_plot), " release events, but there are only ",  length(unique_release_events), " release events. changing the max value of release_ndx_to_plot"))
     release_ndx_to_plot = release_ndx_to_plot[-which(release_ndx_to_plot >  length(unique_release_events))]
   }
-  subset_df = full_df %>% filter(release_event %in% unique_release_events[release_ndx_to_plot])
+  subset_df = full_df %>% dplyr::filter(release_event %in% unique_release_events[release_ndx_to_plot])
   if(!is.null(region_key)) {
     subset_df$recovery_region = factor(subset_df$recovery_region, levels = rev(region_key$area[region_key$TMB_ndx + 1]))
     subset_df$release_region = factor(subset_df$release_region, levels = rev(region_key$area[region_key$TMB_ndx + 1]))
@@ -101,7 +101,7 @@ plot_frequency_of_tag_release_and_recoveries = function(data, region_key = NULL,
   subset_df$release_event_with_sample_size = paste0(subset_df$release_event, " releases: ", subset_df$n_releases)
 
   if(!is.null(release_region_to_plt))
-    subset_df = subset_df %>% filter(release_region == release_region_to_plt)
+    subset_df = subset_df %>% dplyr::filter(release_region == release_region_to_plt)
 
   gplt = ggplot(subset_df, aes(x = factor(recovery_year), y = recovery_region)) +
     geom_point(aes(size = n_recoveries)) +
@@ -131,7 +131,7 @@ plot_tag_release_AF = function(data, region_key = NULL, release_ndx_to_plot = 1:
     warning(paste0("you are asking to plot up to ", max(release_ndx_to_plot), " release events, but there are only ",  length(unique_release_events), " release events. changing the max value of release_ndx_to_plot"))
     release_ndx_to_plot = release_ndx_to_plot[-which(release_ndx_to_plot >  length(unique_release_events))]
   }
-  subset_df = tag_df %>% filter(release_event %in% unique_release_events[release_ndx_to_plot])
+  subset_df = tag_df %>% dplyr::filter(release_event %in% unique_release_events[release_ndx_to_plot])
   if(!is.null(region_key)) {
     subset_df$release_region = factor(subset_df$release_region, levels = rev(region_key$area[region_key$TMB_ndx + 1]))
   }
@@ -222,12 +222,12 @@ plot_tag_recovery_obs= function(MLE_report, region_key = NULL, release_ndx_to_pl
     warning(paste0("you are asking to plot up to ", max(release_ndx_to_plot), " release events, but there are only ",  length(unique_release_events), " release events. changing the max value of release_ndx_to_plot"))
     release_ndx_to_plot = release_ndx_to_plot[-which(release_ndx_to_plot >  length(unique_release_events))]
   }
-  subset_df = get_tag_df %>% filter(release_event %in% unique_release_events[release_ndx_to_plot])
+  subset_df = get_tag_df %>% dplyr::filter(release_event %in% unique_release_events[release_ndx_to_plot])
   if(sex != "both") {
     sex_ndx = "M"
     if(sex == "female")
       sex_ndx = "F"
-    subset_df = subset_df %>% filter(sex == sex_ndx)
+    subset_df = subset_df %>% dplyr::filter(sex == sex_ndx)
   }
 
   if(!is.null(region_key)) {
