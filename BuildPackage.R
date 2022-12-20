@@ -8,6 +8,8 @@ library(roxygen2)
 library(devtools)
 library(testthat)
 
+remove.packages("SpatialSablefishAssessment")
+
 ## build package
 pkgbuild::compile_dll() # need to compile src first
 devtools::document()

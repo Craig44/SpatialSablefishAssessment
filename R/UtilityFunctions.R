@@ -1,3 +1,35 @@
+#' Utility function for executing a string in R
+#'
+#' @author Craig Marsh
+#' @param x string
+#' @return will exectute the string
+#' @export
+#'
+evalit <- function(x) {
+  result <- eval(parse(text = x))
+  return(result)
+}
+#' zerofun
+#'
+#' @param x value to check if is zero
+#' @param delta how small the value is before we alter it
+#' @return adjusted x if x < delta
+#' @export
+zerofun = function(x, delta) {
+  if (x >= delta)
+    return(x);
+
+  return (delta / (2.0 - (x / delta)));
+}
+#' zerofun_v vectorised version of zerofun
+#'
+#' @param x value to check if is zero
+#' @param delta how small the value is before we alter it
+#' @return adjusted x if x < delta
+#' @export
+
+zerofun_v = Vectorize(zerofun)
+
 #' log_cv Calculate the CV of the lognormal distribution based on \deqn{cv = \sqrt{e^{\sigma^2} - 1}}
 #'
 #' @param sigma The standard deviation of the lognormal distribution

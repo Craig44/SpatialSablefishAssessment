@@ -20,7 +20,7 @@ test_that("single-release-test-recovery-reporting-rate", {
   data$initial_tag_induced_mortality = rep(0.0, sum(data$tag_release_event_this_year))
   data$annual_tag_shedding_rate = 0.0
   ##
-  data$tag_reporting_rate = matrix(0.2, nrow = data$n_regions, ncol = sum(data$tag_recovery_indicator))
+  parameters$logistic_tag_reporting_rate = matrix(logit(0.2), nrow = data$n_regions, ncol = sum(data$tag_recovery_indicator))
 
   ## because there is no movement we need to turn off tag-recoveries in non release years
   tag_recovery_years = 2011:2020
@@ -32,6 +32,7 @@ test_that("single-release-test-recovery-reporting-rate", {
   data$tag_recovery_indicator[data$years %in% tag_recovery_years] = 1
   data$tag_recovery_indicator_by_release_event_and_recovery_region = array(0, dim = c(data$n_regions * (data$n_years_to_retain_tagged_cohorts_for + 1), data$n_regions, length(tag_recovery_years)))
   data$obs_tag_recovery = array(10, dim = c(length(data$ages) * 2, data$n_regions * (data$n_years_to_retain_tagged_cohorts_for + 1), data$n_regions, length(tag_recovery_years)))
+  data$apply_tag_reporting_rate = 1;
 
   ## track each tag cohort for 6 years opst release
   for(y_ndx in 1:length(tag_release_years)) {
@@ -107,8 +108,9 @@ test_that("single-release-F-reporting", {
   ## turn off tag shedding and initial mortality
   data$initial_tag_induced_mortality = rep(0.0, sum(data$tag_release_event_this_year))
   data$annual_tag_shedding_rate = 0.0
+  data$apply_tag_reporting_rate = 1;
   ##
-  data$tag_reporting_rate = matrix(0.2, nrow = data$n_regions, ncol = sum(data$tag_recovery_indicator))
+  parameters$logistic_tag_reporting_rate = matrix(logit(0.2), nrow = data$n_regions, ncol = sum(data$tag_recovery_indicator))
 
 
   test_model <- TMB::MakeADFun(data = data,

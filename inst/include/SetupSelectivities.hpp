@@ -64,12 +64,14 @@ void BuildSelectivity(array<Type>& sel_params, vector<int>& sel_type, vector<Typ
       // Power function used for the GOA trawl selectivity
       for(int age_ndx = 0; age_ndx < n_ages; ++age_ndx)
         sel_array(age_ndx, i) = (1.0 / pow(ages[age_ndx],sel_params(i, 0)));
+    }  else if (sel_type(i) == 3) {
+      sel_array.col(i) = logistic_ogive(ages, sel_params(i, 0), sel_params(i, 1));
     }
     // scale by max TODO: DELETE THIS after validated it shouldn't be here
     // A max call can cause AD issues.
-    Type max_sel = max(vector<Type>(sel_array.col(i)));
-    for(int age_ndx = 0; age_ndx < n_ages; ++age_ndx)
-      sel_array(age_ndx, i) /= max_sel;
+    //Type max_sel = max(vector<Type>(sel_array.col(i)));
+    //for(int age_ndx = 0; age_ndx < n_ages; ++age_ndx)
+    //  sel_array(age_ndx, i) /= max_sel;
   }
 
 }

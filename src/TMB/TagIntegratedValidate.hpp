@@ -54,6 +54,7 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   // these are mainly used for unit-testing tag submodules
   DATA_INTEGER(apply_Z_on_tagged_fish);             // 0 means no M or F applied to the tagged fish 1 = will apply M and F and contribute tagged fish to catch at age and catch at length observations
   DATA_INTEGER(apply_fishery_tag_reporting);        // 0 means no movement is applied 1 = will apply movement
+  DATA_INTEGER(apply_tag_reporting_rate);             // 0 means no M or F applied to the tagged fish 1 = will apply M and F and contribute tagged fish to catch at age and catch at length observations
 
   // the reason I added this fixed fixed movement switch is because we use the simplex to transform parameters for the estimated movement
   // matrix. This parameterisation will cause NaNs or Inf when there is a value = 1 and the rest zeros i.e., no movement. For this scenario you
@@ -143,7 +144,6 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   DATA_IARRAY(tag_recovery_indicator_by_release_event_and_recovery_region);// dim: n_tag_release_events x n_regions x n_tag_recovery_years.  1 = calculate fitted values for tag-recoveries this year and region, 0 = don't calculate tag recovery observation for this year and region
   DATA_ARRAY(obs_tag_recovery);                                 // dim: n_ages x 2 (for sex) x n_tag_release_events x n_regions x n_tag_recovery_years.
   array<Type> pred_tag_recovery(obs_tag_recovery.dim);
-  DATA_ARRAY(tag_reporting_rate);                    // dim: n_regions x n_tag_recovery_years
 
 
   /*
@@ -171,8 +171,9 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   PARAMETER(ln_init_F_avg);                                 // log average initial Fishing mortality used when F_method == 1, else should not be estimated
   PARAMETER(ln_catch_sd);                                   // Shared across all gears
   //
-  PARAMETER_VECTOR(ln_srv_dom_ll_q);                        // log catchabilities parameters for srv_dom_ll observation
+  PARAMETER_VECTOR(logistic_srv_dom_ll_q);                  // log catchabilities parameters for srv_dom_ll observation
   PARAMETER_ARRAY(ln_srv_dom_ll_sel_pars);                  // log selectivity parameters for domestic longline surveyr, dim: time-blocks:  max(sel parameters): sex
+  PARAMETER_ARRAY(logistic_tag_reporting_rate);             // dim: n_regions x n_tag_recovery_years
 
   // Initialise consistently used variables throughout the code
   int year_ndx;
@@ -200,6 +201,12 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   } else {
     F_hist = exp(ln_init_F_avg);
   }
+  array<Type> tag_reporting_rate(logistic_tag_reporting_rate.dim);
+  for(int i = 0; i < logistic_tag_reporting_rate.dim[0]; ++i) {
+    for(int j = 0; j < logistic_tag_reporting_rate.dim[1]; ++j) {
+      tag_reporting_rate(i, j) = invlogit(logistic_tag_reporting_rate(i,j));
+    }
+  }
   Type init_F_hist = F_hist * prop_F_hist;
   Type catch_sd = exp(ln_catch_sd);
 
@@ -212,7 +219,9 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   array<Type> srv_dom_ll_sel_pars(ln_srv_dom_ll_sel_pars.dim);
   srv_dom_ll_sel_pars = exp(ln_srv_dom_ll_sel_pars);
 
-  vector<Type> srv_dom_ll_q = exp(ln_srv_dom_ll_q);
+  vector<Type> srv_dom_ll_q(logistic_srv_dom_ll_q.size());
+  for(int i = 0; i < srv_dom_ll_q.size(); ++i)
+    srv_dom_ll_q(i) = invlogit(logistic_srv_dom_ll_q(i));
   // deal with movement
   array<Type> movement_matrix(n_regions,n_regions);                  // n_regions x n_regions. Rows sum = 1 (aka source)
   vector<Type> cache_log_k_value(n_regions - 1);
@@ -640,7 +649,8 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
                   numbers_at_age_and_sex.segment(n_ages,n_ages) = temp_numbers_at_age_f;
                 }
                 // apply reporting rate
-                numbers_at_age_and_sex *= tag_reporting_rate(region_ndx, tag_recovery_counter);
+                if(apply_tag_reporting_rate == 1)
+                  numbers_at_age_and_sex *= tag_reporting_rate(region_ndx, tag_recovery_counter);
                 pred_tag_recovery.col(tag_recovery_counter).col(region_ndx).col(tag_release_event_ndx) = numbers_at_age_and_sex;
 
                 // likelihood contribution
@@ -968,6 +978,8 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
 
   REPORT(S_f);
   REPORT(S_m);
+
+  REPORT(tag_reporting_rate);
 
   // Report model expected/predicted values
   REPORT(pred_fixed_catchatage);

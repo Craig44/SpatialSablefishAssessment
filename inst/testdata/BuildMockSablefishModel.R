@@ -99,6 +99,7 @@ data$srv_dom_ll_sel_by_year_indicator = as.vector(rep(0, n_projyears), mode = "i
 #'
 data$apply_Z_on_tagged_fish = 0
 data$apply_fishery_tag_reporting = 0;
+data$apply_tag_reporting_rate = 0;
 tag_release_years = c(2010)
 data$tag_release_event_this_year = rep(0, n_years) ## no tag releases
 data$tag_release_event_this_year[data$years %in% tag_release_years] = 1
@@ -182,8 +183,6 @@ for(y_ndx in 1:length(tag_release_years)) {
   }
 }
 
-## reporting rate
-data$tag_reporting_rate = array(1, dim = c(n_regions, length(tag_recovery_years)))
 
 #'
 #' TMB Parameter definition OM values or starting values for EM
@@ -225,10 +224,12 @@ parameters$ln_trwl_F_avg = -2.965016
 parameters$ln_trwl_F_devs = array(0, dim = c(n_regions, n_projyears))
 
 parameters$ln_init_F_avg = parameters$ln_fixed_F_avg
-parameters$ln_srv_dom_ll_q = log(0.2)
+parameters$logistic_srv_dom_ll_q = logit(0.2)
 parameters$ln_rec_dev = rep(0, n_years)
 parameters$ln_init_rec_dev = 0
 parameters$ln_catch_sd = log(0.02)
+## reporting rate
+parameters$logistic_tag_reporting_rate = array(logit(0.999), dim = c(n_regions, length(tag_recovery_years)))
 
 save(data, parameters, region_key, file = file.path("inst", "testdata", "MockSablefishModel.RData"))
 ########################

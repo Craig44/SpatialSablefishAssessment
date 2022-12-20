@@ -15,13 +15,14 @@ test_that("compatibility-single-release-with-movement-and-Z", {
   ## no Z or movement
   data$apply_Z_on_tagged_fish = 1
   data$apply_fixed_movement = 1
+  data$apply_tag_reporting_rate = 1
   ## this assumes no movement
   data$fixed_movement_matrix  = data$movement_matrix
   data$apply_fishery_tag_reporting = 1 ## all tagged fish will be recovered not a function of F
   ## turn off tag shedding and initial mortality
   data$initial_tag_induced_mortality = rep(0.1, sum(data$tag_release_event_this_year))
   data$annual_tag_shedding_rate = 0.05
-  data$tag_reporting_rate = matrix(0.2, nrow = data$n_regions, ncol = sum(data$tag_recovery_indicator))
+  parameters$logistic_tag_reporting_rate = matrix(logit(0.2), nrow = data$n_regions, ncol = sum(data$tag_recovery_indicator))
 
 
   validate_model <- TMB::MakeADFun(data = data,

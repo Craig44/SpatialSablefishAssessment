@@ -78,18 +78,22 @@ get_catches = function(MLE_report, region_key = NULL) {
 #' @return ggplot2
 #' @export
 plot_movement = function(MLE_report, region_key = NULL) {
-  if(is.null(region_key)) {
-    dimnames(MLE_report$movement_matrix) = list(paste0("Region ", 1:data$n_regions), paste0("Region ", 1:data$n_regions))
-  } else {
-    dimnames(MLE_report$movement_matrix) = list(region_key$area, region_key$area)
-  }
+  regions = paste0("Region ", 1:data$n_regions)
+  if(!is.null(region_key))
+    regions = region_key$area[region_key$TMB_ndx + 1]
+
+  dimnames(MLE_report$movement_matrix) = list(regions, regions)
+
 
   move_est_df = reshape2::melt(MLE_report$movement_matrix)
   colnames(move_est_df) = c("From","To", "Proportion")
+  #move_est_df$From = factor(move_est_df$From, levels = rev(regions), ordered = T)
+
   gplt = ggplot(move_est_df, aes(x = To, y = From, fill = Proportion)) +
     geom_tile() +
     scale_fill_gradient(low = "white", high = "red") +
-    geom_text(aes(x = To, y = From, label = round(Proportion,2)), color = "black", size = 4)
+    geom_text(aes(x = To, y = From, label = round(Proportion,2)), color = "black", size = 4) +
+    labs(x = "To", y = "From")
   return(gplt)
 }
 
@@ -112,3 +116,5 @@ plot_selectivities = function(MLE_report) {
     facet_wrap(~gear)
   return(gplt)
 }
+
+

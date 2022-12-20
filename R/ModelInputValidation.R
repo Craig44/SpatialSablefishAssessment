@@ -232,10 +232,6 @@ validate_input_data_and_parameters = function(data, parameters) {
     check = check_dim(data$obs_tag_recovery, c(n_ages * 2, n_regions * (data$n_years_to_retain_tagged_cohorts_for + 1), n_regions, n_tag_recoveries))
     if(!check$result)
       return(paste0("obs_tag_recovery: ", check$message))
-    ## tag_reporting_rate
-    check = check_dim(data$tag_reporting_rate, c(n_regions, n_tag_recoveries))
-    if(!check$result)
-      return(paste0("tag_reporting_rate: ", check$message))
   }
 
   ## parameters
@@ -283,9 +279,9 @@ validate_input_data_and_parameters = function(data, parameters) {
   if(!any(data$srv_dom_ll_q_by_year_indicator == 0))
     return("Could not find a 0 index in srv_dom_ll_q_by_year_indicator, this is likely an error")
 
-  check = check_length(parameters$ln_srv_dom_ll_q, n_fixed_survey_q_time_blocks)
+  check = check_length(parameters$logistic_srv_dom_ll_q, n_fixed_survey_q_time_blocks)
   if(!check$result)
-    return(paste0("ln_srv_dom_ll_q: ", check$message))
+    return(paste0("logistic_srv_dom_ll_q: ", check$message))
 
   # movement parameters transformed_movement_pars
   check = check_dim(parameters$transformed_movement_pars, c(n_regions - 1, n_regions))
@@ -301,6 +297,11 @@ validate_input_data_and_parameters = function(data, parameters) {
   check = check_dim(parameters$ln_trwl_F_devs, c(n_regions, n_years))
   if(!check$result)
     return(paste0("ln_trwl_F_devs: ", check$message))
+
+  # logistic_tag_reporting_rate
+  check = check_dim(parameters$logistic_tag_reporting_rate, c(n_regions, max(n_tag_recoveries, 1)))
+  if(!check$result)
+    return(paste0("logistic_tag_reporting_rate: ", check$message))
 
   print("Success!! Hopefully the model wont crash (no promises though)")
   return(TRUE)
