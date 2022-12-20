@@ -16,7 +16,7 @@ devtools::install_github("Craig44/SpatialSablefishAssessment")
 This function contains TMB models and summarizing and plotting functions for the spatial model, users are responsible for configuring the `data` and `parameter` structures that are passed to the TMB `MakeADFun` function which compiles the model. The best place to look for what dimensions and names of expected elements for `data` and `parameter` it is best to look at an example or the source code for the model ([see here](https://github.com/Craig44/SpatialSablefishAssessment/blob/master/src/TMB/TagIntegrated.hpp)). To view an example data run 
 
 
-```{r}
+```r
 load(system.file("testdata", "MockSablefishModel.RData",package="SpatialSablefishAssessment"))
 names(data)
 names(parameters)
@@ -26,7 +26,7 @@ region_key
 
 Once you have built the `data` and `parameter` objects then you can check that the dimensions are consistent with the model by using,
 
-```{r}
+```r
 validate_input_data_and_parameters(data, parameters)
 ```
 
@@ -35,7 +35,7 @@ This function will report a message telling you either success or if one of the 
 
 Once you have checked the `data` and `parameter` objects you can build the TMB model following,
 
-```{r}
+```r
 my_model = TMB::MakeADFun(data = data,
                                parameters = parameters,
                                DLL = "SpatialSablefishAssessment_TMBExports", silent  = T)
@@ -43,14 +43,14 @@ my_model = TMB::MakeADFun(data = data,
 
 ### Check for zero gradients
 It is possible to configure a model that has zero gradients for parameters, and you want to check this is not the case using the 
-```{r}
+```r
 check_gradients(my_model)
 ```
 
 
 ## Optimisation
 
-```{r}
+```r
 mle_optim = nlminb(start = my_model$par, objective = my_model$fn, gradient  = my_model$gr, control = list(iter.max = 10000, eval.max = 10000))
 
 # Try and improve the optimsation running the model for two additional Newton Raphson iterations
@@ -70,7 +70,7 @@ try_improve
 ### Check convergence
 
 
-```{r}
+```r
 ## largest gradient 
 names(mle_optim$par)[which.max(abs(my_model$gr(mle_optim$par)))]
 ```
@@ -86,7 +86,7 @@ names(mle_optim$par)[which.max(abs(my_model$gr(mle_optim$par)))]
 ## Model Summary
 Once you are satisfied that the model has converged at global minimum, then you can get the model to report model quantities
 
-```{r}
+```r
 ## get MLE outputs
 mle_report = my_model$report(mle_optim$par)
 
