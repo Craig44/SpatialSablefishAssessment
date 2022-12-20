@@ -40,4 +40,3 @@ jobs:
         shell: Rscript {0}
       - name: Run Tests
         run: devtools::test(stop_on_failure = TRUE)
-        shell: Rscript {0}
