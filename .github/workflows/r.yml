@@ -37,6 +37,7 @@ jobs:
             any::testthat
             any::rcmdcheck
             any::remotes
+            any::RcppEigen
 #      - name: Install dependencies
 #        run: |
 #          install.packages(c("remotes", "rcmdcheck", "testthat", "devtools"))
