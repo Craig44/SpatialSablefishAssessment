@@ -11,6 +11,8 @@
 
 #include "TagIntegrated.hpp"
 
+#include "CurrentAssessment.hpp"
+
 template<class Type>
 Type objective_function<Type>::operator() () {
   DATA_STRING(model);
@@ -18,6 +20,8 @@ Type objective_function<Type>::operator() () {
     return TagIntegrated(this);
   } else if(model == "TagIntegratedValidate") {
     return TagIntegratedValidate(this);
+  } else if(model == "Assessment") {
+    return CurrentAssessment(this);
   } else {
     Rf_error("Unknown model.");
   }
