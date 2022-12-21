@@ -1,6 +1,6 @@
 ![Check package](https://github.com/Craig44/SpatialSablefishAssessment/actions/workflows/r.yml/badge.svg)
 # SpatialSablefishAssessment
-A R package that contains TMB models that can be used as operating models (OMs) or Estimation Models (EMs), it also contains a bunch of utility R functions for checking inputs and visualizing/summarizing model outputs and fits to observations. The models are developed for the Alaskan sablefish stock area, but the TMB models can in theory be applied to any assessment that has two fisheries and an annual cycle (time-step). To see how this package is being used, there is an online Gitbook that outlines some research using it [(see here)](craig44.github.io/SableFishResearch).
+A R package that contains TMB models that can be used as operating models (OMs) or Estimation Models (EMs), it also contains a bunch of utility R functions for checking inputs and visualizing/summarizing model outputs and fits to observations. The models are developed for the Alaskan sablefish stock area, but the TMB models can in theory be applied to any assessment that has two fisheries and an annual cycle (time-step). To see how this package is being used, there is an online Gitbook that outlines some research using it [(see here)](https://craig44.github.io/SableFishResearch/).
 
 There are currently three TMB models contained in this package
 
