@@ -1,7 +1,15 @@
 ![Check package](https://github.com/Craig44/SpatialSablefishAssessment/actions/workflows/r.yml/badge.svg)
 # SpatialSablefishAssessment
-An R package that contains the TMB model and auxillary functions for running a spatially explicit model for Alaskan sablefish.
+A R package that contains TMB models that can be used as operating models (OMs) or Estimation Models (EMs), it also contains a bunch of utility R functions for checking inputs and visualizing/summarizing model outputs and fits to observations. The models are developed for the Alaskan sablefish stock area, but the TMB models can in theory be applied to any assessment that has two fisheries and an annual cycle (time-step). To see how this package is being used, there is an online Gitbook that outlines some research using it [(see here)](craig44.github.io/SableFishResearch).
 
+There are currently three TMB models contained in this package
+
+- `TagIntegrated` A generalized spatially disaggregated model
+- `TagIntegratedValidate` This model is used to unit-test `TagIntegrated`. Any change to `TagIntegrated` should be incorporated into `TagIntegratedValidate`
+- `Assessment` The closest version to the current ADMB model that is used for the current assessment (needs further testing and comparisons to current ADMB assessment model before being used for management advice).
+
+
+Each of these models will expect slightly different input data and parameters lists.
 
 # Install 
 Before installing, it is advised to check that the R package is passing all unit-tests and you have Rtools correctly installed [(see here)](https://cran.r-project.org/bin/windows/Rtools/). It is advised that you have TMB installed before attempting to install this package. In addition to installing TMB, make sure you can compile a TMB example model i.e., `TMB::compile(file = system.file("examples", "simple.cpp",package = "TMB"))`. Once TMB is installed and you can compile an a model, you should be able to install this package following
@@ -83,8 +91,6 @@ try_improve
 
 
 ### Check convergence
-
-
 ```r
 ## largest gradient 
 names(mle_optim$par)[which.max(abs(my_model$gr(mle_optim$par)))]
@@ -92,20 +98,26 @@ names(mle_optim$par)[which.max(abs(my_model$gr(mle_optim$par)))]
 
 
 ### Fixing estimable parameters at input values
-
+```r
+?fix_pars()
+```
 
 ### Sharing parameter estimates among estimable variables i.e., male and female having a common selectivity
-
-
+```r
+?set_pars_to_be_the_same()
+```
 
 ## Model Summary
 Once you are satisfied that the model has converged at global minimum, then you can get the model to report model quantities
 
 ```r
-## get MLE outputs
+## get MLE quantities
 mle_report = my_model$report(mle_optim$par)
 
-
+#########
+## Plot interesting
+## Model quantities i.e., recruitment SSBs model fits etc
+#########
 
 ## movement assumption
 plot_movement(mle_report, region_key = region_key)
