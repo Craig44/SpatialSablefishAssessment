@@ -4,7 +4,7 @@ An R package that contains the TMB model and auxillary functions for running a s
 
 
 # Install 
-To install this R package run the following command. Before installing, it is advised to check that the R package is passing all unit-tests.
+Before installing, it is advised to check that the R package is passing all unit-tests and you have Rtools correctly installed [(see here)](https://cran.r-project.org/bin/windows/Rtools/). It is advised that you have TMB installed before attempting to install this package. In addition to installing TMB, make sure you can compile a TMB example model i.e., `TMB::compile(file = system.file("examples", "simple.cpp",package = "TMB"))`. Once TMB is installed and you can compile an a model, you should be able to install this package following
 
 ```r
 devtools::install_github("Craig44/SpatialSablefishAssessment")
@@ -33,6 +33,14 @@ validate_input_data_and_parameters(data, parameters)
 This function will report a message telling you either success or if one of the objects dimensions are off, then you will need to fix this because it is likely if you pass this to the TMBs `MakeADFun` it will crash your R session.
 
 
+The following list are some useful utility functions contained in this package to visualize data inputs. All functions should be documented and queried using the usual R `?` method
+
+- `plot_input_observations`
+- `plot_input_catches`
+- `plot_mean_weight`
+- `plot_age_length_matrix`
+
+
 Once you have checked the `data` and `parameter` objects you can build the TMB model following,
 
 ```r
@@ -41,12 +49,19 @@ my_model = TMB::MakeADFun(data = data,
                                DLL = "SpatialSablefishAssessment_TMBExports", silent  = T)
 ```
 
-### Check for zero gradients
+### Simple sanity checks
 It is possible to configure a model that has zero gradients for parameters, and you want to check this is not the case using the 
 ```r
 check_gradients(my_model)
 ```
 
+Check the likelihoods are all finite. It is easy to ask the model to calculate a predicted value in a region or year that has no fish which can cause undefined behaviour in some likelihood functions.
+```
+if(!all(is.finite(my_model$report()$nll)))
+  print("Found Inf in log-likelihood, you will need to resolve this before optimisation")
+if(!all(!is.na(my_model$report()$nll)))
+  print("Found NA in log-likelihood, you will need to resolve this before optimisation")
+```
 
 ## Optimisation
 
