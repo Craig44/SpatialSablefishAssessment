@@ -330,20 +330,14 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   /*
    * Build selectivity objects
    */
-  // TODO: Change BuildFisherySelectivity() to be like BuildSelectivity(). This will collapse
   // the number of years needed for the sel_ll_f container.
-  array<Type> temp_par = fixed_sel_pars.col(0);
-  BuildSelectivity(temp_par, fixed_sel_type, ages, sel_fixed_m);
-  temp_par = fixed_sel_pars.col(1);
-  BuildSelectivity(temp_par, fixed_sel_type, ages, sel_fixed_f);
-  temp_par = trwl_sel_pars.col(0);
-  BuildSelectivity(temp_par, trwl_sel_type, ages, sel_trwl_m);
-  temp_par = trwl_sel_pars.col(1);
-  BuildSelectivity(temp_par, trwl_sel_type, ages, sel_trwl_f);
-  temp_par = srv_dom_ll_sel_pars.col(0);
-  BuildSelectivity(temp_par, srv_dom_ll_sel_type, ages, sel_srv_dom_ll_m);
-  temp_par = srv_dom_ll_sel_pars.col(1);
-  BuildSelectivity(temp_par, srv_dom_ll_sel_type, ages, sel_srv_dom_ll_f);
+  BuildSelectivity(fixed_sel_pars.col(0), fixed_sel_type, ages, sel_fixed_m);
+  BuildSelectivity(fixed_sel_pars.col(1), fixed_sel_type, ages, sel_fixed_f);
+  BuildSelectivity(trwl_sel_pars.col(0), trwl_sel_type, ages, sel_trwl_m);
+  BuildSelectivity(trwl_sel_pars.col(1), trwl_sel_type, ages, sel_trwl_f);
+  BuildSelectivity(srv_dom_ll_sel_pars.col(0), srv_dom_ll_sel_type, ages, sel_srv_dom_ll_m);
+  BuildSelectivity(srv_dom_ll_sel_pars.col(1), srv_dom_ll_sel_type, ages, sel_srv_dom_ll_f);
+
 
   // Pre-calculate F, Z and survivorship only if F_method == 0
 

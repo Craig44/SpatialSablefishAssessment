@@ -49,7 +49,7 @@ vector<Type> double_normal_ogive(vector<Type>& ages, Type& sel_50, Type& delta) 
  *  @param sel_array is a prepopulated array that will be fulled with the correct . Specifies which time-block selectivity to which year.
  */
 template <class Type>
-void BuildSelectivity(array<Type>& sel_params, vector<int>& sel_type, vector<Type> ages, array<Type>& sel_array) {
+void BuildSelectivity(array<Type> sel_params, vector<int>& sel_type, vector<Type> ages, array<Type>& sel_array) {
   int n_time_blocks = sel_params.dim(0);
   int n_ages = ages.size();
 
