@@ -183,7 +183,7 @@ for(y_ndx in 1:length(tag_release_years)) {
   }
 }
 
-
+data$tag_likelihood = 0
 #'
 #' TMB Parameter definition OM values or starting values for EM
 #'
@@ -225,13 +225,16 @@ parameters$ln_trwl_F_devs = array(0, dim = c(n_regions, n_projyears))
 
 parameters$ln_init_F_avg = parameters$ln_fixed_F_avg
 parameters$logistic_srv_dom_ll_q = logit(0.2)
-parameters$ln_rec_dev = rep(0, n_years)
+parameters$ln_rec_dev = array(0, dim = c(1, n_years))
 parameters$ln_init_rec_dev = 0
 parameters$ln_catch_sd = log(0.02)
 ## reporting rate
 parameters$logistic_tag_reporting_rate = array(logit(0.999), dim = c(n_regions, length(tag_recovery_years)))
+parameters$ln_tag_phi = log(1)
 
 save(data, parameters, region_key, file = file.path("inst", "testdata", "MockSablefishModel.RData"))
+validate_input_data_and_parameters(data, parameters)
+
 ########################
 ## Check this model data parameter combo doesn't cause issues when making the AD object
 ########################
@@ -240,3 +243,7 @@ modA <- TMB::MakeADFun(data = data,
                        parameters = parameters,
                        DLL = "SpatialSablefishAssessment_TMBExports")
 
+data$model = "TagIntegrated"
+modA <- TMB::MakeADFun(data = data,
+                       parameters = parameters,
+                       DLL = "SpatialSablefishAssessment_TMBExports")

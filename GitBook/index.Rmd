@@ -8,12 +8,12 @@ bibliography: [book.bib, packages.bib]
 url: https://craig44.github.io/SableFishResearch/
 # cover-image: path to the social sharing image like images/cover.jpg
 description: |
-  This book describes the spatial sablefish stock assessment model with examples of how to use it.
+  This Gitbook describes the spatial sablefish stock assessment R package and how to use it
 link-citations: yes
-github-repo: https://github.com/Craig44/
+github-repo: https://github.com/Craig44/SpatialSablefishAssessment
 ---
 
-# `SpatialSablefishAssessment` is an R package for conducting spatial stock assessment research
+# `SpatialSablefishAssessment` is a R package for conducting spatial stock assessment research for a stock that has two fisheries.
 
 
 

@@ -1,9 +1,10 @@
 # A list of functions available in the `SpatialSablefishAssessment` package {#functionlist}
 
 
+## Validate functions
+
 
 ## Accessor functions
-
 
 
 ## Plotting functions

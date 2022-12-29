@@ -240,9 +240,18 @@ validate_input_data_and_parameters = function(data, parameters) {
   if(!check$result)
     return(paste0("ln_mean_rec: ", check$message))
   # ln_rec_dev
-  check = check_length(parameters$ln_rec_dev, n_years)
-  if(!check$result)
-    return(paste0("ln_rec_dev: ", check$message))
+  if(data$global_rec_devs == 1){
+    check = check_dim(parameters$ln_rec_dev, c(1,n_years))
+    if(!check$result)
+      return(paste0("ln_rec_dev: ", check$message))
+
+  } else if(data$global_rec_devs == 0) {
+    check = check_dim(parameters$ln_rec_dev, c(n_regions,n_years))
+    if(!check$result)
+      return(paste0("ln_rec_dev: ", check$message))
+  } else {
+    return("Unknown input value for data$global_rec_devs")
+  }
 
   # fixed sel pars
   n_fixed_sel_time_blocks = length(unique(data$fixed_sel_by_year_indicator))

@@ -152,6 +152,7 @@ Type TagIntegrated(objective_function<Type>* obj) {
   DATA_IARRAY(tag_recovery_indicator_by_release_event_and_recovery_region);// dim: n_tag_release_events x n_regions x n_tag_recovery_years.  1 = calculate fitted values for tag-recoveries this year and region, 0 = don't calculate tag recovery observation for this year and region
   DATA_ARRAY(obs_tag_recovery);                                 // dim: n_ages x 2 (for sex) x n_tag_release_events x n_regions x n_tag_recovery_years.
   array<Type> pred_tag_recovery(obs_tag_recovery.dim);
+  DATA_INTEGER(tag_likelihood);                                 // likelihood type 0 = Poisson, 1 = Negative Binomial
 
 
   /*
@@ -159,7 +160,7 @@ Type TagIntegrated(objective_function<Type>* obj) {
    *
    */
   PARAMETER_VECTOR(ln_mean_rec);                        // Unfish equil recruitment (logged) (estimated) for each spatial region
-  PARAMETER_VECTOR(ln_rec_dev);                         // Recruitment deviations they include years before the asssessment starts to final year: length = n_years
+  PARAMETER_ARRAY(ln_rec_dev);                         // Recruitment deviations they include years before the asssessment starts to final year: length = n_years
   PARAMETER_VECTOR(ln_init_rec_dev);                    // Recruitment deviations to apply during initialization they include years before the assessment starts: length = n_init_rec_devs
 
   // Fishery selectivities
@@ -182,6 +183,8 @@ Type TagIntegrated(objective_function<Type>* obj) {
   PARAMETER_VECTOR(logistic_srv_dom_ll_q);                  // logistic catchabilities parameters for srv_dom_ll observation
   PARAMETER_ARRAY(ln_srv_dom_ll_sel_pars);                  // log selectivity parameters for domestic longline surveyr, dim: time-blocks:  max(sel parameters): sex
   PARAMETER_ARRAY(logistic_tag_reporting_rate);             // logistic tag-reporting dim: n_regions x n_tag_recovery_years
+  // nuisance parameters
+  PARAMETER(ln_tag_phi);                                        // log variance for tag data likelihood- currently only used if tag_likelihood = 1 (Negative binomial)
 
   // Initialise consistently used variables throughout the code
   int year_ndx;
@@ -200,11 +203,29 @@ Type TagIntegrated(objective_function<Type>* obj) {
   Type pen_posfun = 0; // this is passed to the utility posfun function and added to the likelihood as apenalty
   Type eps_for_posfun = 0.00001; // used for the posfun object to scale values above zero
 
+  Type s1; // used in the negative binomial likelihood
+  Type s2; // used in the negative binomial likelihood
+
   // Note: about ln_init_rec_dev - it is the opposite order to how ADMB model is formulated. I am sorry but it was easier to code.
   //       the first init_rec_dev corresponds to recruitment for age class 2 which would have arrived in styr - 1, and so on.
   // Untransform parameters
   vector<Type> mean_rec = exp(ln_mean_rec);
-  vector<Type> rec_dev = exp(ln_rec_dev);
+  Type sigma_R_sq = sigma_R * sigma_R;
+  array<Type> recruitment_multipliers(n_regions, n_projyears);
+  if(global_rec_devs == 1) {
+    for(year_ndx = 0; year_ndx < ln_rec_dev.dim(1); ++year_ndx) {
+      for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
+        recruitment_multipliers(region_ndx, year_ndx) = exp(ln_rec_dev(0, year_ndx) - sigma_R_sq/2);
+      }
+    }
+  } else {
+    for(year_ndx = 0; year_ndx < ln_rec_dev.dim(1); ++year_ndx) {
+      for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
+        recruitment_multipliers(region_ndx, year_ndx) = exp(ln_rec_dev(region_ndx, year_ndx) - sigma_R_sq/2);
+      }
+    }
+  }
+
   Type F_hist;
   if(F_method == 0) {
     F_hist = exp(ln_fixed_F_avg);
@@ -248,9 +269,11 @@ Type TagIntegrated(objective_function<Type>* obj) {
     // plus group
     movement_matrix(region_ndx, n_regions - 1) = stick_length;
   }
+  Type tag_phi = exp(ln_tag_phi);
 
   // Declare Derived quantities
   array<Type>  SSB_yr(n_projyears, n_regions);
+  vector<Type>  SSB_all_areas(n_projyears);
   array<Type>  recruitment_yr(n_projyears, n_regions);
   array<Type> init_natage_m(n_ages, n_regions);                     // Initial numbers at age Males
   array<Type> init_natage_f(n_ages, n_regions);                     // Initial numbers at age Females
@@ -316,7 +339,7 @@ Type TagIntegrated(objective_function<Type>* obj) {
   array<Type> annual_trwl_catch_pred(n_regions, n_years);           // Fishing mortality for trawl gear for each model year
   annual_fixed_catch_pred.fill(0.0);
   annual_trwl_catch_pred.fill(0.0);
-
+  SSB_all_areas.setZero();
 
   array<Type> sel_fixed_f(n_ages, ln_fixed_sel_pars.dim(0));                  // Longline selectivity Female. dim: n_ages x n_time_blocks
   array<Type> sel_fixed_m(n_ages, ln_fixed_sel_pars.dim(0));                  // Longline selectivity Male. dim: n_age x n_time_blocks
@@ -329,7 +352,6 @@ Type TagIntegrated(objective_function<Type>* obj) {
   Type alpha = 0.0;                                       // alpha for the stock recruit relationship
   Type beta = 0.0;                                        // beta for the stock recruit relationship
   vector<Type> Bzero(n_regions);
-  Type sigma_R_sq = sigma_R * sigma_R;
   // Initialise Derived quantities
   /*
    * Calculate some initial Derived quantities
@@ -497,8 +519,8 @@ Type TagIntegrated(objective_function<Type>* obj) {
     for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
       // Recruitment
       //fill in recruitment in current year - a slight ineffieciency as we have already done this for year i.e., year_ndx = 0 above but meh!
-      natage_m(0, region_ndx, year_ndx) = exp(ln_mean_rec(region_ndx) + ln_rec_dev(year_ndx) + sigma_R_sq/2)/2; //
-      natage_f(0, region_ndx, year_ndx) = exp(ln_mean_rec(region_ndx) + ln_rec_dev(year_ndx) + sigma_R_sq/2)/2; //
+      natage_m(0, region_ndx, year_ndx) = (mean_rec(region_ndx) * recruitment_multipliers(region_ndx, year_ndx)) / 2.0; // TODO: add sex ratio here currnetly 50:50
+      natage_f(0, region_ndx, year_ndx) = (mean_rec(region_ndx) * recruitment_multipliers(region_ndx, year_ndx)) / 2.0; // TODO: add sex ratio here currnetly 50:50
 
       recruitment_yr(year_ndx, region_ndx) = natage_m(0, region_ndx, year_ndx) + natage_f(0, region_ndx, year_ndx);
 
@@ -590,9 +612,12 @@ Type TagIntegrated(objective_function<Type>* obj) {
         natage_m(age_ndx + 1, region_ndx, year_ndx + 1) =  natage_m(age_ndx, region_ndx, year_ndx) * S_m(age_ndx, region_ndx, year_ndx);
         natage_f(age_ndx + 1, region_ndx, year_ndx + 1) =  natage_f(age_ndx, region_ndx, year_ndx) * S_f(age_ndx, region_ndx, year_ndx);
         SSB_yr(year_ndx, region_ndx) += natage_f(age_ndx, region_ndx, year_ndx) * pow(S_f(age_ndx, region_ndx, year_ndx), spawning_time_proportion(year_ndx)) * weight_maturity_prod_f(age_ndx, year_ndx);
+        SSB_all_areas(year_ndx) += SSB_yr(year_ndx, region_ndx);
       }
       // SSB for the plus group
       SSB_yr(year_ndx, region_ndx) += natage_f(n_ages - 1, region_ndx, year_ndx) * pow(S_f(n_ages - 1, region_ndx, year_ndx), spawning_time_proportion(year_ndx)) * weight_maturity_prod_f(n_ages - 1, year_ndx);
+      SSB_all_areas(year_ndx) += SSB_yr(year_ndx, region_ndx);
+
       // plus group accumulation
       natage_m(n_ages - 1, region_ndx, year_ndx + 1) +=  m_plus_group * S_m(n_ages - 1, region_ndx, year_ndx);
       natage_f(n_ages - 1, region_ndx, year_ndx + 1) +=  f_plus_group * S_f(n_ages - 1, region_ndx, year_ndx);
@@ -616,8 +641,6 @@ Type TagIntegrated(objective_function<Type>* obj) {
             }
           }
         }
-
-
         // Calculate expected catch per method.
         annual_fixed_catch_pred(region_ndx, year_ndx) += catchatage_fixed_f(age_ndx, region_ndx, year_ndx) * female_mean_weight_by_age(age_ndx, year_ndx) + catchatage_fixed_m(age_ndx, region_ndx, year_ndx) * male_mean_weight_by_age(age_ndx, year_ndx);
         annual_trwl_catch_pred(region_ndx, year_ndx) += catchatage_trwl_f(age_ndx, region_ndx, year_ndx) * female_mean_weight_by_age(age_ndx, year_ndx) + catchatage_trwl_m(age_ndx, region_ndx, year_ndx) * male_mean_weight_by_age(age_ndx, year_ndx);
@@ -629,8 +652,10 @@ Type TagIntegrated(objective_function<Type>* obj) {
         for(tag_ndx = 0; tag_ndx <= n_years_to_retain_tagged_cohorts_for; ++tag_ndx) {
           for(release_region_ndx = 0; release_region_ndx < n_regions; ++release_region_ndx) {
             tag_release_event_ndx = get_tag_release_event_ndx(release_region_ndx, tag_ndx, n_regions);
-            for(age_ndx = 0; age_ndx < n_ages; age_ndx++)
+            for(age_ndx = 0; age_ndx < n_ages; age_ndx++) {
               SSB_yr(year_ndx, region_ndx) += tagged_natage_f(age_ndx, region_ndx, tag_release_event_ndx) / 1000 * pow(S_f(age_ndx, region_ndx, year_ndx), spawning_time_proportion(year_ndx)) * weight_maturity_prod_f(age_ndx, year_ndx);
+              SSB_all_areas(year_ndx) += SSB_yr(year_ndx, region_ndx);
+            }
           }
         }
 
@@ -653,8 +678,22 @@ Type TagIntegrated(objective_function<Type>* obj) {
                 predicted_tags = numbers_at_age_and_sex.sum();
                 predicted_tags = posfun(predicted_tags, eps_for_posfun, pen_posfun);
                 // likelihood contribution
-                nll(7) -= dpois(obs_tag_recovery.col(tag_recovery_counter).col(region_ndx).col(tag_release_event_ndx).vec().sum(), predicted_tags, true);
-
+                if(tag_likelihood == 0) {
+                  nll(7) -= dpois(obs_tag_recovery.col(tag_recovery_counter).col(region_ndx).col(tag_release_event_ndx).vec().sum(), predicted_tags, true);
+                  SIMULATE {
+                    // store the simualted tag-observation in the first age-sex bin of obs_tag_recovery
+                    obs_tag_recovery(0, tag_release_event_ndx, region_ndx, tag_recovery_counter) = rpois(predicted_tags);
+                  }
+                } else if(tag_likelihood == 1) {
+                  s1 = log(predicted_tags);                          // log(mu)
+                  s2 = 2. * s1 - ln_tag_phi;                         // log(var - mu)
+                  nll(7) -= dnbinom_robust(obs_tag_recovery.col(tag_recovery_counter).col(region_ndx).col(tag_release_event_ndx).vec().sum(), s1, s2, true);
+                  SIMULATE{
+                    s1 = predicted_tags;
+                    s2 = predicted_tags * (1.0 + tag_phi);  // (1+phi) guarantees that var >= mu
+                    obs_tag_recovery(0, tag_release_event_ndx, region_ndx, tag_recovery_counter) = rnbinom2(s1, s2);
+                  }
+                }
               }
             }
           }
@@ -886,17 +925,21 @@ Type TagIntegrated(objective_function<Type>* obj) {
     }
   }
   // Recruitment Penalty
-  for(year_ndx = 0; year_ndx < ln_rec_dev.size(); ++year_ndx)
-    nll(8) += square(ln_rec_dev(year_ndx) + sigma_R_sq / 2.0)/(2.0* sigma_R_sq);
-  nll(8) += (ln_rec_dev.size()) * log(sigma_R);
-
+  Type n_rec_devs = 0.0;
+  for(region_ndx = 0; region_ndx < ln_rec_dev.dim(0); ++region_ndx) {
+    for(year_ndx = 0; year_ndx < ln_rec_dev.dim(1); ++year_ndx) {
+      nll(8) += square(ln_rec_dev(region_ndx, year_ndx) - sigma_R_sq / 2.0)/(2.0* sigma_R_sq);
+      n_rec_devs += 1.0;
+    }
+  }
+  nll(8) += (n_rec_devs) * log(sigma_R);
   nll(9) = pen_posfun;
   /*
    * Report section
    */
   REPORT(nll);
   REPORT(mean_rec);
-  REPORT(rec_dev);
+  REPORT(recruitment_multipliers);
   REPORT(Bzero);
   REPORT(init_natage_f);
   REPORT(init_natage_m);
@@ -949,6 +992,7 @@ Type TagIntegrated(objective_function<Type>* obj) {
   REPORT(S_m);
 
   REPORT(tag_reporting_rate);
+  REPORT(tag_phi);
 
   // Report model expected/predicted values
   REPORT(pred_fixed_catchatage);
@@ -984,6 +1028,17 @@ Type TagIntegrated(objective_function<Type>* obj) {
   REPORT( fixed_fishery_catch );
   REPORT( trwl_fishery_catch );
   REPORT( obs_tag_recovery )
+
+
+  // AD reports
+  ADREPORT(tag_reporting_rate);
+  ADREPORT(SSB_yr);
+  ADREPORT(SSB_all_areas);
+  ADREPORT(movement_matrix);
+  ADREPORT(recruitment_yr);
+  ADREPORT(annual_F_fixed);
+  ADREPORT(annual_F_trwl);
+  ADREPORT(init_F_hist);
 
   // REMOVE objects after this comment.
   // I created them for reporting interim calculations debugging etc
