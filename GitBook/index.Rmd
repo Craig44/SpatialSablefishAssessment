@@ -19,7 +19,9 @@ github-repo: https://github.com/Craig44/SpatialSablefishAssessment
 
 ```{r install_packages, results = 'hide', message=FALSE, warning=FALSE}
 library(TMB)
-
+library(SpatialSablefishAssessment) #devtools::install_github("Craig44/SpatialSablefishAssessment")
+library(ggplot2)
+library(dplyr)
 ```
 
 

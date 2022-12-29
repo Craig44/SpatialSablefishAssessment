@@ -203,6 +203,7 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   // Untransform parameters
   vector<Type> mean_rec = exp(ln_mean_rec);
   Type sigma_R_sq = sigma_R * sigma_R;
+  vector<Type> init_rec_dev = exp(ln_init_rec_dev);
 
   array<Type> recruitment_multipliers(n_regions, n_projyears);
   if(global_rec_devs == 1) {
@@ -478,6 +479,21 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
       Bzero(region_ndx) += init_natage_f(age_ndx, region_ndx) * pow(exp(- 0.5 * (M(age_ndx, 0) + init_F_hist * sel_fixed_f(age_ndx, 0))), spawning_time_proportion(0)) * weight_maturity_prod_f(age_ndx, 0);
 
   }
+  // apply init rec devs
+  if(n_init_rec_devs > 0) {
+    for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
+      for(age_ndx = 1; age_ndx < (n_ages - 1); ++age_ndx) {
+        if(age_ndx >= n_init_rec_devs) {
+          init_natage_m(age_ndx, region_ndx) *= init_rec_dev(n_init_rec_devs - 1);
+          init_natage_f(age_ndx, region_ndx) *= init_rec_dev(n_init_rec_devs - 1);
+        } else {
+          init_natage_m(age_ndx, region_ndx) *= init_rec_dev(age_ndx - 1);
+          init_natage_f(age_ndx, region_ndx) *= init_rec_dev(age_ndx - 1);
+        }
+      }
+    }
+  }
+
   natage_m.col(0) = init_natage_m;
   natage_f.col(0) = init_natage_f;
   /*
@@ -970,6 +986,7 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   REPORT(nll);
   REPORT(mean_rec);
   REPORT(recruitment_multipliers);
+  REPORT(init_rec_dev);
   REPORT(Bzero);
   REPORT(init_natage_f);
   REPORT(init_natage_m);

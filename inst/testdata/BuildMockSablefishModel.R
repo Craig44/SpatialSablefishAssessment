@@ -33,7 +33,7 @@ n_years = length(data$years)
 projyears = min(data$years):(max(data$years) + data$n_projections_years)
 
 data$global_rec_devs = 1
-data$n_init_rec_devs = 1
+data$n_init_rec_devs = 0
 data$M = matrix(0.104884, nrow = n_ages, ncol = n_projyears)
 maturity = c(0.02,0.05,0.09,0.18,0.31,0.49,0.67,0.81,0.9,0.95,0.98,0.99,0.99,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1)
 data$maturity = matrix(maturity, nrow = n_ages, ncol = n_projyears, byrow = F)
