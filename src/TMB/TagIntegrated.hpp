@@ -213,6 +213,7 @@ Type TagIntegrated(objective_function<Type>* obj) {
   Type sigma_R_sq = sigma_R * sigma_R;
   vector<Type> init_rec_dev = exp(ln_init_rec_dev);
   array<Type> recruitment_multipliers(n_regions, n_projyears);
+  recruitment_multipliers.fill(0.0);
   if(global_rec_devs == 1) {
     for(year_ndx = 0; year_ndx < ln_rec_dev.dim(1); ++year_ndx) {
       for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {

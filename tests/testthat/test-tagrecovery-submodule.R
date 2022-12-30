@@ -88,6 +88,29 @@ test_that("single-release-test-recovery-reporting-rate", {
   ## check that the Poisson likelihood evaluation is as expected
   expect_equal(test_report$nll[8], -1 * sum(dpois(tmp$obs, tmp$pred, log = T)), tolerance = 0.0001)
 
+
+  ## with negtive binomial likelihood
+  data$tag_likelihood = 1
+  dispersion_param = 2
+  parameters$ln_tag_phi = log(dispersion_param)
+
+  test_model <- TMB::MakeADFun(data = data,
+                               parameters = parameters,
+                               DLL = "SpatialSablefishAssessment_TMBExports", silent  = T)
+
+  test_report = test_model$report()
+  expect_equal(test_report$nll[8], -1 * sum(dnbinom(tmp$obs, size = dispersion_param, mu = tmp$pred, log = T)), tolerance = 0.0001)
+
+  dispersion_param = 0.001
+  parameters$ln_tag_phi = log(dispersion_param)
+
+  test_model <- TMB::MakeADFun(data = data,
+                               parameters = parameters,
+                               DLL = "SpatialSablefishAssessment_TMBExports", silent  = T)
+
+  test_report = test_model$report()
+  expect_equal(test_report$nll[8], -1 * sum(dnbinom(tmp$obs, size = dispersion_param, mu = tmp$pred, log = T)), tolerance = 0.0001)
+
 })
 
 
