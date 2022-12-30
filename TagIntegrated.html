@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+<head>
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>Chapter 3 Descriptions of data and parameter objects expected by the TagIntegrated model | SpatialSablefishAssessment</title>
+  <meta name="description" content="This Gitbook describes the spatial sablefish stock assessment R package and how to use it" />
+  <meta name="generator" content="bookdown 0.31 and GitBook 2.6.7" />
+
+  <meta property="og:title" content="Chapter 3 Descriptions of data and parameter objects expected by the TagIntegrated model | SpatialSablefishAssessment" />
+  <meta property="og:type" content="book" />
+  
+  <meta property="og:description" content="This Gitbook describes the spatial sablefish stock assessment R package and how to use it" />
+  <meta name="github-repo" content="https://github.com/Craig44/SpatialSablefishAssessment" />
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Chapter 3 Descriptions of data and parameter objects expected by the TagIntegrated model | SpatialSablefishAssessment" />
+  
+  <meta name="twitter:description" content="This Gitbook describes the spatial sablefish stock assessment R package and how to use it" />
+  
+
+<meta name="author" content="C.Marsh" />
+
+
+<meta name="date" content="2022-12-30" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  
+  
+<link rel="prev" href="functionlist.html"/>
+<link rel="next" href="references.html"/>
+<script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-clipboard.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+<link href="libs/anchor-sections-1.1.0/anchor-sections.css" rel="stylesheet" />
+<link href="libs/anchor-sections-1.1.0/anchor-sections-hash.css" rel="stylesheet" />
+<script src="libs/anchor-sections-1.1.0/anchor-sections.js"></script>
+
+
+<style type="text/css">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { color: #008000; } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { color: #008000; font-weight: bold; } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li><a href="./">r4Casal2</a></li>
+
+<li class="divider"></li>
+<li class="chapter" data-level="1" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i><b>1</b> <code>SpatialSablefishAssessment</code> is a R package for conducting spatial stock assessment research for a stock that has two fisheries.</a></li>
+<li class="chapter" data-level="2" data-path="functionlist.html"><a href="functionlist.html"><i class="fa fa-check"></i><b>2</b> A list of functions available in the <code>SpatialSablefishAssessment</code> package</a>
+<ul>
+<li class="chapter" data-level="2.1" data-path="functionlist.html"><a href="functionlist.html#validate-functions"><i class="fa fa-check"></i><b>2.1</b> Validate functions</a></li>
+<li class="chapter" data-level="2.2" data-path="functionlist.html"><a href="functionlist.html#accessor-functions"><i class="fa fa-check"></i><b>2.2</b> Accessor functions</a></li>
+<li class="chapter" data-level="2.3" data-path="functionlist.html"><a href="functionlist.html#plotting-functions"><i class="fa fa-check"></i><b>2.3</b> Plotting functions</a></li>
+</ul></li>
+<li class="chapter" data-level="3" data-path="TagIntegrated.html"><a href="TagIntegrated.html"><i class="fa fa-check"></i><b>3</b> Descriptions of data and parameter objects expected by the <code>TagIntegrated</code> model</a>
+<ul>
+<li class="chapter" data-level="3.1" data-path="TagIntegrated.html"><a href="TagIntegrated.html#data"><i class="fa fa-check"></i><b>3.1</b> <code>data</code></a></li>
+<li class="chapter" data-level="3.2" data-path="TagIntegrated.html"><a href="TagIntegrated.html#parameters"><i class="fa fa-check"></i><b>3.2</b> <code>parameters</code></a></li>
+</ul></li>
+<li class="chapter" data-level="" data-path="references.html"><a href="references.html"><i class="fa fa-check"></i>References</a></li>
+<li class="divider"></li>
+<li><a href="https://github.com/NIWAFisheriesModelling/r4Casal2" target="blank">Github Repo here</a></li>
+
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">SpatialSablefishAssessment</a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="TagIntegrated" class="section level1 hasAnchor" number="3">
+<h1><span class="header-section-number">Chapter 3</span> Descriptions of data and parameter objects expected by the <code>TagIntegrated</code> model<a href="TagIntegrated.html#TagIntegrated" class="anchor-section" aria-label="Anchor link to header"></a></h1>
+<p>Users need to population a <code>data</code> and <code>parameters</code> named list object that is then passed to TMBs <code>MakeADFun</code>. These sections outline the elements and corresponding dimensions of both <code>data</code> and <code>parameters</code>.</p>
+<div id="data" class="section level2 hasAnchor" number="3.1">
+<h2><span class="header-section-number">3.1</span> <code>data</code><a href="TagIntegrated.html#data" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<ul>
+<li><p><code>ages</code> vector of ages. Length <code>n_ages</code></p></li>
+<li><p><code>years</code> vector of years from start year to current year. length <code>n_years</code></p></li>
+<li><p><code>length_bins</code> vector of length bin midpoints. length. <code>n_length_bins</code></p></li>
+<li><p><code>n_projections_years</code> integer of future years to project the model <code>n_projyears = n_years + n_projections_years</code></p></li>
+<li><p><code>do_projection</code> integer 0 means don’t do projection 1 does a stochastic projection</p></li>
+<li><p><code>n_regions</code> integer needs to be greater than 1</p></li>
+<li><p><code>global_rec_devs</code> integer 1 means all regions share the same recruitment deviations. 0 means they have separate global recruitment deviations. This will effect the dimensions of the parameter <code>ln_rec_dev</code></p></li>
+<li><p><code>n_init_rec_devs</code> number of initial n_age_deviations (<code>parameter$ln_init_rec_dev</code>) to multiply against the initial numbers at age to have non equilibrium initial age-structure. A value of zero will <strong>not</strong> apply these initial devs and expects <code>parameter$ln_init_rec_dev</code> to have length 1.</p></li>
+<li><p><code>M</code> Natural mortality array with dimensions <code>n_ages</code> <span class="math inline">\(\times\)</span> <code>n_projyears</code></p></li>
+<li><p><code>maturity</code> proportion mature array with dimensions <code>n_ages</code> <span class="math inline">\(\times\)</span> <code>n_projyears</code></p></li>
+<li><p><code>male_mean_weight_by_age</code> male mean weight at age array with dimensions <code>n_ages</code> <span class="math inline">\(\times\)</span> <code>n_projyears</code>. Units are in kgs, this is because we track 000’s of fish in the partition.</p></li>
+<li><p><code>female_mean_weight_by_age</code> female mean weight at age array with dimensions <code>n_ages</code> <span class="math inline">\(\times\)</span> <code>n_projyears</code>. Units are in kgs, this is because we track 000’s of fish in the partition.</p></li>
+<li><p><code>male_age_length_transition</code> male age-length transtion matrix for each year. An array with dimensions <code>n_ages</code> <span class="math inline">\(\times\)</span><code>n_length_bins</code> <span class="math inline">\(\times\)</span> <code>n_projyears</code></p></li>
+<li><p><code>female_age_length_transition</code> female age-length transtion matrix for each year. An array with dimensions <code>n_ages</code> <span class="math inline">\(\times\)</span><code>n_length_bins</code> <span class="math inline">\(\times\)</span> <code>n_projyears</code></p></li>
+<li><p><code>sigma_R</code> Scalar defining the standard deviation for recruitment deviations</p></li>
+<li><p><code>SrType</code> Stock recruitment type 1 = Beverton holt, 2 = Ricker, 3 = average</p></li>
+<li><p><code>spawning_time_proportion</code> vector of proportions that indicate when during the year spawning occurs. Length = <code>n_projyears</code></p></li>
+<li><p><code>apply_fixed_movement</code> integer whether to apply the input <code>fixed_movement_matrix</code> or estimated movement matrix. This was added because the transformation on estimated movement parameters does not allow values to be zero or one so cannot truly apply no movement. That is when I have used this fixed movement</p></li>
+<li><p><code>fixed_movement_matrix</code> movement matrix with dimensions <code>n_regions</code> <span class="math inline">\(\times\)</span><code>n_regions</code>. Rows sum equal to one.</p></li>
+<li><p><code>prop_F_hist</code> scalar proportion of longline average F that is applied during initialization.</p></li>
+<li><p><code>F_method</code> integer, if = 0 then we estimate mean and deviation F free parameters, otherwise if equal 1, use newton raphson iterations and solve F</p></li>
+<li><p><code>F_max</code> scalar Maxium F when using the <code>F_method = 1</code></p></li>
+<li><p><code>F_iterations</code> integer how many newton raphson iterations are done to solve F when <code>F_method = 1</code></p></li>
+<li><p><code>fixed_fishery_catch</code> vector of annual catch for the fixed gear fishery. Units are kilo tonnes</p></li>
+<li><p><code>trwl_fishery_catch</code> vector of annual catch for the Trawl gear fishery. Units are kilo tonnes</p></li>
+<li><p><code>fixed_sel_type</code> vector of integers specifying the selectivity type in each time-block.</p></li>
+<li><p><code>fixed_sel_by_year_indicator</code> vector of integers specifying which selectivity time-block to apply in each year (C++ indexing so start at zero)</p></li>
+<li><p><code>trwl_sel_type</code> vector of integers specifying the selectivity type in each time-block.</p></li>
+<li><p><code>trwl_sel_by_year_indicator</code> vector of integers specifying which selectivity time-block to apply in each year (C++ indexing so start at zero)</p></li>
+<li><p><code>srv_dom_ll_sel_type</code> vector of integers specifying the selectivity type in each time-block.</p></li>
+<li><p><code>srv_dom_ll_sel_by_year_indicator</code> vector of integers specifying which selectivity time-block to apply in each year (C++ indexing so start at zero)</p></li>
+<li><p><code>tag_release_event_this_year</code> vector of integers specifying whether tags are released in each year. Length <code>n_years</code>. <code>n_years_with_tag_releases = sum(tag_release_event_this_year)</code></p></li>
+<li><p><code>male_tagged_cohorts_by_age</code> Numbers of male tagged fish. Dimension <code>n_ages</code> <span class="math inline">\(\times\)</span> <code>n_region</code> <span class="math inline">\(\times\)</span> <code>n_years_with_tag_releases</code>. These are in actual numbers <strong>not</strong> 1000’s of fish, like the recruitment parameters</p></li>
+<li><p><code>female_tagged_cohorts_by_age</code> Numbers of female tagged fish. Dimension <code>n_ages</code> <span class="math inline">\(\times\)</span> <code>n_region</code> <span class="math inline">\(\times\)</span> <code>n_years_with_tag_releases</code>. These are in actual numbers <strong>not</strong> 1000’s of fish, like the recruitment parameters</p></li>
+<li><p><code>n_years_to_retain_tagged_cohorts_for</code> integer, number of years to keep release event information on tag-releases</p></li>
+<li><p><code>initial_tag_induced_mortality</code> vector or initial tag release mortality with length <code>n_years_with_tag_releases</code></p></li>
+<li><p><code>annual_tag_shedding_rate</code> scalar for annual tag-shedding rate</p></li>
+<li><p><code>ageing_error_matrix</code> ageing error matrix <code>n_ages</code> <span class="math inline">\(\times\)</span> <code>n_ages</code></p></li>
+<li><p><code>fixed_catchatage_indicator</code> an indicator array for fixed gear catch at age observation with dimensions <code>n_regions</code> <span class="math inline">\(\times\)</span> <code>n_years</code>. A one indicates there is a catch at age observation for the fixed fishery in this region and year. A zero indicates no observation.</p></li>
+<li><p><code>obs_fixed_catchatage</code> fixed catch at age observation with dimensions <code>n_ages * 2</code> <span class="math inline">\(\times\)</span> <code>n_regions</code> <span class="math inline">\(\times\)</span> <code>n_years</code>. The first dimension represents sex and age with males being the first age block followed by females. This observation is in numbers which is equivalent to proportions times the effective sample size. Predicted proportions will sum = 1 over the age and sex dimension.</p></li>
+<li><p><code>fixed_catchatage_covar_structure</code> integer, this is a place holder doesn’t do anything yet, will be used when there is alternative composition likelihoods.</p></li>
+<li><p><code>fixed_catchatage_comp_likelihood</code> integer, this is a place holder doesn’t do anything yet, will be used when alternative composition likelihoods are available.</p></li>
+<li><p><code>trwl_catchatlgth_indicator</code> an indicator array for trawl gear catch at length observation with dimensions <code>n_regions</code> <span class="math inline">\(\times\)</span> <code>n_years</code>. A one indicates there is a catch at length observation for the trawl fishery in this region and year. A zero indicates no observation.</p></li>
+<li><p><code>obs_trawl_catchatlgth</code> fixed catch at length observation with dimensions <code>n_length_bins * 2</code> <span class="math inline">\(\times\)</span> <code>n_regions</code> <span class="math inline">\(\times\)</span> <code>n_years</code>. The first dimension represents length bin and age with males being the first length block followed by females. This observation is in numbers which is equivalent to proportions times the effective sample size. Predicted proportions will sum = 1 over the length and sex dimension.</p></li>
+<li><p><code>trwl_catchatlgth_covar_structure</code> integer, this is a place holder doesn’t do anything yet, will be used when there is alternative composition likelihoods.</p></li>
+<li><p><code>trwl_catchatlgth_comp_likelihood</code> integer, this is a place holder doesn’t do anything yet, will be used when alternative composition likelihoods are available.</p></li>
+<li><p><code>fixed_catchatlgth_indicator</code> an indicator array for fixed gear catch at length observation with dimensions <code>n_regions</code> <span class="math inline">\(\times\)</span> <code>n_years</code>. A one indicates there is a catch at length observation for the fixed gear fishery in this region and year. A zero indicates no observation.</p></li>
+<li><p><code>obs_fixed_catchatlgth</code> fixed catch at length observation with dimensions <code>n_length_bins * 2</code> <span class="math inline">\(\times\)</span> <code>n_regions</code> <span class="math inline">\(\times\)</span> <code>n_years</code>. The first dimension represents length bin and age with males being the first length block followed by females. This observation is in numbers which is equivalent to proportions times the effective sample size. Predicted proportions will sum = 1 over the length and sex dimension.</p></li>
+<li><p><code>fixed_catchatlgth_covar_structure</code> integer, this is a place holder doesn’t do anything yet, will be used when there is alternative composition likelihoods.</p></li>
+<li><p><code>fixed_catchatlgth_comp_likelihood</code> integer, this is a place holder doesn’t do anything yet, will be used when alternative composition likelihoods are available.</p></li>
+<li><p><code>srv_dom_ll_catchatage_indicator</code> an indicator array for survey longline catch at age observation with dimensions <code>n_regions</code> <span class="math inline">\(\times\)</span> <code>n_years</code>. A one indicates there is a catch at age observation for the longline survey in this region and year. A zero indicates no observation.</p></li>
+<li><p><code>obs_srv_dom_ll_catchatage</code> fixed catch at length observation with dimensions <code>n_ages * 2</code> <span class="math inline">\(\times\)</span> <code>n_regions</code> <span class="math inline">\(\times\)</span> <code>n_years</code>. The first dimension represents age and age with males being the first age block followed by females. This observation is in numbers which is equivalent to proportions times the effective sample size. Predicted proportions will sum = 1 over the age and sex dimension.</p></li>
+<li><p><code>srv_dom_ll_catchatage_covar_structure</code> integer, this is a place holder doesn’t do anything yet, will be used when there is alternative composition likelihoods.</p></li>
+<li><p><code>srv_dom_ll_catchatage_comp_likelihood</code> integer, this is a place holder doesn’t do anything yet, will be used when alternative composition likelihoods are available.</p></li>
+<li><p><code>srv_dom_ll_bio_indicator</code> an indicator array for survey longline abundance observation with dimensions <code>n_regions</code> <span class="math inline">\(\times\)</span> <code>n_years</code>. A one indicates there is an abundance observation for the longline survey in this region and year. A zero indicates no observation.</p></li>
+<li><p><code>obs_srv_dom_ll_bio</code> domestic survey abundance observation <code>n_regions</code> <span class="math inline">\(\times\)</span> <code>n_years</code>. This observation is in numbers (000’s) which is equivalent to proportions times the effective sample size. Predicted proportions will sum = 1 over the age and sex dimension.</p></li>
+<li><p><code>obs_srv_dom_ll_se</code> Standard error for the domestic survey abundance observation</p></li>
+<li><p><code>srv_dom_ll_bio_comp_likelihood</code> integer, this is a place holder doesn’t do anything yet, will be used when alternative composition likelihoods are available.</p></li>
+<li><p><code>srv_dom_ll_q_by_year_indicator</code> indicator vector, this indicates how many time-blocks for time-varying catchabilities are available. Each element links an element of the parameter <code>logistic_srv_dom_ll_q</code> for a year.</p></li>
+<li><p><code>tag_recovery_indicator</code> an indicator vector for tag-recovery observations has length <code>n_years</code>. A one indicates there is a tag recovery observation in this year. A zero indicates no observation. This object is used to define <code>n_tag_recovery_years = sum(tag_recovery_indicator)</code>, which links to other tag-recovery structures</p></li>
+<li><p><code>tag_recovery_indicator_by_release_event_and_recovery_region</code> an indicator vector for tag-recovery observations with dimensions <code>n_tag_release_events</code> <span class="math inline">\(\times\)</span> <code>n_regions</code> <span class="math inline">\(\times\)</span> <code>n_tag_recovery_years</code>. A one indicates there is a tag recovery observation, a zero indicates no observation.</p></li>
+<li><p><code>obs_tag_recovery</code> tag-recovery observation with dimensions <code>n_ages * 2</code> <span class="math inline">\(\times\)</span> <code>n_tag_release_events</code> <span class="math inline">\(\times\)</span> <code>n_regions</code> <span class="math inline">\(\times\)</span> <code>n_tag_recovery_years</code>. Although age and sex is included in this observation, the current likelihood pools observations and expected values of age and sex. Units are numbers (can be non-integer) of recoveries.</p></li>
+<li><p><code>tag_likelihood</code> integer specifying the tag-likelihood, 0 = Poisson, 1 = negative binomial.</p></li>
+</ul>
+</div>
+<div id="parameters" class="section level2 hasAnchor" number="3.2">
+<h2><span class="header-section-number">3.2</span> <code>parameters</code><a href="TagIntegrated.html#parameters" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<ul>
+<li><p><code>ln_mean_rec</code> vector of natural logarithm of mean recruitment (units are 000’s) for each region. length <code>n_regions</code>.</p></li>
+<li><p><code>ln_rec_dev</code> array of recruitment deviations. if <code>global_rec_devs</code> = 1 then this has dimension <code>1</code> <span class="math inline">\(\times\)</span> <code>n_years</code>, else it has a row for each region and dimension <code>n_regions</code><span class="math inline">\(\times\)</span> <code>n_years</code></p></li>
+<li><p><code>ln_init_rec_dev</code> vector of initial devs to multiple to initial numbers at age for non-equilibrium age-structure. Must have length equal to <code>data$n_init_rec_devs</code>. The first dev, corresponds to the second age we the last value gets applied to all successive ages i.e., if <code>length(ln_init_rec_dev) = 10</code>, the first value <code>numbers_at_age[2] * exp(ln_init_rec_dev[1])</code>, and <code>numbers_at_age[11:n_ages] * exp(ln_init_rec_dev[10])</code></p></li>
+<li><p><code>ln_fixed_sel_pars</code> array of log selectivity parameters for fixed gear fishery with dimension <code>n_time_blocks</code><span class="math inline">\(\times\)</span> <code>max(sel parameters)</code><span class="math inline">\(\times\)</span> <code>2</code> (for each sex) male parameters first followed by female. The number of time-blocks is defined by the data parameter <code>data$fixed_sel_by_year_indicator</code> and max selectivity parameters controlled by <code>data$fixed_sel_type</code> which defines the selectivity shape and thus number of parameters.</p></li>
+<li><p><code>ln_trwl_sel_pars</code> array of log selectivity parameters for trawl gear fishery with dimension <code>n_time_blocks</code><span class="math inline">\(\times\)</span> <code>max(sel parameters)</code><span class="math inline">\(\times\)</span> <code>2</code> (for each sex) male parameters first followed by female. The number of time-blocks is defined by the data parameter <code>data$trwl_sel_by_year_indicator</code> and max selectivity parameters controlled by <code>data$trwl_sel_type</code> which defines the selectivity shape and thus number of parameters.</p></li>
+<li><p><code>transformed_movement_pars</code> array of movement parameters that are transformed in the simplex space. It has dimension <code>n_regions - 1</code> <span class="math inline">\(\times\)</span> <code>n_regions</code>. Use the packages inbuilt <code>simplex()</code> and <code>restoresimplex()</code> functions to change a vector that sums to one to a simplex with n-1 parameters.</p></li>
+<li><p><code>ln_fixed_F_avg</code> scalar for the log average fishing mortality of the fixed gear fishery. Should be not estimated if <code>data$F_method = 1</code></p></li>
+<li><p><code>ln_fixed_F_devs</code> annual fishing mortality deviations from <code>ln_fixed_F_avg</code>. Expected dimensions are <code>n_regions</code> <span class="math inline">\(\times\)</span> <code>n_years</code>. Should be not estimated if <code>data$F_method = 1</code></p></li>
+<li><p><code>ln_trwl_F_avg</code> scalar for the log average fishing mortality of the fixed gear fishery. Should be not estimated if <code>data$F_method = 1</code></p></li>
+<li><p><code>ln_trwl_F_devs</code> annual fishing mortality deviations from <code>ln_trwl_F_avg</code>. Expected dimensions are <code>n_regions</code> <span class="math inline">\(\times\)</span> <code>n_years</code>. Should be not estimated if <code>data$F_method = 1</code></p></li>
+<li><p><code>ln_init_F_avg</code> scalar for the log fishing mortality applied during initialisation.</p></li>
+<li><p><code>ln_catch_sd</code> scalar for the log catch standard deviation</p></li>
+<li><p><code>logistic_srv_dom_ll_q</code> vector of logistic catchabilities. Should have length of q time-blocks which is defined by <code>data$srv_dom_ll_q_by_year_indicator</code></p></li>
+<li><p><code>ln_srv_dom_ll_sel_pars</code> array of log selectivity parameters for domestic longline fishery with dimension <code>n_time_blocks</code><span class="math inline">\(\times\)</span> <code>max(sel parameters)</code><span class="math inline">\(\times\)</span> <code>2</code> (for each sex) male parameters first followed by female. The number of time-blocks is defined by the data parameter <code>data$srv_dom_ll_sel_by_year_indicator</code> and max selectivity parameters controlled by <code>data$srv_dom_ll_sel_type</code> which defines the selectivity shape and thus number of parameters.</p></li>
+<li><p><code>logistic_tag_reporting_rate</code> logistic tag-reporting rates. Expected dimensions are <code>n_regions</code> <span class="math inline">\(\times\)</span> <code>n_tag_recovery_years</code>.</p></li>
+<li><p><code>ln_tag_phi</code> scalar which is the log of the dispersion parameter. Only used if <code>data$tag_likelihood == 1</code> i.e. the negative binomial distribution is assumed.</p></li>
+</ul>
+
+</div>
+</div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+<a href="functionlist.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="references.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+    </div>
+  </div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-clipboard.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+"sharing": {
+"github": false,
+"facebook": true,
+"twitter": true,
+"linkedin": false,
+"weibo": false,
+"instapaper": false,
+"vk": false,
+"whatsapp": false,
+"all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
+},
+"fontsettings": {
+"theme": "white",
+"family": "sans",
+"size": 2
+},
+"edit": {
+"link": "https://github.com/NIWAFisheriesModelling/r4Casal2/edit/main/02-TagIntegratedInputs.Rmd",
+"text": "Edit"
+},
+"history": {
+"link": null,
+"text": null
+},
+"view": {
+"link": null,
+"text": null
+},
+"download": ["_main.pdf", "_main.epub"],
+"search": {
+"engine": "fuse",
+"options": null
+},
+"toc": {
+"collapse": "subsection"
+}
+});
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    var src = "true";
+    if (src === "" || src === "true") src = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/latest.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:")
+      if (/^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
+    script.src = src;
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+</body>
+
+</html>

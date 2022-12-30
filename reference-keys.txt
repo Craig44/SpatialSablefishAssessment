@@ -1,0 +1,8 @@
+spatialsablefishassessment-is-a-r-package-for-conducting-spatial-stock-assessment-research-for-a-stock-that-has-two-fisheries.
+functionlist
+validate-functions
+accessor-functions
+plotting-functions
+TagIntegrated
+data
+parameters
