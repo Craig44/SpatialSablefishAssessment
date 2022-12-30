@@ -45,18 +45,17 @@ jobs:
 #        shell: Rscript {0}
 
 
-#      - name: Check
-#        run: rcmdcheck::rcmdcheck(args = "--no-manual", error_on = "error")
-#        shell: Rscript {0}
-#      - name: Run Tests
-#        run: Rscript -e 'devtools::test(stop_on_failure = T)'
+      - name: Check
+        run: rcmdcheck::rcmdcheck(args = "--no-manual", error_on = "error")
+        shell: Rscript {0}
+      - name: Run Tests
+        run: Rscript -e 'devtools::test(stop_on_failure = T)'
 
       - name: Install SpatialSablefishAssessment
         env:
            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # https://github.com/settings/tokens
         run: Rscript -e "devtools::install_github('Craig44/SpatialSablefishAssessment', build_vignettes  = F,dependencies = F)"
-      - name: getwd
-        run: Rscript -e 'print(list.files())'
+
       - name: Render Gitbook
         run: Rscript -e "bookdown::render_book(input = 'Gitbook')"
       - name: artifact Gitbook

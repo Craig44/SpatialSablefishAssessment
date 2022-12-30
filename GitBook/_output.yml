@@ -3,10 +3,10 @@ bookdown::gitbook:
   config:
     toc:
       before: |
-        <li><a href="./">r4Casal2</a></li>
+        <li><a href="./">SpatialSablefishAssessment</a></li>
       after: |
-        <li><a href="https://github.com/NIWAFisheriesModelling/r4Casal2" target="blank">Github Repo here</a></li>
-    edit: https://github.com/NIWAFisheriesModelling/r4Casal2/edit/main/%s
+        <li><a href="https://github.com/Craig44/SpatialSablefishAssessment" target="blank">Github Repo here</a></li>
+    edit: https://github.com/Craig44/SpatialSablefishAssessment/edit/main/%s
     download: ["pdf", "epub"]
 bookdown::pdf_book:
   includes:

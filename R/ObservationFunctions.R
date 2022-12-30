@@ -125,9 +125,10 @@ plot_mean_age = function(MLE_report, label = "fixed", subset_years = NULL, sex =
       full_df = rbind(full_df, tmp_df)
     }
   }
-
+  ## drop NA's
+  full_df = full_df %>% filter(!is.na(Observed))
   ## multiple predicted proportions by effective sample size
-  full_df= full_df %>% group_by(Year, Region, label) %>% mutate(N_eff = sum(Observed), Observed_prop = Observed / N_eff, Predicted_prop / sum(Predicted))
+  full_df= full_df %>% group_by(Year, Region, label) %>% mutate(N_eff = sum(Observed), Observed_prop = Observed / N_eff, Predicted_prop = Predicted / sum(Predicted))
 
   full_df= full_df %>% group_by(Year, Region, label, Sex) %>% summarise(Ey = sum(Age * Predicted_prop), Oy = sum(Age * Observed_prop), E_squared_y = sum(Age^2 * Predicted_prop), N_eff = mean(N_eff))
   full_df$Ry = full_df$Oy - full_df$Ey

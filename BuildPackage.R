@@ -23,4 +23,4 @@ result = devtools::test(stop_on_failure = T)
 
 test_active_file(file.path("tests","testthat","test-validate-and-production-compatible.R"))
 ## build Gitbook
-bookdown::render_book(input = "Gitbook")
+bookdown::render_book(input = 'Gitbook')
