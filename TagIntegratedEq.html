@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+<head>
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>Chapter 4 Equations describing the TagIntegrated model | SpatialSablefishAssessment</title>
+  <meta name="description" content="This Gitbook describes the spatial sablefish stock assessment R package and how to use it" />
+  <meta name="generator" content="bookdown 0.31 and GitBook 2.6.7" />
+
+  <meta property="og:title" content="Chapter 4 Equations describing the TagIntegrated model | SpatialSablefishAssessment" />
+  <meta property="og:type" content="book" />
+  
+  <meta property="og:description" content="This Gitbook describes the spatial sablefish stock assessment R package and how to use it" />
+  <meta name="github-repo" content="https://github.com/Craig44/SpatialSablefishAssessment" />
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Chapter 4 Equations describing the TagIntegrated model | SpatialSablefishAssessment" />
+  
+  <meta name="twitter:description" content="This Gitbook describes the spatial sablefish stock assessment R package and how to use it" />
+  
+
+<meta name="author" content="C.Marsh" />
+
+
+<meta name="date" content="2022-12-30" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  
+  
+<link rel="prev" href="how-to-use-the-spatialsablefishassessment-r-package.html"/>
+<link rel="next" href="TagIntegrated.html"/>
+<script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-clipboard.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+<link href="libs/anchor-sections-1.1.0/anchor-sections.css" rel="stylesheet" />
+<link href="libs/anchor-sections-1.1.0/anchor-sections-hash.css" rel="stylesheet" />
+<script src="libs/anchor-sections-1.1.0/anchor-sections.js"></script>
+
+
+<style type="text/css">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { color: #008000; } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { color: #008000; font-weight: bold; } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li><a href="./">SpatialSablefishAssessment</a></li>
+
+<li class="divider"></li>
+<li class="chapter" data-level="1" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i><b>1</b> <code>SpatialSablefishAssessment</code> is a R package for conducting spatial stock assessment research for a stock that has two fisheries.</a></li>
+<li class="chapter" data-level="2" data-path="functionlist.html"><a href="functionlist.html"><i class="fa fa-check"></i><b>2</b> A list of functions available in the <code>SpatialSablefishAssessment</code> package</a>
+<ul>
+<li class="chapter" data-level="2.1" data-path="functionlist.html"><a href="functionlist.html#validate-functions"><i class="fa fa-check"></i><b>2.1</b> Validate functions</a></li>
+<li class="chapter" data-level="2.2" data-path="functionlist.html"><a href="functionlist.html#accessor-functions"><i class="fa fa-check"></i><b>2.2</b> Accessor functions</a></li>
+<li class="chapter" data-level="2.3" data-path="functionlist.html"><a href="functionlist.html#plotting-functions"><i class="fa fa-check"></i><b>2.3</b> Plotting functions</a></li>
+<li class="chapter" data-level="2.4" data-path="functionlist.html"><a href="functionlist.html#estimation-functions"><i class="fa fa-check"></i><b>2.4</b> Estimation functions</a></li>
+<li class="chapter" data-level="2.5" data-path="functionlist.html"><a href="functionlist.html#parameter-transformation-functions"><i class="fa fa-check"></i><b>2.5</b> Parameter transformation functions</a></li>
+</ul></li>
+<li class="chapter" data-level="3" data-path="how-to-use-the-spatialsablefishassessment-r-package.html"><a href="how-to-use-the-spatialsablefishassessment-r-package.html"><i class="fa fa-check"></i><b>3</b> How to use the <code>SpatialSablefishAssessment</code> R package</a>
+<ul>
+<li class="chapter" data-level="3.1" data-path="how-to-use-the-spatialsablefishassessment-r-package.html"><a href="how-to-use-the-spatialsablefishassessment-r-package.html#configuring-and-checking-model-inputs-data-and-parameters"><i class="fa fa-check"></i><b>3.1</b> Configuring and checking model inputs (data and parameters)</a>
+<ul>
+<li class="chapter" data-level="3.1.1" data-path="how-to-use-the-spatialsablefishassessment-r-package.html"><a href="how-to-use-the-spatialsablefishassessment-r-package.html#simple-sanity-checks"><i class="fa fa-check"></i><b>3.1.1</b> Simple sanity checks</a></li>
+</ul></li>
+<li class="chapter" data-level="3.2" data-path="how-to-use-the-spatialsablefishassessment-r-package.html"><a href="how-to-use-the-spatialsablefishassessment-r-package.html#optimisation"><i class="fa fa-check"></i><b>3.2</b> Optimisation</a>
+<ul>
+<li class="chapter" data-level="3.2.1" data-path="how-to-use-the-spatialsablefishassessment-r-package.html"><a href="how-to-use-the-spatialsablefishassessment-r-package.html#check-convergence"><i class="fa fa-check"></i><b>3.2.1</b> Check convergence</a></li>
+<li class="chapter" data-level="3.2.2" data-path="how-to-use-the-spatialsablefishassessment-r-package.html"><a href="how-to-use-the-spatialsablefishassessment-r-package.html#fixing-estimable-parameters-at-input-values"><i class="fa fa-check"></i><b>3.2.2</b> Fixing estimable parameters at input values</a></li>
+<li class="chapter" data-level="3.2.3" data-path="how-to-use-the-spatialsablefishassessment-r-package.html"><a href="how-to-use-the-spatialsablefishassessment-r-package.html#sharing-parameter-estimates-among-estimable-variables-i.e.-male-and-female-having-a-common-selectivity"><i class="fa fa-check"></i><b>3.2.3</b> Sharing parameter estimates among estimable variables i.e., male and female having a common selectivity</a></li>
+</ul></li>
+<li class="chapter" data-level="3.3" data-path="how-to-use-the-spatialsablefishassessment-r-package.html"><a href="how-to-use-the-spatialsablefishassessment-r-package.html#model-summary"><i class="fa fa-check"></i><b>3.3</b> Model Summary</a></li>
+</ul></li>
+<li class="chapter" data-level="4" data-path="TagIntegratedEq.html"><a href="TagIntegratedEq.html"><i class="fa fa-check"></i><b>4</b> Equations describing the <code>TagIntegrated</code> model</a>
+<ul>
+<li class="chapter" data-level="" data-path="TagIntegratedEq.html"><a href="TagIntegratedEq.html#process-equations"><i class="fa fa-check"></i>Process equations</a>
+<ul>
+<li class="chapter" data-level="" data-path="TagIntegratedEq.html"><a href="TagIntegratedEq.html#population-dynamics"><i class="fa fa-check"></i>Population dynamics</a></li>
+<li class="chapter" data-level="" data-path="TagIntegratedEq.html"><a href="TagIntegratedEq.html#initialisation"><i class="fa fa-check"></i>Initialisation</a></li>
+<li class="chapter" data-level="" data-path="TagIntegratedEq.html"><a href="TagIntegratedEq.html#growth"><i class="fa fa-check"></i>Growth</a></li>
+<li class="chapter" data-level="" data-path="TagIntegratedEq.html"><a href="TagIntegratedEq.html#recruitment"><i class="fa fa-check"></i>Recruitment</a></li>
+<li class="chapter" data-level="" data-path="TagIntegratedEq.html"><a href="TagIntegratedEq.html#fishing-mortality"><i class="fa fa-check"></i>Fishing mortality</a></li>
+<li class="chapter" data-level="" data-path="TagIntegratedEq.html"><a href="TagIntegratedEq.html#tag-release-events"><i class="fa fa-check"></i>Tag release events</a></li>
+</ul></li>
+<li class="chapter" data-level="" data-path="TagIntegratedEq.html"><a href="TagIntegratedEq.html#observation-equations"><i class="fa fa-check"></i>Observation equations</a>
+<ul>
+<li class="chapter" data-level="" data-path="TagIntegratedEq.html"><a href="TagIntegratedEq.html#catch-at-age"><i class="fa fa-check"></i>Catch at age</a></li>
+<li class="chapter" data-level="" data-path="TagIntegratedEq.html"><a href="TagIntegratedEq.html#catch-at-length"><i class="fa fa-check"></i>Catch at length</a></li>
+<li class="chapter" data-level="" data-path="TagIntegratedEq.html"><a href="TagIntegratedEq.html#proportions-at-age"><i class="fa fa-check"></i>Proportions at age</a></li>
+<li class="chapter" data-level="" data-path="TagIntegratedEq.html"><a href="TagIntegratedEq.html#relative-abundance-indices"><i class="fa fa-check"></i>Relative abundance indices</a></li>
+<li class="chapter" data-level="" data-path="TagIntegratedEq.html"><a href="TagIntegratedEq.html#tag-recovery-observations"><i class="fa fa-check"></i>Tag recovery observations</a></li>
+</ul></li>
+<li class="chapter" data-level="" data-path="TagIntegratedEq.html"><a href="TagIntegratedEq.html#symbol-notation"><i class="fa fa-check"></i>Symbol Notation</a></li>
+</ul></li>
+<li class="chapter" data-level="5" data-path="TagIntegrated.html"><a href="TagIntegrated.html"><i class="fa fa-check"></i><b>5</b> Descriptions of data and parameter objects expected by the <code>TagIntegrated</code> model</a>
+<ul>
+<li class="chapter" data-level="5.1" data-path="TagIntegrated.html"><a href="TagIntegrated.html#data"><i class="fa fa-check"></i><b>5.1</b> <code>data</code></a></li>
+<li class="chapter" data-level="5.2" data-path="TagIntegrated.html"><a href="TagIntegrated.html#parameters"><i class="fa fa-check"></i><b>5.2</b> <code>parameters</code></a></li>
+</ul></li>
+<li class="chapter" data-level="" data-path="references.html"><a href="references.html"><i class="fa fa-check"></i>References</a></li>
+<li class="divider"></li>
+<li><a href="https://github.com/Craig44/SpatialSablefishAssessment" target="blank">Github Repo here</a></li>
+
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">SpatialSablefishAssessment</a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="TagIntegratedEq" class="section level1 hasAnchor" number="4">
+<h1><span class="header-section-number">Chapter 4</span> Equations describing the <code>TagIntegrated</code> model<a href="TagIntegratedEq.html#TagIntegratedEq" class="anchor-section" aria-label="Anchor link to header"></a></h1>
+<div id="process-equations" class="section level2 unnumbered hasAnchor">
+<h2>Process equations<a href="TagIntegratedEq.html#process-equations" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<div id="population-dynamics" class="section level3 unnumbered hasAnchor">
+<h3>Population dynamics<a href="TagIntegratedEq.html#population-dynamics" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>The order of processes in an annual cycle follow</p>
+<ol style="list-style-type: decimal">
+<li>recruitment and release of tagged fish (we apply initial tag induced mortality here),</li>
+<li>total mortality and ageing,</li>
+<li>markovian movement</li>
+<li>annual tag shedding (applied as a mortality process),</li>
+</ol>
+<p>Before movement, the partition is updated following
+<span class="math display">\[\begin{align*}
+N_{a,r,y,s} =
+\begin{cases}
+R_{r,y} 0.5, &amp; a = a_1\\
+N_{a - 1,r,y - 1,s} \exp\bigg( -Z_{a - 1,r, y - 1,s} \bigg), &amp; a_1 &lt; a &lt; a_+\\
+N_{a - 1,r,y - 1,s} \exp\bigg( -Z_{a - 1,r, y - 1,s} \bigg) + N_{a,r,y - 1,s} \exp\bigg( -Z_{a,r, y - 1,s} \bigg), &amp;  a = a_+
+\end{cases}
+\end{align*}\]</span></p>
+<p>and movement is then applied</p>
+<p><span class="math display">\[\begin{equation*}
+\boldsymbol{N}&#39;_{a,y,s} = \boldsymbol{N}_{a,y,s} \boldsymbol{M} \ \ \forall \ a
+\end{equation*}\]</span></p>
+<p>where, <span class="math inline">\(\boldsymbol{N}&#39;_{a,y,s} = (N&#39;_{a,1,y,s}, \dots, N&#39;_{a,n_r,y,s})\)</span> denotes the numbers for age <span class="math inline">\(a\)</span> across all regions after movement and <span class="math inline">\(\boldsymbol{M}\)</span> is an <span class="math inline">\(n_r \times n_r\)</span> movement matrix, which will move age cohort <span class="math inline">\(a\)</span> among the regions based on the movement matrix.</p>
+</div>
+<div id="initialisation" class="section level3 unnumbered hasAnchor">
+<h3>Initialisation<a href="TagIntegratedEq.html#initialisation" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>An equilibrium age structure is derived by iterating the annual cycle is run <span class="math inline">\(n_a - 1\)</span> times (i.e., to populate all age cohorts prior to the plus group). Then, iterate the annual cycle one more time and calculate the number of individuals that moved into each regions plus age cohort, denoted by <span class="math inline">\(c^r_{a+}\)</span>. This will be the result of ageing, mortality and movement. The equilibrium plus group for region <span class="math inline">\(r\)</span> is then calculated as</p>
+<p><span class="math display">\[
+N_{a+, r} = N_{a+ - 1, r} \frac{1}{1 - c^r_{a+}}  \  .
+\]</span></p>
+<p>After the equilibrium age-structure is calculated, there is an option to estimate global or region specific deviations to allow the model to start with a non-equilibrium age-structure</p>
+<p><span class="math display">\[
+N_{a, r} = N_{a, r} e^{\epsilon_a} \ \ \forall \ a \ r \ .
+\]</span>
+To help with estimation there is a penalty on <span class="math inline">\(\epsilon_a\)</span> that assumes a central tendancy of zero with an estimable variance parameter (<span class="math inline">\(\sigma_{\epsilon}^2\)</span>).
+<span class="math display">\[
+\epsilon_a \sim \mathcal{N}(0, \sigma_{\epsilon})
+\]</span></p>
+<p>In general these parameters can be highly uncertain. The variance on these deviation parameters is often fixed at a low value which requires a strong signal in the data to deviate away from the initial equilibrium age-structure.</p>
+</div>
+<div id="growth" class="section level3 unnumbered hasAnchor">
+<h3>Growth<a href="TagIntegratedEq.html#growth" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>Empirical length at age matrices are supplied for all years where sufficient age-length data was available and growth was assumed the same across all regions. Mean weight at age was calculated using an allometric length weight relationship with time and space invariant parameters <span class="math inline">\(\alpha\)</span> and <span class="math inline">\(\beta\)</span></p>
+<p><span class="math display">\[
+\bar{w}_{a,y} = \alpha \bar{l}_{a,y}^{\beta}
+\]</span></p>
+<p><strong>TODO</strong> add the adjustment for lognormal distribution as in Casal2.</p>
+</div>
+<div id="recruitment" class="section level3 unnumbered hasAnchor">
+<h3>Recruitment<a href="TagIntegratedEq.html#recruitment" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>How to spatially apportion recruits in a way that is consistent with the data and isn’t confounded with movement of young fish? There are two considerations, firstly looking at the AF and LFs there are regions that seem to have more young fish than others (link to figure and describe). However, there is very little information on spawning grounds and behavior. This coupled with a complex early life history make it difficult to a priori set regional apportionment of recruits, which would be ideal, an alternative is to estimate these as free parameters. This may introduce confounding when we start estimating movement which is believed to be ontogenetic.</p>
+</div>
+<div id="fishing-mortality" class="section level3 unnumbered hasAnchor">
+<h3>Fishing mortality<a href="TagIntegratedEq.html#fishing-mortality" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>When the hybrid <span class="math inline">\(F\)</span> method is assumed, tagged fish were not included when internally solving the fishing mortality nuisance parameters. The ratio of tagged to untagged numbers of fish in the partition in any year was assumed to be small enough not to effect <span class="math inline">\(F\)</span> estimates. However, tagged fish were included when the model calculates predicted catch-at-age/length and catch for a fleet. This decision was made to reduce the computational overhead this would require to implement. When <span class="math inline">\(F\)</span> parameters are estimated as free parameters, then this is not a problem and <span class="math inline">\(F\)</span> will be applied to both tagged and untagged fish.</p>
+</div>
+<div id="tag-release-events" class="section level3 unnumbered hasAnchor">
+<h3>Tag release events<a href="TagIntegratedEq.html#tag-release-events" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>Tags release event denoted by the index <span class="math inline">\(k\)</span> have an implied region <span class="math inline">\(r\)</span> and year <span class="math inline">\(y\)</span> dimension. Each tag release event has known sex and age frequency at release. This is derived using the age-length key from the survey. Tagged fish from release event <span class="math inline">\(k\)</span> are denoted in the partition by <span class="math inline">\(N^k_{a,r,y,s}\)</span>, and are tracked for <span class="math inline">\(n_{T}\)</span> years before migrating into a pooled tag group, at which point we loose release-event information because we loose the year information but we do maintain its region of release. At present, tagged fish are assumed to take on the exact same population processes as the untagged elements of the partition.</p>
+<p>Most of the tagged fish in the available have unknown sex. Sex disaggregated age-frequencies were derived using an ALK that was disaggregrated by sex in the age dimension but sex aggregated in the length dimension. This meant when we multiplied an unsexed length frequency through this ALK we obtained sex disaggregated age frequency. The negative of this approach is a tagged fish that would have an exact age, sex and length will be represented in the model as a fraction of a fish across multiple ages and sexes.</p>
+<p>Age length keys were not available in all years when tagged fish were released, particularly in the early period. Tag release age frequencies before 1981 were based on age-length keys pooled over years 1981, 1985 and 1987. After that period, if an age-length key was not available we used the age length key from the closest year that has an age-length key. (<strong>How can we explore uncertainty in this input?</strong> re-run the model with numbers at age and length from bootstrapping age-length keys?)</p>
+</div>
+</div>
+<div id="observation-equations" class="section level2 unnumbered hasAnchor">
+<h2>Observation equations<a href="TagIntegratedEq.html#observation-equations" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>As in the current stock assessment model, there are the three conventional observation types in the spatial model</p>
+<ul>
+<li>Relative indices of abundance</li>
+<li>Age composition disaggregated by sex for the fixed gear fishery and longline survey</li>
+<li>Length composition disaggregated by sex for the trawl and early period of the fixed gear fishery</li>
+</ul>
+<p>In addition to these, tag-recoveries are also included in the model.</p>
+<div id="catch-at-age" class="section level3 unnumbered hasAnchor">
+<h3>Catch at age<a href="TagIntegratedEq.html#catch-at-age" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>Fishery dependent catch at age observations are available for the fixed gear fishery, but are also needed to calculate catch at length observations for the trawl fishery. Catch at age for fishery <span class="math inline">\(g\)</span> is denoted by <span class="math inline">\({C}^g_{a,r,y,s}\)</span> and model fitted values are calculated following</p>
+<p><span class="math display">\[\begin{equation}
+  {C}^g_{a,r,y,s} = \frac{F^g_{a,r,y,s}}{Z_{a,r,y,s}}   N_{a,r,y,s} \left(1 - S_{a,r,y,s} \right)
+\end{equation}\]</span></p>
+<p>Observed values were proportions with respect to age and sex, final model fitted proportions were
+<span class="math display">\[
+{P}^g_{a,r,y,s} = \frac{{C}^g_{a,r,y,s}}{\sum_a \sum_s {C}^g_{a,r,y,s}},
+\]</span>
+and initially the multinomial likelihood was assumed</p>
+<p><span class="math display">\[
+\boldsymbol{X}^g_{r,y} \sim \text{Multinomial}\left(\boldsymbol{\widehat{P}}^g_{r,y}\right)
+\]</span>
+where, <span class="math inline">\(\boldsymbol{X}^g_{r,y} = \boldsymbol{P}^g_{r,y}N^{eff}_{r,y}\)</span> and <span class="math inline">\(\boldsymbol{P}^g_{r,y}\)</span> is the observed proportions, <span class="math inline">\(N^{eff}_{r,y}\)</span> is the effective sample size and <span class="math inline">\(\boldsymbol{P}^g_{r,y} = (P^g_{1,r,y,1}, \dots, P^g_{a_+,r,y,1}, P^g_{1,r,y,2}, \dots, P^g_{a_+,r,y,2})\)</span> is the vector of observed proportions across all ages and sexs in year <span class="math inline">\(y\)</span> and region <span class="math inline">\(r\)</span>, and <span class="math inline">\(\boldsymbol{\widehat{P}}^g_{r,y}\)</span> is the model fitted values which have the same dimension (<span class="math inline">\(\sum_a \sum_s \widehat{P}^g_{a,r,y,s} = 1\)</span>).</p>
+</div>
+<div id="catch-at-length" class="section level3 unnumbered hasAnchor">
+<h3>Catch at length<a href="TagIntegratedEq.html#catch-at-length" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>Catch at length observations are available for the trawl fishery. Model fitted values are derived by multiplying the catch at age (see above) by an age-length transition matrix denoted by <span class="math inline">\(\boldsymbol{A}^l_{y,s}\)</span> (dimensions of <span class="math inline">\(\boldsymbol{A}^l_{y,s}\)</span> are <span class="math inline">\(n_a \ \times \ n_l\)</span> and its rows must sum to 1),</p>
+<p><span class="math display">\[\begin{equation}
+  \widehat{\boldsymbol{Cl}}^g_{r,y,s} =  \left(\boldsymbol{A}^l_{y,s} \right)^T \ \times \ \widehat{\boldsymbol{C}}^g_{r,y,s}
+\end{equation}\]</span>
+where, <span class="math inline">\(\widehat{\boldsymbol{C}}^g_{r,y,s}\)</span> is a column vector of catch at age (dimension <span class="math inline">\(n_a \ \times \ 1\)</span>) at the beginning of year <span class="math inline">\(y\)</span> in region <span class="math inline">\(r\)</span> for sex <span class="math inline">\(s\)</span>, and <span class="math inline">\(\widehat{\boldsymbol{Cl}}^g_{r,y,s}\)</span> is a column vector of catch at length (dimension <span class="math inline">\(n_l \ \times \ 1\)</span>).</p>
+</div>
+<div id="proportions-at-age" class="section level3 unnumbered hasAnchor">
+<h3>Proportions at age<a href="TagIntegratedEq.html#proportions-at-age" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>Survey age composition data denoted by <span class="math inline">\({N}^s_{a,r,y,s}\)</span> is available for the longline survey where model fitted numbers are derived as,</p>
+<p><span class="math display">\[\begin{equation}
+  \widehat{N}^s_{a,r,y,s} = N_{a,r,y,s} \left(1 - \exp^{\delta_y Z_{a,r,y,s}}\right)S^s_{y,r,a,s}
+\end{equation}\]</span>
+where, <span class="math inline">\(\delta_y \in (0,1)\)</span> is the proportion of time in the year that the observation occurs during year <span class="math inline">\(y\)</span> and <span class="math inline">\(S^s_{y,r,a,s}\)</span> is the survey selectivity.</p>
+</div>
+<div id="relative-abundance-indices" class="section level3 unnumbered hasAnchor">
+<h3>Relative abundance indices<a href="TagIntegratedEq.html#relative-abundance-indices" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p><span class="math display">\[\begin{equation}
+  \widehat{I}^s_{r,y} = \sum_s\sum_a \widehat{N}^s_{a,r,y,s} \bar{w}_{a,y,s}
+\end{equation}\]</span>
+where, <span class="math inline">\(\bar{w}_{a,y,s}\)</span> is mean weight at age, this can be omitted if the observation is in numbers i.e., abundance instead of biomass.</p>
+</div>
+<div id="tag-recovery-observations" class="section level3 unnumbered hasAnchor">
+<h3>Tag recovery observations<a href="TagIntegratedEq.html#tag-recovery-observations" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>When tagged fish are released in to the model partition they are tracked by the tag release event <span class="math inline">\(k\)</span> for <span class="math inline">\(n_{T}\)</span> years. Due to tags being predominately recovered by the fixed gear fishery there are many recoveries for which there is no length or sex information (<strong>get a number</strong>). The model expects tag-recovery observations to be known by age and sex. These are derived for each recovery event (also year and region specific) and tag-release event by using the age-length key that was used to release each recovered fish to obtain an sex specific age-frequency. This age-frequency is then aged by the number of years this tag-recovery event was at liberty to derive observed tag-recoveries by age and sex.</p>
+<p>This assumes the age-length conversion between releases and recoveries is consistent and allows us to use recovered fish with no length or sex recorded, but has the down side as mentioned earlier in the tag release section of smearing a single recovered fish across multiple age bins and sexes. However, it does mitigate the problem of going backwards and forwards through the age-length transition matrix, which appears to be more problematic.</p>
+<p>All tag recoveries are from the fixed gear (longline and pot gear) fishery, due to the recent trend in recoveries by gear method</p>
+<p>Model fitted values for tag event <span class="math inline">\(k\)</span> recovered in region <span class="math inline">\(r\)</span> and year <span class="math inline">\(y\)</span> are denoted by <span class="math inline">\(\widehat{N}^k_{a,r,y,s}\)</span>, and are derived as</p>
+<p><span class="math display">\[
+\widehat{N}^k_{a,r,y,s} =  N^k_{a,r,y,s}e^{-0.5M_{y}} (1 - e^{-F^{LL}_{a,r,y,s}})\delta_y
+\]</span>
+where, <span class="math inline">\(N^k_{a,r,y,s}\)</span> are the number of tagged fish from tag-release event <span class="math inline">\(k\)</span>, and <span class="math inline">\(\delta_y\)</span> is the reporting rate in year <span class="math inline">\(y\)</span>. We assume there has been half the years natural mortality when deriving expected tag-recoveries. The current assessment pools observed and fitted values across age and sex and assumes the are from the Poisson distribution.</p>
+<p><span class="math display">\[
+{N}^k_{r,y} \sim \mathcal{Poisson}(\widehat{N}^k_{r,y})
+\]</span>
+where, <span class="math inline">\(\widehat{N}^k_{r,y} = \sum_a \sum_s \widehat{N}^k_{a,r,y,s}\)</span></p>
+</div>
+</div>
+<div id="symbol-notation" class="section level2 unnumbered hasAnchor">
+<h2>Symbol Notation<a href="TagIntegratedEq.html#symbol-notation" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<table>
+<colgroup>
+<col width="27%" />
+<col width="72%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Symbol</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(y\)</span></td>
+<td>Year, <span class="math inline">\(y = 1960, \dots, T\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(T\)</span></td>
+<td>Terminal year of the model</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(s\)</span></td>
+<td>Sex index <span class="math inline">\(s \in \{1,2\}\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(a\)</span></td>
+<td>Model age cohort, i.e., <span class="math inline">\(a = a_0, a_0 + 1, \dots\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(a_{1}\)</span></td>
+<td>Recruitment age to the model = 2</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(a_+\)</span></td>
+<td>Plus-group age class (oldest age considered plus all older ages)</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(n_a\)</span></td>
+<td>Number of age classes modeled <span class="math inline">\(a_+ \ - a_1\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(l\)</span></td>
+<td>length class</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(n_l\)</span></td>
+<td>Number of length classes</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(g\)</span></td>
+<td>gear type index, i.e. longline survey, fixed gear fishery, trawl fishery</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(x\)</span></td>
+<td>log-likelihoos index</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(\bar{w}_{a,y, s}\)</span></td>
+<td>Average weight at age <span class="math inline">\(a\)</span>, year <span class="math inline">\(y\)</span> and sex <span class="math inline">\(s\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(\phi_{a,y}\)</span></td>
+<td>Proportion of female mature by age and year</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(p^s_{y}\)</span></td>
+<td>Proportion of recruits for sex <span class="math inline">\(s\)</span>. Often assumed = 0.5</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(\ln \mu_{r}\)</span></td>
+<td>Average log-recruitment</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(\ln \mu_{f}\)</span></td>
+<td>Average log-fishing mortality</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(\phi_{y,g}\)</span></td>
+<td>annual fishing mortality deviation by gear (log space)</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(\tau_{y}\)</span></td>
+<td>annual recruitment deviation <span class="math inline">\(\sim LogNormal\left(0,\sigma_r\right)\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(\sigma_r\)</span></td>
+<td>Recruitment standard deviation</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(N_{a,y,s}\)</span></td>
+<td>Numbers of fish at age <span class="math inline">\(a\)</span> in year <span class="math inline">\(y\)</span> of sex <span class="math inline">\(s\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(M\)</span></td>
+<td>Natural mortality</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(F^g_{a,y}\)</span></td>
+<td>Fishing mortality for year <span class="math inline">\(y\)</span>, age <span class="math inline">\(a\)</span> and gear <span class="math inline">\(g\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(F_{hist}\)</span></td>
+<td>Historical proportion of Fishing mortality</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(Z_{a,y}\)</span></td>
+<td>Total mortality for year <span class="math inline">\(y\)</span>, age <span class="math inline">\(a\)</span> <span class="math inline">\(=\sum\limits_g F^g_{a,y} + M\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(R_{y}\)</span></td>
+<td>Annual recruitment</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(B_{y}\)</span></td>
+<td>Spawning biomass in year <span class="math inline">\(y\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(S^g_{a,y,s}\)</span></td>
+<td>Selectivity at age <span class="math inline">\(a\)</span> for gear type <span class="math inline">\(g\)</span> and sex <span class="math inline">\(s\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(a_50\)</span></td>
+<td>age at 50% selection for ascending limb</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(d_50\)</span></td>
+<td>age at 50% selection for descending limb</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(\delta\)</span></td>
+<td>slope/shape parameters for different logistic curves</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(\boldsymbol{A}\)</span></td>
+<td>ageing-error matrix dimensions <span class="math inline">\(n_a \ \times \ n_a\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(\boldsymbol{A}^l_s\)</span></td>
+<td>age to length conversion matrix by sex. dimensions <span class="math inline">\(n_a \ \times \ n_l\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(q_g\)</span></td>
+<td>abundance index catchability coeffecient by gear</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(\lambda_x\)</span></td>
+<td>Statistical weight (penalty) for component <span class="math inline">\(x\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(P^g_{l,y,s}\)</span></td>
+<td>Observed proportions at length for gear <span class="math inline">\(g\)</span> in year <span class="math inline">\(y\)</span> and sex <span class="math inline">\(s\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(P^g_{a,y,s}\)</span></td>
+<td>Observed proportions at age for gear <span class="math inline">\(g\)</span> in year <span class="math inline">\(y\)</span> and sex <span class="math inline">\(s\)</span></td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+<a href="how-to-use-the-spatialsablefishassessment-r-package.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="TagIntegrated.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+    </div>
+  </div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-clipboard.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+"sharing": {
+"github": false,
+"facebook": true,
+"twitter": true,
+"linkedin": false,
+"weibo": false,
+"instapaper": false,
+"vk": false,
+"whatsapp": false,
+"all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
+},
+"fontsettings": {
+"theme": "white",
+"family": "sans",
+"size": 2
+},
+"edit": {
+"link": "https://github.com/Craig44/SpatialSablefishAssessment/edit/main/03-TagIntegratedModel.Rmd",
+"text": "Edit"
+},
+"history": {
+"link": null,
+"text": null
+},
+"view": {
+"link": null,
+"text": null
+},
+"download": ["_main.pdf", "_main.epub"],
+"search": {
+"engine": "fuse",
+"options": null
+},
+"toc": {
+"collapse": "subsection"
+}
+});
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    var src = "true";
+    if (src === "" || src === "true") src = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/latest.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:")
+      if (/^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
+    script.src = src;
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+</body>
+
+</html>

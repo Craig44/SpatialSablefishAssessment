@@ -3,6 +3,17 @@ functionlist
 validate-functions
 accessor-functions
 plotting-functions
+estimation-functions
+parameter-transformation-functions
+how-to-use-the-spatialsablefishassessment-r-package
+configuring-and-checking-model-inputs-data-and-parameters
+simple-sanity-checks
+optimisation
+check-convergence
+fixing-estimable-parameters-at-input-values
+sharing-parameter-estimates-among-estimable-variables-i.e.-male-and-female-having-a-common-selectivity
+model-summary
+TagIntegratedEq
 TagIntegrated
 data
 parameters
