@@ -58,6 +58,10 @@ check_length = function(vector_to_check, n_elements) {
 #' @return string telling you if there are problems or if you are good to go
 #' @export
 validate_input_data_and_parameters = function(data, parameters) {
+  # TODO: DG- add an if statement for current assessment model
+  if(!data$model %in% c("TagIntegrated", "TagIntegratedValidate"))
+    return("This validate function is currently only written for models: TagIntegrated and TagIntegratedValidate")
+
   n_ages = length(data$ages)
   n_length_bins = length(data$length_bins)
   n_projyears = length(data$years) +  data$n_projections_years

@@ -1,15 +1,13 @@
 ![Check package](https://github.com/Craig44/SpatialSablefishAssessment/actions/workflows/r.yml/badge.svg)
 # SpatialSablefishAssessment
-A R package that contains TMB models that can be used as operating models (OMs) or Estimation Models (EMs), it also contains a bunch of utility R functions for checking inputs and visualizing/summarizing model outputs and fits to observations. The models are developed for the Alaskan sablefish stock area, but the TMB models can in theory be applied to any assessment that has two fisheries and an annual cycle (time-step). To see how this package is being used, there is an online Gitbook that outlines some research using it [(see here)](https://craig44.github.io/SableFishResearch/).
+A R package that contains TMB models that can be used as operating models (OMs) or Estimation Models (EMs), it also contains a bunch of utility R functions for checking inputs and visualizing/summarizing model outputs and fits to observations. The models are developed for the Alaskan sablefish stock area, but the TMB models can in theory be applied to any assessment that has two fisheries and an annual cycle (time-step). There are two online gitbook resources that are related to this package. The first is the [online documentation](https://craig44.github.io/SpatialSablefishAssessment/) which describes the TMB models, expected inputs and functions to investigate and summaries model fits. An additional online Gitbook that relates to my post-doctoral research which uses this R package [can be found here](https://craig44.github.io/SableFishResearch/).
 
-There are currently three TMB models contained in this package
+There is currently three TMB models contained in this package
 
-- `TagIntegrated` A generalized spatially disaggregated model
+- `TagIntegrated` A generalized spatially disaggregated model that assumes two fisheries
 - `TagIntegratedValidate` This model is used to unit-test `TagIntegrated`. Any change to `TagIntegrated` should be incorporated into `TagIntegratedValidate`
 - `Assessment` The closest version to the current ADMB model that is used for the current assessment (needs further testing and comparisons to current ADMB assessment model before being used for management advice).
 
-
-Each of these models will expect slightly different input data and parameters lists.
 
 # Install 
 Before installing, it is advised to check that the R package is passing all unit-tests and you have Rtools correctly installed [(see here)](https://cran.r-project.org/bin/windows/Rtools/). It is advised that you have TMB installed before attempting to install this package. In addition to installing TMB, make sure you can compile a TMB example model i.e., `TMB::compile(file = system.file("examples", "simple.cpp",package = "TMB"))`. Once TMB is installed and you can compile an a model, you should be able to install this package following
@@ -21,7 +19,13 @@ devtools::install_github("Craig44/SpatialSablefishAssessment")
 # Using `SpatialSablefishAssessment`
 
 ## Configuring and checking model inputs (data and parameters)
-This package contains TMB models and summarizing and plotting functions for a spatial model used in sablefish research. Users are responsible for configuring the `data` and `parameter` structures that are passed to the TMB `MakeADFun` function which compiles the model. The best place to look for what dimensions and names of expected elements for `data` and `parameter` it is best to look at an example or the source code for the model ([see here](https://github.com/Craig44/SpatialSablefishAssessment/blob/master/src/TMB/TagIntegrated.hpp)). To view an example data run 
+This package contains TMB models and summarizing and plotting functions for a range of models used during my sablefish research. Users are responsible for configuring the `data` and `parameter` structures that are passed to the TMB `MakeADFun` function which compiles the model. Each of these models will expect slightly different input data and parameters lists see
+
+- `TagIntegrated` has described inputs [found here](https://craig44.github.io/SpatialSablefishAssessment/TagIntegrated.html)
+- `Assessment` I haven't documented this model yet, the best place to look is the source TMB code [found here](https://github.com/Craig44/SpatialSablefishAssessment/blob/master/src/TMB/CurrentAssessment.hpp)
+
+
+An alternative place to look for expected names and dimensions for elements of `data` and `parameter` is an example or the source code for the model ([see here](https://github.com/Craig44/SpatialSablefishAssessment/blob/master/src/TMB/TagIntegrated.hpp)). To view an example `data` and `parameter` for the `TagIntegrated` model run the following code 
 
 
 ```r
