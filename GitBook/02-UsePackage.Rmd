@@ -1,27 +1,8 @@
-![Check package](https://github.com/Craig44/SpatialSablefishAssessment/actions/workflows/r.yml/badge.svg)
-# SpatialSablefishAssessment
-A R package that contains TMB models that can be used as operating models (OMs) or Estimation Models (EMs), it also contains a bunch of utility R functions for checking inputs and visualizing/summarizing model outputs and fits to observations. The models are developed for the Alaskan sablefish stock area, but the TMB models can in theory be applied to any assessment that has two fisheries and an annual cycle (time-step). To see how this package is being used, there is an online Gitbook that outlines some research using it [(see here)](https://craig44.github.io/SableFishResearch/).
+# How to use the `SpatialSablefishAssessment` R package
 
-There are currently three TMB models contained in this package
-
-- `TagIntegrated` A generalized spatially disaggregated model
-- `TagIntegratedValidate` This model is used to unit-test `TagIntegrated`. Any change to `TagIntegrated` should be incorporated into `TagIntegratedValidate`
-- `Assessment` The closest version to the current ADMB model that is used for the current assessment (needs further testing and comparisons to current ADMB assessment model before being used for management advice).
-
-
-Each of these models will expect slightly different input data and parameters lists.
-
-# Install 
-Before installing, it is advised to check that the R package is passing all unit-tests and you have Rtools correctly installed [(see here)](https://cran.r-project.org/bin/windows/Rtools/). It is advised that you have TMB installed before attempting to install this package. In addition to installing TMB, make sure you can compile a TMB example model i.e., `TMB::compile(file = system.file("examples", "simple.cpp",package = "TMB"))`. Once TMB is installed and you can compile an a model, you should be able to install this package following
-
-```r
-devtools::install_github("Craig44/SpatialSablefishAssessment")
-```
-
-# Using `SpatialSablefishAssessment`
 
 ## Configuring and checking model inputs (data and parameters)
-This package contains TMB models and summarizing and plotting functions for a spatial model used in sablefish research. Users are responsible for configuring the `data` and `parameter` structures that are passed to the TMB `MakeADFun` function which compiles the model. The best place to look for what dimensions and names of expected elements for `data` and `parameter` it is best to look at an example or the source code for the model ([see here](https://github.com/Craig44/SpatialSablefishAssessment/blob/master/src/TMB/TagIntegrated.hpp)). To view an example data run 
+This package contains TMB models and summarizing and plotting functions for a spatial model used in sablefish research. Users are responsible for configuring the `data` and `parameter` structures that are passed to the TMB `MakeADFun` function which compiles the model. The best place to look for what dimensions and names of expected elements for `data` and `parameter` it is best to look at an example or the source code for the model ([see here](https://github.com/Craig44/SpatialSablefishAssessment/blob/master/src/TMB/TagIntegrated.hpp)). To view an example data run
 
 
 ```r
@@ -180,7 +161,3 @@ gplt = ggplot(tag_fits %>% filter(release_event %in% unique_release_events[1:16]
   scale_x_discrete(breaks = every_nth(n = 5))
 
 ```
-
-
-
-## Standard errors for derived quantities

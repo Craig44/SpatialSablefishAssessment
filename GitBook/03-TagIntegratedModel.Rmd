@@ -1,0 +1,231 @@
+# Equations describing the `TagIntegrated` model {#TagIntegratedEq}
+
+## Process equations {-}
+### Population dynamics {-}
+The order of processes in an annual cycle follow
+
+1. recruitment and release of tagged fish (we apply initial tag induced mortality here),
+2. total mortality and ageing,
+3. markovian movement
+4. annual tag shedding (applied as a mortality process),
+
+
+
+Before movement, the partition is updated following 
+\begin{align*}
+N_{a,r,y,s} = 
+\begin{cases}
+R_{r,y} 0.5, & a = a_1\\
+N_{a - 1,r,y - 1,s} \exp\bigg( -Z_{a - 1,r, y - 1,s} \bigg), & a_1 < a < a_+\\
+N_{a - 1,r,y - 1,s} \exp\bigg( -Z_{a - 1,r, y - 1,s} \bigg) + N_{a,r,y - 1,s} \exp\bigg( -Z_{a,r, y - 1,s} \bigg), &  a = a_+
+\end{cases}
+\end{align*}
+
+and movement is then applied
+
+\begin{equation*}
+\boldsymbol{N}'_{a,y,s} = \boldsymbol{N}_{a,y,s} \boldsymbol{M} \ \ \forall \ a
+\end{equation*}
+
+where, \(\boldsymbol{N}'_{a,y,s} = (N'_{a,1,y,s}, \dots, N'_{a,n_r,y,s})\) denotes the numbers for age \(a\) across all regions after movement and \(\boldsymbol{M}\) is an \(n_r \times n_r\) movement matrix, which will move age cohort \(a\) among the regions based on the movement matrix.
+
+
+### Initialisation {-}
+An equilibrium age structure is derived by iterating the annual cycle is run \(n_a - 1\) times (i.e., to populate all age cohorts prior to the plus group). Then, iterate the annual cycle one more time and calculate the number of individuals that moved into each regions plus age cohort, denoted by \(c^r_{a+}\). This will be the result of ageing, mortality and movement. The equilibrium plus group for region \(r\) is then calculated as
+
+\[
+N_{a+, r} = N_{a+ - 1, r} \frac{1}{1 - c^r_{a+}}  \  .
+\]
+
+After the equilibrium age-structure is calculated, there is an option to estimate global or region specific deviations to allow the model to start with a non-equilibrium age-structure
+
+\[
+N_{a, r} = N_{a, r} e^{\epsilon_a} \ \ \forall \ a \ r \ .
+\]
+To help with estimation there is a penalty on \(\epsilon_a\) that assumes a central tendancy of zero with an estimable variance parameter (\(\sigma_{\epsilon}^2\)). 
+\[
+\epsilon_a \sim \mathcal{N}(0, \sigma_{\epsilon})
+\]
+
+In general these parameters can be highly uncertain. The variance on these deviation parameters is often fixed at a low value which requires a strong signal in the data to deviate away from the initial equilibrium age-structure.
+
+
+### Growth {-}
+
+Empirical length at age matrices are supplied for all years where sufficient age-length data was available and growth was assumed the same across all regions. Mean weight at age was calculated using an allometric length weight relationship with time and space invariant parameters \(\alpha\) and \(\beta\)
+
+\[
+\bar{w}_{a,y} = \alpha \bar{l}_{a,y}^{\beta} 
+\]
+
+**TODO** add the adjustment for lognormal distribution as in Casal2.
+
+### Recruitment {-}
+How to spatially apportion recruits in a way that is consistent with the data and isn't confounded with movement of young fish? There are two considerations, firstly looking at the AF and LFs there are regions that seem to have more young fish than others (link to figure and describe). However, there is very little information on spawning grounds and behavior. This coupled with a complex early life history make it difficult to a priori set regional apportionment of recruits, which would be ideal, an alternative is to estimate these as free parameters. This may introduce confounding when we start estimating movement which is believed to be ontogenetic.
+
+### Fishing mortality {-}
+When the hybrid \(F\) method is assumed, tagged fish were not included when internally solving the fishing mortality nuisance parameters. The ratio of tagged to untagged numbers of fish in the partition in any year was assumed to be small enough not to effect \(F\) estimates. However, tagged fish were included when the model calculates predicted catch-at-age/length and catch for a fleet. This decision was made to reduce the computational overhead this would require to implement. When \(F\) parameters are estimated as free parameters, then this is not a problem and \(F\) will be applied to both tagged and untagged fish.
+
+
+### Tag release events {-}
+
+Tags release event denoted by the index \(k\) have an implied region \(r\) and year \(y\) dimension. Each tag release event has known sex and age frequency at release. This is derived using the age-length key from the survey. Tagged fish from release event \(k\) are denoted in the partition by \(N^k_{a,r,y,s}\), and are tracked for \(n_{T}\) years before migrating into a pooled tag group, at which point we loose release-event information because we loose the year information but we do maintain its region of release. At present, tagged fish are assumed to take on the exact same population processes as the untagged elements of the partition.
+
+
+Most of the tagged fish in the available have unknown sex. Sex disaggregated age-frequencies were derived using an ALK that was disaggregrated by sex in the age dimension but sex aggregated in the length dimension. This meant when we multiplied an unsexed length frequency through this ALK we obtained sex disaggregated age frequency. The negative of this approach is a tagged fish that would have an exact age, sex and length will be represented in the model as a fraction of a fish across multiple ages and sexes.
+
+
+Age length keys were not available in all years when tagged fish were released, particularly in the early period. Tag release age frequencies before 1981 were based on age-length keys pooled over years 1981, 1985 and 1987. After that period, if an age-length key was not available we used the age length key from the closest year that has an age-length key. (**How can we explore uncertainty in this input?** re-run the model with numbers at age and length from bootstrapping age-length keys?)
+
+
+## Observation equations {-}
+
+As in the current stock assessment model, there are the three conventional observation types in the spatial model
+
+- Relative indices of abundance
+- Age composition disaggregated by sex for the fixed gear fishery and longline survey
+- Length composition disaggregated by sex for the trawl and early period of the fixed gear fishery 
+
+In addition to these, tag-recoveries are also included in the model.
+
+### Catch at age {-}
+Fishery dependent catch at age observations are available for the fixed gear fishery, but are also needed to calculate catch at length observations for the trawl fishery. Catch at age for fishery \(g\) is denoted by \({C}^g_{a,r,y,s}\) and model fitted values are calculated following
+
+\begin{equation} 
+  {C}^g_{a,r,y,s} = \frac{F^g_{a,r,y,s}}{Z_{a,r,y,s}}   N_{a,r,y,s} \left(1 - S_{a,r,y,s} \right)
+\end{equation} 
+
+Observed values were proportions with respect to age and sex, final model fitted proportions were
+\[
+{P}^g_{a,r,y,s} = \frac{{C}^g_{a,r,y,s}}{\sum_a \sum_s {C}^g_{a,r,y,s}},
+\]
+and initially the multinomial likelihood was assumed
+
+\[
+\boldsymbol{X}^g_{r,y} \sim \text{Multinomial}\left(\boldsymbol{\widehat{P}}^g_{r,y}\right)
+\]
+where, \(\boldsymbol{X}^g_{r,y} = \boldsymbol{P}^g_{r,y}N^{eff}_{r,y}\) and \(\boldsymbol{P}^g_{r,y}\) is the observed proportions, \(N^{eff}_{r,y}\) is the effective sample size and \(\boldsymbol{P}^g_{r,y} = (P^g_{1,r,y,1}, \dots, P^g_{a_+,r,y,1}, P^g_{1,r,y,2}, \dots, P^g_{a_+,r,y,2})\) is the vector of observed proportions across all ages and sexs in year \(y\) and region \(r\), and \(\boldsymbol{\widehat{P}}^g_{r,y}\) is the model fitted values which have the same dimension (\(\sum_a \sum_s \widehat{P}^g_{a,r,y,s} = 1\)).
+
+
+### Catch at length {-}
+Catch at length observations are available for the trawl fishery. Model fitted values are derived by multiplying the catch at age (see above) by an age-length transition matrix denoted by \(\boldsymbol{A}^l_{y,s}\) (dimensions of \(\boldsymbol{A}^l_{y,s}\) are \(n_a \ \times \ n_l\) and its rows must sum to 1),
+
+\begin{equation} 
+  \widehat{\boldsymbol{Cl}}^g_{r,y,s} =  \left(\boldsymbol{A}^l_{y,s} \right)^T \ \times \ \widehat{\boldsymbol{C}}^g_{r,y,s}
+\end{equation} 
+where, \(\widehat{\boldsymbol{C}}^g_{r,y,s}\) is a column vector of catch at age (dimension \(n_a \ \times \ 1\)) at the beginning of year \(y\) in region \(r\) for sex \(s\), and \(\widehat{\boldsymbol{Cl}}^g_{r,y,s} \) is a column vector of catch at length (dimension \(n_l \ \times \ 1\)).
+
+
+### Proportions at age {-}
+Survey age composition data denoted by \({N}^s_{a,r,y,s}\) is available for the longline survey where model fitted numbers are derived as,
+
+\begin{equation} 
+  \widehat{N}^s_{a,r,y,s} = N_{a,r,y,s} \left(1 - \exp^{\delta_y Z_{a,r,y,s}}\right)S^s_{y,r,a,s}
+\end{equation} 
+where, \(\delta_y \in (0,1)\) is the proportion of time in the year that the observation occurs during year \(y\) and \(S^s_{y,r,a,s}\) is the survey selectivity.
+
+
+### Relative abundance indices {-}
+\begin{equation} 
+  \widehat{I}^s_{r,y} = \sum_s\sum_a \widehat{N}^s_{a,r,y,s} \bar{w}_{a,y,s}
+\end{equation} 
+where, \(\bar{w}_{a,y,s}\) is mean weight at age, this can be omitted if the observation is in numbers i.e., abundance instead of biomass.
+
+### Tag recovery observations {-}
+
+When tagged fish are released in to the model partition they are tracked by the tag release event \(k\) for \(n_{T}\) years. Due to tags being predominately recovered by the fixed gear fishery there are many recoveries for which there is no length or sex information (**get a number**). The model expects tag-recovery observations to be known by age and sex. These are derived for each recovery event (also year and region specific) and tag-release event by using the age-length key that was used to release each recovered fish to obtain an sex specific age-frequency. This age-frequency is then aged by the number of years this tag-recovery event was at liberty to derive observed tag-recoveries by age and sex.
+
+This assumes the age-length conversion between releases and recoveries is consistent and allows us to use recovered fish with no length or sex recorded, but has the down side as mentioned earlier in the tag release section of smearing a single recovered fish across multiple age bins and sexes. However, it does mitigate the problem of going backwards and forwards through the age-length transition matrix, which appears to be more problematic.
+
+All tag recoveries are from the fixed gear (longline and pot gear) fishery, due to the recent trend in recoveries by gear method
+
+Model fitted values for tag event \(k\) recovered in region \(r\) and year \(y\) are denoted by \(\widehat{N}^k_{a,r,y,s}\), and are derived as
+
+
+\[
+\widehat{N}^k_{a,r,y,s} =  N^k_{a,r,y,s}e^{-0.5M_{y}} (1 - e^{-F^{LL}_{a,r,y,s}})\delta_y
+\]
+where, \(N^k_{a,r,y,s}\) are the number of tagged fish from tag-release event \(k\), and \(\delta_y\) is the reporting rate in year \(y\). We assume there has been half the years natural mortality when deriving expected tag-recoveries. The current assessment pools observed and fitted values across age and sex and assumes the are from the Poisson distribution.
+
+\[
+{N}^k_{r,y} \sim \mathcal{Poisson}(\widehat{N}^k_{r,y})
+\]
+where, \(\widehat{N}^k_{r,y} = \sum_a \sum_s \widehat{N}^k_{a,r,y,s}\)
+
+
+## Symbol Notation {-}
++----------------------------+-----------------------------------------------------------------------------+
+| Symbol                     | Description                            
++============================+=============================================================================+
+| \(y\)                      | Year, \(y = 1960, \dots, T\) 
++----------------------------+-----------------------------------------------------------------------------+
+| \(T\)                      | Terminal year of the model
++----------------------------+-----------------------------------------------------------------------------+
+| \(s\)                      | Sex index \(s \in \{1,2\}\)
++----------------------------+-----------------------------------------------------------------------------+
+| \(a\)                      | Model age cohort, i.e., \(a = a_0, a_0 + 1, \dots\)
++----------------------------+-----------------------------------------------------------------------------+
+| \(a_{1}\)                  | Recruitment age to the model = 2 
++----------------------------+-----------------------------------------------------------------------------+
+| \(a_+\)                    | Plus-group age class (oldest age considered plus all older ages)
++----------------------------+-----------------------------------------------------------------------------+
+| \(n_a\)                    | Number of age classes modeled \(a_+ \ - a_1\)
++----------------------------+-----------------------------------------------------------------------------+
+| \(l\)                      | length class
++----------------------------+-----------------------------------------------------------------------------+
+| \(n_l\)                    | Number of length classes
++----------------------------+-----------------------------------------------------------------------------+
+| \(g\)                      | gear type index, i.e. longline survey, fixed gear fishery, trawl fishery
++----------------------------+-----------------------------------------------------------------------------+
+| \(x\)                      | log-likelihoos index
++----------------------------+-----------------------------------------------------------------------------+
+| \(\bar{w}_{a,y, s}\)       | Average weight at age \(a\), year \(y\) and sex \(s\)
++----------------------------+-----------------------------------------------------------------------------+
+| \(\phi_{a,y}\)             | Proportion of female mature by age and year
++----------------------------+-----------------------------------------------------------------------------+
+| \(p^s_{y}\)                | Proportion of recruits for sex \(s\). Often assumed = 0.5
++----------------------------+-----------------------------------------------------------------------------+
+| \(\ln \mu_{r}\)            | Average log-recruitment
++----------------------------+-----------------------------------------------------------------------------+
+| \(\ln \mu_{f}\)            | Average log-fishing mortality
++----------------------------+-----------------------------------------------------------------------------+
+| \(\phi_{y,g}\)             | annual fishing mortality deviation by gear (log space)
++----------------------------+-----------------------------------------------------------------------------+
+| \(\tau_{y}\)               | annual recruitment deviation \(\sim LogNormal\left(0,\sigma_r\right)\)
++----------------------------+-----------------------------------------------------------------------------+
+| \(\sigma_r\)               | Recruitment standard deviation
++----------------------------+-----------------------------------------------------------------------------+
+| \(N_{a,y,s}\)              | Numbers of fish at age \(a\) in year \(y\) of sex \(s\)
++----------------------------+-----------------------------------------------------------------------------+
+| \(M\)                      | Natural mortality
++----------------------------+-----------------------------------------------------------------------------+
+| \(F^g_{a,y}\)              | Fishing mortality for year \(y\), age \(a\) and gear \(g\)
++----------------------------+-----------------------------------------------------------------------------+
+| \(F_{hist}\)               | Historical proportion of Fishing mortality 
++----------------------------+-----------------------------------------------------------------------------+
+| \(Z_{a,y}\)                | Total mortality for year \(y\), age \(a\) \(=\sum\limits_g F^g_{a,y} + M\)
++----------------------------+-----------------------------------------------------------------------------+
+| \(R_{y}\)                  | Annual recruitment
++----------------------------+-----------------------------------------------------------------------------+
+| \(B_{y}\)                  | Spawning biomass in year \(y\)
++----------------------------+-----------------------------------------------------------------------------+
+| \(S^g_{a,y,s}\)            | Selectivity at age \(a\) for gear type \(g\) and sex \(s\)
++----------------------------+-----------------------------------------------------------------------------+
+| \(a_50\)                   | age at 50\% selection for ascending limb 
++----------------------------+-----------------------------------------------------------------------------+
+| \(d_50\)                   | age at 50\% selection for descending limb 
++----------------------------+-----------------------------------------------------------------------------+
+| \(\delta\)                 | slope/shape parameters for different logistic curves
++----------------------------+-----------------------------------------------------------------------------+
+| \(\boldsymbol{A}\)         | ageing-error matrix dimensions \(n_a \ \times \ n_a\)
++----------------------------+-----------------------------------------------------------------------------+
+| \(\boldsymbol{A}^l_s\)     | age to length conversion matrix by sex. dimensions  \(n_a \ \times \ n_l\)
++----------------------------+-----------------------------------------------------------------------------+
+| \(q_g\)                    | abundance index catchability coeffecient by gear
++----------------------------+-----------------------------------------------------------------------------+
+| \(\lambda_x\)              | Statistical weight (penalty) for component \(x\)
++----------------------------+-----------------------------------------------------------------------------+
+| \(P^g_{l,y,s}\)            | Observed proportions at length for gear \(g\) in year \(y\) and sex \(s\)
++----------------------------+-----------------------------------------------------------------------------+
+| \(P^g_{a,y,s}\)            | Observed proportions at age for gear \(g\) in year \(y\) and sex \(s\)
++----------------------------+-----------------------------------------------------------------------------+

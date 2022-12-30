@@ -1,10 +1,77 @@
 # A list of functions available in the `SpatialSablefishAssessment` package {#functionlist}
 
+All of these functions have descriptions and details on expected input parameters using the standard `?` R query methods. You can also use `help(package = "SpatialSablefishAssessment")` to get a list of functions available in this package.
 
 ## Validate functions
 
+- `validate_input_data_and_parameters` This should always be run before `TMB::MakeADFun`
 
 ## Accessor functions
 
+- `get_AF` get age-frequency observed and predicted values from a model
+- `get_LF` get length-frequency observed and predicted values from a model
+- `get_catches` get observed and predicted catches from a fitted model
+- `get_fishing_mortalities` get annual fishing mortalities from a model
+- `get_index` get survey index from a model
+- `get_partition`  get numbers at age (units 000's) from a fitted model
+- `get_SSB` get SSBS (kilo tonnes 000's) from a fitted model
+- `get_tag_recovery_obs_fitted_values`
+- `get_tag_release_AF` get age-frequency of tag-releases
+
 
 ## Plotting functions
+
+- `plot_AF` plot age frequency observation
+- `plot_age_length_matrix` plot input age-length transition matrices
+- `plot_catch_fit` plot the fit to catches
+- `plot_fishing_mortalities`  plot fishing mortalities
+- `plot_frequency_of_tag_release_and_recoveries	`
+- `plot_index_fit` plot survey index
+- `plot_init_nage` plot initial numbers at age
+- `plot_input_catches` plot input catches
+- `plot_input_observations` plot input observations
+- `plot_LF` plot length frequency observation
+- `plot_mean_age` plot mean age observations
+- `plot_mean_length` plot mean length observations
+- `plot_mean_weight` plot mean weight over time for males and females
+- `plot_movement`  plot movement matrix from a model
+- `plot_partition`
+- `plot_recruitment`
+- `plot_selectivities` 
+- `plot_SSB`
+- `plot_tag_recovery_obs`
+- `plot_tag_release_AF`
+- `plot_partition`
+
+## Estimation functions
+
+
+- `check_gradients` check all parameter gradients are not zero
+- `Francis_reweighting` calculate stage-two weights for composition data
+- `get_tmb_fixed_effects` return fixed effect parameters from a model
+- `fix_pars` turn off parameters so they aren't estimated, there are many parameters that shouldn't be estimated
+- `set_pars_to_be_the_same` set parameters to be estimated at the same value i.e., male female have the same selectivity parameters. or tag-reporting  to be the same among regions.
+- `rmvnorm_prec` simulate from a multivariate normal distribution using the precision matrix.
+
+
+## Parameter transformation functions
+
+- `restoresimplex` go from simplex to unit vector
+- `simplex` go from unit vector to simplex
+- `logit_general` logistic transformation between a specified lower and upper bound
+- `logit` logistic transformation between 0, 1 similar to `qlogis`
+- `invlogit_general` inverse logistic transformation between a specified lower and upper bound
+- `invlogit` inverse logistic transformation between 0, 1 similar to `plogis`
+- `bound_unit` transform a parameter \(X\) bound between -1 and 1 (i.e., correlation parameter) as
+\[
+Y = 
+\begin{cases}
+\sqrt{\frac{X^2}{1  - X^2}}, \ \ & X \geq 0 \\
+-\sqrt{\frac{X^2}{1  - X^2}} , \ \ & X < 0
+\end{cases}
+\]
+- `inv_bound_unit` inverse of `bound_unit`
+- `gm_mean` calculate the geometric mean
+- `log_cv` calculate cv for the lognormal distribution given standard deviation
+- `log_sigma` calculate standard deviation for the lognormal distribution given CV
+- `lognormal_CI` calculate confidence intervals for the lognormal distribution
