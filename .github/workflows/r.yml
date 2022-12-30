@@ -60,7 +60,7 @@ jobs:
       - name: getwd
         run: Rscript -e 'print(list.files())'
       - name: Render Gitbook
-        run: Rscript -e 'bookdown::render_book(input = "GitBook")'
+        run: Rscript -e "bookdown::render_book(input = 'Gitbook')"
       - name: artifact Gitbook
         uses: actions/upload-artifact@v1
         with:
