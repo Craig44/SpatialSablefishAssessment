@@ -231,8 +231,9 @@ parameters$ln_catch_sd = log(0.02)
 ## reporting rate
 parameters$logistic_tag_reporting_rate = array(logit(0.999), dim = c(n_regions, length(tag_recovery_years)))
 parameters$ln_tag_phi = log(1)
-
+data$model = "TagIntegratedValidate"
 save(data, parameters, region_key, file = file.path("inst", "testdata", "MockSablefishModel.RData"))
+
 validate_input_data_and_parameters(data, parameters)
 
 ########################

@@ -36,5 +36,6 @@ test_that("check_dims", {
 test_that("validate-inputs", {
   load(system.file("testdata", "MockSablefishModel.RData",package="SpatialSablefishAssessment"))
   ## check the models
+  data$model = "TagIntegrated"
   expect_true(validate_input_data_and_parameters(data, parameters))
 })
