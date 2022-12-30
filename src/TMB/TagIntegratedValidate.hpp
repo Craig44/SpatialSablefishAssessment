@@ -445,8 +445,13 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
       init_natage_m(n_ages - 1, region_ndx) += m_plus_group *  exp(- (M(n_ages - 1, 0) + init_F_hist * sel_fixed_f(n_ages - 1, 0)));
     }
     // Movement
-    init_natage_f = (init_natage_f.matrix() * movement_matrix.matrix()).array();
-    init_natage_m = (init_natage_m.matrix() * movement_matrix.matrix()).array();
+    if(apply_fixed_movement) {
+      init_natage_f = (init_natage_f.matrix() * fixed_movement_matrix).array();
+      init_natage_m = (init_natage_m.matrix() * fixed_movement_matrix).array();
+    } else {
+      init_natage_f = (init_natage_f.matrix() * movement_matrix.matrix()).array();
+      init_natage_m = (init_natage_m.matrix() * movement_matrix.matrix()).array();
+    }
   }
   // Cache age-structure
   cache_natage_f = init_natage_f;
@@ -467,8 +472,14 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
     init_natage_m(n_ages - 1, region_ndx) += m_plus_group *  exp(- (M(age_ndx - 1, 0) + init_F_hist * sel_fixed_m(n_ages - 1, 0)));
   }
   // Movement
-  init_natage_f = (init_natage_f.matrix() * movement_matrix.matrix()).array();
-  init_natage_m = (init_natage_m.matrix() * movement_matrix.matrix()).array();
+  if(apply_fixed_movement) {
+    init_natage_f = (init_natage_f.matrix() * fixed_movement_matrix).array();
+    init_natage_m = (init_natage_m.matrix() * fixed_movement_matrix).array();
+  } else {
+    init_natage_f = (init_natage_f.matrix() * movement_matrix.matrix()).array();
+    init_natage_m = (init_natage_m.matrix() * movement_matrix.matrix()).array();
+  }
+
   // Approximate plus group
   for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
     plus_c = init_natage_f(n_ages - 1, region_ndx) / cache_natage_f(n_ages - 1, region_ndx) - 1.0;
