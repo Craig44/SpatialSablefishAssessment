@@ -17,7 +17,7 @@ All of these functions have descriptions and details on expected input parameter
 - `get_SSB` get SSBS (kilo tonnes 000's) from a fitted model
 - `get_tag_recovery_obs_fitted_values`
 - `get_tag_release_AF` get age-frequency of tag-releases
-
+- `get_negloglike` get negative loglikelihoods for each contribution
 
 ## Plotting functions
 
