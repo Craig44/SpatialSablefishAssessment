@@ -292,7 +292,7 @@ validate_input_data_and_parameters = function(data, parameters) {
   if(!any(data$srv_dom_ll_q_by_year_indicator == 0))
     return("Could not find a 0 index in srv_dom_ll_q_by_year_indicator, this is likely an error")
 
-  check = check_length(parameters$logistic_srv_dom_ll_q, n_fixed_survey_q_time_blocks)
+  check = check_dim(parameters$logistic_srv_dom_ll_q, c(n_regions, length(unique(data$srv_dom_ll_q_by_year_indicator))))
   if(!check$result)
     return(paste0("logistic_srv_dom_ll_q: ", check$message))
 

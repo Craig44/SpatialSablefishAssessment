@@ -47,6 +47,7 @@ set_up_parameters(
 
 \item{tag_reporting_rate}{how to deal with tag-reporting rate will be ignored if there are no tag-recovery observations.
 \itemize{
+\item off: not estimated
 \item ignore: ignore this parameter
 \item constant: single value for all years and regions
 \item time: estimates a tag-reporting rate coefficient for all recovery years which is common across all regions

@@ -224,7 +224,7 @@ parameters$ln_trwl_F_avg = -2.965016
 parameters$ln_trwl_F_devs = array(0, dim = c(n_regions, n_projyears))
 
 parameters$ln_init_F_avg = parameters$ln_fixed_F_avg
-parameters$logistic_srv_dom_ll_q = logit(0.2)
+parameters$logistic_srv_dom_ll_q = array(logit(0.2), dim = c(data$n_regions, length(unique(data$srv_dom_ll_q_by_year_indicator))))
 parameters$ln_rec_dev = array(0, dim = c(1, n_years))
 parameters$ln_init_rec_dev = 0
 parameters$ln_catch_sd = log(0.02)

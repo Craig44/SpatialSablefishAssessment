@@ -165,11 +165,12 @@ fix_pars <- function(par_list, pars_to_exclude, vec_elements_to_exclude = NULL, 
 #' @param srv_q_spatial whether regional Q's exist
 #' @param tag_reporting_rate how to deal with tag-reporting rate will be ignored if there are no tag-recovery observations.
 #' \itemize{
-#'   \item ignore: ignore this parameter
-#'   \item constant: single value for all years and regions
-#'   \item time: estimates a tag-reporting rate coefficient for all recovery years which is common across all regions
-#'   \item space: TODO - not implemented estimates an regional tag-reporting rate which is common across all recovery years
-#'   \item spatio-temporal: TODO - not implemented - estimates annual and regional tag-reporting rates
+#'   \item `off`: not estimated
+#'   \item `ignore`: ignore this parameter
+#'   \item `constant`: single value for all years and regions
+#'   \item `time`: estimates a tag-reporting rate coefficient for all recovery years which is common across all regions
+#'   \item `space`: TODO - not implemented estimates an regional tag-reporting rate which is common across all recovery years
+#'   \item `spatio-temporal`: TODO - not implemented - estimates annual and regional tag-reporting rates
 #' }
 #' @param est_init_F bool whether you want to estimate an initial F
 #' @param est_catch_sd bool whether you want to estimate the catch sd parameter
@@ -192,8 +193,8 @@ set_up_parameters <- function(data, parameters,
                               est_movement = T
 ) {
 
-  if(!tag_reporting_rate %in% c("ignore","constant", "time"))#, "space", "spatio-temporal"))
-    stop('tag_reporting_rate: needs to be one of the following "ignore", "constant", "time"')
+  if(!tag_reporting_rate %in% c("ignore","constant", "time", "off"))#, "space", "spatio-temporal"))
+    stop('tag_reporting_rate: needs to be one of the following "ignore", "constant", "time", "off"')
   #
   map_to_fix = na_map
   parameters_completely_fixed = c()
@@ -215,14 +216,25 @@ set_up_parameters <- function(data, parameters,
   # turn off init_rec devs if not applying
   if(data$n_init_rec_devs == 0)
     parameters_completely_fixed = c(parameters_completely_fixed, c("ln_init_rec_dev"))
-
+  ## survey catchability regional and annual
+  base_q_vals = list()
+  copy_q_vals = list()
+  if(!srv_q_spatial) {
+    ## regionally similar q's
+    logis_sel_q = list(logistic_srv_dom_ll_q = expand.grid(1:data$n_regions, 1:ncol(parameters$logistic_srv_dom_ll_q))[-1,])
+    arrays_with_elements_fixed[["logistic_srv_dom_ll_q"]] = logis_sel_q$logistic_srv_dom_ll_q
+    base_q_vals = rep(list(logistic_srv_dom_ll_q = 1), dim(parameters$logistic_srv_dom_ll_q)[1] * dim(parameters$logistic_srv_dom_ll_q)[2] - 1)
+    copy_q_vals = evalit(paste0("list(",paste(paste0("logistic_srv_dom_ll_q = ", 2:(dim(parameters$logistic_srv_dom_ll_q)[1] * dim(parameters$logistic_srv_dom_ll_q)[2])), collapse = ", "),")"))
+  }
   ## no tag recovery observations
   base_tag_report_vals = list()
   copy_tag_report_vals = list()
   if(sum(data$tag_recovery_indicator) == 0) {
     parameters_completely_fixed = c(parameters_completely_fixed, c("logistic_tag_reporting_rate", "ln_tag_phi"))
   } else {
-    if(tag_reporting_rate == "ignore") {
+    if(tag_reporting_rate == "off") {
+      parameters_completely_fixed = c(parameters_completely_fixed, c("logistic_tag_reporting_rate"))
+    } else if(tag_reporting_rate == "ignore") {
 
       # don't do anything
 
@@ -252,6 +264,9 @@ set_up_parameters <- function(data, parameters,
 
       }
     }
+    ## negative binomial we estimate ln_tag_phi else it should be estimated
+    if(data$tag_likelihood != 1)
+      parameters_completely_fixed = c(parameters_completely_fixed, c("ln_tag_phi"))
   }
 
   ## deal with recruit devs
@@ -397,9 +412,13 @@ set_up_parameters <- function(data, parameters,
   bse_params = append(base_tag_report_vals, base_srv_sel_param_vals)
   bse_params = append(bse_params, base_fixed_sel_param_vals)
   bse_params = append(bse_params, base_trwl_sel_param_vals)
+  bse_params = append(bse_params, base_q_vals)
+
   cpy_params = append(copy_tag_report_vals, copy_srv_sel_param_vals)
   cpy_params = append(cpy_params, copy_fixed_sel_param_vals)
   cpy_params = append(cpy_params, copy_trwl_sel_param_vals)
+  cpy_params = append(cpy_params, copy_q_vals)
+
   if(length(bse_params) > 0) {
     ## some-times this wont be populated which means we won't be fixing any paramaeters
     if(length(bse_params) != length(cpy_params))

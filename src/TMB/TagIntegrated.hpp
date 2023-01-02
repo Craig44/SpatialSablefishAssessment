@@ -180,7 +180,7 @@ Type TagIntegrated(objective_function<Type>* obj) {
   PARAMETER(ln_init_F_avg);                                 // log average initial Fishing mortality used when F_method == 1, else should not be estimated
   PARAMETER(ln_catch_sd);                                   // Shared across all gears
   //
-  PARAMETER_VECTOR(logistic_srv_dom_ll_q);                  // logistic catchabilities parameters for srv_dom_ll observation
+  PARAMETER_ARRAY(logistic_srv_dom_ll_q);                   // logistic catchabilities parameters for srv_dom_ll n_regions x n_q_time-blocks
   PARAMETER_ARRAY(ln_srv_dom_ll_sel_pars);                  // log selectivity parameters for domestic longline surveyr, dim: time-blocks:  max(sel parameters): sex
   PARAMETER_ARRAY(logistic_tag_reporting_rate);             // logistic tag-reporting dim: n_regions x n_tag_recovery_years
   // nuisance parameters
@@ -252,9 +252,12 @@ Type TagIntegrated(objective_function<Type>* obj) {
   array<Type> srv_dom_ll_sel_pars(ln_srv_dom_ll_sel_pars.dim);
   srv_dom_ll_sel_pars = exp(ln_srv_dom_ll_sel_pars);
 
-  vector<Type> srv_dom_ll_q(logistic_srv_dom_ll_q.size());
-  for(int i = 0; i < srv_dom_ll_q.size(); ++i)
-    srv_dom_ll_q(i) = invlogit(logistic_srv_dom_ll_q(i));
+  array<Type> srv_dom_ll_q(logistic_srv_dom_ll_q.dim);
+  for(int i = 0; i < srv_dom_ll_q.dim(0); ++i) { // region
+    for(int j = 0; j < srv_dom_ll_q.dim(1); ++j) // time-blocks
+      srv_dom_ll_q(i,j) = invlogit(logistic_srv_dom_ll_q(i,j));
+  }
+
 
   // deal with movement
   array<Type> movement_matrix(n_regions,n_regions);                  // n_regions x n_regions. Rows sum = 1 (aka source)
@@ -930,7 +933,7 @@ Type TagIntegrated(objective_function<Type>* obj) {
       if(srv_dom_ll_bio_indicator(region_ndx, year_ndx) == 1) {
         for(age_ndx = 0; age_ndx < n_ages; age_ndx++)
           pred_srv_dom_ll_bio(region_ndx, year_ndx) += natage_m(age_ndx, region_ndx, year_ndx) * sel_srv_dom_ll_m(age_ndx, srv_dom_ll_sel_by_year_indicator(year_ndx)) * S_m_mid(age_ndx, region_ndx, year_ndx) + natage_f(age_ndx, region_ndx, year_ndx) * sel_srv_dom_ll_f(age_ndx, srv_dom_ll_sel_by_year_indicator(year_ndx)) * S_f_mid(age_ndx, region_ndx, year_ndx) ;
-        pred_srv_dom_ll_bio(region_ndx, year_ndx) *= srv_dom_ll_q(srv_dom_ll_q_by_year_indicator(year_ndx));
+        pred_srv_dom_ll_bio(region_ndx, year_ndx) *= srv_dom_ll_q(region_ndx, srv_dom_ll_q_by_year_indicator(year_ndx));
         nll(4) -= dnorm(log(obs_srv_dom_ll_bio(region_ndx, year_ndx)), log(pred_srv_dom_ll_bio(region_ndx, year_ndx)) - 0.5 * obs_srv_dom_ll_se(region_ndx, year_ndx) * obs_srv_dom_ll_se(region_ndx, year_ndx), obs_srv_dom_ll_se(region_ndx, year_ndx), true);
         SIMULATE {
           obs_srv_dom_ll_bio(region_ndx, year_ndx) = exp(rnorm(log(pred_srv_dom_ll_bio(region_ndx, year_ndx)) - 0.5 * obs_srv_dom_ll_se(region_ndx, year_ndx) * obs_srv_dom_ll_se(region_ndx, year_ndx), obs_srv_dom_ll_se(region_ndx, year_ndx)));

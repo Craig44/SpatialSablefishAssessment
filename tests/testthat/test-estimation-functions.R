@@ -2,6 +2,8 @@
 #' @description tests fix pars function
 #'
 test_that("test-fix-pars", {
+  load(system.file("testdata", "MockSablefishModel.RData",package="SpatialSablefishAssessment"))
+
   ## add an additional time-block
   ## test fix-pars on 3D arrays
   data$srv_dom_ll_sel_type = rep(0,2)
