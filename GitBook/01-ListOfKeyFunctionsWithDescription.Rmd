@@ -45,8 +45,9 @@ All of these functions have descriptions and details on expected input parameter
 
 ## Estimation functions
 
-
 - `set_up_parameters` Fix parameters, uses `fix_pars` and `set_pars_to_be_the_same` for the `TagIntegrated` model 
+- `pre_optim_sanity_checks` run some checks on a TMB model of type `TagIntegrated` before optimization
+- `post_optim_sanity_checks`  run some checks on a TMB model of type `TagIntegrated` after optimization
 - `check_gradients` check all parameter gradients are not zero
 - `Francis_reweighting` calculate stage-two weights for composition data
 - `get_tmb_fixed_effects` return fixed effect parameters from a model

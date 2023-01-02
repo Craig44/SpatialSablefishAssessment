@@ -120,7 +120,7 @@ plot_selectivities = function(MLE_report) {
                       surveyll_male = MLE_report$sel_srv_dom_ll_m, surveyll_female = MLE_report$sel_srv_dom_ll_f,
                       age = MLE_report$ages
   )
-  sel_lng_df = sel_df %>% pivot_longer(!age)
+  sel_lng_df = sel_df %>% tidyr::pivot_longer(!age)
   sel_lng_df$gear = Reduce(c, lapply(sel_lng_df$name %>% str_split(pattern = "_"), function(x){x[1]}))
   sel_lng_df$sex = Reduce(c, lapply(sel_lng_df$name %>% str_split(pattern = "_"), function(x){x[2]}))
   gplt = ggplot(sel_lng_df, aes(x = age, y = value, col = sex, linetype = sex)) +
@@ -143,12 +143,17 @@ plot_recruitment = function(MLE_report, region_key = NULL) {
     regions = region_key$area[region_key$TMB_ndx + 1]
 
   dimnames(MLE_report$recruitment_yr) = list(data$years, regions)
-
+  names(MLE_report$mean_rec) = regions
   recruit_df = reshape2::melt(MLE_report$recruitment_yr)
+  mean_recruit_df = reshape2::melt(as.matrix(MLE_report$mean_rec))
   colnames(recruit_df) = c("Year","Region", "Recruitment")
-  gplt = ggplot(recruit_df, aes(x = Year, y = Recruitment)) +
-    geom_line(linewidth = 1.1) +
+  colnames(mean_recruit_df) = c("Region", "row_ndx","Mean_recruitment")
+  recruit_df = recruit_df %>% dplyr::inner_join(mean_recruit_df)
+  gplt = ggplot(recruit_df) +
+    geom_line(aes(x = Year, y = Recruitment), linewidth = 1.1) +
+    geom_hline(aes(yintercept = Mean_recruitment), linetype = "dashed", linewidth = 1.1, col = "gray60") +
     facet_wrap(~Region) +
     theme_bw()
+
   return(gplt)
 }

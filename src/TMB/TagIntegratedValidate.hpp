@@ -47,7 +47,6 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   DATA_ARRAY(female_age_length_transition);         // Proportion at among length bins for each age for female: dim = n_ages x n_lengths x n_years
 
 
-  DATA_SCALAR(sigma_R);                             // standard deviation for recruitment;
   DATA_INTEGER(SrType);                             // Stock recruitment type 3=average, 2=Bholt, 1=Ricker
   DATA_VECTOR(spawning_time_proportion);            // proportion of time within a year that spawning occurs needed for each year length = n_projyears, bound between 0 and 1
 
@@ -176,7 +175,9 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   PARAMETER_ARRAY(logistic_tag_reporting_rate);             // dim: n_regions x n_tag_recovery_years
 
   // nuisance parameters
-  PARAMETER(ln_tag_phi);                                        // log variance for tag data likelihood- currently only used if tag_likelihood = 1 (Negative binomial)
+  PARAMETER(ln_tag_phi);                                    // log variance for tag data likelihood- currently only used if tag_likelihood = 1 (Negative binomial)
+  PARAMETER(ln_sigma_R);                                    // standard deviation for recruitment;
+  PARAMETER(ln_sigma_init_devs);                            // standard deviation for recruitment;
 
   // Initialise consistently used variables throughout the code
   int year_ndx;
@@ -202,6 +203,9 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   //       the first init_rec_dev corresponds to recruitment for age class 2 which would have arrived in styr - 1, and so on.
   // Untransform parameters
   vector<Type> mean_rec = exp(ln_mean_rec);
+  Type sigma_R = exp(ln_sigma_R);
+  Type sigma_init_devs = exp(ln_sigma_init_devs);
+  Type sigma_init_devs_sq = sigma_init_devs * sigma_init_devs;
   Type sigma_R_sq = sigma_R * sigma_R;
   vector<Type> init_rec_dev = exp(ln_init_rec_dev);
 
@@ -406,7 +410,7 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
 
 
 
-  vector<Type> nll(10); // slots
+  vector<Type> nll(11); // slots
   nll.setZero();
   /* nll components
    * 0 - fixed - fishery age comp
@@ -418,8 +422,8 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
    * 6 - Trawl fishery catch contribution
    * 7 - Tag-recovery
    * 8 - Recruitment penalty/hyper prior if model is hierachical
-   * 9 - Posfun penalty for values that must be > 0 but aren't
-
+   * 9 - init dev penalty/hyper prior if model is hierachical
+   * 10 - Posfun penalty for values that must be > 0 but aren't
    */
 
 
@@ -992,8 +996,18 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
       n_rec_devs += 1.0;
     }
   }
-  nll(8) += (n_rec_devs) * log(sigma_R);
-  nll(9) = pen_posfun;
+  nll(8) += (n_rec_devs) * ln_sigma_R;
+  // Init-dev Penalty
+  if(n_init_rec_devs > 0) {
+    n_rec_devs = 0.0;
+    for(int i = 0; i < ln_init_rec_dev.size(); ++i) {
+      nll(9) += square(ln_init_rec_dev(i) - sigma_init_devs_sq / 2.0)/(2.0* sigma_init_devs_sq);
+      n_rec_devs += 1.0;
+    }
+    nll(9) += (n_rec_devs) * ln_sigma_init_devs;
+  }
+  // pos fun penalty for
+  nll(10) = pen_posfun;
 
   /*
    * Report section
@@ -1012,8 +1026,6 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   REPORT(annual_F_trwl);
   REPORT(annual_F_fixed);
   REPORT(recruitment_yr);
-  REPORT( catch_sd );
-  REPORT( sigma_R );
   REPORT(weight_maturity_prod_f);
   REPORT(catchatage_fixed_m);
   REPORT(catchatage_trwl_m);
@@ -1037,6 +1049,10 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
 
   REPORT(srv_dom_ll_sel_pars);
   REPORT(srv_dom_ll_q);
+  // estimated variances
+  REPORT(sigma_R);
+  REPORT(sigma_init_devs);
+  REPORT( catch_sd );
   //
   REPORT(tagged_natage_m); //
   REPORT(tagged_natage_f); //

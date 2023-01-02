@@ -18,15 +18,18 @@ get_tmb_fixed_effects <- function(obj) {
 #' look into these parameters.
 #' @param obj A TMB list that has been built by MakeAdFun
 #' @export
-#' @return character of good news or labels of problem parameters
+#' @return bool and print a message. True is gradients all non zero false suggests there are parameters with zero gradients which is a problem
 #'
 check_gradients = function(obj) {
   if(sum(obj$gr() == 0) == 0) {
-    return("no gradients were equal to zero. Your model passes the first 'sniff test'. You may continue")
+    cat("no parameters had gradients equal to zero.\n")
+    return(TRUE)
   } else {
-    return(names(obj$par)[which(obj$gr() == 0)])
+    cat("Found the following parameters with zero gradients:\n\n")
+    cat(paste(paste0(names(obj$par)[which(obj$gr() == 0)], ", index = ", which(obj$gr() == 0)), collapse = "\n"))
+    return(FALSE)
   }
-  return(NULL)
+  return(TRUE)
 }
 
 #' rmvnorm_prec
@@ -175,6 +178,8 @@ fix_pars <- function(par_list, pars_to_exclude, vec_elements_to_exclude = NULL, 
 #' @param est_init_F bool whether you want to estimate an initial F
 #' @param est_catch_sd bool whether you want to estimate the catch sd parameter
 #' @param est_movement bool whether you want to estimate movement parameters
+#' @param est_sigma_R bool whether you want to estimate the recruitment sd parameter
+#' @param est_sigma_init_dev bool whether you want to estimate the initial-dev sd parameter
 #' @return a named list that can be used by the `map` input for the `TMB::MakeADFun` function. NAs mean parameters are not estimated and elements with the same factor level mean they will be estimated with a common coefficient i.e., shared parameters
 #' @export
 set_up_parameters <- function(data, parameters,
@@ -190,7 +195,9 @@ set_up_parameters <- function(data, parameters,
                               tag_reporting_rate = "constant",
                               est_init_F = F,
                               est_catch_sd = F,
-                              est_movement = T
+                              est_movement = T,
+                              est_sigma_R = F,
+                              est_sigma_init_dev = F
 ) {
 
   if(!tag_reporting_rate %in% c("ignore","constant", "time", "off"))#, "space", "spatio-temporal"))
@@ -210,12 +217,20 @@ set_up_parameters <- function(data, parameters,
   # trun off sd catch if not estimating it
   if(!est_catch_sd)
     parameters_completely_fixed = c(parameters_completely_fixed, c("ln_catch_sd"))
+  if(!est_sigma_R)
+    parameters_completely_fixed = c(parameters_completely_fixed, c("ln_sigma_R"))
+  if(!est_sigma_init_dev)
+    parameters_completely_fixed = c(parameters_completely_fixed, c("ln_sigma_init_devs"))
+
   # turn off movement estimation parameters
   if(!est_movement)
     parameters_completely_fixed = c(parameters_completely_fixed, c("transformed_movement_pars"))
   # turn off init_rec devs if not applying
-  if(data$n_init_rec_devs == 0)
+  if(data$n_init_rec_devs == 0) {
     parameters_completely_fixed = c(parameters_completely_fixed, c("ln_init_rec_dev"))
+    if(!"ln_sigma_init_devs" %in% parameters_completely_fixed)
+      parameters_completely_fixed = c(parameters_completely_fixed, c("ln_sigma_init_devs"))
+  }
   ## survey catchability regional and annual
   base_q_vals = list()
   copy_q_vals = list()
@@ -466,4 +481,155 @@ set_pars_to_be_the_same <- function(par_list, map, base_parameters, copy_paramet
   }
 
   return(map);
+}
+
+
+#' pre_optim_sanity_checks run a few sanity checks before estimating a model
+#' @author C.Marsh
+#' @description This function will do some simple checks such check likelihoods are all finite, no non-zero gradients
+#' @param obj an estimated TMB object that contains fn(), gr(), and par functions
+#' @return bool true means model passed false means model failed. Will also print a message to screen on what failed.
+#' @export
+
+pre_optim_sanity_checks <- function(obj) {
+  passed_pre_sanity_checks = TRUE;
+  ## get the data
+  data = obj$env$data
+  if(data$model != "TagIntegrated")
+    stop("sanity checks are made for the 'TagIntegrated' model")
+  ## get derived quantities
+  mle_report = obj$report(obj$env$last.par.best)
+  ## check likelihoods are all finite and not NA
+  if(!all(is.finite(mle_report$nll))) {
+    cat("Found Inf in log-likelihood, you will need to resolve this before optimisation\n")
+    passed_pre_sanity_checks = F
+  }
+  if(!all(!is.na(mle_report$nll))) {
+    cat("Found NA in log-likelihood, you will need to resolve this before optimisation\n")
+    passed_pre_sanity_checks = F
+  }
+  ## check gradients
+  if(!check_gradients(obj))
+    passed_pre_sanity_checks = F
+  ## return a pass or fail message
+  cat("\n\n");
+  if(passed_pre_sanity_checks) {
+    cat("Successfully passed pre-sanity checks\n")
+    return(TRUE)
+  }
+
+  ## else must have failed
+  cat("Failed pre-sanity checks, please sort these out before you try and optimise this model\n")
+  return(FALSE)
+}
+
+#' post_optim_sanity_checks run a few sanity checks before estimating a model
+#' @author C.Marsh
+#' @description This function will do some simple checks such check likelihoods are all finite, no non-zero gradients
+#' @param mle_obj which is TMB object that contains fn(), gr(), and par functions. Should have been optimised
+#' @param mle_pars vector of fixed effect parameters that can be passed to fn and gr obj calls
+#' @return bool true means model passed false means model failed. Will also print a message to screen on what failed.
+#' @export
+
+post_optim_sanity_checks <- function(mle_obj, mle_pars, max_abs_gradient = 0.00001) {
+  passed_post_sanity_checks = TRUE;
+  ## turn obj to silent so messages don't get lost
+  mle_obj$env$silent = F
+  mle_obj$env$tracepar = F
+  mle_obj$env$tracemgc = F
+
+  ## get the data
+  data = mle_obj$env$data
+  if(data$model != "TagIntegrated")
+    stop("sanity checks are made for the 'TagIntegrated' model")
+  ## get derived quantities
+  mle_report = mle_obj$report(mle_obj$env$last.par.best)
+  ## check likelihoods are all finite and not NA
+  if(!all(is.finite(mle_report$nll))) {
+    cat("Found Inf in log-likelihood, you will need to resolve this before optimisation\n")
+    passed_post_sanity_checks = F
+  }
+  if(!all(!is.na(mle_report$nll))) {
+    cat("Found NA in log-likelihood, you will need to resolve this before optimisation\n")
+    passed_post_sanity_checks = F
+  }
+  ## check max absolute gradients
+  max_abs_grad_ndx = which.max(abs(mle_obj$gr(mle_pars)))
+  max_abs_grad = abs(mle_obj$gr(mle_pars))[max_abs_grad_ndx]
+  if(max_abs_gradient < max_abs_grad) {
+    cat("Parameter: ", names(mle_obj$par)[max_abs_grad_ndx], " had absolute gradient = ", max_abs_grad, " which was greater than tolerance ", max_abs_gradient,". This indicates non-convergence.\n")
+    passed_post_sanity_checks = F
+  }
+
+  ## check hessian not singular
+  calculate_hessian = tryCatch(expr = optimHess(mle_pars, fn = mle_obj$fn, gr = mle_obj$gr)
+                               , error = function(e){e})
+
+  if(inherits(calculate_hessian,"error")) {
+    cat("Hessian calculation: ", calculate_hessian$message,"\n")
+    passed_post_sanity_checks = F
+  } else {
+    ## invert hessian
+    if(!is_matrix_invertable(calculate_hessian)) {
+      cat("Hessian matrix not invertible: probably due to singularity. Check the eigen values to find possible problematic parameters\n")
+      passed_post_sanity_checks = F
+    }
+    ## look at eigen values
+    hess_eigen_vals = eigen(calculate_hessian)
+    if(any(hess_eigen_vals$values < 0)) {
+      cat("Found negative eigen values for the Hessian matrix. This occurs when the matrix is non-zero, real, symmetric, and not positive semi-definite.\n")
+      passed_post_sanity_checks = F
+    }
+    ## just a message not sure how to flag this one. TODO add a threshold
+    cat("parameter ", names(mle_obj$par)[which.min(hess_eigen_vals$values)], " had the smallest eigen value of ", hess_eigen_vals$values[which.min(hess_eigen_vals$values)], "\n\n")
+  }
+
+  ## check parameters are not at bounds
+  ## rec-devs
+  if(any(abs(mle_report$recruitment_multipliers) > 10)) {
+    cat("Found recruitment_multipliers that had absolute values greater than 10. This is extreme value (possible convergence at bound) and worthy of furthur investigation.\n")
+    passed_post_sanity_checks = F
+  }
+  ## Survey Catchability
+  if(any(mle_report$srv_dom_ll_q > 0.95)){
+    cat("Found survey catchability greater than 0.95. This is an extreme value (possible convergence at bound)and worthy of furthur investigation.\n")
+    passed_post_sanity_checks = F
+  }
+  if(any(mle_report$srv_dom_ll_q < 0.00001)){
+    cat("Found survey catchability less than 0.00001. This is an extreme value (possible convergence at bound) and worthy of furthur investigation.\n")
+    passed_post_sanity_checks = F
+  }
+  ## tag reporting
+  if(any(mle_report$tag_reporting_rate > 0.95)){
+    cat("Found tag-reporting rate greater than 0.95. This is an extreme value (possible convergence at bound)and worthy of furthur investigation.\n")
+    passed_post_sanity_checks = F
+  }
+  if(any(mle_report$tag_reporting_rate < 0.00001)){
+    cat("Found tag-reporting rate less than 0.00001. This is an extreme value (possible convergence at bound) and worthy of furthur investigation.\n")
+    passed_post_sanity_checks = F
+  }
+  ## Selectivity values
+  if(any(mle_report$trwl_sel_pars > 40)){
+    cat("Found trawl fishery selectivity pars greater than 40 This is an extreme value (possible convergence at bound) and worthy of furthur investigation.\n")
+    passed_post_sanity_checks = F
+  }
+  if(any(mle_report$fixed_sel_pars > 40)){
+    cat("Found fixed fishery selectivity pars greater than 40 This is an extreme value (possible convergence at bound) and worthy of furthur investigation.\n")
+    passed_post_sanity_checks = F
+  }
+  if(any(mle_report$srv_dom_ll_sel_pars > 40)){
+    cat("Found survey selectivity pars greater than 40 This is an extreme value (possible convergence at bound) and worthy of furthur investigation.\n")
+    passed_post_sanity_checks = F
+  }
+
+  ## return a pass or fail message
+  cat("\n\n");
+  if(passed_post_sanity_checks) {
+    cat("Successfully passed post-optim-sanity checks\n")
+    return(TRUE)
+  }
+
+  ## else must have failed
+  cat("Failed post-optim-sanity checks. This suggests your model has not non-converged. It is best practice to explore these problems before evaluating model fits and derived quantities.\n")
+  return(FALSE)
 }

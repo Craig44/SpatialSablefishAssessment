@@ -19,7 +19,9 @@ set_up_parameters(
   tag_reporting_rate = "constant",
   est_init_F = F,
   est_catch_sd = F,
-  est_movement = T
+  est_movement = T,
+  est_sigma_R = F,
+  est_sigma_init_dev = F
 )
 }
 \arguments{
@@ -47,12 +49,12 @@ set_up_parameters(
 
 \item{tag_reporting_rate}{how to deal with tag-reporting rate will be ignored if there are no tag-recovery observations.
 \itemize{
-\item off: not estimated
-\item ignore: ignore this parameter
-\item constant: single value for all years and regions
-\item time: estimates a tag-reporting rate coefficient for all recovery years which is common across all regions
-\item space: TODO - not implemented estimates an regional tag-reporting rate which is common across all recovery years
-\item spatio-temporal: TODO - not implemented - estimates annual and regional tag-reporting rates
+\item \code{off}: not estimated
+\item \code{ignore}: ignore this parameter
+\item \code{constant}: single value for all years and regions
+\item \code{time}: estimates a tag-reporting rate coefficient for all recovery years which is common across all regions
+\item \code{space}: TODO - not implemented estimates an regional tag-reporting rate which is common across all recovery years
+\item \code{spatio-temporal}: TODO - not implemented - estimates annual and regional tag-reporting rates
 }}
 
 \item{est_init_F}{bool whether you want to estimate an initial F}
@@ -60,6 +62,10 @@ set_up_parameters(
 \item{est_catch_sd}{bool whether you want to estimate the catch sd parameter}
 
 \item{est_movement}{bool whether you want to estimate movement parameters}
+
+\item{est_sigma_R}{bool whether you want to estimate the recruitment sd parameter}
+
+\item{est_sigma_init_dev}{bool whether you want to estimate the initial-dev sd parameter}
 }
 \value{
 a named list that can be used by the \code{map} input for the \code{TMB::MakeADFun} function. NAs mean parameters are not estimated and elements with the same factor level mean they will be estimated with a common coefficient i.e., shared parameters

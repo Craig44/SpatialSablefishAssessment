@@ -3,7 +3,7 @@
 #' @return data frame with age-frequency info
 #' @export
 get_negloglike <- function(MLE_report) {
-  nll_df = data.frame(negloglike = round(MLE_report$nll,4), label = c("Fixed AF", "Trawl LF", "Fixed LF","Survey AF","Survey abund","Fixed catch","Trawl catch","Tag recovery", "Recruitment", "posfun penalty"))
+  nll_df = data.frame(negloglike = round(MLE_report$nll,4), label = c("Fixed AF", "Trawl LF", "Fixed LF","Survey AF","Survey abund","Fixed catch","Trawl catch","Tag recovery", "Recruitment", "Initialisation devs", "posfun penalty"))
   return(nll_df)
 }
 
@@ -159,8 +159,9 @@ plot_mean_age = function(MLE_report, label = "fixed", subset_years = NULL, sex =
 
   ## plot
   gplt = ggplot(full_df, aes(x = Year)) +
-    geom_point(aes(y = Oy, col = "Observed", shape = Sex, group = Sex)) +
+    geom_point(aes(y = Oy, col = "Observed", shape = Sex, group = Sex), size = 1.2) +
     geom_line(aes(y = Ey, col = "Predicted", linetype = Sex, group = Sex), linewidth= 1.1) +
+    geom_point(aes(y = Ey, col = "Predicted", shape = Sex, group = Sex), size = 1) +
     geom_errorbar(aes(ymin=ObsloAdj, ymax=ObshiAdj, col = "Observed"), width=.2, position=position_dodge(.9)) +
     guides( linewidth = "none") +
     labs(y = "Mean age", col = "", linetype = "") +
@@ -315,8 +316,9 @@ plot_mean_length = function(MLE_report, label = "fixed", subset_years = NULL, se
 
   ## plot
   gplt = ggplot(full_df, aes(x = Year)) +
-    geom_point(aes(y = Oy, col = "Observed", shape = Sex, group = Sex)) +
+    geom_point(aes(y = Oy, col = "Observed", shape = Sex, group = Sex, size = 1.2)) +
     geom_line(aes(y = Ey, col = "Predicted", linetype = Sex, group = Sex), linewidth= 1.1) +
+    geom_point(aes(y = Ey, col = "Predicted", shape = Sex, group = Sex), size = 1) +
     geom_errorbar(aes(ymin=ObsloAdj, ymax=ObshiAdj, col = "Observed"), width=.2, position=position_dodge(.9)) +
     guides( linewidth = "none") +
     labs(y = "Mean length", col = "", linetype = "") +

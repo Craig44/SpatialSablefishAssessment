@@ -4,7 +4,7 @@
 #' by unit-tests. There are no observations in this model.
 #'
 set.seed(234)
-library(SpatialSablefishAssessment)
+#library(SpatialSablefishAssessment)
 years = 2010:2020
 min_age = 2
 max_age = 31
@@ -15,6 +15,9 @@ M = 0.1
 sex_length_lvls = paste0(rep(c("M","F"), each = length(length_bins)), length_bins)
 reg_lvls = region_key$area[region_key$TMB_ndx + 1] ## need to be in correct order
 year_lvls = years ## need to be in correct order
+get_tag_release_ndx = function(region_ndx, release_event_year_ndx, n_regions) {
+  return ((release_event_year_ndx - 1) * n_regions + (region_ndx - 1) + 1);
+}
 #'
 #' TMB data
 #'
@@ -184,6 +187,40 @@ for(y_ndx in 1:length(tag_release_years)) {
 }
 
 data$tag_likelihood = 0
+
+#' logit bounds X which is between 0-1 to -inf -> inf based on the logit transformation
+#' equivalent to qlogis(X)
+#' @param X scalar range [0,1]
+#' @export
+#' @return Y to be between -inf, inf
+logit = function(X) {
+  log(X / (1 - X))
+}
+
+#' simplex
+#' takes a unit vector (or a vector that will be scaled by the mean) of length K and converts to unconstrained K - 1 vector
+#' @param xk vector of length K - 1 takes unconstrained values
+#' @param sum_to_one whether to rescale xk so it sums to one
+#' @return vector of length K - 1 unconstrained values
+#' @export
+#'
+simplex <- function (xk, sum_to_one = TRUE)  {
+  zk = vector()
+  if (!sum_to_one) {
+    xk = xk/sum(xk)
+  }
+  else {
+    if (abs(sum(xk) - 1) > 0.001)
+      stop("xk needs to sum = 1, otherwise speify sum_to_one = TRUE")
+  }
+  K = length(xk)
+  zk[1] = xk[1]/(1)
+  for (k in 2:(K - 1)) {
+    zk[k] = xk[k]/(1 - sum(xk[1:(k - 1)]))
+  }
+  yk = stats::qlogis(zk) - log(1/(K - 1:(K - 1)))
+  return(yk)
+}
 #'
 #' TMB Parameter definition OM values or starting values for EM
 #'
@@ -228,6 +265,9 @@ parameters$logistic_srv_dom_ll_q = array(logit(0.2), dim = c(data$n_regions, len
 parameters$ln_rec_dev = array(0, dim = c(1, n_years))
 parameters$ln_init_rec_dev = 0
 parameters$ln_catch_sd = log(0.02)
+parameters$ln_sigma_init_devs = log(0.2)
+parameters$ln_sigma_R = log(data$sigma_R)
+
 ## reporting rate
 parameters$logistic_tag_reporting_rate = array(logit(0.999), dim = c(n_regions, length(tag_recovery_years)))
 parameters$ln_tag_phi = log(1)
@@ -235,7 +275,8 @@ data$model = "TagIntegratedValidate"
 save(data, parameters, region_key, file = file.path("inst", "testdata", "MockSablefishModel.RData"))
 
 validate_input_data_and_parameters(data, parameters)
-
+## rm functions so we don't get a namespace clash
+rm(list = c("get_tag_release_ndx", "logit", "simplex"))
 ########################
 ## Check this model data parameter combo doesn't cause issues when making the AD object
 ########################

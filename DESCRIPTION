@@ -16,7 +16,8 @@ Depends:
     reshape2,
     dplyr
 Imports:
-    Rdpack
+    Rdpack,
+    tidyr
 LinkingTo: 
     TMB
 RdMacros: 

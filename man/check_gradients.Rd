@@ -10,7 +10,7 @@ check_gradients(obj)
 \item{obj}{A TMB list that has been built by MakeAdFun}
 }
 \value{
-character of good news or labels of problem parameters
+bool and print a message. True is gradients all non zero false suggests there are parameters with zero gradients which is a problem
 }
 \description{
 check_gradients
