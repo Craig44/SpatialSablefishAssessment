@@ -5,7 +5,7 @@ accessor-functions
 plotting-functions
 estimation-functions
 parameter-transformation-functions
-how-to-use-the-spatialsablefishassessment-r-package
+how-to-use-spatialsablefishassessment
 configuring-and-checking-model-inputs-data-and-parameters
 simple-sanity-checks
 optimisation

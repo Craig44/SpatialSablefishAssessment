@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+<head>
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>Chapter 3 How to use SpatialSablefishAssessment | SpatialSablefishAssessment</title>
+  <meta name="description" content="This Gitbook describes the spatial sablefish stock assessment R package and how to use it" />
+  <meta name="generator" content="bookdown 0.31 and GitBook 2.6.7" />
+
+  <meta property="og:title" content="Chapter 3 How to use SpatialSablefishAssessment | SpatialSablefishAssessment" />
+  <meta property="og:type" content="book" />
+  
+  <meta property="og:description" content="This Gitbook describes the spatial sablefish stock assessment R package and how to use it" />
+  <meta name="github-repo" content="https://github.com/Craig44/SpatialSablefishAssessment" />
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Chapter 3 How to use SpatialSablefishAssessment | SpatialSablefishAssessment" />
+  
+  <meta name="twitter:description" content="This Gitbook describes the spatial sablefish stock assessment R package and how to use it" />
+  
+
+<meta name="author" content="C.Marsh" />
+
+
+<meta name="date" content="2023-01-02" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  
+  
+<link rel="prev" href="functionlist.html"/>
+<link rel="next" href="TagIntegratedEq.html"/>
+<script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-clipboard.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+<link href="libs/anchor-sections-1.1.0/anchor-sections.css" rel="stylesheet" />
+<link href="libs/anchor-sections-1.1.0/anchor-sections-hash.css" rel="stylesheet" />
+<script src="libs/anchor-sections-1.1.0/anchor-sections.js"></script>
+
+
+<style type="text/css">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { color: #008000; } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { color: #008000; font-weight: bold; } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li><a href="./">SpatialSablefishAssessment</a></li>
+
+<li class="divider"></li>
+<li class="chapter" data-level="1" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i><b>1</b> <code>SpatialSablefishAssessment</code> is a R package for conducting spatial stock assessment research for a stock that has two fisheries.</a></li>
+<li class="chapter" data-level="2" data-path="functionlist.html"><a href="functionlist.html"><i class="fa fa-check"></i><b>2</b> A list of functions available in the <code>SpatialSablefishAssessment</code> package</a>
+<ul>
+<li class="chapter" data-level="2.1" data-path="functionlist.html"><a href="functionlist.html#validate-functions"><i class="fa fa-check"></i><b>2.1</b> Validate functions</a></li>
+<li class="chapter" data-level="2.2" data-path="functionlist.html"><a href="functionlist.html#accessor-functions"><i class="fa fa-check"></i><b>2.2</b> Accessor functions</a></li>
+<li class="chapter" data-level="2.3" data-path="functionlist.html"><a href="functionlist.html#plotting-functions"><i class="fa fa-check"></i><b>2.3</b> Plotting functions</a></li>
+<li class="chapter" data-level="2.4" data-path="functionlist.html"><a href="functionlist.html#estimation-functions"><i class="fa fa-check"></i><b>2.4</b> Estimation functions</a></li>
+<li class="chapter" data-level="2.5" data-path="functionlist.html"><a href="functionlist.html#parameter-transformation-functions"><i class="fa fa-check"></i><b>2.5</b> Parameter transformation functions</a></li>
+</ul></li>
+<li class="chapter" data-level="3" data-path="how-to-use-spatialsablefishassessment.html"><a href="how-to-use-spatialsablefishassessment.html"><i class="fa fa-check"></i><b>3</b> How to use <code>SpatialSablefishAssessment</code></a>
+<ul>
+<li class="chapter" data-level="3.1" data-path="how-to-use-spatialsablefishassessment.html"><a href="how-to-use-spatialsablefishassessment.html#configuring-and-checking-model-inputs-data-and-parameters"><i class="fa fa-check"></i><b>3.1</b> Configuring and checking model inputs (data and parameters)</a>
+<ul>
+<li class="chapter" data-level="3.1.1" data-path="how-to-use-spatialsablefishassessment.html"><a href="how-to-use-spatialsablefishassessment.html#simple-sanity-checks"><i class="fa fa-check"></i><b>3.1.1</b> Simple sanity checks</a></li>
+</ul></li>
+<li class="chapter" data-level="3.2" data-path="how-to-use-spatialsablefishassessment.html"><a href="how-to-use-spatialsablefishassessment.html#optimisation"><i class="fa fa-check"></i><b>3.2</b> Optimisation</a>
+<ul>
+<li class="chapter" data-level="3.2.1" data-path="how-to-use-spatialsablefishassessment.html"><a href="how-to-use-spatialsablefishassessment.html#check-convergence"><i class="fa fa-check"></i><b>3.2.1</b> Check convergence</a></li>
+<li class="chapter" data-level="3.2.2" data-path="how-to-use-spatialsablefishassessment.html"><a href="how-to-use-spatialsablefishassessment.html#fixing-estimable-parameters-at-input-values"><i class="fa fa-check"></i><b>3.2.2</b> Fixing estimable parameters at input values</a></li>
+<li class="chapter" data-level="3.2.3" data-path="how-to-use-spatialsablefishassessment.html"><a href="how-to-use-spatialsablefishassessment.html#sharing-parameter-estimates-among-estimable-variables-i.e.-male-and-female-having-a-common-selectivity"><i class="fa fa-check"></i><b>3.2.3</b> Sharing parameter estimates among estimable variables i.e., male and female having a common selectivity</a></li>
+</ul></li>
+<li class="chapter" data-level="3.3" data-path="how-to-use-spatialsablefishassessment.html"><a href="how-to-use-spatialsablefishassessment.html#model-summary"><i class="fa fa-check"></i><b>3.3</b> Model Summary</a></li>
+</ul></li>
+<li class="chapter" data-level="4" data-path="TagIntegratedEq.html"><a href="TagIntegratedEq.html"><i class="fa fa-check"></i><b>4</b> <code>TagIntegrated</code> model equations</a>
+<ul>
+<li class="chapter" data-level="" data-path="TagIntegratedEq.html"><a href="TagIntegratedEq.html#process-equations"><i class="fa fa-check"></i>Process equations</a>
+<ul>
+<li class="chapter" data-level="" data-path="TagIntegratedEq.html"><a href="TagIntegratedEq.html#population-dynamics"><i class="fa fa-check"></i>Population dynamics</a></li>
+<li class="chapter" data-level="" data-path="TagIntegratedEq.html"><a href="TagIntegratedEq.html#initialisation"><i class="fa fa-check"></i>Initialisation</a></li>
+<li class="chapter" data-level="" data-path="TagIntegratedEq.html"><a href="TagIntegratedEq.html#growth"><i class="fa fa-check"></i>Growth</a></li>
+<li class="chapter" data-level="" data-path="TagIntegratedEq.html"><a href="TagIntegratedEq.html#recruitment"><i class="fa fa-check"></i>Recruitment</a></li>
+<li class="chapter" data-level="" data-path="TagIntegratedEq.html"><a href="TagIntegratedEq.html#fishing-mortality"><i class="fa fa-check"></i>Fishing mortality</a></li>
+<li class="chapter" data-level="" data-path="TagIntegratedEq.html"><a href="TagIntegratedEq.html#tag-release-events"><i class="fa fa-check"></i>Tag release events</a></li>
+</ul></li>
+<li class="chapter" data-level="" data-path="TagIntegratedEq.html"><a href="TagIntegratedEq.html#observation-equations"><i class="fa fa-check"></i>Observation equations</a>
+<ul>
+<li class="chapter" data-level="" data-path="TagIntegratedEq.html"><a href="TagIntegratedEq.html#catch-at-age"><i class="fa fa-check"></i>Catch at age</a></li>
+<li class="chapter" data-level="" data-path="TagIntegratedEq.html"><a href="TagIntegratedEq.html#catch-at-length"><i class="fa fa-check"></i>Catch at length</a></li>
+<li class="chapter" data-level="" data-path="TagIntegratedEq.html"><a href="TagIntegratedEq.html#proportions-at-age"><i class="fa fa-check"></i>Proportions at age</a></li>
+<li class="chapter" data-level="" data-path="TagIntegratedEq.html"><a href="TagIntegratedEq.html#relative-abundance-indices"><i class="fa fa-check"></i>Relative abundance indices</a></li>
+<li class="chapter" data-level="" data-path="TagIntegratedEq.html"><a href="TagIntegratedEq.html#tag-recovery-observations"><i class="fa fa-check"></i>Tag recovery observations</a></li>
+</ul></li>
+<li class="chapter" data-level="" data-path="TagIntegratedEq.html"><a href="TagIntegratedEq.html#symbol-notation"><i class="fa fa-check"></i>Symbol Notation</a></li>
+</ul></li>
+<li class="chapter" data-level="5" data-path="TagIntegrated.html"><a href="TagIntegrated.html"><i class="fa fa-check"></i><b>5</b> <code>TagIntegrated</code> <code>data</code> and <code>parameter</code> descriptions</a>
+<ul>
+<li class="chapter" data-level="5.1" data-path="TagIntegrated.html"><a href="TagIntegrated.html#data"><i class="fa fa-check"></i><b>5.1</b> <code>data</code></a></li>
+<li class="chapter" data-level="5.2" data-path="TagIntegrated.html"><a href="TagIntegrated.html#parameters"><i class="fa fa-check"></i><b>5.2</b> <code>parameters</code></a></li>
+</ul></li>
+<li class="chapter" data-level="" data-path="references.html"><a href="references.html"><i class="fa fa-check"></i>References</a></li>
+<li class="divider"></li>
+<li><a href="https://github.com/Craig44/SpatialSablefishAssessment" target="blank">Github Repo here</a></li>
+
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">SpatialSablefishAssessment</a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="how-to-use-spatialsablefishassessment" class="section level1 hasAnchor" number="3">
+<h1><span class="header-section-number">Chapter 3</span> How to use <code>SpatialSablefishAssessment</code><a href="how-to-use-spatialsablefishassessment.html#how-to-use-spatialsablefishassessment" class="anchor-section" aria-label="Anchor link to header"></a></h1>
+<div id="configuring-and-checking-model-inputs-data-and-parameters" class="section level2 hasAnchor" number="3.1">
+<h2><span class="header-section-number">3.1</span> Configuring and checking model inputs (data and parameters)<a href="how-to-use-spatialsablefishassessment.html#configuring-and-checking-model-inputs-data-and-parameters" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>This package contains TMB models and summarizing and plotting functions for a spatial model used in sablefish research. Users are responsible for configuring the <code>data</code> and <code>parameter</code> structures that are passed to the TMB <code>MakeADFun</code> function which compiles the model. The best place to look for what dimensions and names of expected elements for <code>data</code> and <code>parameter</code> it is best to look at an example or the source code for the model (<a href="https://github.com/Craig44/SpatialSablefishAssessment/blob/master/src/TMB/TagIntegrated.hpp">see here</a>). To view an example data run</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="how-to-use-spatialsablefishassessment.html#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">load</span>(<span class="fu">system.file</span>(<span class="st">&quot;testdata&quot;</span>, <span class="st">&quot;MockSablefishModel.RData&quot;</span>,<span class="at">package=</span><span class="st">&quot;SpatialSablefishAssessment&quot;</span>))</span>
+<span id="cb2-2"><a href="how-to-use-spatialsablefishassessment.html#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(data)</span>
+<span id="cb2-3"><a href="how-to-use-spatialsablefishassessment.html#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(parameters)</span>
+<span id="cb2-4"><a href="how-to-use-spatialsablefishassessment.html#cb2-4" aria-hidden="true" tabindex="-1"></a>region_key</span></code></pre></div>
+<p>Once you have built the <code>data</code> and <code>parameter</code> objects then you can check that the dimensions are consistent with the model by using,</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="how-to-use-spatialsablefishassessment.html#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">validate_input_data_and_parameters</span>(data, parameters)</span></code></pre></div>
+<p>This function will report a message telling you either success or if one of the objects dimensions are off, then you will need to fix this because it is likely if you pass this to the TMBs <code>MakeADFun</code> it will crash your R session.</p>
+<p>The following list are some useful utility functions contained in this package to visualize data inputs. All functions should be documented and queried using the usual R <code>?</code> method</p>
+<ul>
+<li><code>plot_input_observations</code></li>
+<li><code>plot_input_catches</code></li>
+<li><code>plot_mean_weight</code></li>
+<li><code>plot_age_length_matrix</code></li>
+</ul>
+<p>Once you have checked the <code>data</code> and <code>parameter</code> objects you can build the TMB model following,</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="how-to-use-spatialsablefishassessment.html#cb4-1" aria-hidden="true" tabindex="-1"></a>my_model <span class="ot">=</span> TMB<span class="sc">::</span><span class="fu">MakeADFun</span>(<span class="at">data =</span> data,</span>
+<span id="cb4-2"><a href="how-to-use-spatialsablefishassessment.html#cb4-2" aria-hidden="true" tabindex="-1"></a>                               <span class="at">parameters =</span> parameters,</span>
+<span id="cb4-3"><a href="how-to-use-spatialsablefishassessment.html#cb4-3" aria-hidden="true" tabindex="-1"></a>                               <span class="at">DLL =</span> <span class="st">&quot;SpatialSablefishAssessment_TMBExports&quot;</span>, <span class="at">silent  =</span> T)</span></code></pre></div>
+<div id="simple-sanity-checks" class="section level3 hasAnchor" number="3.1.1">
+<h3><span class="header-section-number">3.1.1</span> Simple sanity checks<a href="how-to-use-spatialsablefishassessment.html#simple-sanity-checks" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>It is possible to configure a model that has zero gradients for parameters, and you want to check this is not the case using the</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="how-to-use-spatialsablefishassessment.html#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">check_gradients</span>(my_model)</span></code></pre></div>
+<p>Check the likelihoods are all finite. It is easy to ask the model to calculate a predicted value in a region or year that has no fish which can cause undefined behaviour in some likelihood functions.</p>
+<pre><code>if(!all(is.finite(my_model$report()$nll)))
+  print(&quot;Found Inf in log-likelihood, you will need to resolve this before optimisation&quot;)
+if(!all(!is.na(my_model$report()$nll)))
+  print(&quot;Found NA in log-likelihood, you will need to resolve this before optimisation&quot;)</code></pre>
+</div>
+</div>
+<div id="optimisation" class="section level2 hasAnchor" number="3.2">
+<h2><span class="header-section-number">3.2</span> Optimisation<a href="how-to-use-spatialsablefishassessment.html#optimisation" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="how-to-use-spatialsablefishassessment.html#cb7-1" aria-hidden="true" tabindex="-1"></a>mle_optim <span class="ot">=</span> <span class="fu">nlminb</span>(<span class="at">start =</span> my_model<span class="sc">$</span>par, <span class="at">objective =</span> my_model<span class="sc">$</span>fn, <span class="at">gradient  =</span> my_model<span class="sc">$</span>gr, <span class="at">control =</span> <span class="fu">list</span>(<span class="at">iter.max =</span> <span class="dv">10000</span>, <span class="at">eval.max =</span> <span class="dv">10000</span>))</span>
+<span id="cb7-2"><a href="how-to-use-spatialsablefishassessment.html#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="how-to-use-spatialsablefishassessment.html#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Try and improve the optimsation running the model for two additional Newton Raphson iterations</span></span>
+<span id="cb7-4"><a href="how-to-use-spatialsablefishassessment.html#cb7-4" aria-hidden="true" tabindex="-1"></a>try_improve <span class="ot">=</span> <span class="fu">tryCatch</span>(<span class="at">expr =</span></span>
+<span id="cb7-5"><a href="how-to-use-spatialsablefishassessment.html#cb7-5" aria-hidden="true" tabindex="-1"></a>                         <span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>) {</span>
+<span id="cb7-6"><a href="how-to-use-spatialsablefishassessment.html#cb7-6" aria-hidden="true" tabindex="-1"></a>                           g <span class="ot">=</span> <span class="fu">as.numeric</span>(my_model<span class="sc">$</span><span class="fu">gr</span>(mle_optim<span class="sc">$</span>par))</span>
+<span id="cb7-7"><a href="how-to-use-spatialsablefishassessment.html#cb7-7" aria-hidden="true" tabindex="-1"></a>                           h <span class="ot">=</span> <span class="fu">optimHess</span>(mle_spatial<span class="sc">$</span>par, <span class="at">fn =</span> my_model<span class="sc">$</span>fn, <span class="at">gr =</span> my_model<span class="sc">$</span>gr)</span>
+<span id="cb7-8"><a href="how-to-use-spatialsablefishassessment.html#cb7-8" aria-hidden="true" tabindex="-1"></a>                           mle_optim<span class="sc">$</span>par <span class="ot">=</span> mle_spatial<span class="sc">$</span>par <span class="sc">-</span> <span class="fu">solve</span>(h,g)</span>
+<span id="cb7-9"><a href="how-to-use-spatialsablefishassessment.html#cb7-9" aria-hidden="true" tabindex="-1"></a>                           mle_optim<span class="sc">$</span>objective <span class="ot">=</span> my_model<span class="sc">$</span><span class="fu">fn</span>(mle_optim<span class="sc">$</span>par)</span>
+<span id="cb7-10"><a href="how-to-use-spatialsablefishassessment.html#cb7-10" aria-hidden="true" tabindex="-1"></a>                         }</span>
+<span id="cb7-11"><a href="how-to-use-spatialsablefishassessment.html#cb7-11" aria-hidden="true" tabindex="-1"></a>                       , <span class="at">error =</span> <span class="cf">function</span>(e){e})</span>
+<span id="cb7-12"><a href="how-to-use-spatialsablefishassessment.html#cb7-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-13"><a href="how-to-use-spatialsablefishassessment.html#cb7-13" aria-hidden="true" tabindex="-1"></a>try_improve</span></code></pre></div>
+<div id="check-convergence" class="section level3 hasAnchor" number="3.2.1">
+<h3><span class="header-section-number">3.2.1</span> Check convergence<a href="how-to-use-spatialsablefishassessment.html#check-convergence" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="how-to-use-spatialsablefishassessment.html#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="do">## largest gradient </span></span>
+<span id="cb8-2"><a href="how-to-use-spatialsablefishassessment.html#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(mle_optim<span class="sc">$</span>par)[<span class="fu">which.max</span>(<span class="fu">abs</span>(my_model<span class="sc">$</span><span class="fu">gr</span>(mle_optim<span class="sc">$</span>par)))]</span></code></pre></div>
+</div>
+<div id="fixing-estimable-parameters-at-input-values" class="section level3 hasAnchor" number="3.2.2">
+<h3><span class="header-section-number">3.2.2</span> Fixing estimable parameters at input values<a href="how-to-use-spatialsablefishassessment.html#fixing-estimable-parameters-at-input-values" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="how-to-use-spatialsablefishassessment.html#cb9-1" aria-hidden="true" tabindex="-1"></a>?<span class="fu">fix_pars</span>()</span></code></pre></div>
+</div>
+<div id="sharing-parameter-estimates-among-estimable-variables-i.e.-male-and-female-having-a-common-selectivity" class="section level3 hasAnchor" number="3.2.3">
+<h3><span class="header-section-number">3.2.3</span> Sharing parameter estimates among estimable variables i.e., male and female having a common selectivity<a href="how-to-use-spatialsablefishassessment.html#sharing-parameter-estimates-among-estimable-variables-i.e.-male-and-female-having-a-common-selectivity" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="how-to-use-spatialsablefishassessment.html#cb10-1" aria-hidden="true" tabindex="-1"></a>?<span class="fu">set_pars_to_be_the_same</span>()</span></code></pre></div>
+</div>
+</div>
+<div id="model-summary" class="section level2 hasAnchor" number="3.3">
+<h2><span class="header-section-number">3.3</span> Model Summary<a href="how-to-use-spatialsablefishassessment.html#model-summary" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>Once you are satisfied that the model has converged at global minimum, then you can get the model to report model quantities</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="how-to-use-spatialsablefishassessment.html#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="do">## get MLE quantities</span></span>
+<span id="cb11-2"><a href="how-to-use-spatialsablefishassessment.html#cb11-2" aria-hidden="true" tabindex="-1"></a>mle_report <span class="ot">=</span> my_model<span class="sc">$</span><span class="fu">report</span>(mle_optim<span class="sc">$</span>par)</span>
+<span id="cb11-3"><a href="how-to-use-spatialsablefishassessment.html#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-4"><a href="how-to-use-spatialsablefishassessment.html#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="do">#########</span></span>
+<span id="cb11-5"><a href="how-to-use-spatialsablefishassessment.html#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="do">## Plot interesting</span></span>
+<span id="cb11-6"><a href="how-to-use-spatialsablefishassessment.html#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="do">## Model quantities i.e., recruitment SSBs model fits etc</span></span>
+<span id="cb11-7"><a href="how-to-use-spatialsablefishassessment.html#cb11-7" aria-hidden="true" tabindex="-1"></a><span class="do">#########</span></span>
+<span id="cb11-8"><a href="how-to-use-spatialsablefishassessment.html#cb11-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-9"><a href="how-to-use-spatialsablefishassessment.html#cb11-9" aria-hidden="true" tabindex="-1"></a><span class="do">## movement assumption</span></span>
+<span id="cb11-10"><a href="how-to-use-spatialsablefishassessment.html#cb11-10" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_movement</span>(mle_report, <span class="at">region_key =</span> region_key)</span>
+<span id="cb11-11"><a href="how-to-use-spatialsablefishassessment.html#cb11-11" aria-hidden="true" tabindex="-1"></a><span class="co"># starting values</span></span>
+<span id="cb11-12"><a href="how-to-use-spatialsablefishassessment.html#cb11-12" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_movement</span>(OM_report, region_key)</span>
+<span id="cb11-13"><a href="how-to-use-spatialsablefishassessment.html#cb11-13" aria-hidden="true" tabindex="-1"></a><span class="co"># plot selectivities</span></span>
+<span id="cb11-14"><a href="how-to-use-spatialsablefishassessment.html#cb11-14" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_selectivities</span>(mle_report)</span>
+<span id="cb11-15"><a href="how-to-use-spatialsablefishassessment.html#cb11-15" aria-hidden="true" tabindex="-1"></a><span class="co"># starting values</span></span>
+<span id="cb11-16"><a href="how-to-use-spatialsablefishassessment.html#cb11-16" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_selectivities</span>(OM_report)</span>
+<span id="cb11-17"><a href="how-to-use-spatialsablefishassessment.html#cb11-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-18"><a href="how-to-use-spatialsablefishassessment.html#cb11-18" aria-hidden="true" tabindex="-1"></a><span class="do">## Regional SSBs</span></span>
+<span id="cb11-19"><a href="how-to-use-spatialsablefishassessment.html#cb11-19" aria-hidden="true" tabindex="-1"></a>ssb_plt <span class="ot">=</span> <span class="fu">plot_SSB</span>(mle_report, <span class="at">region_key =</span> region_key)</span>
+<span id="cb11-20"><a href="how-to-use-spatialsablefishassessment.html#cb11-20" aria-hidden="true" tabindex="-1"></a>ssb_plt</span>
+<span id="cb11-21"><a href="how-to-use-spatialsablefishassessment.html#cb11-21" aria-hidden="true" tabindex="-1"></a><span class="do">## sum SSB over all regions</span></span>
+<span id="cb11-22"><a href="how-to-use-spatialsablefishassessment.html#cb11-22" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(ssb_plt<span class="sc">$</span>data <span class="sc">%&gt;%</span> <span class="fu">group_by</span>(Year) <span class="sc">%&gt;%</span> <span class="fu">summarise</span>(<span class="at">total_ssb =</span> <span class="fu">sum</span>(SSB)), <span class="fu">aes</span>(<span class="at">x =</span> Year, <span class="at">y =</span> total_ssb)) <span class="sc">+</span></span>
+<span id="cb11-23"><a href="how-to-use-spatialsablefishassessment.html#cb11-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">linewidth =</span> <span class="fl">1.1</span>) <span class="sc">+</span></span>
+<span id="cb11-24"><a href="how-to-use-spatialsablefishassessment.html#cb11-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylim</span>(<span class="dv">0</span>,<span class="cn">NA</span>)</span>
+<span id="cb11-25"><a href="how-to-use-spatialsablefishassessment.html#cb11-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-26"><a href="how-to-use-spatialsablefishassessment.html#cb11-26" aria-hidden="true" tabindex="-1"></a><span class="do">## plot F&#39;s</span></span>
+<span id="cb11-27"><a href="how-to-use-spatialsablefishassessment.html#cb11-27" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_fishing_mortalities</span>(<span class="at">MLE_report =</span> mle_report, <span class="at">region_key =</span> region_key)</span>
+<span id="cb11-28"><a href="how-to-use-spatialsablefishassessment.html#cb11-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-29"><a href="how-to-use-spatialsablefishassessment.html#cb11-29" aria-hidden="true" tabindex="-1"></a><span class="do">## plot fits to observations</span></span>
+<span id="cb11-30"><a href="how-to-use-spatialsablefishassessment.html#cb11-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-31"><a href="how-to-use-spatialsablefishassessment.html#cb11-31" aria-hidden="true" tabindex="-1"></a><span class="co"># catch and index</span></span>
+<span id="cb11-32"><a href="how-to-use-spatialsablefishassessment.html#cb11-32" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_catch_fit</span>(<span class="at">MLE_report =</span> mle_report, <span class="at">region_key =</span> region_key) <span class="sc">+</span> <span class="fu">facet_wrap</span>(label<span class="sc">~</span>Region, <span class="at">ncol =</span> n_regions) <span class="sc">+</span> <span class="fu">ylab</span>(<span class="st">&quot;Catch (mt)&quot;</span>)</span>
+<span id="cb11-33"><a href="how-to-use-spatialsablefishassessment.html#cb11-33" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_index_fit</span>(<span class="at">MLE_report =</span> mle_report, <span class="at">region_key =</span> region_key)</span>
+<span id="cb11-34"><a href="how-to-use-spatialsablefishassessment.html#cb11-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-35"><a href="how-to-use-spatialsablefishassessment.html#cb11-35" aria-hidden="true" tabindex="-1"></a><span class="co"># survey AFs</span></span>
+<span id="cb11-36"><a href="how-to-use-spatialsablefishassessment.html#cb11-36" aria-hidden="true" tabindex="-1"></a>first_year_set <span class="ot">=</span> <span class="fu">c</span>(<span class="dv">1981</span>, <span class="fu">seq</span>(<span class="at">from =</span> <span class="dv">1985</span>, <span class="at">to =</span> <span class="dv">1993</span>, <span class="at">by =</span> <span class="dv">2</span>), <span class="dv">1996</span><span class="sc">:</span><span class="dv">1999</span>)</span>
+<span id="cb11-37"><a href="how-to-use-spatialsablefishassessment.html#cb11-37" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_AF</span>(<span class="at">MLE_report =</span> mle_report, <span class="at">region_key =</span> region_key, <span class="at">label =</span> <span class="st">&quot;srv_dom_ll&quot;</span>, <span class="at">subset_years =</span> first_year_set, <span class="at">sex =</span> <span class="st">&quot;male&quot;</span>) <span class="sc">+</span></span>
+<span id="cb11-38"><a href="how-to-use-spatialsablefishassessment.html#cb11-38" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">&quot;Male survey AF&quot;</span>) <span class="sc">+</span></span>
+<span id="cb11-39"><a href="how-to-use-spatialsablefishassessment.html#cb11-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">guides</span>(<span class="at">shape =</span> <span class="st">&quot;none&quot;</span>, <span class="at">linetype =</span> <span class="st">&quot;none&quot;</span>) <span class="sc">+</span></span>
+<span id="cb11-40"><a href="how-to-use-spatialsablefishassessment.html#cb11-40" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylim</span>(<span class="dv">0</span>,<span class="dv">20</span>)</span>
+<span id="cb11-41"><a href="how-to-use-spatialsablefishassessment.html#cb11-41" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_AF</span>(<span class="at">MLE_report =</span> mle_report, <span class="at">region_key =</span> region_key, <span class="at">label =</span> <span class="st">&quot;srv_dom_ll&quot;</span>, <span class="at">subset_years =</span> first_year_set, <span class="at">sex =</span> <span class="st">&quot;female&quot;</span>) <span class="sc">+</span></span>
+<span id="cb11-42"><a href="how-to-use-spatialsablefishassessment.html#cb11-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">&quot;Female survey AF&quot;</span>) <span class="sc">+</span></span>
+<span id="cb11-43"><a href="how-to-use-spatialsablefishassessment.html#cb11-43" aria-hidden="true" tabindex="-1"></a>  <span class="fu">guides</span>(<span class="at">shape =</span> <span class="st">&quot;none&quot;</span>, <span class="at">linetype =</span> <span class="st">&quot;none&quot;</span>)</span>
+<span id="cb11-44"><a href="how-to-use-spatialsablefishassessment.html#cb11-44" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb11-45"><a href="how-to-use-spatialsablefishassessment.html#cb11-45" aria-hidden="true" tabindex="-1"></a><span class="co"># fishery LFs</span></span>
+<span id="cb11-46"><a href="how-to-use-spatialsablefishassessment.html#cb11-46" aria-hidden="true" tabindex="-1"></a><span class="co"># Fixed gear</span></span>
+<span id="cb11-47"><a href="how-to-use-spatialsablefishassessment.html#cb11-47" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_LF</span>(<span class="at">MLE_report =</span> mle_report, <span class="at">region_key =</span> region_key, <span class="at">label =</span> <span class="st">&quot;fixed&quot;</span>, <span class="at">subset_years =</span> <span class="dv">1991</span><span class="sc">:</span><span class="dv">1999</span>, <span class="at">sex =</span> <span class="st">&quot;male&quot;</span>) <span class="sc">+</span></span>
+<span id="cb11-48"><a href="how-to-use-spatialsablefishassessment.html#cb11-48" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">&quot;Male fixed LF&quot;</span>) <span class="sc">+</span></span>
+<span id="cb11-49"><a href="how-to-use-spatialsablefishassessment.html#cb11-49" aria-hidden="true" tabindex="-1"></a>  <span class="fu">guides</span>(<span class="at">shape =</span> <span class="st">&quot;none&quot;</span>, <span class="at">linetype =</span> <span class="st">&quot;none&quot;</span>)</span>
+<span id="cb11-50"><a href="how-to-use-spatialsablefishassessment.html#cb11-50" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_LF</span>(<span class="at">MLE_report =</span> mle_report, <span class="at">region_key =</span> region_key, <span class="at">label =</span> <span class="st">&quot;fixed&quot;</span>, <span class="at">subset_years =</span> <span class="dv">1991</span><span class="sc">:</span><span class="dv">1999</span>, <span class="at">sex =</span> <span class="st">&quot;female&quot;</span>) <span class="sc">+</span></span>
+<span id="cb11-51"><a href="how-to-use-spatialsablefishassessment.html#cb11-51" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">&quot;Female fixed LF&quot;</span>) <span class="sc">+</span></span>
+<span id="cb11-52"><a href="how-to-use-spatialsablefishassessment.html#cb11-52" aria-hidden="true" tabindex="-1"></a>  <span class="fu">guides</span>(<span class="at">shape =</span> <span class="st">&quot;none&quot;</span>, <span class="at">linetype =</span> <span class="st">&quot;none&quot;</span>)</span>
+<span id="cb11-53"><a href="how-to-use-spatialsablefishassessment.html#cb11-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-54"><a href="how-to-use-spatialsablefishassessment.html#cb11-54" aria-hidden="true" tabindex="-1"></a><span class="co"># plot by tag releases event</span></span>
+<span id="cb11-55"><a href="how-to-use-spatialsablefishassessment.html#cb11-55" aria-hidden="true" tabindex="-1"></a>tag_fits_by_age_sex <span class="ot">=</span> <span class="fu">get_tag_recovery_obs_fitted_values</span>(mle_report, <span class="at">region_key =</span> region_key)</span>
+<span id="cb11-56"><a href="how-to-use-spatialsablefishassessment.html#cb11-56" aria-hidden="true" tabindex="-1"></a>tag_fits <span class="ot">=</span> tag_fits_by_age_sex <span class="sc">%&gt;%</span> <span class="fu">group_by</span>(release_event, unique_recovery_id) <span class="sc">%&gt;%</span> <span class="fu">summarise</span>(<span class="at">observed =</span> <span class="fu">sum</span>(observed), <span class="at">predicted =</span> <span class="fu">sum</span>(predicted), <span class="at">recovery_year =</span> <span class="fu">unique</span>(recovery_year), <span class="at">recovery_region =</span> <span class="fu">unique</span>(recovery_region), <span class="at">release_region =</span> <span class="fu">unique</span>(release_region), <span class="at">release_year =</span> <span class="fu">unique</span>(release_year))</span>
+<span id="cb11-57"><a href="how-to-use-spatialsablefishassessment.html#cb11-57" aria-hidden="true" tabindex="-1"></a>tag_fits<span class="sc">$</span>resid <span class="ot">=</span> tag_fits<span class="sc">$</span>observed <span class="sc">-</span> tag_fits<span class="sc">$</span>predicted</span>
+<span id="cb11-58"><a href="how-to-use-spatialsablefishassessment.html#cb11-58" aria-hidden="true" tabindex="-1"></a>tag_fits<span class="sc">$</span>stand_resid <span class="ot">=</span> tag_fits<span class="sc">$</span>resid <span class="sc">/</span> tag_fits<span class="sc">$</span>predicted</span>
+<span id="cb11-59"><a href="how-to-use-spatialsablefishassessment.html#cb11-59" aria-hidden="true" tabindex="-1"></a>tag_fits<span class="sc">$</span>resid_sign <span class="ot">=</span> <span class="fu">ifelse</span>(tag_fits<span class="sc">$</span>resid <span class="sc">&lt;</span> <span class="dv">0</span>, <span class="st">&quot;negative&quot;</span>, <span class="st">&quot;positive&quot;</span>)</span>
+<span id="cb11-60"><a href="how-to-use-spatialsablefishassessment.html#cb11-60" aria-hidden="true" tabindex="-1"></a>unique_release_events <span class="ot">=</span> <span class="fu">unique</span>(tag_fits<span class="sc">$</span>release_event)</span>
+<span id="cb11-61"><a href="how-to-use-spatialsablefishassessment.html#cb11-61" aria-hidden="true" tabindex="-1"></a>gplt <span class="ot">=</span> <span class="fu">ggplot</span>(tag_fits <span class="sc">%&gt;%</span> <span class="fu">filter</span>(release_event <span class="sc">%in%</span> unique_release_events[<span class="dv">1</span><span class="sc">:</span><span class="dv">16</span>]), <span class="fu">aes</span>(<span class="at">x =</span> recovery_year, <span class="at">y =</span> recovery_region)) <span class="sc">+</span></span>
+<span id="cb11-62"><a href="how-to-use-spatialsablefishassessment.html#cb11-62" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="fu">aes</span>(<span class="at">size =</span> <span class="fu">abs</span>(stand_resid), <span class="at">col =</span> resid_sign)) <span class="sc">+</span></span>
+<span id="cb11-63"><a href="how-to-use-spatialsablefishassessment.html#cb11-63" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;Recovery year&quot;</span>, <span class="at">y =</span> <span class="st">&quot;Recovery region&quot;</span>, <span class="at">size =</span> <span class="st">&quot;Pearson residuals&quot;</span>) <span class="sc">+</span></span>
+<span id="cb11-64"><a href="how-to-use-spatialsablefishassessment.html#cb11-64" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>() <span class="sc">+</span></span>
+<span id="cb11-65"><a href="how-to-use-spatialsablefishassessment.html#cb11-65" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_size_area</span>() <span class="sc">+</span></span>
+<span id="cb11-66"><a href="how-to-use-spatialsablefishassessment.html#cb11-66" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span>release_event) <span class="sc">+</span></span>
+<span id="cb11-67"><a href="how-to-use-spatialsablefishassessment.html#cb11-67" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_discrete</span>(<span class="at">breaks =</span> <span class="fu">every_nth</span>(<span class="at">n =</span> <span class="dv">5</span>))</span></code></pre></div>
+
+</div>
+</div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+<a href="functionlist.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="TagIntegratedEq.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+    </div>
+  </div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-clipboard.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+"sharing": {
+"github": false,
+"facebook": true,
+"twitter": true,
+"linkedin": false,
+"weibo": false,
+"instapaper": false,
+"vk": false,
+"whatsapp": false,
+"all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
+},
+"fontsettings": {
+"theme": "white",
+"family": "sans",
+"size": 2
+},
+"edit": {
+"link": "https://github.com/Craig44/SpatialSablefishAssessment/edit/main/02-UsePackage.Rmd",
+"text": "Edit"
+},
+"history": {
+"link": null,
+"text": null
+},
+"view": {
+"link": null,
+"text": null
+},
+"download": ["_main.pdf", "_main.epub"],
+"search": {
+"engine": "fuse",
+"options": null
+},
+"toc": {
+"collapse": "subsection"
+}
+});
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    var src = "true";
+    if (src === "" || src === "true") src = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/latest.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:")
+      if (/^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
+    script.src = src;
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+</body>
+
+</html>
