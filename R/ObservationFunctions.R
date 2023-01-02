@@ -6,6 +6,7 @@ get_negloglike <- function(MLE_report) {
   nll_df = data.frame(negloglike = round(MLE_report$nll,4), label = c("Fixed AF", "Trawl LF", "Fixed LF","Survey AF","Survey abund","Fixed catch","Trawl catch","Tag recovery", "Recruitment", "posfun penalty"))
   return(nll_df)
 }
+
 #' get_AF accessor function to get age-frequency data
 #' @param MLE_report a list that is output from obj$report() usually once an optimsation routine has been done.
 #' @param label character labeling the observation you want to plot. See below for options

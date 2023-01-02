@@ -8,7 +8,8 @@ fix_pars(
   par_list,
   pars_to_exclude,
   vec_elements_to_exclude = NULL,
-  array_elements_to_exclude = NULL
+  array_elements_to_exclude = NULL,
+  existing_map = NULL
 )
 }
 \arguments{
@@ -18,7 +19,9 @@ fix_pars(
 
 \item{vec_elements_to_exclude}{a named list (names \%in\% pars_to_exclude) with number of elements = length(vec_pars_to_adjust). each list element}
 
-\item{array_elements_to_exclude}{a named list (names \%in\% pars_to_exclude) with a matrix each row corresponds to an element with the first column being the array row index and second column being the array column index to fix
+\item{array_elements_to_exclude}{a named list (names \%in\% pars_to_exclude) with a matrix each row corresponds to an element with the first column being the array row index and second column being the array column index to fix}
+
+\item{existing_map}{a named list that already contains NAs from previous fix_pars calls
 contains a vector of elements that we want to exclude from estimation.}
 }
 \value{

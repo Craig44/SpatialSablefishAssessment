@@ -1,4 +1,4 @@
-# How to use the `SpatialSablefishAssessment` R package
+# How to use `SpatialSablefishAssessment`
 
 
 ## Configuring and checking model inputs (data and parameters)

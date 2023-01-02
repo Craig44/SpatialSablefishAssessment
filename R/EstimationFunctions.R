@@ -55,16 +55,19 @@ rmvnorm_prec <- function(mu, prec, n.sims, random_seed ) {
 #' @param pars_to_exclude a vector of strings with names of parameters you want to FIX in the objective object.
 #' @param vec_elements_to_exclude a named list (names %in% pars_to_exclude) with number of elements = length(vec_pars_to_adjust). each list element
 #' @param array_elements_to_exclude a named list (names %in% pars_to_exclude) with a matrix each row corresponds to an element with the first column being the array row index and second column being the array column index to fix
-
+#' @param existing_map a named list that already contains NAs from previous fix_pars calls
 #' contains a vector of elements that we want to exclude from estimation.
 #' @return a list of factors used in the MakeADFun function
 #' @export
-fix_pars <- function(par_list, pars_to_exclude, vec_elements_to_exclude = NULL, array_elements_to_exclude = NULL) {
+fix_pars <- function(par_list, pars_to_exclude, vec_elements_to_exclude = NULL, array_elements_to_exclude = NULL, existing_map = NULL) {
   if (!any(pars_to_exclude %in% names(par_list))) {
     stop(paste0("The parameters ", paste(pars_to_exclude[!pars_to_exclude %in% names(par_list)],collapse = " ")," in exclusion parameters could not be found in the 'par_list', please sort this out"))
   }
   pars = names(par_list)
   mapped_pars = list();
+  if(!is.null(existing_map))
+    mapped_pars = existing_map
+
   if (!is.null(vec_elements_to_exclude)) {
     if (!all(names(vec_elements_to_exclude) %in% pars_to_exclude))
       stop("parameters names in vec_elements_to_exclude, need to also be in pars_to_exclude")
@@ -148,7 +151,263 @@ fix_pars <- function(par_list, pars_to_exclude, vec_elements_to_exclude = NULL, 
   return(mapped_pars);
 }
 
+#' set_up_parameters utility function to help 'turn off' parameters and share estimated parameters across elements
+#' @param data a list of data inputs for the model
+#' @param parameters a list of parameter values for the model
+#' @param na_map an existing map that has already had parameters turned off, not well tested
+#' @param srv_sel_first_param_shared_by_sex bool, whether the first survey selectivity parameter is shared among male and female for all time-blocks
+#' @param srv_sel_second_param_shared_by_sex bool, whether the second survey selectivity parameter is shared among male and female for all time-blocks
+#' @param fixed_sel_first_shared_by_sex bool, whether the first fixed gear selectivity parameter is shared among male and female for all time-blocks
+#' @param fixed_sel_second_shared_by_sex bool, whether the second fixed gear selectivity parameter is shared among male and female for all time-blocks
+#' @param trwl_sel_first_shared_by_sex bool, whether the first trawl gear selectivity parameter is shared among male and female for all time-blocks
+#' @param trwl_sel_second_shared_by_sex bool, whether the second trawl gear selectivity parameter is shared among male and female for all time-blocks
+#' @param recruit_dev_years_not_to_estimate vector of years that are not estimated.
+#' @param srv_q_spatial whether regional Q's exist
+#' @param tag_reporting_rate how to deal with tag-reporting rate will be ignored if there are no tag-recovery observations.
+#' \itemize{
+#'   \item ignore: ignore this parameter
+#'   \item constant: single value for all years and regions
+#'   \item time: estimates a tag-reporting rate coefficient for all recovery years which is common across all regions
+#'   \item space: TODO - not implemented estimates an regional tag-reporting rate which is common across all recovery years
+#'   \item spatio-temporal: TODO - not implemented - estimates annual and regional tag-reporting rates
+#' }
+#' @param est_init_F bool whether you want to estimate an initial F
+#' @param est_catch_sd bool whether you want to estimate the catch sd parameter
+#' @param est_movement bool whether you want to estimate movement parameters
+#' @return a named list that can be used by the `map` input for the `TMB::MakeADFun` function. NAs mean parameters are not estimated and elements with the same factor level mean they will be estimated with a common coefficient i.e., shared parameters
+#' @export
+set_up_parameters <- function(data, parameters,
+                              na_map = NULL,
+                              srv_sel_first_param_shared_by_sex = F,
+                              srv_sel_second_param_shared_by_sex = F,
+                              fixed_sel_first_shared_by_sex = F,
+                              fixed_sel_second_shared_by_sex = F,
+                              trwl_sel_first_shared_by_sex = F,
+                              trwl_sel_second_shared_by_sex = F,
+                              recruit_dev_years_not_to_estimate = NULL,
+                              srv_q_spatial = F,
+                              tag_reporting_rate = "constant",
+                              est_init_F = F,
+                              est_catch_sd = F,
+                              est_movement = T
+) {
 
+  if(!tag_reporting_rate %in% c("ignore","constant", "time"))#, "space", "spatio-temporal"))
+    stop('tag_reporting_rate: needs to be one of the following "ignore", "constant", "time"')
+  #
+  map_to_fix = na_map
+  parameters_completely_fixed = c()
+  vectors_with_elements_fixed = list()
+  arrays_with_elements_fixed = list()
+
+  # turn off F-avg and devs
+  if(data$F_method == 1)
+    parameters_completely_fixed = c(parameters_completely_fixed, c("ln_fixed_F_avg", "ln_fixed_F_devs","ln_trwl_F_avg", "ln_trwl_F_devs"))
+  # trun off init F if not estimating it
+  if(!est_init_F)
+    parameters_completely_fixed = c(parameters_completely_fixed, c("ln_init_F_avg"))
+  # trun off sd catch if not estimating it
+  if(!est_catch_sd)
+    parameters_completely_fixed = c(parameters_completely_fixed, c("ln_catch_sd"))
+  # turn off movement estimation parameters
+  if(!est_movement)
+    parameters_completely_fixed = c(parameters_completely_fixed, c("transformed_movement_pars"))
+  # turn off init_rec devs if not applying
+  if(data$n_init_rec_devs == 0)
+    parameters_completely_fixed = c(parameters_completely_fixed, c("ln_init_rec_dev"))
+
+  ## no tag recovery observations
+  base_tag_report_vals = list()
+  copy_tag_report_vals = list()
+  if(sum(data$tag_recovery_indicator) == 0) {
+    parameters_completely_fixed = c(parameters_completely_fixed, c("logistic_tag_reporting_rate", "ln_tag_phi"))
+  } else {
+    if(tag_reporting_rate == "ignore") {
+
+      # don't do anything
+
+    } else if(tag_reporting_rate == "constant") {
+      # all regions and years have the same reporting value
+      tag_report_fixd_elements = list(logistic_tag_reporting_rate = expand.grid(1:data$n_regions, 1:ncol(parameters$logistic_tag_reporting_rate))[-1,])
+      arrays_with_elements_fixed[["logistic_tag_reporting_rate"]] = tag_report_fixd_elements$logistic_tag_reporting_rate
+
+      base_tag_report_vals = rep(list(logistic_tag_reporting_rate = 1), dim(parameters$logistic_tag_reporting_rate)[1] * dim(parameters$logistic_tag_reporting_rate)[2] - 1)
+      copy_tag_report_vals = evalit(paste0("list(",paste(paste0("logistic_tag_reporting_rate = ", 2:(dim(parameters$logistic_tag_reporting_rate)[1] * dim(parameters$logistic_tag_reporting_rate)[2])), collapse = ", "),")"))
+
+    } else if (tag_reporting_rate == "time") {
+      # all years have the same reporting value
+      tag_report_fixd_elements = list(logistic_tag_reporting_rate = expand.grid(2:data$n_regions, 1:ncol(parameters$logistic_tag_reporting_rate)))
+      arrays_with_elements_fixed[["logistic_tag_reporting_rate"]] = tag_report_fixd_elements$logistic_tag_reporting_rate
+      ## build copy and base parameter labels
+      counter = 1;
+      for(i in 1:ncol(parameters$logistic_tag_reporting_rate)) {
+        this_bse_lst = rep(list(logistic_tag_reporting_rate = counter), data$n_regions - 1)
+        base_tag_report_vals = append(base_tag_report_vals, this_bse_lst)
+        this_cpy_lst = sapply((counter + 1):(counter + data$n_regions - 1), FUN = function(x) {
+          list(logistic_tag_reporting_rate =  x)
+        })
+        copy_tag_report_vals = append(copy_tag_report_vals, this_cpy_lst)
+
+        counter = counter + data$n_regions
+
+      }
+    }
+  }
+
+  ## deal with recruit devs
+  if(!is.null(recruit_dev_years_not_to_estimate)) {
+    yr_ndx = which(data$years %in% recruit_dev_years_not_to_estimate)
+
+    if(data$global_rec_devs == 1) {
+      ln_rec_dev_elements_to_fix = matrix(c(rep(1, length(yr_ndx)), yr_ndx), byrow = F, ncol = 2)
+    } else {
+      ln_rec_dev_elements_to_fix = matrix(c(rep(1:data$n_regions, each = length(yr_ndx)), rep(yr_ndx, data$n_regions)), byrow = F, ncol = 2)
+    }
+    arrays_with_elements_fixed[["ln_rec_dev"]] = ln_rec_dev_elements_to_fix
+  }
+  ## are we sharing selectivity parameters
+  base_srv_sel_param_vals = list()
+  copy_srv_sel_param_vals = list()
+  if(srv_sel_first_param_shared_by_sex) {
+    ## turn off females delta param will be set the same as male
+    srv_sel_param_elements_to_fix = cbind(1:dim(parameters$ln_srv_dom_ll_sel_pars)[1], 1,2)
+
+    ## fix male and female for all time-blocks
+    counter = 1
+    n_time_blocks = dim(parameters$ln_srv_dom_ll_sel_pars)[1]
+    for(t_ndx in 1:n_time_blocks) {
+      n_sel_pars_for_this_time_block = ifelse(data$srv_dom_ll_sel_type[t_ndx] != 2, 2, 1);
+      this_bse_lst = list(ln_srv_dom_ll_sel_pars = counter)
+      this_cpy_lst = list(ln_srv_dom_ll_sel_pars = counter + n_time_blocks * n_sel_pars_for_this_time_block)
+      base_srv_sel_param_vals = append(base_srv_sel_param_vals, this_bse_lst)
+      copy_srv_sel_param_vals = append(copy_srv_sel_param_vals, this_cpy_lst)
+      counter = counter + 1
+    }
+    arrays_with_elements_fixed[["ln_srv_dom_ll_sel_pars"]] = srv_sel_param_elements_to_fix
+  }
+  if(srv_sel_second_param_shared_by_sex) {
+    ## turn off females delta param will be set the same as male
+    srv_sel_param_elements_to_fix = cbind(1:dim(parameters$ln_srv_dom_ll_sel_pars)[1], 2,2)
+
+    ## fix male and female for all time-blocks
+    n_time_blocks = dim(parameters$ln_srv_dom_ll_sel_pars)[1]
+    counter = n_time_blocks + 1
+
+    for(t_ndx in 1:dim(parameters$ln_srv_dom_ll_sel_pars)[1]) {
+      n_sel_pars_for_this_time_block = ifelse(data$srv_dom_ll_sel_type[t_ndx] != 2, 2, 1);
+      this_bse_lst = list(ln_srv_dom_ll_sel_pars = counter)
+      this_cpy_lst = list(ln_srv_dom_ll_sel_pars = counter + n_time_blocks * n_sel_pars_for_this_time_block)
+      base_srv_sel_param_vals = append(base_srv_sel_param_vals, this_bse_lst)
+      copy_srv_sel_param_vals = append(copy_srv_sel_param_vals, this_cpy_lst)
+      counter = counter + 1
+    }
+    if(is.null(arrays_with_elements_fixed[["ln_srv_dom_ll_sel_pars"]])) {
+      arrays_with_elements_fixed[["ln_srv_dom_ll_sel_pars"]] = srv_sel_param_elements_to_fix
+    } else {
+      arrays_with_elements_fixed[["ln_srv_dom_ll_sel_pars"]] = rbind(arrays_with_elements_fixed[["ln_srv_dom_ll_sel_pars"]], srv_sel_param_elements_to_fix)
+    }
+  }
+  ## fixed gear fishery
+  ## are we sharing selectivity parameters
+  base_fixed_sel_param_vals = list()
+  copy_fixed_sel_param_vals = list()
+  if(fixed_sel_first_shared_by_sex) {
+    ## turn off females delta param will be set the same as male
+    fixed_sel_param_elements_to_fix = cbind(1:dim(parameters$ln_fixed_sel_pars)[1], 1,2)
+
+    ## fix male and female for all time-blocks
+    counter = 1
+    n_time_blocks = dim(parameters$ln_fixed_sel_pars)[1]
+    for(t_ndx in 1:dim(parameters$ln_fixed_sel_pars)[1]) {
+      n_sel_pars_for_this_time_block = ifelse(data$fixed_sel_type[t_ndx] != 2, 2, 1);
+      this_bse_lst = list(ln_fixed_sel_pars = counter)
+      this_cpy_lst = list(ln_fixed_sel_pars = counter + n_time_blocks * n_sel_pars_for_this_time_block)
+      base_fixed_sel_param_vals = append(base_fixed_sel_param_vals, this_bse_lst)
+      copy_fixed_sel_param_vals = append(copy_fixed_sel_param_vals, this_cpy_lst)
+      counter = counter + 1
+    }
+    arrays_with_elements_fixed[["ln_fixed_sel_pars"]] = fixed_sel_param_elements_to_fix
+  }
+  if(fixed_sel_second_shared_by_sex) {
+    ## turn off females delta param will be set the same as male
+    fixed_sel_param_elements_to_fix = cbind(1:dim(parameters$ln_fixed_sel_pars)[1], 2,2)
+
+    ## fix male and female for all time-blocks
+    n_time_blocks = dim(parameters$ln_fixed_sel_pars)[1]
+    counter = n_time_blocks + 1
+    for(t_ndx in 1:dim(parameters$ln_fixed_sel_pars)[1]) {
+      n_sel_pars_for_this_time_block = ifelse(data$fixed_sel_type[t_ndx] != 2, 2, 1);
+      this_bse_lst = list(ln_fixed_sel_pars = counter)
+      this_cpy_lst = list(ln_fixed_sel_pars = counter + n_time_blocks * n_sel_pars_for_this_time_block)
+      base_fixed_sel_param_vals = append(base_fixed_sel_param_vals, this_bse_lst)
+      copy_fixed_sel_param_vals = append(copy_fixed_sel_param_vals, this_cpy_lst)
+      counter = counter + 1
+    }
+    if(is.null(arrays_with_elements_fixed[["ln_fixed_sel_pars"]])) {
+      arrays_with_elements_fixed[["ln_fixed_sel_pars"]] = fixed_sel_param_elements_to_fix
+    } else {
+      arrays_with_elements_fixed[["ln_fixed_sel_pars"]] = rbind(arrays_with_elements_fixed[["ln_fixed_sel_pars"]], fixed_sel_param_elements_to_fix)
+    }
+  }
+  ## trwl gear fishery
+  ## are we sharing selectivity parameters
+  base_trwl_sel_param_vals = list()
+  copy_trwl_sel_param_vals = list()
+  if(trwl_sel_first_shared_by_sex) {
+    ## turn off females delta param will be set the same as male
+    trwl_sel_param_elements_to_fix = cbind(1:dim(parameters$ln_trwl_sel_pars)[1], 1,2)
+
+    ## fix male and female for all time-blocks
+    counter = 1
+    n_time_blocks = dim(parameters$ln_trwl_sel_pars)[1]
+    for(t_ndx in 1:dim(parameters$ln_trwl_sel_pars)[1]) {
+      n_sel_pars_for_this_time_block = ifelse(data$trwl_sel_type[t_ndx] != 2, 2, 1);
+      this_bse_lst = list(ln_trwl_sel_pars = counter)
+      this_cpy_lst = list(ln_trwl_sel_pars = counter + n_time_blocks * n_sel_pars_for_this_time_block)
+      base_trwl_sel_param_vals = append(base_trwl_sel_param_vals, this_bse_lst)
+      copy_trwl_sel_param_vals = append(copy_trwl_sel_param_vals, this_cpy_lst)
+      counter = counter + 1
+    }
+    arrays_with_elements_fixed[["ln_trwl_sel_pars"]] = trwl_sel_param_elements_to_fix
+  }
+  if(trwl_sel_second_shared_by_sex) {
+    ## turn off females delta param will be set the same as male
+    trwl_sel_param_elements_to_fix = cbind(1:dim(parameters$ln_trwl_sel_pars)[1], 2,2)
+
+    ## fix male and female for all time-blocks
+    n_time_blocks = dim(parameters$ln_trwl_sel_pars)[1]
+    counter = n_time_blocks + 1
+    for(t_ndx in 1:dim(parameters$ln_trwl_sel_pars)[1]) {
+      n_sel_pars_for_this_time_block = ifelse(data$trwl_sel_type[t_ndx] != 2, 2, 1);
+      this_bse_lst = list(ln_trwl_sel_pars = counter)
+      this_cpy_lst = list(ln_trwl_sel_pars = counter + n_time_blocks * n_sel_pars_for_this_time_block)
+      base_trwl_sel_param_vals = append(base_trwl_sel_param_vals, this_bse_lst)
+      copy_trwl_sel_param_vals = append(copy_trwl_sel_param_vals, this_cpy_lst)
+      counter = counter + 1
+    }
+    if(is.null(arrays_with_elements_fixed[["ln_trwl_sel_pars"]])) {
+      arrays_with_elements_fixed[["ln_trwl_sel_pars"]] = trwl_sel_param_elements_to_fix
+    } else {
+      arrays_with_elements_fixed[["ln_trwl_sel_pars"]] = rbind(arrays_with_elements_fixed[["ln_trwl_sel_pars"]], trwl_sel_param_elements_to_fix)
+    }
+  }
+  ## initial fix pars
+  map_to_fix = fix_pars(parameters, pars_to_exclude = c(parameters_completely_fixed, names(arrays_with_elements_fixed), names(vectors_with_elements_fixed)), vec_elements_to_exclude = vectors_with_elements_fixed, array_elements_to_exclude = arrays_with_elements_fixed, existing_map = na_map)
+  ## append all base and copy lists elements
+  bse_params = append(base_tag_report_vals, base_srv_sel_param_vals)
+  bse_params = append(bse_params, base_fixed_sel_param_vals)
+  bse_params = append(bse_params, base_trwl_sel_param_vals)
+  cpy_params = append(copy_tag_report_vals, copy_srv_sel_param_vals)
+  cpy_params = append(cpy_params, copy_fixed_sel_param_vals)
+  cpy_params = append(cpy_params, copy_trwl_sel_param_vals)
+  if(length(bse_params) > 0) {
+    ## some-times this wont be populated which means we won't be fixing any paramaeters
+    if(length(bse_params) != length(cpy_params))
+      stop("An error occured: base_parameters has different length to copy_parameters for the 'set_pars_to_be_the_same' function")
+    map_to_fix = set_pars_to_be_the_same(par_list = parameters, map = map_to_fix, base_parameters = bse_params, copy_parameters = cpy_params)
+  }
+  return(map_to_fix)
+}
 #' set_pars_to_be_the_same
 #' @author C.Marsh
 #' @description TMB helper function this function returns a list of factors used in the map argument of the MakeADFun function

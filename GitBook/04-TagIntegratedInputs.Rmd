@@ -1,6 +1,6 @@
-# Descriptions of data and parameter objects expected by the `TagIntegrated` model {#TagIntegrated}
+# `TagIntegrated` `data` and `parameter` descriptions {#TagIntegrated}
 
-Users need to population a `data` and `parameters` named list object that is then passed to TMBs `MakeADFun`. These sections outline the elements and corresponding dimensions of both `data` and `parameters`.
+Users need to population a `data` and `parameters` named list object that is then passed to TMB's `MakeADFun`. These sections outline the elements and corresponding dimensions of both `data` and `parameters`.
 
 
 ## `data`
@@ -32,11 +32,11 @@ Users need to population a `data` and `parameters` named list object that is the
 
 - `fixed_fishery_catch` vector of annual catch for the fixed gear fishery. Units are kilo tonnes
 - `trwl_fishery_catch` vector of annual catch for the Trawl gear fishery. Units are kilo tonnes
-- `fixed_sel_type` vector of integers specifying the selectivity type in each time-block.
+- `fixed_sel_type` vector of integers specifying the selectivity type in each time-block `length(unique(fixed_sel_by_year_indicator))`. Values 0 = logistic, 1  = Double normal, 2 = power function, 3 = alternative logistic formulation
 - `fixed_sel_by_year_indicator` vector of integers specifying which selectivity time-block to apply in each year (C++ indexing so start at zero)
-- `trwl_sel_type` vector of integers specifying the selectivity type in each time-block.
+- `trwl_sel_type` vector of integers specifying the selectivity type in each time-block `length(unique(trwl_sel_by_year_indicator))`. Values 0 = logistic, 1  = Double normal, 2 = power function, 3 = alternative logistic formulation
 - `trwl_sel_by_year_indicator` vector of integers specifying which selectivity time-block to apply in each year (C++ indexing so start at zero)
-- `srv_dom_ll_sel_type` vector of integers specifying the selectivity type in each time-block.
+- `srv_dom_ll_sel_type` vector of integers specifying the selectivity type in each time-block, `length(unique(srv_dom_ll_sel_by_year_indicator))`. Values 0 = logistic, 1  = Double normal, 2 = power function, 3 = alternative logistic formulation
 - `srv_dom_ll_sel_by_year_indicator` vector of integers specifying which selectivity time-block to apply in each year (C++ indexing so start at zero)
 - `tag_release_event_this_year` vector of integers specifying whether tags are released in each year. Length `n_years`. `n_years_with_tag_releases = sum(tag_release_event_this_year)`
 - `male_tagged_cohorts_by_age` Numbers of male tagged fish. Dimension `n_ages` \(\times\)  `n_region` \(\times\) `n_years_with_tag_releases`. These are in actual numbers **not** 1000's of fish, like the recruitment parameters
