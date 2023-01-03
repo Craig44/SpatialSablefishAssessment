@@ -2,7 +2,7 @@
 % Please edit documentation in R/TagFunctions.R
 \name{plot_tag_recovery_obs}
 \alias{plot_tag_recovery_obs}
-\title{plot_tag_recovery_obs}
+\title{plot_tag_recovery_obs plot predicted and observed tag-recovery obs}
 \usage{
 plot_tag_recovery_obs(
   MLE_report,
@@ -22,5 +22,5 @@ plot_tag_recovery_obs(
 ggplot2
 }
 \description{
-plot_tag_recovery_obs
+plot_tag_recovery_obs plot predicted and observed tag-recovery obs
 }

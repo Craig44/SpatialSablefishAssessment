@@ -207,13 +207,13 @@ get_tag_recovery_obs_fitted_values = function(MLE_report, region_key = NULL, ver
 }
 
 #'
-#' plot_tag_recovery_obs
+#' plot_tag_recovery_obs plot predicted and observed tag-recovery obs
 #' @param MLE_report a list that is output from obj$report() usually once an optimsation routine has been done.
 #' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
 #' @param release_ndx_to_plot vector of integers to create subset plots
 #' @return ggplot2
 #' @export
-plot_tag_recovery_obs= function(MLE_report, region_key = NULL, release_ndx_to_plot = 1:5, sex = "both") {
+plot_tag_recovery_obs = function(MLE_report, region_key = NULL, release_ndx_to_plot = 1:5, sex = "both") {
   if(!sex %in% c("both", "male","female"))
     stop("sex must be 'both', 'male' or 'female'")
   get_tag_df = get_tag_recovery_obs_fitted_values(MLE_report, region_key)
@@ -239,5 +239,79 @@ plot_tag_recovery_obs= function(MLE_report, region_key = NULL, release_ndx_to_pl
     geom_line(linewidth = 1.1) +
     facet_grid(recovery_region~release_event) +
     labs(col = "Recovery years")
+  return(gplt)
+}
+
+
+#'
+#' plot_tag_recovery_fits plot predicted and observed tag-recovery obs
+#' @param MLE_report a list that is output from obj$report() usually once an optimsation routine has been done.
+#' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
+#' @param plt_type string for the plot type
+#' \itemize{
+#'   \item `aggregate`: aggregated observed and predicted
+#'   \item `stand_resid`: boxplots of standardised residuals for release region and recovery region i.e., boxplots are all the release-events
+#'   \item `rqr_resid`: boxplots of randomised quantile residuals for release region and recovery region i.e., boxplots are all the release-events
+#' }
+#' @return ggplot2 facets are columns recovery regions rows are release regions
+#' @export
+plot_tag_recovery_fits <- function(MLE_report, region_key = NULL, plt_type = "aggregate") {
+  if(!plt_type %in% c("aggregate", "stand_resid", "rqr_resid"))
+    stop('plt_type needs to be one of "aggregate", "stand_resid", "rqr_resid"')
+
+  tag_fits_by_age_sex = get_tag_recovery_obs_fitted_values(MLE_report, region_key)
+  regions = paste0("Region ", 1:data$n_regions)
+  if(!is.null(region_key))
+    regions = region_key$area[region_key$TMB_ndx + 1]
+
+  if(!is.null(region_key)) {
+    tag_fits_by_age_sex$recovery_region = factor(tag_fits_by_age_sex$recovery_region, levels = rev(regions), ordered = T)
+    tag_fits_by_age_sex$release_region = factor(tag_fits_by_age_sex$release_region, levels = rev(regions), ordered = T)
+  }
+  gplt = NULL
+  ## aggregate to release region and recovery region
+  if(plt_type == "aggregate") {
+    tag_aggregated = tag_fits_by_age_sex %>% group_by(release_region, recovery_region) %>% summarise(observed = sum(observed), predicted = sum(predicted))
+    tag_aggregated$resid = tag_aggregated$observed - tag_aggregated$predicted
+    tag_aggregated$resid_sign = ifelse(tag_aggregated$resid < 0, "negative", "positive")
+
+    gplt = ggplot(tag_aggregated, aes(x = release_region, y = recovery_region, fill = resid)) +
+      geom_tile() +
+      scale_fill_gradient(low = "red", high = "blue") +
+      geom_text(aes(x = recovery_region, y = release_region, label = round(resid,2)), color = "black", size = 4) +
+      labs(x = "Recovery", y = "Release", fill = "Aggregated\nresiduals")
+
+  } else {
+    tag_fits = tag_fits_by_age_sex %>% group_by(release_event, unique_recovery_id) %>% summarise(observed = sum(observed), predicted = sum(predicted), recovery_year = unique(recovery_year), recovery_region = unique(recovery_region), release_region = unique(release_region), release_year = unique(release_year))
+    ## residuals
+    tag_fits$resid = tag_fits$observed - tag_fits$predicted
+    tag_fits$resid_sign = ifelse(tag_fits$resid < 0, "negative", "positive")
+    if(MLE_report$tag_likelihood == 0) {
+      ## Poisson
+      tag_fits$rqr = pnorm(ppois(tag_fits$observed, tag_fits$predicted))
+      tag_fits$stand_resid = tag_fits$resid / tag_fits$predicted
+    } else if(MLE_report$tag_likelihood == 1) {
+      ## Negative Binomial
+      tag_fits$rqr = pnorm(pnbinom(tag_fits$observed, size = MLE_report$tag_phi, mu = tag_fits$predicted))
+      tag_var = tag_fits$predicted + (tag_fits$predicted^2/MLE_report$tag_phi)
+      tag_fits$stand_resid = tag_fits$resid / sqrt(tag_var)
+    }
+
+    if(plt_type == "stand_resid") {
+      gplt = ggplot(data = tag_fits) +
+        geom_boxplot(aes(y = stand_resid)) +
+        ylim(-10,10) +
+        geom_hline(yintercept = 0, col = "red", linewidth = 1.1, linetype = "dashed") +
+        theme_bw()+
+        facet_grid(recovery_region~release_region)
+    }
+    if(plt_type == "stand_resid") {
+      gplt = ggplot(data = tag_fits) +
+        geom_boxplot(aes(y = rqr)) +
+        theme_bw()+
+        facet_grid(recovery_region~release_region)
+    }
+  }
+
   return(gplt)
 }

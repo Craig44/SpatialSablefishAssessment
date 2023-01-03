@@ -35,13 +35,13 @@ All of these functions have descriptions and details on expected input parameter
 - `plot_mean_length` plot mean length observations
 - `plot_mean_weight` plot mean weight over time for males and females
 - `plot_movement`  plot movement matrix from a model
-- `plot_partition`
-- `plot_recruitment`
-- `plot_selectivities` 
-- `plot_SSB`
-- `plot_tag_recovery_obs`
-- `plot_tag_release_AF`
-- `plot_partition`
+- `plot_partition` plot numbers at age by year and sex
+- `plot_recruitment` plot annual recruitment by region
+- `plot_selectivities` plot selectivity curves 
+- `plot_SSB` plot regional SSBs
+- `plot_tag_recovery_obs` plot tag-recovery obs
+- `plot_tag_recovery_fits` an alternative plotting function for tag-recovery obs
+- `plot_tag_release_AF` plot the numbers at age by sex for each release event
 
 ## Estimation functions
 

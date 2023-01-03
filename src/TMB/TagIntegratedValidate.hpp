@@ -1095,6 +1095,12 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   REPORT( tag_recovery_indicator );
   REPORT( tag_recovery_indicator_by_release_event_and_recovery_region );
   REPORT( tag_release_event_this_year );
+  // likelhood flags
+  REPORT( tag_likelihood );
+  REPORT( fixed_catchatage_comp_likelihood );
+  REPORT( trwl_catchatlgth_comp_likelihood );
+  REPORT( fixed_catchatlgth_comp_likelihood );
+  REPORT( srv_dom_ll_catchatage_comp_likelihood );
   // Report observations
   REPORT( obs_srv_dom_ll_bio );
   REPORT( obs_srv_dom_ll_se );
