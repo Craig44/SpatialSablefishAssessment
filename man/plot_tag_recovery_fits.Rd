@@ -16,6 +16,7 @@ plot_tag_recovery_fits(MLE_report, region_key = NULL, plt_type = "aggregate")
 \item \code{aggregate}: aggregated observed and predicted
 \item \code{stand_resid}: boxplots of standardised residuals for release region and recovery region i.e., boxplots are all the release-events
 \item \code{rqr_resid}: boxplots of randomised quantile residuals for release region and recovery region i.e., boxplots are all the release-events
+\item \code{raw_resid}: points and lines of raw residuals by recovery year (aggregated over release events) facets are release region by recovery region i.e., can by multiple release years for a recovery year
 }}
 }
 \value{

@@ -39,6 +39,7 @@ jobs:
             any::bookdown
             any::RcppEigen
             any::purrr
+            any::tidyr
 #      - name: Install dependencies
 #        run: |
 #          install.packages(c("remotes", "rcmdcheck", "testthat", "devtools"))

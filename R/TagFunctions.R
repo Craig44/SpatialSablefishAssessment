@@ -252,12 +252,13 @@ plot_tag_recovery_obs = function(MLE_report, region_key = NULL, release_ndx_to_p
 #'   \item `aggregate`: aggregated observed and predicted
 #'   \item `stand_resid`: boxplots of standardised residuals for release region and recovery region i.e., boxplots are all the release-events
 #'   \item `rqr_resid`: boxplots of randomised quantile residuals for release region and recovery region i.e., boxplots are all the release-events
+#'   \item `raw_resid`: points and lines of raw residuals by recovery year (aggregated over release events) facets are release region by recovery region i.e., can by multiple release years for a recovery year
 #' }
 #' @return ggplot2 facets are columns recovery regions rows are release regions
 #' @export
 plot_tag_recovery_fits <- function(MLE_report, region_key = NULL, plt_type = "aggregate") {
-  if(!plt_type %in% c("aggregate", "stand_resid", "rqr_resid"))
-    stop('plt_type needs to be one of "aggregate", "stand_resid", "rqr_resid"')
+  if(!plt_type %in% c("aggregate", "stand_resid", "rqr_resid", "raw_resid"))
+    stop('plt_type needs to be one of "aggregate", "stand_resid", "rqr_resid", "raw_resid"')
 
   tag_fits_by_age_sex = get_tag_recovery_obs_fitted_values(MLE_report, region_key)
   regions = paste0("Region ", 1:data$n_regions)
@@ -309,6 +310,14 @@ plot_tag_recovery_fits <- function(MLE_report, region_key = NULL, plt_type = "ag
       gplt = ggplot(data = tag_fits) +
         geom_boxplot(aes(y = rqr)) +
         theme_bw()+
+        facet_grid(recovery_region~release_region)
+    }
+    if(plt_type == "raw_resid") {
+      gplt = ggplot(data = tag_fits) +
+        geom_line(aes(x = recovery_year, y = resid)) +
+        geom_point(aes(x = recovery_year, y = resid)) +
+        theme_bw()+
+        labs(x = "recovery year",y = "Raw residual") +
         facet_grid(recovery_region~release_region)
     }
   }
