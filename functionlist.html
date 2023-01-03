@@ -23,7 +23,7 @@
 <meta name="author" content="C.Marsh" />
 
 
-<meta name="date" content="2023-01-02" />
+<meta name="date" content="2023-01-03" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -247,19 +247,21 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li><code>plot_mean_length</code> plot mean length observations</li>
 <li><code>plot_mean_weight</code> plot mean weight over time for males and females</li>
 <li><code>plot_movement</code> plot movement matrix from a model</li>
-<li><code>plot_partition</code></li>
-<li><code>plot_recruitment</code></li>
-<li><code>plot_selectivities</code></li>
-<li><code>plot_SSB</code></li>
-<li><code>plot_tag_recovery_obs</code></li>
-<li><code>plot_tag_release_AF</code></li>
-<li><code>plot_partition</code></li>
+<li><code>plot_partition</code> plot numbers at age by year and sex</li>
+<li><code>plot_recruitment</code> plot annual recruitment by region</li>
+<li><code>plot_selectivities</code> plot selectivity curves</li>
+<li><code>plot_SSB</code> plot regional SSBs</li>
+<li><code>plot_tag_recovery_obs</code> plot tag-recovery obs</li>
+<li><code>plot_tag_recovery_fits</code> an alternative plotting function for tag-recovery obs</li>
+<li><code>plot_tag_release_AF</code> plot the numbers at age by sex for each release event</li>
 </ul>
 </div>
 <div id="estimation-functions" class="section level2 hasAnchor" number="2.4">
 <h2><span class="header-section-number">2.4</span> Estimation functions<a href="functionlist.html#estimation-functions" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <ul>
 <li><code>set_up_parameters</code> Fix parameters, uses <code>fix_pars</code> and <code>set_pars_to_be_the_same</code> for the <code>TagIntegrated</code> model</li>
+<li><code>pre_optim_sanity_checks</code> run some checks on a TMB model of type <code>TagIntegrated</code> before optimization</li>
+<li><code>post_optim_sanity_checks</code> run some checks on a TMB model of type <code>TagIntegrated</code> after optimization</li>
 <li><code>check_gradients</code> check all parameter gradients are not zero</li>
 <li><code>Francis_reweighting</code> calculate stage-two weights for composition data</li>
 <li><code>get_tmb_fixed_effects</code> return fixed effect parameters from a model</li>
