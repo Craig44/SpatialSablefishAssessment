@@ -14,11 +14,10 @@ Depends:
     ggplot2,
     TMB (== 1.9.1),
     reshape2,
+    tidyr,
     dplyr
 Imports:
-    Rdpack,
-    tidyr,
-    purrr
+    Rdpack
 LinkingTo: 
     TMB
 RdMacros: 
