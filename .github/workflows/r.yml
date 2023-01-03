@@ -42,13 +42,13 @@ jobs:
       - name: Check
         run: rcmdcheck::rcmdcheck(args = c("--no-manual","--no-multiarch","--force"), error_on = "error")
         shell: Rscript {0}
-      - name: Run Tests
-        run: Rscript -e 'devtools::test(stop_on_failure = T)'
 
       - name: Install SpatialSablefishAssessment
         env:
            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # https://github.com/settings/tokens
         run: Rscript -e "devtools::install_github('Craig44/SpatialSablefishAssessment', dependencies = T)"
+      - name: Run Tests
+        run: Rscript -e 'devtools::test(stop_on_failure = T)'
 
       - name: Render Gitbook
         run: Rscript -e "bookdown::render_book(input = 'Gitbook')"
