@@ -487,7 +487,7 @@ set_pars_to_be_the_same <- function(par_list, map, base_parameters, copy_paramet
 #' pre_optim_sanity_checks run a few sanity checks before estimating a model
 #' @author C.Marsh
 #' @description This function will do some simple checks such check likelihoods are all finite, no non-zero gradients
-#' @param obj an estimated TMB object that contains fn(), gr(), and par functions
+#' @param obj an compiled MakeADFun TMB object that contains fn(), gr(), and par functions
 #' @return bool true means model passed false means model failed. Will also print a message to screen on what failed.
 #' @export
 

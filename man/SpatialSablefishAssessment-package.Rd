@@ -6,7 +6,7 @@
 \alias{SpatialSablefishAssessment-package}
 \title{SpatialSablefishAssessment: Spatial sablefish stock assessment model}
 \description{
-This package contains a TMB model used in spatial sablefish research, with utility functions and unit-tests.
+This package contains TMB models used in spatial sablefish research, with utility functions and unit-tests.
 }
 \author{
 \strong{Maintainer}: Craig Marsh \email{Craig.Marsh10@gmail.com}

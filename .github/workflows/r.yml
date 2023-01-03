@@ -31,8 +31,6 @@ jobs:
       - uses: r-lib/actions/setup-pandoc@v2
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          cache: true
-          cache-version: 2
           extra-packages: |
             any::devtools
             any::testthat
@@ -40,8 +38,6 @@ jobs:
             any::remotes
             any::bookdown
             any::RcppEigen
-            any::purrr
-            any::tidyr
 #      - name: Install dependencies
 #        run: |
 #          install.packages(c("remotes", "rcmdcheck", "testthat", "devtools"))

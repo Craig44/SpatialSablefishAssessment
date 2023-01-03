@@ -7,7 +7,7 @@
 pre_optim_sanity_checks(obj)
 }
 \arguments{
-\item{obj}{an estimated TMB object that contains fn(), gr(), and par functions}
+\item{obj}{an compiled MakeADFun TMB object that contains fn(), gr(), and par functions}
 }
 \value{
 bool true means model passed false means model failed. Will also print a message to screen on what failed.
