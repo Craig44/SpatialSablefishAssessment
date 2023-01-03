@@ -39,11 +39,10 @@ jobs:
             any::bookdown
             any::RcppEigen
           needs: purrr
-#      - name: Install dependencies
-#        run: |
-#          install.packages(c("remotes", "rcmdcheck", "testthat", "devtools"))
-#          remotes::install_deps(dependencies = TRUE)
-#        shell: Rscript {0}
+      - name: Install additional dependencies
+        run: |
+          install.packages(c("purrr"))
+        shell: Rscript {0}
 
 
       - name: Check
