@@ -6,7 +6,7 @@
 #' @importFrom tidyr pivot_wider pivot_longer
 #' @importFrom reshape2 melt
 #' @importFrom Rdpack reprompt
-#'
+#' @importFrom stats optimHess pnbinom pnorm  ppois
 # The following block is used by usethis to automatically manage
 # roxygen namespace tags. Modify with care!
 ## usethis namespace: start
