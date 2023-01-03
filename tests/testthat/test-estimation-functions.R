@@ -242,3 +242,57 @@ test_that("test-get_negloglike", {
   nll = get_negloglike(mle_report)
   expect_true(nrow(nll) == 11) ## 11 slots
 })
+
+
+#' test-get_tmb_parameter_element
+#' @description tests get_tmb_parameter_element  function
+#'
+test_that("test-get_tmb_parameter_element", {
+
+  parameters = list(
+    scalar_param = 2,
+    vector_param = 1:3,
+    array_2d = matrix(1:6, ncol = 3),
+    array_3d = array(1:18, dim = c(2,3,6))
+  )
+
+  ## scalar
+  expect_true(get_tmb_parameter_element(parameters = parameters, parameter_label = "scalar_param", element = 1) == 1)
+  expect_error(get_tmb_parameter_element(parameters = parameters, parameter_label = "scalar_param", element = 2))
+  ## vector
+  expect_true(get_tmb_parameter_element(parameters = parameters, parameter_label = "vector_param", element = 1) == 1)
+  expect_true(get_tmb_parameter_element(parameters = parameters, parameter_label = "vector_param", element = 2) == 2)
+  expect_true(get_tmb_parameter_element(parameters = parameters, parameter_label = "vector_param", element = 3) == 3)
+  expect_error(get_tmb_parameter_element(parameters = parameters, parameter_label = "vector_param", element = 4))
+  ## 2D array
+  expect_true(get_tmb_parameter_element(parameters = parameters, parameter_label = "array_2d", element = matrix(c(1,1), nrow = 1)) == 1)
+  expect_true(get_tmb_parameter_element(parameters = parameters, parameter_label = "array_2d", element = matrix(c(2,1), nrow = 1)) == 2)
+  expect_true(get_tmb_parameter_element(parameters = parameters, parameter_label = "array_2d", element = matrix(c(1,2), nrow = 1)) == 3)
+  expect_true(get_tmb_parameter_element(parameters = parameters, parameter_label = "array_2d", element = matrix(c(2,2), nrow = 1)) == 4)
+  expect_true(get_tmb_parameter_element(parameters = parameters, parameter_label = "array_2d", element = matrix(c(1,3), nrow = 1)) == 5)
+  expect_true(get_tmb_parameter_element(parameters = parameters, parameter_label = "array_2d", element = matrix(c(2,3), nrow = 1)) == 6)
+  ## 3D array
+  expect_true(get_tmb_parameter_element(parameters = parameters, parameter_label = "array_3d", element = matrix(c(1,1, 1), nrow = 1)) == 1)
+  expect_true(get_tmb_parameter_element(parameters = parameters, parameter_label = "array_3d", element = matrix(c(2,1, 1), nrow = 1)) == 2)
+  expect_true(get_tmb_parameter_element(parameters = parameters, parameter_label = "array_3d", element = matrix(c(1,2, 1), nrow = 1)) == 3)
+  expect_true(get_tmb_parameter_element(parameters = parameters, parameter_label = "array_3d", element = matrix(c(2,2, 1), nrow = 1)) == 4)
+  expect_true(get_tmb_parameter_element(parameters = parameters, parameter_label = "array_3d", element = matrix(c(1,3, 1), nrow = 1)) == 5)
+  expect_true(get_tmb_parameter_element(parameters = parameters, parameter_label = "array_3d", element = matrix(c(2,3, 1), nrow = 1)) == 6)
+
+  expect_true(get_tmb_parameter_element(parameters = parameters, parameter_label = "array_3d", element = matrix(c(1,1, 2), nrow = 1)) == 7)
+  expect_true(get_tmb_parameter_element(parameters = parameters, parameter_label = "array_3d", element = matrix(c(2,1, 2), nrow = 1)) == 8)
+  expect_true(get_tmb_parameter_element(parameters = parameters, parameter_label = "array_3d", element = matrix(c(1,2, 2), nrow = 1)) == 9)
+  expect_true(get_tmb_parameter_element(parameters = parameters, parameter_label = "array_3d", element = matrix(c(2,2, 2), nrow = 1)) == 10)
+  expect_true(get_tmb_parameter_element(parameters = parameters, parameter_label = "array_3d", element = matrix(c(1,3, 2), nrow = 1)) ==11)
+  expect_true(get_tmb_parameter_element(parameters = parameters, parameter_label = "array_3d", element = matrix(c(2,3, 2), nrow = 1)) == 12)
+
+  expect_true(get_tmb_parameter_element(parameters = parameters, parameter_label = "array_3d", element = matrix(c(1,1, 3), nrow = 1)) == 13)
+  expect_true(get_tmb_parameter_element(parameters = parameters, parameter_label = "array_3d", element = matrix(c(2,1, 3), nrow = 1)) == 14)
+  expect_true(get_tmb_parameter_element(parameters = parameters, parameter_label = "array_3d", element = matrix(c(1,2, 3), nrow = 1)) == 15)
+  expect_true(get_tmb_parameter_element(parameters = parameters, parameter_label = "array_3d", element = matrix(c(2,2, 3), nrow = 1)) == 16)
+  expect_true(get_tmb_parameter_element(parameters = parameters, parameter_label = "array_3d", element = matrix(c(1,3, 3), nrow = 1)) == 17)
+  expect_true(get_tmb_parameter_element(parameters = parameters, parameter_label = "array_3d", element = matrix(c(2,3, 3), nrow = 1)) == 18)
+
+  expect_error(get_tmb_parameter_element(parameters = parameters, parameter_label = "scalar_param", element = matrix(c(2,3, 3), nrow = 1)))
+  expect_error(get_tmb_parameter_element(parameters = parameters, parameter_label = "array_3d", element = 1))
+})

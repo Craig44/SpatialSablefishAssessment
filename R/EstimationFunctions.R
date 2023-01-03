@@ -633,3 +633,65 @@ post_optim_sanity_checks <- function(mle_obj, mle_pars, max_abs_gradient = 0.000
   cat("Failed post-optim-sanity checks. This suggests your model has not non-converged. It is best practice to explore these problems before evaluating model fits and derived quantities.\n")
   return(FALSE)
 }
+#' get_tmb_parameter_element utility function for turning an array index into a vector element.
+#' @detail TMB converts matrices and arrays into vectors internally, this function will take an vector or array index (element) and give TMBs vector location for that parameter
+#' @param element this is the element that is will be profiled in na_map$profile_param
+#' @param parameter_label string that corresponds to a parameter label in parameters
+#' @param parameters a named list that is passed to TMB::MakeADFun
+#' @return an integer that corresponds to how TMB vectorises array parameters
+#' @export
+get_tmb_parameter_element <- function(parameters, element, parameter_label) {
+  if(!any(class(element) %in% c("integer", "numeric", "array"))) {
+    stop("element: must be a class of type numeric or array")
+  }
+  param_type = "numeric"
+  element_type = "numeric"
+
+  this_par = get(parameter_label, parameters)
+  if(!any(class(this_par) %in% c("integer","numeric", "array"))) {
+    stop("parameter_label in parameters: must be a class of type numeric or array")
+  }
+
+  if ("array" %in% class(element)){
+    element_type = "array"
+  }
+  if ("array" %in% class(this_par)){
+    param_type = "array"
+  }
+  if(param_type != element_type)
+    stop("element class and parameter class must be the same")
+
+  if(param_type == "numeric") {
+    if(element > length(this_par))
+      stop(paste0("element ", element, " larger than container (", length(this_par),")"))
+    return(element)
+  } else {
+    counter = 1;
+    if(length(dim(this_par)) == 2) {
+      for(dim2_ndx in 1:dim(this_par)[2]) {
+        for(dim1_ndx in 1:dim(this_par)[1]) {
+          ## check if we need to drop this value
+          if(all(c(dim1_ndx, dim2_ndx) == element)) {
+            return(counter)
+          }
+          counter = counter + 1
+        }
+      }
+    } else if(length(dim(this_par)) == 3) {
+      for(dim3_ndx in 1:dim(this_par)[3]) {
+        for(dim2_ndx in 1:dim(this_par)[2]) {
+          for(dim1_ndx in 1:dim(this_par)[1]) {
+            ## check if we need to drop this value
+            if(all(c(dim1_ndx, dim2_ndx, dim3_ndx) == element)) {
+              return(counter)
+            }
+            counter = counter + 1
+
+          }
+        }
+      }
+    } else {
+      stop("can only deal with 2 or 3 dimension array parameters")
+    }
+  }
+}
