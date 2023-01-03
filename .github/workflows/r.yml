@@ -38,7 +38,8 @@ jobs:
             any::remotes
             any::bookdown
             any::RcppEigen
-
+            any::purrr
+            any::tidyr
       - name: Check
         run: rcmdcheck::rcmdcheck(args = c("--no-manual","--no-multiarch","--force"), error_on = "error")
         shell: Rscript {0}
