@@ -634,7 +634,7 @@ post_optim_sanity_checks <- function(mle_obj, mle_pars, max_abs_gradient = 0.000
   return(FALSE)
 }
 #' get_tmb_parameter_element utility function for turning an array index into a vector element.
-#' @detail TMB converts matrices and arrays into vectors internally, this function will take an vector or array index (element) and give TMBs vector location for that parameter
+#' @details TMB converts matrices and arrays into vectors internally, this function will take an vector or array index (element) and give TMBs vector location for that parameter
 #' @param element this is the element that is will be profiled in na_map$profile_param
 #' @param parameter_label string that corresponds to a parameter label in parameters
 #' @param parameters a named list that is passed to TMB::MakeADFun
@@ -694,4 +694,135 @@ get_tmb_parameter_element <- function(parameters, element, parameter_label) {
       stop("can only deal with 2 or 3 dimension array parameters")
     }
   }
+}
+
+
+#
+#' profile_param
+#' @details this will run a profile for a parameter or related set of parameters
+#' @param parameters a named list that is passed to TMB::MakeADFun. This is used as the starting values for the profile runs
+#' @param mle_obj which is TMB object that contains fn(), gr(), and par functions. Should have been optimised
+#' @param na_map a named list that was used during optimisation
+#' @param profile_param_label string that corresponds to a parameter in na_map and mle_obj$par
+#' @param element this is the element that corresponds to the index of parameters$profile_param. a single value means its a vector, a matrix with one row indicates the parameter is an array/matrix (can only handle 2-3 dimensional arrays)
+#' @param same_element this is the element of other values of parameters$profile_param that need to be set the same as element i.e., they are estimated at the same value. a vector of values means its a vector, a matrix with multiple row indicates the elements that will be set the same as the profile parameter.
+#' @param profile_values numeric vector of values that the model will profile the parameter at
+#' @param no_estimation bool only should be true for unit-testing purposes or debugging
+#' @param verbose print information during the function call
+#' @return a named list with the following objects
+#' \itemize{
+#'   \item `profile_mle` a list each element is an estimated report for each profile value
+#'   \item `parameters_ls`: a list each element is
+#'   \item `na_map`: single value for all years and regions
+#'   \item `profile_values` vector of values that was profiled
+#' }
+#'
+#' @export
+profile_param <- function(parameters, mle_obj, na_map, profile_param_label, element = 1, profile_values,  same_element = NULL, no_estimation = F, verbose = T) {
+  ## check profile_param correct
+  if(!profile_param_label %in% names(na_map))
+    stop(paste0("Could not find ", profile_param_label, " in 'na_map'. Check spelling"))
+  if(!profile_param_label %in% names(mle_obj$par))
+    stop(paste0("Could not find ", profile_param_label, " in 'mle_obj$par'. Check spelling"))
+  data = mle_obj$env$data
+  element_type = "numeric"
+  if("array" %in% class(element)) {
+    element_type = "array"
+  }
+
+  param_ndx = get_tmb_parameter_element(parameters = parameters, parameter_label = profile_param_label, element = element)
+  param_lvl = as.numeric(as.character(na_map[[profile_param_label]][param_ndx]))
+  ## need to turn this off in na_map and minus all other values
+  na_map[[profile_param_label]][param_ndx] = NA
+  param_ndx_of_pars_with_same_map = NULL
+  ## iterate over all containers and check levels greater than param_lvl have a minus value
+  for(i in 1:length(na_map)) {
+    ## convert factor to numeric
+    na_map[[i]] = as.numeric(as.character(na_map[[i]]))
+    for(j in 1:length(na_map[[i]])) {
+      if(is.na(na_map[[i]][j]))
+        next;
+      if(as.numeric(as.character(na_map[[i]][j])) >= param_lvl) {
+        if(as.numeric(as.character(na_map[[i]][j])) == param_lvl) {
+          ## this parameter is estimated to be the same as the profiled parameter
+          ## turn this parameter off and make sure we save the index so we can update it.
+          ## during profiling.
+          param_ndx_of_pars_with_same_map = c(param_ndx_of_pars_with_same_map, j)
+          na_map[[i]][j] = NA
+        } else {
+          na_map[[i]][j] = as.numeric(as.character(na_map[[i]][j])) - 1
+        }
+      }
+    }
+    if(!all(is.na( na_map[[i]]))) {
+      na_map[[i]] = factor(na_map[[i]], levels = unique(na_map[[i]]))
+    } else {
+      na_map[[i]] = rep(factor(NA), length(na_map[[i]]))
+    }
+  }
+  same_element_type = NULL
+  if(!is.null(same_element)) {
+    if("array" %in% class(same_element)) {
+      same_element_type = "array"
+    } else {
+      same_element_type = "numeric"
+    }
+    if(element_type != same_element_type)
+      stop("discrepency between class of element_type and same_element_type. These need to be the same")
+  }
+  ## now profile
+  profile_mle_lst = parameters_ls = list();
+  for(i in 1:length(profile_values)) {
+    if(verbose)
+      cat("profile iteration = ", i, "\n")
+    ## populat the parameters with profile values
+    if(element_type == "numeric") {
+      parameters[[profile_param_label]][element] = profile_values[i]
+      if(!is.null(same_element)) {
+        for(j in 1:length(same_element))
+          parameters[[profile_param_label]][same_element[j]] = profile_values[i]
+      }
+    } else {
+      if(length(dim(parameters[[profile_param_label]])) == 2) {
+        parameters[[profile_param_label]][element[1,1], element[1,2]] = profile_values[i]
+        if(!is.null(same_element)) {
+          for(j in 1:nrow(same_element))
+            parameters[[profile_param_label]][same_element[j,1], same_element[j,2]] = profile_values[i]
+        }
+      } else if (length(dim(parameters[[profile_param_label]])) == 3) {
+        parameters[[profile_param_label]][element[1,1], element[1,2],element[1,3]] = profile_values[i]
+        if(!is.null(same_element)) {
+          for(j in 1:nrow(same_element))
+            parameters[[profile_param_label]][same_element[j,1], same_element[j,2],same_element[j,3]] = profile_values[i]
+        }
+      } else {
+        stop("unknown dimension for profile_param_label")
+      }
+    }
+    parameters_ls[[i]] = parameters
+    ## recompile the AD object
+    profile_obj = TMB::MakeADFun(data = data, parameters = parameters, map = na_map, DLL="SpatialSablefishAssessment_TMBExports", silent = T)
+    if(!no_estimation) {
+      ## optimise
+      profile_mle = nlminb(start = profile_obj$par, objective = profile_obj$fn, gradient  = profile_obj$gr, control = list(iter.max = 10000, eval.max = 10000))
+      try_improve = tryCatch(expr =
+                               for(k in 1:2) {
+                                 g = as.numeric(profile_obj$gr(profile_mle$par))
+                                 h = optimHess(profile_mle$par, fn = profile_obj$fn, gr = profile_obj$gr)
+                                 profile_mle$par = profile_mle$par - solve(h,g)
+                                 profile_mle$objective = profile_obj$fn(profile_mle$par)
+                               }
+                             , error = function(e){e})
+
+      try_improve
+      if(inherits(try_improve, "error")) {
+        cat("non-convergence for profile iteration ", i , " value = ",profile_values[i],"\n")
+        break;
+      }
+      profile_mle_lst[[i]] = profile_obj$report(profile_mle$par)
+    } else {
+      profile_mle_lst[[i]] = profile_obj$report()
+    }
+  }
+  return(list(profile_mle = profile_mle_lst, na_map = na_map, data = data, parameters_ls = parameters_ls, profile_values = profile_values))
 }

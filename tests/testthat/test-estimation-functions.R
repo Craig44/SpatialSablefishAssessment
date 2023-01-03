@@ -296,3 +296,50 @@ test_that("test-get_tmb_parameter_element", {
   expect_error(get_tmb_parameter_element(parameters = parameters, parameter_label = "scalar_param", element = matrix(c(2,3, 3), nrow = 1)))
   expect_error(get_tmb_parameter_element(parameters = parameters, parameter_label = "array_3d", element = 1))
 })
+
+
+
+#' test-profile_param
+#' @description tests profile_param  function
+#'
+test_that("test-profile_param", {
+  load(system.file("testdata", "MockSablefishModel.RData",package="SpatialSablefishAssessment"))
+
+  ## start with fixing a recruitment dev
+  data$F_method = 1
+  na_map = set_up_parameters(data= data, parameters = parameters, trwl_sel_first_shared_by_sex = F, trwl_sel_second_shared_by_sex = F)
+
+  test_model <- TMB::MakeADFun(data = data,
+                               parameters = parameters, map = na_map,
+                               DLL = "SpatialSablefishAssessment_TMBExports", silent  = T)
+
+  test_rep = test_model$report()
+  rec_vals = c(-1,0,1)
+  rec_ndx = 11
+  test_rec = profile_param(parameters, test_model, na_map, profile_param_label = "ln_rec_dev", element = matrix(c(1,rec_ndx),nrow = 1), profile_values = rec_vals,  same_element = NULL, no_estimation = T, verbose= F)
+  for(i in 1:length(rec_vals)) {
+    expect_equal(test_rec$profile_mle[[i]]$recruitment_multipliers[,rec_ndx],  rep(exp(rec_vals[i] - 0.5 * test_rep$sigma_R^2), nrow(test_rec$profile_mle[[i]]$recruitment_multipliers)), tolerance = 0.0001)
+  }
+
+  ## start by profiling a mean recruitment element
+  mean_rec_profiles = c(13, 14, 15, 16)
+  mean_rec_ndx = 2
+  test_rec = profile_param(parameters, test_model, na_map, profile_param_label = "ln_mean_rec", element = mean_rec_ndx, profile_values = mean_rec_profiles,  same_element = NULL, no_estimation = T, verbose= F)
+  for(i in 1:length(mean_rec_profiles)) {
+    ## check the profiled value was set to the correct value
+    expect_equal(test_rec$profile_mle[[i]]$mean_rec[mean_rec_ndx],  exp(mean_rec_profiles[i]), tolerance = 0.0001)
+    ## check the others didn't change
+    expect_equal(test_rec$profile_mle[[i]]$mean_rec[1],  exp(parameters$ln_mean_rec[1]), tolerance = 0.0001)
+
+  }
+
+  ## check the same element works
+  ## profile catchability
+  profile_q_vals = (c(0.1, 0.2, 0.3,0.4))
+  q_ndx = 1
+  test_profile = profile_param(parameters, test_model, na_map, profile_param_label = "logistic_srv_dom_ll_q", element = matrix(c(q_ndx,1),nrow = 1), profile_values = qlogis(profile_q_vals),  same_element = matrix(c(2,1,3,1, 4, 1, 5, 1), byrow = T, ncol = 2), no_estimation = T, verbose= F)
+  for(i in 1:length(profile_q_vals)) {
+    ## check the profiled value was set to the correct value
+    expect_equal(as.numeric(test_profile$profile_mle[[i]]$srv_dom_ll_q),  rep(profile_q_vals[i], nrow(test_profile$profile_mle[[i]]$srv_dom_ll_q)), tolerance = 0.0001)
+  }
+})
