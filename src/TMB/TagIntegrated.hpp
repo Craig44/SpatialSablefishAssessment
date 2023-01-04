@@ -703,9 +703,9 @@ Type TagIntegrated(objective_function<Type>* obj) {
               tag_release_event_ndx = get_tag_release_event_ndx(release_region_ndx, tag_ndx, n_regions);
               if(tag_recovery_indicator_by_release_event_and_recovery_region(tag_release_event_ndx, region_ndx, tag_recovery_counter) == 1) {
                 //pred_tag_recovery
-                temp_numbers_at_age_m = tagged_natage_m.col(tag_release_event_ndx).col(region_ndx).vec() * (1.0 - exp(- (F_fixed_m.col(year_ndx).col(region_ndx).vec())));
+                temp_numbers_at_age_m = tagged_natage_m.col(tag_release_event_ndx).col(region_ndx).vec() * F_fixed_m.col(year_ndx).col(region_ndx).vec() / Z_m.col(year_ndx).col(region_ndx).vec() * (1.0 - S_m.col(year_ndx).col(region_ndx).vec());
                 numbers_at_age_and_sex.segment(0,n_ages) = temp_numbers_at_age_m;
-                temp_numbers_at_age_f = tagged_natage_f.col(tag_release_event_ndx).col(region_ndx).vec() * (1.0 - exp(- (F_fixed_f.col(year_ndx).col(region_ndx).vec())));
+                temp_numbers_at_age_f = tagged_natage_f.col(tag_release_event_ndx).col(region_ndx).vec() * F_fixed_f.col(year_ndx).col(region_ndx).vec() / Z_f.col(year_ndx).col(region_ndx).vec() * (1.0 - S_f.col(year_ndx).col(region_ndx).vec());
                 numbers_at_age_and_sex.segment(n_ages,n_ages) = temp_numbers_at_age_f;
 
                 // apply reporting rate
@@ -717,7 +717,7 @@ Type TagIntegrated(objective_function<Type>* obj) {
                 if(tag_likelihood == 0) {
                   nll(7) -= dpois(obs_tag_recovery.col(tag_recovery_counter).col(region_ndx).col(tag_release_event_ndx).vec().sum(), predicted_tags, true);
                   SIMULATE {
-                    // store the simualted tag-observation in the first age-sex bin of obs_tag_recovery
+                    // store the simulated tag-observation in the first age-sex bin of obs_tag_recovery
                     obs_tag_recovery(0, tag_release_event_ndx, region_ndx, tag_recovery_counter) = rpois(predicted_tags);
                   }
                 } else if(tag_likelihood == 1) {

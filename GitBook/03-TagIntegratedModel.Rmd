@@ -133,34 +133,57 @@ where, \(\bar{w}_{a,y,s}\) is mean weight at age, this can be omitted if the obs
 
 ### Tag recovery observations {-}
 
-When tagged fish are released in to the model partition they are tracked by the tag release event denoted by index \(k\) for \(n_{T}\) years. Due to tags being predominately recovered by the fixed gear fishery all recoveries are from the fixed gear fishery. The model expects tag-recovery observations to be known by age and sex (not true). These are derived for each recovery event (also year and region specific) and tag-release event by using the age-length key that was used to release each recovered fish to obtain an sex specific age-frequency. This age-frequency is then aged by the number of years this tag-recovery event was at liberty to derive observed tag-recoveries by age and sex.
-
-This assumes the age-length conversion between releases and recoveries is consistent and allows us to use recovered fish with no length or sex recorded, but has the down side as mentioned earlier in the tag release section of smearing a single recovered fish across multiple age bins and sexes. However, it does mitigate the problem of going backwards and forwards through the age-length transition matrix, which appears to be more problematic.
-
-All tag recoveries are from the fixed gear (longline and pot gear) fishery, due to the recent trend in recoveries by gear method
-
-Model fitted values for tag event \(k\) recovered in region \(r\) and year \(y\) are denoted by \(\widehat{N}^k_{a,r,y,s}\), and are derived as
-
+When tagged fish are released in to the model partition they are tracked by the tag release event index denoted by \(k\) for \(n_{T}\) years after release. Due to tags being predominately recovered by the fixed gear fishery, all recoveries are assumed from the fixed gear fishery. A tag recovery observation will depend on if it is release conditioned or recapture conditioned. If tag-observations are release conditioned (the default) then for each release event there is a maximum of \(n_{T} \times n_r + 1\) recovery possibilities, assuming the fixed gear fishery operates in all regions and all years we tracked the release event for. The plus one is for the not-recovered event, although it is not clear to me how this is different from a zero recovery event? (ask Dan). Let \(m\) index a recovery event for a given release event and let \(n_{m|k} = n_{T} \times n_r + 1\) where \(n_{m|k}\) is the number of recovery events for release event \(k\). Let \(N^k_{m}\) denote the number of tag-recoveries for a given release and recovery combination, and \(\boldsymbol{N^k} = (N^k_{1}, N^k_{2}, \dots, N^k_{n_{m|k}})^T\) represents a vector of all possible observed recoveries for release event \(k\). Model fitted values for \(N^k_{m}\) are calculated as
 
 \[
-\widehat{N}^k_{a,r,y,s} =  N^k_{a,r,y,s}e^{-0.5M_{y}} (1 - e^{-F^{LL}_{a,r,y,s}})\delta_y
+\widehat{N}^k_{m} =  \sum_a \sum_s N^k_{a,r,y,s} \frac{F^{LL}_{a,r,y,s}}{Z_{a,r,y,s}} (1 - e^{-Z_{a,r,y,s}})\delta_y \ \ y,r \in m|k
 \]
-where, \(N^k_{a,r,y,s}\) are the number of tagged fish from tag-release event \(k\), and \(\delta_y\) is the reporting rate in year \(y\). We assume half the years natural mortality has taken place before deriving expected tag-recoveries from the fixed gear fishery. The current assessment pools observed and fitted values across age and sex,
-\[
-\widehat{N}^k_{r,y} = \sum_a \sum_s \widehat{N}^k_{a,r,y,s}
-\]
+where, \(N^k_{a,r,y,s}\) is the number of tagged fish alive from tag-release event \(k\), and \(\delta_y\) is the reporting rate in year \(y\).
 
 There are three likelihoods used in the literature for tag-recoveries,
 
 - The Poisson (`tag_likelihood = 0`)
 \[
-{N}^k_{r,y} \sim \mathcal{Poisson}(\widehat{N}^k_{r,y})
+N^k_{m} \sim \mathcal{Poisson}(\widehat{N}^k_{m})
 \]
 - The Negative Binomial (`tag_likelihood = 1`)
 \[
-{N}^k_{r,y} \sim \mathcal{NB}(\widehat{N}^k_{r,y}, \hat{\phi})
+N^k_{m} \sim \mathcal{NB}(\widehat{N}^k_{m}, \hat{\phi})
 \]
 where, \(\hat{\phi}\) is the estimable dispersion parameter
+- Multinomial (Not implemented)
+\[
+\boldsymbol{N^k}  \sim \text{Multinomial}\left(\boldsymbol{\hat{\theta}}^k, \text{Neff}^k\right)
+\]
+All the recovery states include all regions, and years of recoveries including the non recaptured, where, \(\boldsymbol{\hat{\theta}}^k = (\hat{\theta}^k_1, \hat{\theta}^k_2\dots, \hat{\theta}^k_{n_{m|k}})\) is the proportions of all recovery states [@vincent2020parameter; @goethel2014demonstration], with
+
+\begin{equation}
+\hat{\theta}^{k}_{m} = \frac{\widehat{N}^k_{m}}{\sum_m \widehat{N}^k_{m}}
+\end{equation}
+
+
+For recapture conditioned tag-recovery observations, a recovery event relates a specific year i.e., the number of recoveries at each location within a year. Only the multinomial likelihood is available for this tag-recovery observation.
+
+Here, model predicted recaptures are recapture conditioned, which means the predicted proportions are year specific, and represent the proportion of recaptures in each region, \(\boldsymbol{\hat{\theta}}^k_y = (\hat{\theta}^{k}_{y,1},\dots, \hat{\theta}^k_{y,n_r})'\)
+\begin{equation}
+\hat{\theta}^{k}_{y,r} = \frac{\widehat{N}^k_{r,y}}{\sum_r\widehat{N}^k_{r,y}}
+\end{equation}
+
+
+
+
+- How to deal with the high number of zeros in \(\boldsymbol{N^k}\)
+
+
+
+
+These are derived for each recovery event (also year and region specific) denoted by the index \(m\) and tag-release event by using the age-length key that was used to release each recovered fish to obtain an sex specific age-frequency. This age-frequency is then aged by the number of years this tag-recovery event was at liberty to derive observed tag-recoveries by age and sex.
+
+This assumes the age-length conversion between releases and recoveries is consistent and allows us to use recovered fish with no length or sex recorded, but has the down side as mentioned earlier in the tag release section of smearing a single recovered fish across multiple age bins and sexes. However, it does mitigate the problem of going backwards and forwards through the age-length transition matrix, which appears to be more problematic.
+
+
+
+
 - Multinomial (Not implemented)
 \[
 {N}^k_{r,y} \sim \text{Multinomial}\left(\boldsymbol{\hat{\theta}}^k_y, \text{Neff}^k_y\right)
