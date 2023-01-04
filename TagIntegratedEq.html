@@ -23,7 +23,7 @@
 <meta name="author" content="C.Marsh" />
 
 
-<meta name="date" content="2023-01-03" />
+<meta name="date" content="2023-01-04" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -119,6 +119,28 @@ code span.vs { color: #4070a0; } /* VerbatimString */
 code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
 </style>
 
+<style type="text/css">
+/* Used with Pandoc 2.11+ new --citeproc when CSL is used */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}
+</style>
 
 <link rel="stylesheet" href="style.css" type="text/css" />
 </head>
@@ -275,13 +297,14 @@ To help with estimation there is a penalty on <span class="math inline">\(\epsil
 </div>
 <div id="observation-equations" class="section level2 unnumbered hasAnchor">
 <h2>Observation equations<a href="TagIntegratedEq.html#observation-equations" class="anchor-section" aria-label="Anchor link to header"></a></h2>
-<p>As in the current stock assessment model, there are the three conventional observation types in the spatial model</p>
+<p>There are five observation types available in the <code>TagIntegrated</code> model</p>
 <ul>
-<li>Relative indices of abundance</li>
+<li>Relative indices of abundance from the longline survey</li>
 <li>Age composition disaggregated by sex for the fixed gear fishery and longline survey</li>
 <li>Length composition disaggregated by sex for the trawl and early period of the fixed gear fishery</li>
+<li>Annual observed catch by fishery</li>
+<li>Tag recoveries from the fixed gear fishery</li>
 </ul>
-<p>In addition to these, tag-recoveries are also included in the model.</p>
 <div id="catch-at-age" class="section level3 unnumbered hasAnchor">
 <h3>Catch at age<a href="TagIntegratedEq.html#catch-at-age" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>Fishery dependent catch at age observations are available for the fixed gear fishery, but are also needed to calculate catch at length observations for the trawl fishery. Catch at age for fishery <span class="math inline">\(g\)</span> is denoted by <span class="math inline">\({C}^g_{a,r,y,s}\)</span> and model fitted values are calculated following</p>
@@ -323,18 +346,41 @@ where, <span class="math inline">\(\bar{w}_{a,y,s}\)</span> is mean weight at ag
 </div>
 <div id="tag-recovery-observations" class="section level3 unnumbered hasAnchor">
 <h3>Tag recovery observations<a href="TagIntegratedEq.html#tag-recovery-observations" class="anchor-section" aria-label="Anchor link to header"></a></h3>
-<p>When tagged fish are released in to the model partition they are tracked by the tag release event <span class="math inline">\(k\)</span> for <span class="math inline">\(n_{T}\)</span> years. Due to tags being predominately recovered by the fixed gear fishery there are many recoveries for which there is no length or sex information (<strong>get a number</strong>). The model expects tag-recovery observations to be known by age and sex. These are derived for each recovery event (also year and region specific) and tag-release event by using the age-length key that was used to release each recovered fish to obtain an sex specific age-frequency. This age-frequency is then aged by the number of years this tag-recovery event was at liberty to derive observed tag-recoveries by age and sex.</p>
+<p>When tagged fish are released in to the model partition they are tracked by the tag release event denoted by index <span class="math inline">\(k\)</span> for <span class="math inline">\(n_{T}\)</span> years. Due to tags being predominately recovered by the fixed gear fishery all recoveries are from the fixed gear fishery. The model expects tag-recovery observations to be known by age and sex (not true). These are derived for each recovery event (also year and region specific) and tag-release event by using the age-length key that was used to release each recovered fish to obtain an sex specific age-frequency. This age-frequency is then aged by the number of years this tag-recovery event was at liberty to derive observed tag-recoveries by age and sex.</p>
 <p>This assumes the age-length conversion between releases and recoveries is consistent and allows us to use recovered fish with no length or sex recorded, but has the down side as mentioned earlier in the tag release section of smearing a single recovered fish across multiple age bins and sexes. However, it does mitigate the problem of going backwards and forwards through the age-length transition matrix, which appears to be more problematic.</p>
 <p>All tag recoveries are from the fixed gear (longline and pot gear) fishery, due to the recent trend in recoveries by gear method</p>
 <p>Model fitted values for tag event <span class="math inline">\(k\)</span> recovered in region <span class="math inline">\(r\)</span> and year <span class="math inline">\(y\)</span> are denoted by <span class="math inline">\(\widehat{N}^k_{a,r,y,s}\)</span>, and are derived as</p>
 <p><span class="math display">\[
 \widehat{N}^k_{a,r,y,s} =  N^k_{a,r,y,s}e^{-0.5M_{y}} (1 - e^{-F^{LL}_{a,r,y,s}})\delta_y
 \]</span>
-where, <span class="math inline">\(N^k_{a,r,y,s}\)</span> are the number of tagged fish from tag-release event <span class="math inline">\(k\)</span>, and <span class="math inline">\(\delta_y\)</span> is the reporting rate in year <span class="math inline">\(y\)</span>. We assume there has been half the years natural mortality when deriving expected tag-recoveries. The current assessment pools observed and fitted values across age and sex and assumes the are from the Poisson distribution.</p>
-<p><span class="math display">\[
+where, <span class="math inline">\(N^k_{a,r,y,s}\)</span> are the number of tagged fish from tag-release event <span class="math inline">\(k\)</span>, and <span class="math inline">\(\delta_y\)</span> is the reporting rate in year <span class="math inline">\(y\)</span>. We assume half the years natural mortality has taken place before deriving expected tag-recoveries from the fixed gear fishery. The current assessment pools observed and fitted values across age and sex,
+<span class="math display">\[
+\widehat{N}^k_{r,y} = \sum_a \sum_s \widehat{N}^k_{a,r,y,s}
+\]</span></p>
+<p>There are three likelihoods used in the literature for tag-recoveries,</p>
+<ul>
+<li>The Poisson (<code>tag_likelihood = 0</code>)
+<span class="math display">\[
 {N}^k_{r,y} \sim \mathcal{Poisson}(\widehat{N}^k_{r,y})
+\]</span></li>
+<li>The Negative Binomial (<code>tag_likelihood = 1</code>)
+<span class="math display">\[
+{N}^k_{r,y} \sim \mathcal{NB}(\widehat{N}^k_{r,y}, \hat{\phi})
 \]</span>
-where, <span class="math inline">\(\widehat{N}^k_{r,y} = \sum_a \sum_s \widehat{N}^k_{a,r,y,s}\)</span></p>
+where, <span class="math inline">\(\hat{\phi}\)</span> is the estimable dispersion parameter</li>
+<li>Multinomial (Not implemented)
+<span class="math display">\[
+{N}^k_{r,y} \sim \text{Multinomial}\left(\boldsymbol{\hat{\theta}}^k_y, \text{Neff}^k_y\right)
+\]</span>
+Here, model predicted recaptures are recapture conditioned, which means the predicted proportions are year specific, and represent the proportion of recaptures in each region, <span class="math inline">\(\boldsymbol{\hat{\theta}}^k_y = (\hat{\theta}^{k}_{y,1},\dots, \hat{\theta}^k_{y,n_r})&#39;\)</span>
+<span class="math display">\[\begin{equation}
+\hat{\theta}^{k}_{y,r} = \frac{\widehat{N}^k_{r,y}}{\sum_r\widehat{N}^k_{r,y}}
+\end{equation}\]</span></li>
+</ul>
+<p>Release conditioned are defined as the proportion of recaptures over all states denoted as <span class="math inline">\(i\)</span>, for each release event. All the states, include all regions, and years of recoveries including the non recaptured, where, <span class="math inline">\(\boldsymbol{\hat{\theta}}^k = (\hat{\theta}^k_i, \hat{\theta}^k_2\dots, \hat{\theta}^k_{n_i}) = (\hat{\theta}^k_{1,1}, \hat{\theta}^k_{1,2}, \hat{\theta}^k_{2,2}, \dots, \hat{\theta}^k_{n_y,n_r}, \hat{\theta}^k_{NR})\)</span> is the proportions of all states <span class="citation">(<a href="#ref-vincent2020parameter" role="doc-biblioref">Vincent, Brenden, and Bence 2020</a>; <a href="#ref-goethel2014demonstration" role="doc-biblioref">Goethel, Legault, and Cadrin 2014</a>)</span>, with</p>
+<p><span class="math display">\[\begin{equation}
+\hat{\theta}^{k}_{i} = \frac{\widehat{N}^k_{i}}{\sum_i \widehat{N}^k_{i}}
+\end{equation}\]</span></p>
 </div>
 </div>
 <div id="symbol-notation" class="section level2 unnumbered hasAnchor">
@@ -498,6 +544,15 @@ where, <span class="math inline">\(\widehat{N}^k_{r,y} = \sum_a \sum_s \widehat{
 </tbody>
 </table>
 
+</div>
+</div>
+<h3>References<a href="references.html#references" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-goethel2014demonstration" class="csl-entry">
+Goethel, Daniel R, Christopher M Legault, and Steven X Cadrin. 2014. <span>“Demonstration of a Spatially Explicit, Tag-Integrated Stock Assessment Model with Application to Three Interconnected Stocks of Yellowtail Flounder Off of New England.”</span> <em>ICES Journal of Marine Science</em> 72 (1): 164–77.
+</div>
+<div id="ref-vincent2020parameter" class="csl-entry">
+Vincent, Matthew T, Travis O Brenden, and James R Bence. 2020. <span>“Parameter Estimation Performance of a Recapture-Conditioned Integrated Tagging Catch-at-Age Analysis Model.”</span> <em>Fisheries Research</em> 224: 105451.
 </div>
 </div>
             </section>
