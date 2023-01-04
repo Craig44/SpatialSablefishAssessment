@@ -12,6 +12,8 @@
 
 #include "TagIntegrated.hpp"
 
+#include "TagIntegratedAgeBasedMovement.hpp"
+
 #include "CurrentAssessment.hpp"
 
 template<class Type>
@@ -21,6 +23,8 @@ Type objective_function<Type>::operator() () {
     return TagIntegrated(this);
   } else if(model == "TagIntegratedValidate") {
     return TagIntegratedValidate(this);
+  } else if(model == "TagIntegratedAgeBasedMovement") {
+    return TagIntegratedAgeBasedMovement(this);
   } else if(model == "Assessment") {
     return CurrentAssessment(this);
   } else {

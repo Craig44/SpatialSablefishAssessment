@@ -80,13 +80,13 @@ Age length keys were not available in all years when tagged fish were released, 
 
 ## Observation equations {-}
 
-As in the current stock assessment model, there are the three conventional observation types in the spatial model
+There are five observation types available in the `TagIntegrated` model
 
-- Relative indices of abundance
+- Relative indices of abundance from the longline survey
 - Age composition disaggregated by sex for the fixed gear fishery and longline survey
 - Length composition disaggregated by sex for the trawl and early period of the fixed gear fishery 
-
-In addition to these, tag-recoveries are also included in the model.
+- Annual observed catch by fishery
+- Tag recoveries from the fixed gear fishery
 
 ### Catch at age {-}
 Fishery dependent catch at age observations are available for the fixed gear fishery, but are also needed to calculate catch at length observations for the trawl fishery. Catch at age for fishery \(g\) is denoted by \({C}^g_{a,r,y,s}\) and model fitted values are calculated following
@@ -133,7 +133,7 @@ where, \(\bar{w}_{a,y,s}\) is mean weight at age, this can be omitted if the obs
 
 ### Tag recovery observations {-}
 
-When tagged fish are released in to the model partition they are tracked by the tag release event \(k\) for \(n_{T}\) years. Due to tags being predominately recovered by the fixed gear fishery there are many recoveries for which there is no length or sex information (**get a number**). The model expects tag-recovery observations to be known by age and sex. These are derived for each recovery event (also year and region specific) and tag-release event by using the age-length key that was used to release each recovered fish to obtain an sex specific age-frequency. This age-frequency is then aged by the number of years this tag-recovery event was at liberty to derive observed tag-recoveries by age and sex.
+When tagged fish are released in to the model partition they are tracked by the tag release event denoted by index \(k\) for \(n_{T}\) years. Due to tags being predominately recovered by the fixed gear fishery all recoveries are from the fixed gear fishery. The model expects tag-recovery observations to be known by age and sex (not true). These are derived for each recovery event (also year and region specific) and tag-release event by using the age-length key that was used to release each recovered fish to obtain an sex specific age-frequency. This age-frequency is then aged by the number of years this tag-recovery event was at liberty to derive observed tag-recoveries by age and sex.
 
 This assumes the age-length conversion between releases and recoveries is consistent and allows us to use recovered fish with no length or sex recorded, but has the down side as mentioned earlier in the tag release section of smearing a single recovered fish across multiple age bins and sexes. However, it does mitigate the problem of going backwards and forwards through the age-length transition matrix, which appears to be more problematic.
 
@@ -145,12 +145,37 @@ Model fitted values for tag event \(k\) recovered in region \(r\) and year \(y\)
 \[
 \widehat{N}^k_{a,r,y,s} =  N^k_{a,r,y,s}e^{-0.5M_{y}} (1 - e^{-F^{LL}_{a,r,y,s}})\delta_y
 \]
-where, \(N^k_{a,r,y,s}\) are the number of tagged fish from tag-release event \(k\), and \(\delta_y\) is the reporting rate in year \(y\). We assume there has been half the years natural mortality when deriving expected tag-recoveries. The current assessment pools observed and fitted values across age and sex and assumes the are from the Poisson distribution.
+where, \(N^k_{a,r,y,s}\) are the number of tagged fish from tag-release event \(k\), and \(\delta_y\) is the reporting rate in year \(y\). We assume half the years natural mortality has taken place before deriving expected tag-recoveries from the fixed gear fishery. The current assessment pools observed and fitted values across age and sex,
+\[
+\widehat{N}^k_{r,y} = \sum_a \sum_s \widehat{N}^k_{a,r,y,s}
+\]
 
+There are three likelihoods used in the literature for tag-recoveries,
+
+- The Poisson (`tag_likelihood = 0`)
 \[
 {N}^k_{r,y} \sim \mathcal{Poisson}(\widehat{N}^k_{r,y})
 \]
-where, \(\widehat{N}^k_{r,y} = \sum_a \sum_s \widehat{N}^k_{a,r,y,s}\)
+- The Negative Binomial (`tag_likelihood = 1`)
+\[
+{N}^k_{r,y} \sim \mathcal{NB}(\widehat{N}^k_{r,y}, \hat{\phi})
+\]
+where, \(\hat{\phi}\) is the estimable dispersion parameter
+- Multinomial (Not implemented)
+\[
+{N}^k_{r,y} \sim \text{Multinomial}\left(\boldsymbol{\hat{\theta}}^k_y, \text{Neff}^k_y\right)
+\]
+Here, model predicted recaptures are recapture conditioned, which means the predicted proportions are year specific, and represent the proportion of recaptures in each region, \(\boldsymbol{\hat{\theta}}^k_y = (\hat{\theta}^{k}_{y,1},\dots, \hat{\theta}^k_{y,n_r})'\)
+\begin{equation}
+\hat{\theta}^{k}_{y,r} = \frac{\widehat{N}^k_{r,y}}{\sum_r\widehat{N}^k_{r,y}}
+\end{equation}
+
+Release conditioned are defined as the proportion of recaptures over all states denoted as \(i\), for each release event. All the states, include all regions, and years of recoveries including the non recaptured, where, \(\boldsymbol{\hat{\theta}}^k = (\hat{\theta}^k_i, \hat{\theta}^k_2\dots, \hat{\theta}^k_{n_i}) = (\hat{\theta}^k_{1,1}, \hat{\theta}^k_{1,2}, \hat{\theta}^k_{2,2}, \dots, \hat{\theta}^k_{n_y,n_r}, \hat{\theta}^k_{NR})\) is the proportions of all states [@vincent2020parameter; @goethel2014demonstration], with
+
+\begin{equation}
+\hat{\theta}^{k}_{i} = \frac{\widehat{N}^k_{i}}{\sum_i \widehat{N}^k_{i}}
+\end{equation}
+
 
 
 ## Symbol Notation {-}
