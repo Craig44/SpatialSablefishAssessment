@@ -105,6 +105,7 @@ if the multinomial distribution is assumed
 \[
 \boldsymbol{X}^g_{r,y} \sim \text{Multinomial}\left(\boldsymbol{\widehat{P}}^g_{r,y}\right)
 \]
+
 where, \(\boldsymbol{X}^g_{r,y} = \boldsymbol{P}^g_{r,y}N^{eff}_{r,y}\) and \(\boldsymbol{P}^g_{r,y}\) is the observed proportions, \(N^{eff}_{r,y}\) is the effective sample size and \(\boldsymbol{P}^g_{r,y} = (P^g_{1,r,y,1}, \dots, P^g_{a_+,r,y,1}, P^g_{1,r,y,2}, \dots, P^g_{a_+,r,y,2})\) is the vector of observed proportions across all ages and sexs in year \(y\) and region \(r\), and \(\boldsymbol{\widehat{P}}^g_{r,y}\) is the model fitted values which have the same dimension (\(\sum_a \sum_s \widehat{P}^g_{a,r,y,s} = 1\)).
 
 
@@ -201,12 +202,42 @@ Release conditioned are defined as the proportion of recaptures over all states 
 \end{equation}
 
 
+## Likelihood formulations {-}
+
+### Multinomial {-}
+
+This likelihood has no estimable parameters
+
+\[
+\boldsymbol{X} \sim \text{Multinomial}\left(\boldsymbol{\widehat{P}}\right)
+\]
+
+To avoid \(\widehat{P}_i = 0\), in which case the multinomial can be undefined if \(X_i = 0\) all values of \(\widehat{P}_i\) are run through a `posfun` function which adds a small constant and penalty to the likelihood. See this TMB issue [here](https://github.com/kaskr/adcomp/issues/7) or Ben Bolker's write up found [here](https://github.com/bbolker/bbmisc/blob/master/posfun.pdf).
+
+
+### Dirichlet-Multinomial {-}
+The Dirichlet multinomial distribution used for composition data, when
+
+- \((p_1,\dots,p_k) \sim \mathrm{Dirichlet}(\alpha_1,\dots,\alpha_k)\) and 
+- \((x_1,\dots,x_k) \sim \mathrm{Multinomial}(n, p_1,\dots,p_k)\), then 
+- \((x_1,\dots,x_k) \sim \mathrm{DirichletMultinomial(n, \alpha_1,\dots,\alpha_k)}\).
+
+The probability density function follows
+\begin{equation}
+f(x) = \frac{\left(n!\right)\Gamma\left(\sum \alpha_k\right)}{\Gamma\left(n+\sum \alpha_k\right)}\prod_{k=1}^K\frac{\Gamma(x_{k}+\alpha_{k})} {\left(x_{k}!\right)\Gamma(\alpha_{k})}
+\end{equation}
+
+In the paper by @thorson2017model, the Dirichlet multinomial with observed proportions denoted by \(\tilde{\pi}\) fitted proportions \(\pi\) and over dispersion parameter \(\beta\) and effective sample size \(n_{eff}\). This relates to the classic parametersiation above with \(x_k = \tilde{\pi}_k n_{eff}\), \(\alpha_k = \beta \pi_k\) and \(n = n_{eff}\). When this likelihood is implemented it has an estimable parameter \(\theta = \beta/n_{eff}\).
+
+
+When simulating from this distribution we first simulate the dirichlet variable, using independent gamma draws (normalised), with shape parameter set as the fitted proportion. Then draw from the multinomial with expected composition based on the dirichlet draw.
+
 
 ## Symbol Notation {-}
 +----------------------------+-----------------------------------------------------------------------------+
 | Symbol                     | Description                            
 +============================+=============================================================================+
-| \(y\)                      | Year, \(y = 1960, \dots, T\) 
+| \(y\)                      | Year index
 +----------------------------+-----------------------------------------------------------------------------+
 | \(T\)                      | Terminal year of the model
 +----------------------------+-----------------------------------------------------------------------------+
