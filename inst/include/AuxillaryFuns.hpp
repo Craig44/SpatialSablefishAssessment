@@ -14,7 +14,16 @@ Type ZeroFun(Type x, Type delta) {
 
   return delta / (2.0 - (x / delta));
 }
-
+/*
+ *  an index folding method to help get the folded index given dim1 and dim2
+ *  @param ndx_1 (starts at 0 goes to (n_regions - 1))
+ *  @param ndx2
+ *  @param n_elements_dim1
+ *  @return an index to look up the tagged partition which covers both these indicies
+ */
+int get_folded_ndx(int ndx_1, int ndx2, int n_elements_dim1) {
+  return ndx2 * n_elements_dim1 + ndx_1;
+}
 /*
  * Updated the multinom fun because TMB's version cannot deal with p = 0
  * where as R's can

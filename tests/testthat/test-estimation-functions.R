@@ -196,7 +196,7 @@ test_that("test-shared-survey-selectivity-pars", {
 
   ## there should be 3 srv selectivity pars as we have fixed one
   logis_tag_pars = test_model$par[names(test_model$par) %in% "logistic_tag_reporting_rate"]
-  expect_true(length(logis_tag_pars) == sum(data$tag_recovery_indicator))
+  expect_true(length(logis_tag_pars) == sum(data$tag_recovery_indicator_by_year))
 
   pars =  test_model$par
   report_vals = seq(from = 0.1, to = 0.9, length = sum(names(pars) %in% "logistic_tag_reporting_rate"))
@@ -210,7 +210,7 @@ test_that("test-shared-survey-selectivity-pars", {
 
   ## check if there are no tag recovery observations that tag related parameters are turned off.
   load(system.file("testdata", "MockSablefishModel.RData",package="SpatialSablefishAssessment"))
-  data$tag_recovery_indicator = rep(0, length(data$tag_recovery_indicator))
+  data$tag_recovery_indicator = rep(0, length(data$tag_recovery_indicator_by_year))
   na_map = set_up_parameters(data= data, parameters = parameters, tag_reporting_rate = "constant")
   expect_true(is.na(na_map$ln_tag_phi))
   expect_true(all(is.na(na_map$logistic_tag_reporting_rate)))

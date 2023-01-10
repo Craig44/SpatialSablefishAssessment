@@ -58,10 +58,10 @@ plot_frequency_of_tag_release_and_recoveries = function(data, region_key = NULL,
   ## release event years
   release_years = years[which(data$tag_release_event_this_year == 1)]
   ## recovery years
-  recovery_years = years[which(data$tag_recovery_indicator == 1)]
+  recovery_years = years[which(data$tag_recovery_indicator_by_year == 1)]
 
-  dimnames(data$tag_recovery_indicator_by_release_event_and_recovery_region) = list(1:dim(data$tag_recovery_indicator_by_release_event_and_recovery_region)[1], regions, years[which(data$tag_recovery_indicator == 1)])
-  tag_recovery_detailed = reshape2::melt(data$tag_recovery_indicator_by_release_event_and_recovery_region)
+  dimnames(data$tag_recovery_indicator) = list(1:dim(data$tag_recovery_indicator)[1], regions, years[which(data$tag_recovery_indicator_by_year == 1)])
+  tag_recovery_detailed = reshape2::melt(data$tag_recovery_indicator)
   full_df = NULL
   for(y_ndx in 1:length(release_years)) {
     for(r_ndx in 1:length(regions)) {
@@ -76,9 +76,9 @@ plot_frequency_of_tag_release_and_recoveries = function(data, region_key = NULL,
               next;
             recovery_year_ndx = which(recovery_years %in% tmp_recovery_year)
             release_event_ndx = get_tag_release_ndx(r_ndx, possible_recovery_years + 1, data$n_regions)
-            if(data$tag_recovery_indicator_by_release_event_and_recovery_region[release_event_ndx, possible_recovery_region, recovery_year_ndx] == 1) {
+            if(data$tag_recovery_indicator[release_event_ndx, possible_recovery_region, recovery_year_ndx] == 1) {
               ## recovery here
-              tmp_df = data.frame(release_year = release_years[y_ndx], release_region = regions[r_ndx], recovery_year = tmp_recovery_year, recovery_region = regions[possible_recovery_region], n_releases = n_released_fish, n_recoveries = sum(data$obs_tag_recovery[, release_event_ndx, possible_recovery_region, recovery_year_ndx]))
+              tmp_df = data.frame(release_year = release_years[y_ndx], release_region = regions[r_ndx], recovery_year = tmp_recovery_year, recovery_region = regions[possible_recovery_region], n_releases = n_released_fish, n_recoveries = sum(data$obs_tag_recovery[release_event_ndx, possible_recovery_region, recovery_year_ndx]))
               full_df = rbind(full_df, tmp_df)
             }
           }
@@ -158,20 +158,20 @@ get_tag_recovery_obs_fitted_values = function(MLE_report, region_key = NULL, ver
     regions = region_key$area[match(regions, (region_key$TMB_ndx + 1))]
 
   ## release event years
-  release_years = years[which(MLE_report$tag_release_event_this_year == 1)]
+  release_years = years[which(MLE_report$tag_recovery_indicator_by_year == 1)]
   sex_age_lvls = paste0(rep(c("M","F"), each = length(ages)), ages)
   sex_for_report = rep(c("M","F"), each = length(ages))
   age_for_rep = rep(ages, 2)
   ## recovery years
-  recovery_years = years[which(MLE_report$tag_recovery_indicator == 1)]
+  recovery_years = years[which(MLE_report$tag_recovery_indicator_by_year == 1)]
 
-  #dimnames(MLE_report$tag_recovery_indicator_by_release_event_and_recovery_region) = list(1:((MLE_report$n_years_to_retain_tagged_cohorts_for + 1) * MLE_report$n_regions), regions, recovery_years)
-  #molten_indicator = reshape2::melt(MLE_report$tag_recovery_indicator_by_release_event_and_recovery_region)
+  #dimnames(MLE_report$tag_recovery_indicator_by_year) = list(1:((MLE_report$n_years_to_retain_tagged_cohorts_for + 1) * MLE_report$n_regions), regions, recovery_years)
+  #molten_indicator = reshape2::melt(MLE_report$tag_recovery_indicator_by_year)
   #colnames(molten_indicator) = c("release_event", "recovery_region", "recovery_year", "indicator")
   #molten_indicator$unique_recovery_id = paste0(molten_indicator$release_event,"-", molten_indicator$recovery_region, "-", molten_indicator$recovery_year)
   #sum(molten_indicator$indicator) * length(age_for_rep)
   ## to validate data frame for efficient storing during the loop
-  expected_n_records = sum(MLE_report$tag_recovery_indicator_by_release_event_and_recovery_region) * length(age_for_rep)
+  expected_n_records = sum(MLE_report$tag_recovery_indicator)
   full_df = NULL
 
   for(y_ndx in 1:length(recovery_years)) { ## recovery years
@@ -183,12 +183,12 @@ get_tag_recovery_obs_fitted_values = function(MLE_report, region_key = NULL, ver
       for(release_yr_ndx in 1:(MLE_report$n_years_to_retain_tagged_cohorts_for + 1)) {
         for(release_region_ndx in 1:length(regions)) {
           release_event_ndx = get_tag_release_ndx(release_region_ndx, release_yr_ndx, MLE_report$n_regions)
-          if(MLE_report$tag_recovery_indicator_by_release_event_and_recovery_region[release_event_ndx, r_ndx, y_ndx] == 1) {
+          if(MLE_report$tag_recovery_indicator[release_event_ndx, r_ndx, y_ndx] == 1) {
             this_release_year = as.character(recovery_years[y_ndx] - (release_yr_ndx - 1))
             if(release_yr_ndx == (MLE_report$n_years_to_retain_tagged_cohorts_for + 1))
               this_release_year = "Plus group"
             ## recovery here
-            tmp_df = data.frame(sex = sex_for_report, age = age_for_rep, release_event = release_event_ndx, recovery_year = recovery_years[y_ndx], recovery_region = regions[r_ndx], release_region = regions[release_region_ndx], release_year = this_release_year, observed = MLE_report$obs_tag_recovery[, release_event_ndx, r_ndx, y_ndx], predicted = MLE_report$pred_tag_recovery[, release_event_ndx, r_ndx, y_ndx])
+            tmp_df = data.frame(release_event = release_event_ndx, recovery_year = recovery_years[y_ndx], recovery_region = regions[r_ndx], release_region = regions[release_region_ndx], release_year = this_release_year, observed = MLE_report$obs_tag_recovery[release_event_ndx, r_ndx, y_ndx], predicted = MLE_report$pred_tag_recovery[release_event_ndx, r_ndx, y_ndx])
             full_df = rbind(full_df, tmp_df)
           }
         }

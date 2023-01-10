@@ -20,7 +20,6 @@ Users need to population a `data` and `parameters` named list object that is the
 - `female_mean_weight_by_age` female mean weight at age array with dimensions `n_ages` \(\times\) `n_projyears`. Units are in kgs, this is because we track 000's of fish in the partition.
 - `male_age_length_transition` male age-length transtion matrix for each year. An array with dimensions `n_ages` \(\times\)`n_length_bins` \(\times\) `n_projyears`
 - `female_age_length_transition` female age-length transtion matrix for each year. An array with dimensions `n_ages` \(\times\)`n_length_bins` \(\times\) `n_projyears`
-- `sigma_R` Scalar defining the standard deviation for recruitment deviations
 - `SrType` Stock recruitment type 1 = Beverton holt, 2 = Ricker, 3 = average
 - `spawning_time_proportion` vector of proportions that indicate when during the year spawning occurs. Length = `n_projyears`
 - `apply_fixed_movement` integer whether to apply the input `fixed_movement_matrix` or estimated movement matrix. This was added because the transformation on estimated movement parameters does not allow values to be zero or one so cannot truly apply no movement. That is when I have used this fixed movement
@@ -102,4 +101,6 @@ Users need to population a `data` and `parameters` named list object that is the
 
 - `ln_tag_phi` scalar which is the log of the dispersion parameter. Only used if `data$tag_likelihood == 1` i.e. the negative binomial distribution is assumed.
 
+- `ln_sigma_R` scalar which is the log standard deviation for the recruitment prior/penalty
+- `ln_sigma_init_devs` scalar which is the log standard deviation for the initial age deviation prior/penalty
 

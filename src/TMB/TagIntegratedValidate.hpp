@@ -137,13 +137,22 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
 
   // Tag recovery observations Sexually disaggregated?
   // Note: All tag recoveries are assumed from the fixed fishery!!!
-  DATA_IVECTOR(tag_recovery_indicator);                         // dim: n_years.  1 = calculate fitted values for tag-recoveries this year and region, 0 = don't calculate tag recovery observation for this year and region
+  DATA_IVECTOR(tag_recovery_indicator_by_year);                         // dim: n_years.  1 = calculate fitted values for tag-recoveries this year and region, 0 = don't calculate tag recovery observation for this year and region
 
-  int n_tag_recovery_years = tag_recovery_indicator.sum();
-  DATA_IARRAY(tag_recovery_indicator_by_release_event_and_recovery_region);// dim: n_tag_release_events x n_regions x n_tag_recovery_years.  1 = calculate fitted values for tag-recoveries this year and region, 0 = don't calculate tag recovery observation for this year and region
-  DATA_ARRAY(obs_tag_recovery);                                 // dim: n_ages x 2 (for sex) x n_tag_release_events x n_regions x n_tag_recovery_years.
+  int n_tag_recovery_years = tag_recovery_indicator_by_year.sum();
+  DATA_IARRAY(tag_recovery_indicator);
+  // if tag_likelihood %in% c(0,1)
+  // dim: n_tag_release_events x n_regions x n_tag_recovery_years.  1 = calculate fitted values for tag-recoveries this year and region, 0 = don't calculate tag recovery observation for this year and region
+  // if tag_likelihood == 3
+  // dim: n_years x n_release_regions plus one for the NC group
+
+  DATA_ARRAY(obs_tag_recovery);
+  // if tag_likelihood %in% c(0,1)
+  // dim: n_tag_release_events x n_regions x n_tag_recovery_years.
+  // if tag_likelihood == 3
+  // dim: n_years x n_release_regions x n_recapture_events + 1 plus one for the NC group
+  DATA_INTEGER(tag_likelihood);                                 // likelihood type 0 = Poisson, 1 = Negative Binomial, 2 = Multinomial release conditioned
   array<Type> pred_tag_recovery(obs_tag_recovery.dim);
-  DATA_INTEGER(tag_likelihood);                                 // likelihood type 0 = Poisson, 1 = Negative Binomial
 
   /*
    *  Estimable parameters
@@ -684,53 +693,70 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
         }
 
         // are there any Tag-recovery observations this year and region - unfortunately they need to be calculated during the annual cycle because
-        // of the way we designed the tag partition
-        if(tag_recovery_indicator(year_ndx) == 1) {
-          for(tag_ndx = 0; tag_ndx <= n_years_to_retain_tagged_cohorts_for; ++tag_ndx) {
-            for(release_region_ndx = 0; release_region_ndx < n_regions; ++release_region_ndx) {
-              tag_release_event_ndx = get_tag_release_event_ndx(release_region_ndx, tag_ndx, n_regions);
-              if(tag_recovery_indicator_by_release_event_and_recovery_region(tag_release_event_ndx, region_ndx, tag_recovery_counter) == 1) {
-                //pred_tag_recovery
-                if(apply_fishery_tag_reporting) {
-                  temp_numbers_at_age_m = tagged_natage_m.col(tag_release_event_ndx).col(region_ndx).vec() * F_fixed_m.col(year_ndx).col(region_ndx).vec() / Z_m.col(year_ndx).col(region_ndx).vec() * (1.0 - S_m.col(year_ndx).col(region_ndx).vec());
-                  numbers_at_age_and_sex.segment(0,n_ages) = temp_numbers_at_age_m;
-                  temp_numbers_at_age_f = tagged_natage_f.col(tag_release_event_ndx).col(region_ndx).vec() * F_fixed_f.col(year_ndx).col(region_ndx).vec() / Z_f.col(year_ndx).col(region_ndx).vec() * (1.0 - S_f.col(year_ndx).col(region_ndx).vec());
-                  numbers_at_age_and_sex.segment(n_ages,n_ages) = temp_numbers_at_age_f;
-                } else {
-                  temp_numbers_at_age_m = tagged_natage_m.col(tag_release_event_ndx).col(region_ndx).vec();
-                  numbers_at_age_and_sex.segment(0,n_ages) = temp_numbers_at_age_m;
-                  temp_numbers_at_age_f = tagged_natage_f.col(tag_release_event_ndx).col(region_ndx).vec();
-                  numbers_at_age_and_sex.segment(n_ages,n_ages) = temp_numbers_at_age_f;
+        // of the way we designed the tag partition i.e., we loose release year information after n_years_to_retain_tagged_cohorts_for years
+        if(tag_likelihood == 2) {
+          if(tag_recovery_indicator_by_year(year_ndx) == 1) {
+            for(tag_ndx = 0; tag_ndx <= n_years_to_retain_tagged_cohorts_for; ++tag_ndx) {
+              for(release_region_ndx = 0; release_region_ndx < n_regions; ++release_region_ndx) {
+                tag_release_event_ndx = get_tag_release_event_ndx(release_region_ndx, tag_ndx, n_regions);
+                if(tag_recovery_indicator(year_ndx, release_region_ndx) == 1) {
+                  predicted_tags =  (tagged_natage_m.col(tag_release_event_ndx).col(region_ndx).vec() * F_fixed_m.col(year_ndx).col(region_ndx).vec() / Z_m.col(year_ndx).col(region_ndx).vec() * (1.0 - S_m.col(year_ndx).col(region_ndx).vec())).sum();
+                  predicted_tags += (tagged_natage_f.col(tag_release_event_ndx).col(region_ndx).vec() * F_fixed_f.col(year_ndx).col(region_ndx).vec() / Z_f.col(year_ndx).col(region_ndx).vec() * (1.0 - S_f.col(year_ndx).col(region_ndx).vec())).sum();
+                  //std::cerr << "year_ndx " << year_ndx << " tag_ndx " << tag_ndx << " release ndx " << release_region_ndx << " predicted tags " << predicted_tags <<"\n";
+                  predicted_tags = posfun(predicted_tags, eps_for_posfun, pen_posfun);
+                  pred_tag_recovery(year_ndx - tag_ndx, release_region_ndx, tag_release_event_ndx) = predicted_tags;
                 }
-                // apply reporting rate
-                if(apply_tag_reporting_rate == 1)
-                  numbers_at_age_and_sex *= tag_reporting_rate(region_ndx, tag_recovery_counter);
-                pred_tag_recovery.col(tag_recovery_counter).col(region_ndx).col(tag_release_event_ndx) = numbers_at_age_and_sex;
-                predicted_tags = numbers_at_age_and_sex.sum();
-                predicted_tags = posfun(predicted_tags, eps_for_posfun, pen_posfun);
-
-                // likelihood contribution
-                if(tag_likelihood == 0) {
-                  nll(7) -= dpois(obs_tag_recovery.col(tag_recovery_counter).col(region_ndx).col(tag_release_event_ndx).vec().sum(), predicted_tags, true);
-                  SIMULATE {
-                    // store the simualted tag-observation in the first age-sex bin of obs_tag_recovery
-                    obs_tag_recovery(0, tag_release_event_ndx, region_ndx, tag_recovery_counter) = rpois(predicted_tags);
-                  }
-                } else if(tag_likelihood == 1) {
-                  s1 = log(predicted_tags);                          // log(mu)
-                  s2 = 2. * s1 - ln_tag_phi;                         // log(var - mu)
-                  nll(7) -= dnbinom_robust(obs_tag_recovery.col(tag_recovery_counter).col(region_ndx).col(tag_release_event_ndx).vec().sum(), s1, s2, true);
-                  SIMULATE{
-                    s1 = predicted_tags;
-                    s2 = predicted_tags * (1.0 + tag_phi);  // (1+phi) guarantees that var >= mu
-                    obs_tag_recovery(0, tag_release_event_ndx, region_ndx, tag_recovery_counter) = rnbinom2(s1, s2);
-                  }
-                }
-                //std::cout << "recovery yr ndx " << year_ndx << " recovery region = " << region_ndx << " observed = " << obs_tag_recovery.col(tag_recovery_counter).col(region_ndx).col(tag_release_event_ndx).vec().sum() << " expected = " << numbers_at_age_and_sex.sum() << " ll " << dpois(obs_tag_recovery.col(tag_recovery_counter).col(region_ndx).col(tag_release_event_ndx).vec().sum(), numbers_at_age_and_sex.sum(), true) << "\n";
               }
             }
           }
-        } // if(tag_recovery_indicator(year_ndx) == 1) {
+        } else {
+          if(tag_recovery_indicator_by_year(year_ndx) == 1) {
+            for(tag_ndx = 0; tag_ndx <= n_years_to_retain_tagged_cohorts_for; ++tag_ndx) {
+              for(release_region_ndx = 0; release_region_ndx < n_regions; ++release_region_ndx) {
+                tag_release_event_ndx = get_tag_release_event_ndx(release_region_ndx, tag_ndx, n_regions);
+                if(tag_recovery_indicator(tag_release_event_ndx, region_ndx, tag_recovery_counter) == 1) {
+                  //pred_tag_recovery
+                  if(apply_fishery_tag_reporting) {
+                    temp_numbers_at_age_m = tagged_natage_m.col(tag_release_event_ndx).col(region_ndx).vec() * F_fixed_m.col(year_ndx).col(region_ndx).vec() / Z_m.col(year_ndx).col(region_ndx).vec() * (1.0 - S_m.col(year_ndx).col(region_ndx).vec());
+                    numbers_at_age_and_sex.segment(0,n_ages) = temp_numbers_at_age_m;
+                    temp_numbers_at_age_f = tagged_natage_f.col(tag_release_event_ndx).col(region_ndx).vec() * F_fixed_f.col(year_ndx).col(region_ndx).vec() / Z_f.col(year_ndx).col(region_ndx).vec() * (1.0 - S_f.col(year_ndx).col(region_ndx).vec());
+                    numbers_at_age_and_sex.segment(n_ages,n_ages) = temp_numbers_at_age_f;
+
+                  } else {
+                    temp_numbers_at_age_m = tagged_natage_m.col(tag_release_event_ndx).col(region_ndx).vec();
+                    numbers_at_age_and_sex.segment(0,n_ages) = temp_numbers_at_age_m;
+                    temp_numbers_at_age_f = tagged_natage_f.col(tag_release_event_ndx).col(region_ndx).vec();
+                    numbers_at_age_and_sex.segment(n_ages,n_ages) = temp_numbers_at_age_f;
+                  }
+                  if(apply_tag_reporting_rate == 1)
+                    numbers_at_age_and_sex *= tag_reporting_rate(region_ndx, tag_recovery_counter);
+
+                  predicted_tags = numbers_at_age_and_sex.sum();
+                  predicted_tags = posfun(predicted_tags, eps_for_posfun, pen_posfun);
+                  pred_tag_recovery(tag_release_event_ndx, region_ndx, tag_recovery_counter) = predicted_tags;
+
+                  // likelihood contribution
+                  if(tag_likelihood == 0) {
+                    nll(7) -= dpois(obs_tag_recovery(tag_release_event_ndx, region_ndx, tag_recovery_counter), predicted_tags, true);
+                    SIMULATE {
+                      // store the simulated tag-observation in the first age-sex bin of obs_tag_recovery
+                      obs_tag_recovery(tag_release_event_ndx, region_ndx, tag_recovery_counter) = rpois(predicted_tags);
+                    }
+                  } else if(tag_likelihood == 1) {
+                    s1 = log(predicted_tags);                          // log(mu)
+                    s2 = 2. * s1 - ln_tag_phi;                         // log(var - mu)
+                    nll(7) -= dnbinom_robust(obs_tag_recovery(tag_release_event_ndx, region_ndx, tag_recovery_counter), s1, s2, true);
+                    SIMULATE{
+                      s1 = predicted_tags;
+                      s2 = predicted_tags * (1.0 + tag_phi);  // (1+phi) guarantees that var >= mu
+                      obs_tag_recovery(tag_release_event_ndx, region_ndx, tag_recovery_counter) = rnbinom2(s1, s2);
+                    }
+                  }
+                }
+              }
+            }
+          }
+        } // if(tag_recovery_indicator_by_year(year_ndx) == 1) {
 
 
         // now do Z, ageing for the tagged partition
@@ -857,7 +883,7 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
       natage_f.col(year_ndx + 1) = (natage_f.col(year_ndx + 1).matrix() * movement_matrix.matrix()).array();
     }
     // increment this for the tag-recovery observation
-    if(tag_recovery_indicator(year_ndx) == 1)
+    if(tag_recovery_indicator_by_year(year_ndx) == 1)
       ++tag_recovery_counter;
 
   } // for(year_ndx = 0; year_ndx < n_years; ++year_ndx) {
@@ -1092,8 +1118,8 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   REPORT( fixed_catchatlgth_indicator );
   REPORT( srv_dom_ll_catchatage_indicator );
   REPORT( srv_dom_ll_bio_indicator );
+  REPORT( tag_recovery_indicator_by_year );
   REPORT( tag_recovery_indicator );
-  REPORT( tag_recovery_indicator_by_release_event_and_recovery_region );
   REPORT( tag_release_event_this_year );
   // likelhood flags
   REPORT( tag_likelihood );

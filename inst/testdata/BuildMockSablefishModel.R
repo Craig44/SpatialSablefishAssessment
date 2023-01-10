@@ -164,10 +164,10 @@ tag_recovery_years = 2011:2020
 # drop any recovery years before release years
 #tag_recovery_years = tag_recovery_years[which(tag_recovery_years %in% (tag_release_years + 1))] ## the plus one is because we don't allow a recovery unless after a year at release
 #
-data$tag_recovery_indicator = rep(0, n_years) ## no tag releases
-data$tag_recovery_indicator[data$years %in% tag_recovery_years] = 1
-data$tag_recovery_indicator_by_release_event_and_recovery_region = array(0, dim = c(n_regions * (data$n_years_to_retain_tagged_cohorts_for + 1), n_regions, length(tag_recovery_years)))
-data$obs_tag_recovery = array(10, dim = c(n_ages * 2, n_regions * (data$n_years_to_retain_tagged_cohorts_for + 1), n_regions, length(tag_recovery_years)))
+data$tag_recovery_indicator_by_year = rep(0, n_years) ## no tag releases
+data$tag_recovery_indicator_by_year[data$years %in% tag_recovery_years] = 1
+data$tag_recovery_indicator = array(0, dim = c(n_regions * (data$n_years_to_retain_tagged_cohorts_for + 1), n_regions, length(tag_recovery_years)))
+data$obs_tag_recovery = array(10, dim = c(n_regions * (data$n_years_to_retain_tagged_cohorts_for + 1), n_regions, length(tag_recovery_years)))
 
 ## track each tag cohort for 6 years opst release
 for(y_ndx in 1:length(tag_release_years)) {
@@ -179,7 +179,7 @@ for(y_ndx in 1:length(tag_release_years)) {
           next;
         recovery_year_ndx = which(tag_recovery_years %in% tmp_recovery_year)
         release_event_ndx = get_tag_release_ndx(r_ndx, possible_recovery_years + 1, data$n_regions)
-        data$tag_recovery_indicator_by_release_event_and_recovery_region[release_event_ndx, possible_recovery_region, recovery_year_ndx] = 1
+        data$tag_recovery_indicator[release_event_ndx, possible_recovery_region, recovery_year_ndx] = 1
 
       }
     }

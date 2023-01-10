@@ -162,7 +162,7 @@ All the recovery states include all regions, and years of recoveries including t
 \end{equation}
 
 
-For recapture conditioned tag-recovery observations, a recovery event relates a specific year i.e., the number of recoveries at each location within a year. Only the multinomial likelihood is available for this tag-recovery observation.
+For recapture conditioned tag-recovery observations, we calculate the probability of capture a fish at time \(t\) being released in region \(r\) and recovered in region \(r'\). This was explored by @mcgarvey2002estimating. In this study they show how many of the terms can be dropped when describing the probability of that recovery event. The term \(S_i[a_t, a_m]\) represents the probability of a tagged individual tagged at \(a_t\) surviving until \(a_m\). In our model this surviorship will be regional specific, i.e., fish in certain regions will be exposed to higher fishing mortality rates than other regions over time.
 
 Here, model predicted recaptures are recapture conditioned, which means the predicted proportions are year specific, and represent the proportion of recaptures in each region, \(\boldsymbol{\hat{\theta}}^k_y = (\hat{\theta}^{k}_{y,1},\dots, \hat{\theta}^k_{y,n_r})'\)
 \begin{equation}
@@ -172,7 +172,7 @@ Here, model predicted recaptures are recapture conditioned, which means the pred
 
 
 
-- How to deal with the high number of zeros in \(\boldsymbol{N^k}\)
+- How to deal with the high number of zeros in \(\boldsymbol{N^k}\) zero inflated?
 
 
 
