@@ -196,6 +196,12 @@ Type TagIntegrated(objective_function<Type>* obj) {
   PARAMETER(ln_sigma_R);                                    // standard deviation for recruitment;
   PARAMETER(ln_sigma_init_devs);                            // standard deviation for recruitment;
 
+  // composition parameters
+  PARAMETER_VECTOR(trans_trwl_catchatlgth_error);     //
+  PARAMETER_VECTOR(trans_fixed_catchatlgth_error);     //
+  PARAMETER_VECTOR(trans_fixed_catchatage_error);     //
+  PARAMETER_VECTOR(trans_srv_dom_ll_catchatage_error);    //
+
   // Initialise consistently used variables throughout the code
   int year_ndx;
   int age_ndx;
@@ -289,6 +295,24 @@ Type TagIntegrated(objective_function<Type>* obj) {
   }
   Type tag_phi = exp(ln_tag_phi);
 
+  // Parameters for dirichlet-multinomial composition
+  Type theta_fixed_catchatage;
+  Type theta_fixed_catchatlgth;
+  Type theta_trwl_catchatlgth;
+  Type theta_srv_dom_ll_catchatage;
+
+  if(fixed_catchatage_comp_likelihood == 1)
+    theta_fixed_catchatage = exp(trans_fixed_catchatage_error(0));
+
+  if(fixed_catchatlgth_comp_likelihood == 1)
+    theta_fixed_catchatlgth = exp(trans_fixed_catchatlgth_error(0));
+
+  if(trwl_catchatlgth_comp_likelihood == 1)
+    theta_trwl_catchatlgth = exp(trans_trwl_catchatlgth_error(0));
+
+  if(srv_dom_ll_catchatage_comp_likelihood == 1)
+    theta_srv_dom_ll_catchatage = exp(trans_srv_dom_ll_catchatage_error(0));
+
   // Declare Derived quantities
   array<Type>  SSB_yr(n_projyears, n_regions);
   vector<Type>  SSB_all_areas(n_projyears);
@@ -369,6 +393,8 @@ Type TagIntegrated(objective_function<Type>* obj) {
 
   Type alpha = 0.0;                                       // alpha for the stock recruit relationship
   Type beta = 0.0;                                        // beta for the stock recruit relationship
+  Type N_eff = 0.0;
+
   vector<Type> Bzero(n_regions);
   // Initialise Derived quantities
   /*
@@ -870,19 +896,37 @@ Type TagIntegrated(objective_function<Type>* obj) {
         temp_numbers_at_age = catchatage_fixed_f.col(year_ndx).col(region_ndx);
         temp_numbers_at_age_after_ageing_error = (temp_numbers_at_age.matrix().transpose()) * ageing_error_matrix;
         numbers_at_age_and_sex.segment(n_ages,n_ages) = temp_numbers_at_age_after_ageing_error;
+        // do posfun so no zero proportions
+        for(int i = 0; i < numbers_at_age_and_sex.size(); ++i)
+          numbers_at_age_and_sex(i) = posfun(numbers_at_age_and_sex(i), eps_for_posfun, pen_posfun);
         // normalise to sum = 1 across both sexes
         numbers_at_age_and_sex /= numbers_at_age_and_sex.sum();
         // Store in predicted container
         pred_fixed_catchatage.col(year_ndx).col(region_ndx) = numbers_at_age_and_sex;
-        // evaluate the log-likelihood
-        // Multinomial
+        // Get obs for likelihood calculations
         temp_observed_age_and_sex = obs_fixed_catchatage.col(year_ndx).col(region_ndx);
-        nll(0) -= dmultinom_upd(temp_observed_age_and_sex, numbers_at_age_and_sex, true);
-
-        SIMULATE {
-          effective_sample_size = temp_observed_age_and_sex.sum();
-          temp_observed_age_and_sex = rmultinom(numbers_at_age_and_sex, effective_sample_size);
-          obs_fixed_catchatage.col(year_ndx).col(region_ndx) = temp_observed_age_and_sex;
+        // evaluate the likelihood
+        if(fixed_catchatage_comp_likelihood == 0) {
+          nll(0) -= dmultinom(temp_observed_age_and_sex, numbers_at_age_and_sex, true);
+          SIMULATE {
+            effective_sample_size = temp_observed_age_and_sex.sum();
+            temp_observed_age_and_sex = rmultinom(numbers_at_age_and_sex, effective_sample_size);
+            obs_fixed_catchatage.col(year_ndx).col(region_ndx) = temp_observed_age_and_sex;
+          }
+        } else if (fixed_catchatage_comp_likelihood == 1) {
+          N_eff = sum(temp_observed_age_and_sex);
+          temp_observed_age_and_sex /= N_eff;
+          s1 = 0.0;
+          s2 = 0.0;
+          for(int ndx = 0; ndx < temp_observed_age_and_sex.size(); ndx++){
+            s1 += lgamma(N_eff * temp_observed_age_and_sex(ndx) + 1);
+            s2 += lgamma(N_eff * temp_observed_age_and_sex(ndx) + theta_fixed_catchatage * N_eff * numbers_at_age_and_sex(ndx)) - lgamma(theta_fixed_catchatage * N_eff * numbers_at_age_and_sex(ndx));
+          }
+          nll(0) -= lgamma(N_eff + 1) - s1 + lgamma(theta_fixed_catchatage * N_eff) - lgamma(N_eff + theta_fixed_catchatage * N_eff) + s2;
+          SIMULATE {
+            temp_observed_age_and_sex = rdirichletmulti(numbers_at_age_and_sex, N_eff, theta_fixed_catchatage);
+            obs_fixed_catchatage.col(year_ndx).col(region_ndx) = temp_observed_age_and_sex;
+          }
         }
       }
       // Check if we have Trawl fishery catch at age in this region and year
@@ -893,19 +937,37 @@ Type TagIntegrated(objective_function<Type>* obj) {
         // female length comp
         temp_numbers_at_lgth = (female_age_length_transition.col(year_ndx).matrix().transpose() * catchatage_trwl_f.col(year_ndx).matrix()).col(0);
         temp_numbers_at_lgth_and_sex.segment(n_length_bins,n_length_bins) = temp_numbers_at_lgth;
+        // do posfun so no zero proportions
+        for(int i = 0; i < temp_numbers_at_lgth_and_sex.size(); ++i)
+          temp_numbers_at_lgth_and_sex(i) = posfun(temp_numbers_at_lgth_and_sex(i), eps_for_posfun, pen_posfun);
         // normalise to sum = 1 across both sexes
         temp_numbers_at_lgth_and_sex /= temp_numbers_at_lgth_and_sex.sum();
         // Store in predicted container
         pred_trwl_catchatlgth.col(year_ndx).col(region_ndx) = temp_numbers_at_lgth_and_sex;
-        // evaluate the log-likelihood
-        // Multinomial
+        // Get observations
         temp_observed_lgth_and_sex = obs_trwl_catchatlgth.col(year_ndx).col(region_ndx);
-        nll(1) -= dmultinom_upd(temp_observed_lgth_and_sex, temp_numbers_at_lgth_and_sex, true);
-
-        SIMULATE {
-          effective_sample_size = temp_observed_lgth_and_sex.sum();
-          temp_observed_lgth_and_sex = rmultinom(temp_numbers_at_lgth_and_sex, effective_sample_size);
-          obs_trwl_catchatlgth.col(year_ndx).col(region_ndx) = temp_observed_lgth_and_sex;
+        // evaluate the log-likelihood
+        if(trwl_catchatlgth_comp_likelihood == 0) {
+          nll(1) -= dmultinom(temp_observed_lgth_and_sex, temp_numbers_at_lgth_and_sex, true);
+          SIMULATE {
+            effective_sample_size = temp_observed_lgth_and_sex.sum();
+            temp_observed_lgth_and_sex = rmultinom(temp_numbers_at_lgth_and_sex, effective_sample_size);
+            obs_trwl_catchatlgth.col(year_ndx).col(region_ndx) = temp_observed_lgth_and_sex;
+          }
+        } else if (trwl_catchatlgth_comp_likelihood == 1) {
+          N_eff = sum(temp_observed_lgth_and_sex);
+          temp_observed_lgth_and_sex /= N_eff;
+          s1 = 0.0;
+          s2 = 0.0;
+          for(int ndx = 0; ndx < temp_observed_lgth_and_sex.size(); ndx++){
+            s1 += lgamma(N_eff * temp_observed_lgth_and_sex(ndx) + 1);
+            s2 += lgamma(N_eff * temp_observed_lgth_and_sex(ndx) + theta_trwl_catchatlgth * N_eff * temp_numbers_at_lgth_and_sex(ndx)) - lgamma(theta_trwl_catchatlgth * N_eff * temp_numbers_at_lgth_and_sex(ndx));
+          }
+          nll(1) -= lgamma(N_eff + 1) - s1 + lgamma(theta_trwl_catchatlgth * N_eff) - lgamma(N_eff + theta_trwl_catchatlgth * N_eff) + s2;
+          SIMULATE {
+            temp_observed_lgth_and_sex = rdirichletmulti(temp_numbers_at_lgth_and_sex, N_eff, theta_trwl_catchatlgth);
+            obs_trwl_catchatlgth.col(year_ndx).col(region_ndx) = temp_observed_lgth_and_sex * N_eff;
+          }
         }
       }
       // Check if we have Trawl fishery catch at age in this region and year
@@ -916,19 +978,38 @@ Type TagIntegrated(objective_function<Type>* obj) {
         // female length comp
         temp_numbers_at_lgth = (female_age_length_transition.col(year_ndx).matrix().transpose() * catchatage_fixed_f.col(year_ndx).matrix()).col(0);
         temp_numbers_at_lgth_and_sex.segment(n_length_bins,n_length_bins) = temp_numbers_at_lgth;
+        // do posfun so no zero proportions
+        for(int i = 0; i < temp_numbers_at_lgth_and_sex.size(); ++i)
+          temp_numbers_at_lgth_and_sex(i) = posfun(temp_numbers_at_lgth_and_sex(i), eps_for_posfun, pen_posfun);
         // normalise to sum = 1 across both sexes
         temp_numbers_at_lgth_and_sex /= temp_numbers_at_lgth_and_sex.sum();
+
         // Store in predicted container
         pred_fixed_catchatlgth.col(year_ndx).col(region_ndx) = temp_numbers_at_lgth_and_sex;
-        // evaluate the log-likelihood
-        // Multinomial
+        // Get observation for ll evaluation
         temp_observed_lgth_and_sex = obs_fixed_catchatlgth.col(year_ndx).col(region_ndx);
-        nll(2) -= dmultinom_upd(temp_observed_lgth_and_sex, temp_numbers_at_lgth_and_sex, true);
-
-        SIMULATE {
-          effective_sample_size = temp_observed_lgth_and_sex.sum();
-          temp_observed_lgth_and_sex = rmultinom(temp_numbers_at_lgth_and_sex, effective_sample_size);
-          obs_fixed_catchatlgth.col(year_ndx).col(region_ndx) = temp_observed_lgth_and_sex;
+        // evaluate the log-likelihood
+        if(fixed_catchatlgth_comp_likelihood == 0) {
+          nll(2) -= dmultinom(temp_observed_lgth_and_sex, temp_numbers_at_lgth_and_sex, true);
+          SIMULATE {
+            effective_sample_size = temp_observed_lgth_and_sex.sum();
+            temp_observed_lgth_and_sex = rmultinom(temp_numbers_at_lgth_and_sex, effective_sample_size);
+            obs_fixed_catchatlgth.col(year_ndx).col(region_ndx) = temp_observed_lgth_and_sex;
+          }
+        } else if (fixed_catchatlgth_comp_likelihood == 1) {
+          N_eff = sum(temp_observed_lgth_and_sex);
+          temp_observed_lgth_and_sex /= N_eff;
+          s1 = 0.0;
+          s2 = 0.0;
+          for(int ndx = 0; ndx < temp_observed_lgth_and_sex.size(); ndx++){
+            s1 += lgamma(N_eff * temp_observed_lgth_and_sex(ndx) + 1);
+            s2 += lgamma(N_eff * temp_observed_lgth_and_sex(ndx) + theta_fixed_catchatlgth * N_eff * temp_numbers_at_lgth_and_sex(ndx)) - lgamma(theta_fixed_catchatlgth * N_eff * temp_numbers_at_lgth_and_sex(ndx));
+          }
+          nll(2) -= lgamma(N_eff + 1) - s1 + lgamma(theta_fixed_catchatlgth * N_eff) - lgamma(N_eff + theta_fixed_catchatlgth * N_eff) + s2;
+          SIMULATE {
+            temp_observed_lgth_and_sex = rdirichletmulti(temp_numbers_at_lgth_and_sex, N_eff, theta_fixed_catchatlgth);
+            obs_fixed_catchatlgth.col(year_ndx).col(region_ndx) = temp_observed_lgth_and_sex * N_eff;
+          }
         }
       }
       // Check if we have Survey Longline age composition in this region and year
@@ -941,19 +1022,37 @@ Type TagIntegrated(objective_function<Type>* obj) {
         temp_numbers_at_age = natage_f.col(year_ndx).col(region_ndx).vec() * sel_srv_dom_ll_f.col(srv_dom_ll_sel_by_year_indicator(year_ndx)).vec() * S_f_mid.col(year_ndx).col(region_ndx).vec();
         temp_numbers_at_age_after_ageing_error = (temp_numbers_at_age.matrix().transpose()) * ageing_error_matrix;
         numbers_at_age_and_sex.segment(n_ages,n_ages) = temp_numbers_at_age_after_ageing_error;
+        // do posfun so no zero proportions
+        for(int i = 0; i < numbers_at_age_and_sex.size(); ++i)
+          numbers_at_age_and_sex(i) = posfun(numbers_at_age_and_sex(i), eps_for_posfun, pen_posfun);
         // normalise to sum = 1 across both sexes
         numbers_at_age_and_sex /= numbers_at_age_and_sex.sum();
         // Store in predicted container
         pred_srv_dom_ll_catchatage.col(year_ndx).col(region_ndx) = numbers_at_age_and_sex;
-        // evaluate the log-likelihood
-        // Multinomial
+        // Get observaiton for LL evaluation
         temp_observed_age_and_sex = obs_srv_dom_ll_catchatage.col(year_ndx).col(region_ndx);
-        nll(3) -= dmultinom_upd(temp_observed_age_and_sex, numbers_at_age_and_sex, true);
-
-        SIMULATE {
-          effective_sample_size = temp_observed_age_and_sex.sum();
-          temp_observed_age_and_sex = rmultinom(numbers_at_age_and_sex, effective_sample_size);
-          obs_srv_dom_ll_catchatage.col(year_ndx).col(region_ndx) = temp_observed_age_and_sex;
+        // evaluate the likelihood
+        if(srv_dom_ll_catchatage_comp_likelihood == 0) {
+          nll(3) -= dmultinom(temp_observed_age_and_sex, numbers_at_age_and_sex, true);
+          SIMULATE {
+            effective_sample_size = temp_observed_age_and_sex.sum();
+            temp_observed_age_and_sex = rmultinom(numbers_at_age_and_sex, effective_sample_size);
+            obs_srv_dom_ll_catchatage.col(year_ndx).col(region_ndx) = temp_observed_age_and_sex;
+          }
+        } else if (srv_dom_ll_catchatage_comp_likelihood == 1) {
+          N_eff = sum(temp_observed_age_and_sex);
+          temp_observed_age_and_sex /= N_eff;
+          s1 = 0.0;
+          s2 = 0.0;
+          for(int ndx = 0; ndx < temp_observed_age_and_sex.size(); ndx++){
+            s1 += lgamma(N_eff * temp_observed_age_and_sex(ndx) + 1);
+            s2 += lgamma(N_eff * temp_observed_age_and_sex(ndx) + theta_srv_dom_ll_catchatage * N_eff * numbers_at_age_and_sex(ndx)) - lgamma(theta_srv_dom_ll_catchatage * N_eff * numbers_at_age_and_sex(ndx));
+          }
+          nll(3) -= lgamma(N_eff + 1) - s1 + lgamma(theta_srv_dom_ll_catchatage * N_eff) - lgamma(N_eff + theta_srv_dom_ll_catchatage * N_eff) + s2;
+          SIMULATE {
+            temp_observed_age_and_sex = rdirichletmulti(numbers_at_age_and_sex, N_eff, theta_srv_dom_ll_catchatage);
+            obs_srv_dom_ll_catchatage.col(year_ndx).col(region_ndx) = temp_observed_age_and_sex;
+          }
         }
       }
       // Check if we have Survey Longline biomass obsevation in this region and year
@@ -1080,8 +1179,14 @@ Type TagIntegrated(objective_function<Type>* obj) {
   REPORT(pred_srv_dom_ll_catchatage);
   REPORT(pred_srv_dom_ll_bio);
   REPORT(pred_tag_recovery);
-  // REPORT dimensions so accesor functions and plotting functions only need the $report() object
 
+  // Composition parameters
+  REPORT( theta_fixed_catchatage);
+  REPORT( theta_fixed_catchatlgth);
+  REPORT( theta_trwl_catchatlgth);
+  REPORT( theta_srv_dom_ll_catchatage);
+
+  // REPORT dimensions so accesor functions and plotting functions only need the $report() object
   REPORT(n_regions);
   REPORT(ages);
   REPORT(years);

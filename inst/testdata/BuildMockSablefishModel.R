@@ -127,20 +127,20 @@ data$fixed_catchatage_indicator = matrix(0, nrow = n_regions, ncol = n_years)
 data$obs_fixed_catchatage = array(5, dim = c(n_ages * 2, n_regions, n_years))
 
 data$fixed_catchatage_covar_structure = 0
-data$fixed_catchatage_comp_likelihood = 1
+data$fixed_catchatage_comp_likelihood = 0
 
 ### Trawl gear fishery LF
 data$trwl_catchatlgth_indicator = matrix(0, nrow = n_regions, ncol = n_years)
 data$obs_trwl_catchatlgth = array(5, dim = c(n_length_bins * 2, n_regions, n_years))
 
 data$trwl_catchatlgth_covar_structure = 0
-data$trwl_catchatlgth_comp_likelihood = 1
+data$trwl_catchatlgth_comp_likelihood = 0
 
 ### Fixed gear fishery LF
 data$fixed_catchatlgth_indicator = matrix(0, nrow = n_regions, ncol = n_years)
 data$obs_fixed_catchatlgth = array(5, dim = c(n_length_bins * 2, n_regions, n_years))
 data$fixed_catchatlgth_covar_structure = 0
-data$fixed_catchatlgth_comp_likelihood = 1
+data$fixed_catchatlgth_comp_likelihood = 0
 
 
 
@@ -150,7 +150,7 @@ data$srv_dom_ll_catchatage_indicator = matrix(0, nrow = n_regions, ncol = n_year
 data$obs_srv_dom_ll_catchatage = array(5, dim = c(n_ages * 2, n_regions, n_years))
 
 data$srv_dom_ll_catchatage_covar_structure = 0
-data$srv_dom_ll_catchatage_comp_likelihood = 1
+data$srv_dom_ll_catchatage_comp_likelihood = 0
 
 ### Survey LL index
 data$srv_dom_ll_bio_indicator = matrix(0, nrow = n_regions, ncol = n_years)
@@ -267,6 +267,10 @@ parameters$ln_init_rec_dev = 0
 parameters$ln_catch_sd = log(0.02)
 parameters$ln_sigma_init_devs = log(0.2)
 parameters$ln_sigma_R = log(data$sigma_R)
+parameters$trans_trwl_catchatlgth_error = log(1)
+parameters$trans_fixed_catchatlgth_error = log(1)
+parameters$trans_fixed_catchatage_error = log(1)
+parameters$trans_srv_dom_ll_catchatage_error = log(1)
 
 ## reporting rate
 parameters$logistic_tag_reporting_rate = array(logit(0.999), dim = c(n_regions, length(tag_recovery_years)))

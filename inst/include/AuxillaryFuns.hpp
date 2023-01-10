@@ -175,13 +175,6 @@ void get_covar(vector<Type> theta, matrix<Type>& covar, int n, int type) {
 
 
 /*
- * centred log transform
- */
-template <class Type>
-vector<Type> crl(vector<Type>& x) {
-  return log(x / geo_mean(x));
-}
-/*
  * rmultinomm - for simulate call
  */
 template <class Type>
@@ -290,4 +283,13 @@ matrix<Type> Simplex_restore(vector<Type> logit_unit_vec, vector<Type> last_unit
 
   return matrix_return;
 }
+
+/*
+ * centred log transform
+ */
+template <class Type>
+vector<Type> crl(vector<Type>& x) {
+  return log(x / geo_mean(x));
+}
+
 

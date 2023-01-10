@@ -47,24 +47,24 @@ Users need to population a `data` and `parameters` named list object that is the
 - `fixed_catchatage_indicator` an indicator array for fixed gear catch at age observation with dimensions `n_regions` \(\times\) `n_years`. A one indicates there is a catch at age observation for the fixed fishery in this region and year. A zero indicates no observation.
 - `obs_fixed_catchatage` fixed catch at age observation with dimensions `n_ages * 2` \(\times\) `n_regions` \(\times\) `n_years`. The first dimension represents sex and age with males being the first age block followed by females. This observation is in numbers which is equivalent to proportions times the effective sample size. Predicted proportions will sum = 1 over the age and sex dimension.
 - `fixed_catchatage_covar_structure` integer, this is a place holder doesn't do anything yet, will be used when there is alternative composition likelihoods.
-- `fixed_catchatage_comp_likelihood` integer, this is a place holder doesn't do anything yet, will be used when alternative composition likelihoods are available.
+- `fixed_catchatage_comp_likelihood` integer, 0 indicates multinomial, 1 indicates dirichlet-multinomial 
 
 
 - `trwl_catchatlgth_indicator` an indicator array for trawl gear catch at length observation  with dimensions `n_regions` \(\times\) `n_years`. A one indicates there is a catch at length observation for the trawl fishery in this region and year. A zero indicates no observation.
 - `obs_trawl_catchatlgth` fixed catch at length observation with dimensions `n_length_bins * 2` \(\times\) `n_regions` \(\times\) `n_years`. The first dimension represents length bin and age with males being the first length block followed by females. This observation is in numbers which is equivalent to proportions times the effective sample size. Predicted proportions will sum = 1 over the length and sex dimension.
 - `trwl_catchatlgth_covar_structure` integer, this is a place holder doesn't do anything yet, will be used when there is alternative composition likelihoods.
-- `trwl_catchatlgth_comp_likelihood` integer, this is a place holder doesn't do anything yet, will be used when alternative composition likelihoods are available.
+- `trwl_catchatlgth_comp_likelihood` integer, 0 indicates multinomial, 1 indicates dirichlet-multinomial 
 
 
 - `fixed_catchatlgth_indicator` an indicator array for fixed gear catch at length observation with dimensions `n_regions` \(\times\) `n_years`. A one indicates there is a catch at length observation for the fixed gear fishery in this region and year. A zero indicates no observation.
 - `obs_fixed_catchatlgth` fixed catch at length observation with dimensions `n_length_bins * 2` \(\times\) `n_regions` \(\times\) `n_years`. The first dimension represents length bin and age with males being the first length block followed by females. This observation is in numbers which is equivalent to proportions times the effective sample size. Predicted proportions will sum = 1 over the length and sex dimension.
 - `fixed_catchatlgth_covar_structure` integer, this is a place holder doesn't do anything yet, will be used when there is alternative composition likelihoods.
-- `fixed_catchatlgth_comp_likelihood` integer, this is a place holder doesn't do anything yet, will be used when alternative composition likelihoods are available.
+- `fixed_catchatlgth_comp_likelihood` integer, 0 indicates multinomial, 1 indicates dirichlet-multinomial 
 
 - `srv_dom_ll_catchatage_indicator` an indicator array for survey longline catch at age observation with dimensions `n_regions` \(\times\) `n_years`. A one indicates there is a catch at age observation for the longline survey in this region and year. A zero indicates no observation.
 - `obs_srv_dom_ll_catchatage` fixed catch at length observation with dimensions `n_ages * 2` \(\times\) `n_regions` \(\times\) `n_years`. The first dimension represents age and age with males being the first age block followed by females. This observation is in numbers which is equivalent to proportions times the effective sample size. Predicted proportions will sum = 1 over the age and sex dimension.
 - `srv_dom_ll_catchatage_covar_structure` integer, this is a place holder doesn't do anything yet, will be used when there is alternative composition likelihoods.
-- `srv_dom_ll_catchatage_comp_likelihood` integer, this is a place holder doesn't do anything yet, will be used when alternative composition likelihoods are available.
+- `srv_dom_ll_catchatage_comp_likelihood` integer, 0 indicates multinomial, 1 indicates dirichlet-multinomial 
 
 - `srv_dom_ll_bio_indicator` an indicator array for survey longline abundance observation with dimensions `n_regions` \(\times\) `n_years`. A one indicates there is an abundance observation for the longline survey in this region and year. A zero indicates no observation.
 - `obs_srv_dom_ll_bio` domestic survey abundance observation `n_regions` \(\times\) `n_years`. This observation is in numbers (000's) which is equivalent to proportions times the effective sample size. Predicted proportions will sum = 1 over the age and sex dimension.
@@ -72,10 +72,10 @@ Users need to population a `data` and `parameters` named list object that is the
 - `srv_dom_ll_bio_comp_likelihood` integer, this is a place holder doesn't do anything yet, will be used when alternative composition likelihoods are available.
 - `srv_dom_ll_q_by_year_indicator` indicator vector, this indicates how many time-blocks for time-varying catchabilities are available. Each element links an element of the parameter `logistic_srv_dom_ll_q` for a year.
 
-- `tag_recovery_indicator` an indicator vector for tag-recovery observations has length `n_years`. A one indicates there is a tag recovery observation in this year. A zero indicates no observation. This object is used to define `n_tag_recovery_years = sum(tag_recovery_indicator)`, which links to other tag-recovery structures
-- `tag_recovery_indicator_by_release_event_and_recovery_region` an indicator vector for tag-recovery observations with dimensions `n_tag_release_events` \(\times\) `n_regions` \(\times\) `n_tag_recovery_years`. A one indicates there is a tag recovery observation, a zero indicates no observation. 
+- `tag_recovery_indicator_by_year` an indicator vector for tag-recovery observations has length `n_years`. A one indicates there is a tag recovery observation in this year. A zero indicates no observation. This object is used to define `n_tag_recovery_years = sum(tag_recovery_indicator_by_year)`, which links to other tag-recovery structures
+- `tag_recovery_indicator` an indicator vector for tag-recovery observations with dimensions `n_tag_release_events` \(\times\) `n_regions` \(\times\) `n_tag_recovery_years`. A one indicates there is a tag recovery observation, a zero indicates no observation. 
 - `obs_tag_recovery` tag-recovery observation with dimensions `n_ages * 2` \(\times\) `n_tag_release_events` \(\times\) `n_regions` \(\times\) `n_tag_recovery_years`. Although age and sex is included in this observation, the current likelihood pools observations and expected values of age and sex. Units are numbers (can be non-integer) of recoveries.
-- `tag_likelihood` integer specifying the tag-likelihood, 0 = Poisson, 1 = negative binomial.
+- `tag_likelihood` integer specifying the tag-likelihood, 0 = Poisson, 1 = negative binomial, 2 = Multinomial (release conditioned)
 
 ## `parameters`
 
@@ -103,4 +103,8 @@ Users need to population a `data` and `parameters` named list object that is the
 
 - `ln_sigma_R` scalar which is the log standard deviation for the recruitment prior/penalty
 - `ln_sigma_init_devs` scalar which is the log standard deviation for the initial age deviation prior/penalty
+- `trans_trwl_catchatlgth_error` vector of observation error parameters for trawl catch at length observation Depends on `data$trwl_catchatlgth_comp_likelihood`. If `data$trwl_catchatlgth_comp_likelihood == 0` then this assumes multinomial and this parameter should not be estimated. if `data$trwl_catchatlgth_comp_likelihood == 1` the this assumes the dirichlet-multinomial distribution and this should have length 1 and is the log \(\theta\) parameter.
+- `trans_fixed_catchatlgth_error`  vector of observation error parameters for fixed gear fishery catch at length observation. Depends on `data$fixed_catchatlgth_comp_likelihood`. If `data$fixed_catchatlgth_comp_likelihood == 0` then this assumes multinomial and this parameter should not be estimated. if `data$fixed_catchatlgth_comp_likelihood == 1` the this assumes the dirichlet-multinomial distribution and this should have length 1 and is the log \(\theta\) parameter.
+- `trans_fixed_catchatage_error`  vector of observation error parameters for fixed catch at age observation. Depends on `data$fixed_catchatage_comp_likelihood`. If `data$fixed_catchatage_comp_likelihood == 0` then this assumes multinomial and this parameter should not be estimated. if `data$fixed_catchatage_comp_likelihood == 1` the this assumes the dirichlet-multinomial distribution and this should have length 1 and is the log \(\theta\) parameter.
+- `trans_srv_dom_ll_catchatage_error`  vector of observation error parameters for survey catch at age observation. Depends on `data$srv_dom_ll_catchatage_comp_likelihood`. If `data$srv_dom_ll_catchatage_comp_likelihood == 0` then this assumes multinomial and this parameter should not be estimated. if `data$srv_dom_ll_catchatage_comp_likelihood == 1` the this assumes the dirichlet-multinomial distribution and this should have length 1 and is the log \(\theta\) parameter.
 

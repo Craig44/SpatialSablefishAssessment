@@ -30,43 +30,7 @@ zerofun = function(x, delta) {
 
 zerofun_v = Vectorize(zerofun)
 
-#' log_cv Calculate the CV of the lognormal distribution based on \deqn{cv = \sqrt{e^{\sigma^2} - 1}}
-#'
-#' @param sigma The standard deviation of the lognormal distribution
-#' @return The the cv
-#' @export
-log_cv = function(sigma) {
-  cv = sqrt(exp(sigma^2) - 1)
-  return(cv)
-}
 
-
-#' log_sigma
-#' @description Calculate the sigma of the lognormal distribution based on \deqn{\sigma = \sqrt{log(cv^2 + 1)}}
-#' @param cv The CV (note this is in proportion not percentage) of the lognormal distribution
-#' @return The the sigma
-#' @export
-
-log_sigma = function(cv) {
-  sigma = sqrt(log(cv^2 + 1))
-  return(sigma)
-}
-
-
-#' lognormal_CI
-#' @description Calculate upper and lower bounds for the lognormal distribution based with expectation and cv
-#' @param cv The standard deviation of the lognormal distribution
-#' @param expectation The expectation of the distribution, this is not the mu parameter because for the lognormal distribution the expectation is not the mu parameter.
-#' @param CI level of confidence (units are proportions not percentage i.e. 0.95 for 95 CI)
-#' @export
-#' @return a list with upper and lower elements
-lognormal_CI <- function(expectation, sigma ,CI = 0.95) {
-  mu = (log(expectation) - 0.5*(sigma^2))
-  zscore = abs(stats::qnorm((1 - CI)/2))
-  U_CI = exp(mu + zscore * sigma)
-  L_CI = exp(mu - zscore * sigma)
-  return(list("upper" = U_CI, "lower" = L_CI))
-}
 
 #' gm_mean calculate geometric mean when you have na's in vector
 #' @param x vector of strictly positive values

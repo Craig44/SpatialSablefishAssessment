@@ -22,6 +22,19 @@ test_that("compatibility-single-release-with-movement-and-Z", {
   ## turn off tag shedding and initial mortality
   data$initial_tag_induced_mortality = rep(0.1, sum(data$tag_release_event_this_year))
   data$annual_tag_shedding_rate = 0.05
+
+  ## turn on observations to compare likelihood evaluations
+  ## assumes multinomial
+  data$trwl_catchatlgth_indicator[data$trwl_catchatlgth_indicator == 0] = 1
+  data$obs_trwl_catchatlgth = array(5, dim = dim(data$obs_trwl_catchatlgth))
+  data$fixed_catchatlgth_indicator[data$fixed_catchatlgth_indicator == 0] = 1
+  data$obs_fixed_catchatlgth = array(5, dim = dim(data$obs_fixed_catchatlgth))
+  data$fixed_catchatage_indicator[data$fixed_catchatage_indicator == 0] = 1
+  data$obs_fixed_catchatage = array(5, dim = dim(data$obs_fixed_catchatage))
+  data$srv_dom_ll_catchatage_indicator[data$srv_dom_ll_catchatage_indicator == 0] = 1
+  data$obs_srv_dom_ll_catchatage = array(5, dim = dim(data$obs_srv_dom_ll_catchatage))
+
+
   parameters$logistic_tag_reporting_rate = matrix(logit(0.2), nrow = data$n_regions, ncol = sum(data$tag_recovery_indicator))
 
 
@@ -55,5 +68,67 @@ test_that("compatibility-single-release-with-movement-and-Z", {
 
   ## check SSBs
   expect_true(all(validate_report$SSB_yr == production_report$SSB_yr))
+  ## partition - male
+  expect_true(all(validate_report$natage_m == production_report$natage_m))
+  ## partition - female
+  expect_true(all(validate_report$natage_f == production_report$natage_f))
+
 })
 
+#' compatibility-single-release-with-movement-and-Z-dirichletmultinomial
+#' @description this will run a fairly complex tag module and check nll and predicted values
+#' are the same between the validation TMB model and production TMB model
+#'
+test_that("compatibility-single-release-with-movement-and-Z-dirichletmultinomial", {
+  ## Read in mock data
+  load(system.file("testdata", "MockSablefishModel.RData",package="SpatialSablefishAssessment"))
+
+  data$model = "TagIntegratedValidate"
+  ## no Z or movement
+  data$apply_Z_on_tagged_fish = 1
+  data$apply_fixed_movement = 1
+  data$apply_tag_reporting_rate = 1
+  ## this assumes no movement
+  data$fixed_movement_matrix  = data$movement_matrix
+  data$apply_fishery_tag_reporting = 1 ## all tagged fish will be recovered not a function of F
+  ## turn off tag shedding and initial mortality
+  data$initial_tag_induced_mortality = rep(0.1, sum(data$tag_release_event_this_year))
+  data$annual_tag_shedding_rate = 0.05
+
+  ## turn on observations to compare likelihood evaluations
+  ## assumes multinomial
+  data$trwl_catchatlgth_indicator[data$trwl_catchatlgth_indicator == 0] = 1
+  data$obs_trwl_catchatlgth = array(5, dim = dim(data$obs_trwl_catchatlgth))
+  data$fixed_catchatlgth_indicator[data$fixed_catchatlgth_indicator == 0] = 1
+  data$obs_fixed_catchatlgth = array(6, dim = dim(data$obs_fixed_catchatlgth))
+  data$fixed_catchatage_indicator[data$fixed_catchatage_indicator == 0] = 1
+  data$obs_fixed_catchatage = array(7, dim = dim(data$obs_fixed_catchatage))
+  data$srv_dom_ll_catchatage_indicator[data$srv_dom_ll_catchatage_indicator == 0] = 1
+  data$obs_srv_dom_ll_catchatage = array(8, dim = dim(data$obs_srv_dom_ll_catchatage))
+
+  data$trwl_catchatlgth_indicator[data$trwl_catchatlgth_indicator == 0] = 1
+  data$fixed_catchatlgth_indicator[data$fixed_catchatlgth_indicator == 0] = 1
+  data$fixed_catchatage_comp_likelihood = 1
+  data$srv_dom_ll_catchatage_comp_likelihood = 1
+
+  parameters$logistic_tag_reporting_rate = matrix(logit(0.2), nrow = data$n_regions, ncol = sum(data$tag_recovery_indicator))
+  parameters$trans_fixed_catchatlgth_error = log(0.1)
+  parameters$trans_theta_trwl_catchatlgth_error = log(0.2)
+  parameters$trans_fixed_catchatage_error = log(10)
+  parameters$trans_srv_dom_ll_catchatage = log(7.4)
+
+  validate_model <- TMB::MakeADFun(data = data,
+                                   parameters = parameters,
+                                   DLL = "SpatialSablefishAssessment_TMBExports", silent  = T)
+
+  data$model = "TagIntegrated"
+  production_model <- TMB::MakeADFun(data = data,
+                                     parameters = parameters,
+                                     DLL = "SpatialSablefishAssessment_TMBExports", silent  = T)
+
+  validate_report = validate_model$report()
+  production_report = production_model$report()
+
+  ## check likelihood contribution is the same
+  expect_true(sum(validate_report$nll) == sum(production_report$nll))
+})

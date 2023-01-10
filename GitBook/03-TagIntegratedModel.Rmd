@@ -99,7 +99,8 @@ Observed values were proportions with respect to age and sex, final model fitted
 \[
 {P}^g_{a,r,y,s} = \frac{{C}^g_{a,r,y,s}}{\sum_a \sum_s {C}^g_{a,r,y,s}},
 \]
-and initially the multinomial likelihood was assumed
+
+if the multinomial distribution is assumed
 
 \[
 \boldsymbol{X}^g_{r,y} \sim \text{Multinomial}\left(\boldsymbol{\widehat{P}}^g_{r,y}\right)
