@@ -23,7 +23,7 @@
 <meta name="author" content="C.Marsh" />
 
 
-<meta name="date" content="2023-01-04" />
+<meta name="date" content="2023-01-10" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -248,7 +248,6 @@ div.csl-indent {
 <li><p><code>female_mean_weight_by_age</code> female mean weight at age array with dimensions <code>n_ages</code> <span class="math inline">\(\times\)</span> <code>n_projyears</code>. Units are in kgs, this is because we track 000’s of fish in the partition.</p></li>
 <li><p><code>male_age_length_transition</code> male age-length transtion matrix for each year. An array with dimensions <code>n_ages</code> <span class="math inline">\(\times\)</span><code>n_length_bins</code> <span class="math inline">\(\times\)</span> <code>n_projyears</code></p></li>
 <li><p><code>female_age_length_transition</code> female age-length transtion matrix for each year. An array with dimensions <code>n_ages</code> <span class="math inline">\(\times\)</span><code>n_length_bins</code> <span class="math inline">\(\times\)</span> <code>n_projyears</code></p></li>
-<li><p><code>sigma_R</code> Scalar defining the standard deviation for recruitment deviations</p></li>
 <li><p><code>SrType</code> Stock recruitment type 1 = Beverton holt, 2 = Ricker, 3 = average</p></li>
 <li><p><code>spawning_time_proportion</code> vector of proportions that indicate when during the year spawning occurs. Length = <code>n_projyears</code></p></li>
 <li><p><code>apply_fixed_movement</code> integer whether to apply the input <code>fixed_movement_matrix</code> or estimated movement matrix. This was added because the transformation on estimated movement parameters does not allow values to be zero or one so cannot truly apply no movement. That is when I have used this fixed movement</p></li>
@@ -318,6 +317,8 @@ div.csl-indent {
 <li><p><code>ln_srv_dom_ll_sel_pars</code> array of log selectivity parameters for domestic longline fishery with dimension <code>n_time_blocks</code><span class="math inline">\(\times\)</span> <code>max(sel parameters)</code><span class="math inline">\(\times\)</span> <code>2</code> (for each sex) male parameters first followed by female. The number of time-blocks is defined by the data parameter <code>data$srv_dom_ll_sel_by_year_indicator</code> and max selectivity parameters controlled by <code>data$srv_dom_ll_sel_type</code> which defines the selectivity shape and thus number of parameters.</p></li>
 <li><p><code>logistic_tag_reporting_rate</code> logistic tag-reporting rates. Expected dimensions are <code>n_regions</code> <span class="math inline">\(\times\)</span> <code>n_tag_recovery_years</code>.</p></li>
 <li><p><code>ln_tag_phi</code> scalar which is the log of the dispersion parameter. Only used if <code>data$tag_likelihood == 1</code> i.e. the negative binomial distribution is assumed.</p></li>
+<li><p><code>ln_sigma_R</code> scalar which is the log standard deviation for the recruitment prior/penalty</p></li>
+<li><p><code>ln_sigma_init_devs</code> scalar which is the log standard deviation for the initial age deviation prior/penalty</p></li>
 </ul>
 
 </div>
