@@ -451,7 +451,6 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   Type z_adjustment;
   Type number_of_tag_releases;
 
-
   vector<Type> nll(11); // slots
   nll.setZero();
   /* nll components

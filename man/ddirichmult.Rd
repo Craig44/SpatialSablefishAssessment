@@ -8,10 +8,18 @@ Return the PDF for the dirichlet-multinomial distribution based on \insertCite{t
 ddirichmult(obs, beta, n, est, log_it = F)
 }
 \arguments{
-\item{:}{n, the total number of samples in the available data (which is restricted to any non-negative real number),}
+\item{obs, }{vector of observed compositions assumes sum(obs) = 1}
+
+\item{beta, }{the variance inflation coefficient (beta = n * theta)}
+
+\item{n, }{the total number of samples in the available data (which is restricted to any non-negative real number),}
+
+\item{est, }{vector of fiited compositions assumes sum(est) = 1}
+
+\item{log_it}{return log pdf}
 }
 \value{
-PDF
+pdf
 }
 \description{
 ddirichmult
