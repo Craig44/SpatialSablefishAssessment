@@ -1,9 +1,9 @@
-# `TagIntegrated` `data` and `parameter` descriptions {#TagIntegrated}
+# `TagIntegrated` `data` and `parameter` descriptions {-}
 
 Users need to population a `data` and `parameters` named list object that is then passed to TMB's `MakeADFun`. These sections outline the elements and corresponding dimensions of both `data` and `parameters`.
 
 
-## `data`
+## `data` {-}
 
 - `ages` vector of ages. Length `n_ages`
 - `years` vector of years from start year to current year. length `n_years`
@@ -72,12 +72,13 @@ Users need to population a `data` and `parameters` named list object that is the
 - `srv_dom_ll_bio_comp_likelihood` integer, this is a place holder doesn't do anything yet, will be used when alternative composition likelihoods are available.
 - `srv_dom_ll_q_by_year_indicator` indicator vector, this indicates how many time-blocks for time-varying catchabilities are available. Each element links an element of the parameter `logistic_srv_dom_ll_q` for a year.
 
-- `tag_recovery_indicator_by_year` an indicator vector for tag-recovery observations has length `n_years`. A one indicates there is a tag recovery observation in this year. A zero indicates no observation. This object is used to define `n_tag_recovery_years = sum(tag_recovery_indicator_by_year)`, which links to other tag-recovery structures
-- `tag_recovery_indicator` an indicator vector for tag-recovery observations with dimensions `n_tag_release_events` \(\times\) `n_regions` \(\times\) `n_tag_recovery_years`. A one indicates there is a tag recovery observation, a zero indicates no observation. 
-- `obs_tag_recovery` tag-recovery observation with dimensions `n_ages * 2` \(\times\) `n_tag_release_events` \(\times\) `n_regions` \(\times\) `n_tag_recovery_years`. Although age and sex is included in this observation, the current likelihood pools observations and expected values of age and sex. Units are numbers (can be non-integer) of recoveries.
+- `tag_recovery_indicator_by_year` an indicator vector for tag-recovery observations has length `n_years`. A one indicates there is a tag recovery observation in this year. A zero indicates no observation. This object is used to define `n_tag_recovery_years = sum(tag_recovery_indicator_by_year)`, which links to other tag-recovery structures. This input parameter is not used when `tag_likelihood %in% c(2)`.
+- `tag_recovery_indicator` an indicator vector for specific tag-release/tag-recovery observations to store. Dimensions of this will depend on `tag_likelihood`. If `tag_likelihood %in% c(0,1)` then the dimension is `n_tag_release_events` \(\times\) `n_regions` \(\times\) `n_tag_recovery_years`. If `tag_likelihood %in% c(2)` then the dimensions are `n_years` \(\times\) `n_regions` this indicates the release event that we wont to save all possible recovery predictions for.
+- `obs_tag_recovery` tag-recovery observations. Dimension will depend on `tag_likelihood`. If `tag_likelihood %in% c(0,1)` then the dimensions are `n_tag_release_events` \(\times\) `n_regions` \(\times\) `n_tag_recovery_years`. Units are numbers (can be non-integer) of recoveries. If `tag_likelihood %in% c(2)` then the dimensions are `n_regions * n_years_to_retain_tagged_cohorts_for + 1` \(\times\) `n_regions` \(\times\) `n_years`. The first dimensions relate to a release event, the last dimension relates to all possible recovery events and plus one for the not recovered group. 
+
 - `tag_likelihood` integer specifying the tag-likelihood, 0 = Poisson, 1 = negative binomial, 2 = Multinomial (release conditioned)
 
-## `parameters`
+## `parameters` {-}
 
 
 - `ln_mean_rec` vector of natural logarithm of mean recruitment (units are 000's) for each region. length `n_regions`. 

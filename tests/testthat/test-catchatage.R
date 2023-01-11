@@ -35,7 +35,7 @@ test_that("catch-at-age-fixed-multinomial", {
   expected_nll = 0
   for(y in 1:(length(data$years))) {
     for(r in 1:data$n_regions) {
-      expected_nll = expected_nll - sum(dmultinom(x = test_report$obs_fixed_catchatage[,r,y], prob = test_report$pred_fixed_catchatage[,r,y], log = T))
+      expected_nll = expected_nll - sum(dmultinom_upd(x = test_report$obs_fixed_catchatage[,r,y], prob = test_report$pred_fixed_catchatage[,r,y], log = T))
     }
   }
   expect_equal(test_report$nll[1], expected_nll, tolerance = 0.1) ## with one log likelihood value
@@ -44,7 +44,7 @@ test_that("catch-at-age-fixed-multinomial", {
   expected_nll = 0
   for(y in 1:(length(data$years))) {
     for(r in 1:data$n_regions) {
-      expected_nll = expected_nll - sum(dmultinom(x = test_report$obs_srv_dom_ll_catchatage[,r,y], prob = test_report$pred_srv_dom_ll_catchatage[,r,y], log = T))
+      expected_nll = expected_nll - sum(dmultinom_upd(x = test_report$obs_srv_dom_ll_catchatage[,r,y], prob = test_report$pred_srv_dom_ll_catchatage[,r,y], log = T))
     }
   }
   expect_equal(test_report$nll[4], expected_nll, tolerance = 0.1) ## with one log likelihood value

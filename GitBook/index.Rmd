@@ -13,7 +13,10 @@ link-citations: yes
 github-repo: https://github.com/Craig44/SpatialSablefishAssessment
 ---
 
-# `SpatialSablefishAssessment` is a R package for conducting spatial stock assessment research for a stock that has two fisheries.
+
+# Introduction {-}
+
+`SpatialSablefishAssessment` is a R package for conducting spatial stock assessment research for a stock that has two fisheries and sexed population.
 
 
 

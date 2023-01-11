@@ -230,3 +230,22 @@ should_return_NA <- function(x) {
 unpaste <- function (string, sep)  {
   return(unlist(strsplit(string, split = sep)))
 }
+
+
+
+#'
+#' posfun
+#' utility function to mimic TMB code and likelihood evaluations
+#' @param x a value to check if its greater than epx
+#' @param eps a small value to check if x is greater than
+#' @param pen a value which will get incremented by the penalty of the posfun
+#' @return a modified value of x which is larger than eps in a differential manor
+#' @export
+posfun <- function(x, eps, pen = NULL) {
+  pow <- function(val,exponent) {x^exponent}
+  xp = -(x/eps-1);
+  if(x >= eps) {
+    return(x)
+  }
+  return(eps*(1/(1+xp+pow(xp,2)+pow(xp,3)+pow(xp,4)+pow(xp,5))))
+}

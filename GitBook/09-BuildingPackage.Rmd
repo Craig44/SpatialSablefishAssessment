@@ -1,0 +1,10 @@
+# Contributing to `SpatialSablefishAssessment` {-}
+
+This is an open source project and we encourage users to make changes and help develop the model further. Any commit to the Github page will trigger the [Github actions](https://github.com/Craig44/SpatialSablefishAssessment/actions) to check the R package which includes installing it, running unit-tests and building the Gitbook which then will be publically available. Before commiting to this repository it is recommended to run all these tasks locally.
+
+
+The Github repository contains a R script called `BuildPackage.R` which contains most of the calls that are triggered by the Github actions.
+
+When editing TMB code and recompiling you need to go into the `src/` directory and delete any files with the extension `.dll` or `.o`. You should also do this in the `src/TMB` directory. If you don't delete these libraries sometimes the `pkgbuild::compile_dll()` wont recompile the source code with the updated changes. It is best to get into the habit of doing this when dealing with the TMB source code.
+
+Any model that is added, should be able to be unit-tested. For `TagIntegrated` model I created a mirror model called `TagIntegratedValidate` which has heaps more switches which I didn't want in the production version, but needed to validate isolated functionality. Although this creates duplicate code bases I still think it is the best approach. When you do this it is recommended that you add a unit-test which checks the production and validation model are the same. This will tell you when you change functionality in one of the models and not the other, thus keeping them compatible and the unit-tests trustworthy.

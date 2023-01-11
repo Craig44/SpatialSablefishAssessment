@@ -1,4 +1,4 @@
-# `TagIntegrated` model equations {#TagIntegratedEq}
+# `TagIntegrated` model equations {-}
 
 ## Process equations {-}
 ### Population dynamics {-}

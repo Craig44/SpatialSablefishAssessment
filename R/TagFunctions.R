@@ -162,41 +162,69 @@ get_tag_recovery_obs_fitted_values = function(MLE_report, region_key = NULL, ver
   sex_age_lvls = paste0(rep(c("M","F"), each = length(ages)), ages)
   sex_for_report = rep(c("M","F"), each = length(ages))
   age_for_rep = rep(ages, 2)
-  ## recovery years
-  recovery_years = years[which(MLE_report$tag_recovery_indicator_by_year == 1)]
 
-  #dimnames(MLE_report$tag_recovery_indicator_by_year) = list(1:((MLE_report$n_years_to_retain_tagged_cohorts_for + 1) * MLE_report$n_regions), regions, recovery_years)
-  #molten_indicator = reshape2::melt(MLE_report$tag_recovery_indicator_by_year)
-  #colnames(molten_indicator) = c("release_event", "recovery_region", "recovery_year", "indicator")
-  #molten_indicator$unique_recovery_id = paste0(molten_indicator$release_event,"-", molten_indicator$recovery_region, "-", molten_indicator$recovery_year)
-  #sum(molten_indicator$indicator) * length(age_for_rep)
-  ## to validate data frame for efficient storing during the loop
-  expected_n_records = sum(MLE_report$tag_recovery_indicator)
   full_df = NULL
+  ## tag data is Poisson or Negative binomial structure
+  if(MLE_report$tag_likelihood %in% c(0,1)) {
+    ## recovery years
+    recovery_years = years[which(MLE_report$tag_recovery_indicator_by_year == 1)]
 
-  for(y_ndx in 1:length(recovery_years)) { ## recovery years
-    if(verbose)
-      cat("recovery year ", recovery_years[y_ndx],"\n")
-    for(r_ndx in 1:length(regions)) { ## recovery regions
-      ## now link to release events only include release years prior to recovery year
-      possible_release_years = release_years[release_years < recovery_years[y_ndx]]
-      for(release_yr_ndx in 1:(MLE_report$n_years_to_retain_tagged_cohorts_for + 1)) {
-        for(release_region_ndx in 1:length(regions)) {
-          release_event_ndx = get_tag_release_ndx(release_region_ndx, release_yr_ndx, MLE_report$n_regions)
-          if(MLE_report$tag_recovery_indicator[release_event_ndx, r_ndx, y_ndx] == 1) {
-            this_release_year = as.character(recovery_years[y_ndx] - (release_yr_ndx - 1))
-            if(release_yr_ndx == (MLE_report$n_years_to_retain_tagged_cohorts_for + 1))
-              this_release_year = "Plus group"
-            ## recovery here
-            tmp_df = data.frame(release_event = release_event_ndx, recovery_year = recovery_years[y_ndx], recovery_region = regions[r_ndx], release_region = regions[release_region_ndx], release_year = this_release_year, observed = MLE_report$obs_tag_recovery[release_event_ndx, r_ndx, y_ndx], predicted = MLE_report$pred_tag_recovery[release_event_ndx, r_ndx, y_ndx])
-            full_df = rbind(full_df, tmp_df)
+    #dimnames(MLE_report$tag_recovery_indicator_by_year) = list(1:((MLE_report$n_years_to_retain_tagged_cohorts_for + 1) * MLE_report$n_regions), regions, recovery_years)
+    #molten_indicator = reshape2::melt(MLE_report$tag_recovery_indicator_by_year)
+    #colnames(molten_indicator) = c("release_event", "recovery_region", "recovery_year", "indicator")
+    #molten_indicator$unique_recovery_id = paste0(molten_indicator$release_event,"-", molten_indicator$recovery_region, "-", molten_indicator$recovery_year)
+    #sum(molten_indicator$indicator) * length(age_for_rep)
+    ## to validate data frame for efficient storing during the loop
+    expected_n_records = sum(MLE_report$tag_recovery_indicator)
+
+    for(y_ndx in 1:length(recovery_years)) { ## recovery years
+      if(verbose)
+        cat("recovery year ", recovery_years[y_ndx],"\n")
+      for(r_ndx in 1:length(regions)) { ## recovery regions
+        ## now link to release events only include release years prior to recovery year
+        possible_release_years = release_years[release_years < recovery_years[y_ndx]]
+        for(release_yr_ndx in 1:(MLE_report$n_years_to_retain_tagged_cohorts_for + 1)) {
+          for(release_region_ndx in 1:length(regions)) {
+            release_event_ndx = get_tag_release_ndx(release_region_ndx, release_yr_ndx, MLE_report$n_regions)
+            if(MLE_report$tag_recovery_indicator[release_event_ndx, r_ndx, y_ndx] == 1) {
+              this_release_year = as.character(recovery_years[y_ndx] - (release_yr_ndx - 1))
+              if(release_yr_ndx == (MLE_report$n_years_to_retain_tagged_cohorts_for + 1))
+                this_release_year = "Plus group"
+              ## recovery here
+              tmp_df = data.frame(release_event = release_event_ndx, recovery_year = recovery_years[y_ndx], recovery_region = regions[r_ndx], release_region = regions[release_region_ndx], release_year = this_release_year, observed = MLE_report$obs_tag_recovery[release_event_ndx, r_ndx, y_ndx], predicted = MLE_report$pred_tag_recovery[release_event_ndx, r_ndx, y_ndx])
+              full_df = rbind(full_df, tmp_df)
+            }
           }
         }
       }
     }
+    full_df$unique_recovery_id = paste0(full_df$release_event,"-", full_df$recovery_region, "-", full_df$recovery_year)
+    if(MLE_report$tag_likelihood == 0) {
+      full_df$likelihood = "Poisson"
+    } else if (MLE_report$tag_likelihood == 0) {
+      full_df$likelihood = "Negative Binomial"
+    }
+  } else {
+    expected_n_records = sum(data$tag_recovery_indicator) * (data$n_years_to_retain_tagged_cohorts_for * data$n_regions + 1)
+    ## tag data is Multinomial release conditioned
+    recovery_regions = rep(regions, data$n_years_to_retain_tagged_cohorts_for)
+    recovery_regions = c(recovery_regions, "Not-recaptured")
+    recovery_year_ndx = rep(1:data$n_years_to_retain_tagged_cohorts_for, each = length(regions)) - 1
+    for(y_ndx in 1:length(years)) { ## recovery years
+      for(r_ndx in 1:length(regions)) { ## recovery regions
+        if(data$tag_recovery_indicator[y_ndx, r_ndx] == 1) {
+          recovery_years = years[y_ndx] + recovery_year_ndx
+          recovery_years = c(recovery_years, "Not-recaptured")
+
+          tmp_df = data.frame(release_year = years[y_ndx], release_region = regions[r_ndx], recovery_year = recovery_years, recovery_region = recovery_regions, observed = MLE_report$obs_tag_recovery[, r_ndx, y_ndx], predicted = MLE_report$pred_tag_recovery[, r_ndx, y_ndx])
+          full_df = rbind(full_df, tmp_df)
+
+        }
+      }
+    }
+    full_df$likelihood = "Multinomial-release"
   }
   #nrow(full_df)
-  full_df$unique_recovery_id = paste0(full_df$release_event,"-", full_df$recovery_region, "-", full_df$recovery_year)
   #no_derived_values = molten_indicator$unique_recovery_id[molten_indicator$indicator == 1][which(!molten_indicator$unique_recovery_id[molten_indicator$indicator == 1] %in% unique(full_df$unique_recovery_id))]
 
   if(expected_n_records != nrow(full_df))
@@ -216,6 +244,9 @@ get_tag_recovery_obs_fitted_values = function(MLE_report, region_key = NULL, ver
 plot_tag_recovery_obs = function(MLE_report, region_key = NULL, release_ndx_to_plot = 1:5, sex = "both") {
   if(!sex %in% c("both", "male","female"))
     stop("sex must be 'both', 'male' or 'female'")
+  if(!MLE_report$tag_likelihood %in% c(0,1))
+    stop("This plot function doesn't work for this tag-likelihood")
+
   get_tag_df = get_tag_recovery_obs_fitted_values(MLE_report, region_key)
   unique_release_events = unique(get_tag_df$release_event )
   if(max(release_ndx_to_plot) > length(unique_release_events)) {
@@ -239,6 +270,7 @@ plot_tag_recovery_obs = function(MLE_report, region_key = NULL, release_ndx_to_p
     geom_line(linewidth = 1.1) +
     facet_grid(recovery_region~release_event) +
     labs(col = "Recovery years")
+
   return(gplt)
 }
 
@@ -259,6 +291,8 @@ plot_tag_recovery_obs = function(MLE_report, region_key = NULL, release_ndx_to_p
 plot_tag_recovery_fits <- function(MLE_report, region_key = NULL, plt_type = "aggregate") {
   if(!plt_type %in% c("aggregate", "stand_resid", "rqr_resid", "raw_resid"))
     stop('plt_type needs to be one of "aggregate", "stand_resid", "rqr_resid", "raw_resid"')
+  if(!MLE_report$tag_likelihood %in% c(0,1))
+    stop("This plot function doesn't work for this tag-likelihood")
 
   tag_fits_by_age_sex = get_tag_recovery_obs_fitted_values(MLE_report, region_key)
   regions = paste0("Region ", 1:data$n_regions)
