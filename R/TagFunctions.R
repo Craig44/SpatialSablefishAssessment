@@ -205,14 +205,14 @@ get_tag_recovery_obs_fitted_values = function(MLE_report, region_key = NULL, ver
       full_df$likelihood = "Negative Binomial"
     }
   } else {
-    expected_n_records = sum(data$tag_recovery_indicator) * (data$n_years_to_retain_tagged_cohorts_for * data$n_regions + 1)
+    expected_n_records = sum(MLE_report$tag_recovery_indicator) * (MLE_report$n_years_to_retain_tagged_cohorts_for * MLE_report$n_regions + 1)
     ## tag data is Multinomial release conditioned
-    recovery_regions = rep(regions, data$n_years_to_retain_tagged_cohorts_for)
+    recovery_regions = rep(regions, MLE_report$n_years_to_retain_tagged_cohorts_for)
     recovery_regions = c(recovery_regions, "Not-recaptured")
-    recovery_year_ndx = rep(1:data$n_years_to_retain_tagged_cohorts_for, each = length(regions)) - 1
+    recovery_year_ndx = rep(1:MLE_report$n_years_to_retain_tagged_cohorts_for, each = length(regions)) - 1
     for(y_ndx in 1:length(years)) { ## recovery years
       for(r_ndx in 1:length(regions)) { ## recovery regions
-        if(data$tag_recovery_indicator[y_ndx, r_ndx] == 1) {
+        if(MLE_report$tag_recovery_indicator[y_ndx, r_ndx] == 1) {
           recovery_years = years[y_ndx] + recovery_year_ndx
           recovery_years = c(recovery_years, "Not-recaptured")
 
@@ -295,7 +295,7 @@ plot_tag_recovery_fits <- function(MLE_report, region_key = NULL, plt_type = "ag
     stop("This plot function doesn't work for this tag-likelihood")
 
   tag_fits_by_age_sex = get_tag_recovery_obs_fitted_values(MLE_report, region_key)
-  regions = paste0("Region ", 1:data$n_regions)
+  regions = paste0("Region ", 1:MLE_report$n_regions)
   if(!is.null(region_key))
     regions = region_key$area[region_key$TMB_ndx + 1]
 
