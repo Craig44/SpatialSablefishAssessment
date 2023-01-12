@@ -23,7 +23,7 @@
 <meta name="author" content="C.Marsh" />
 
 
-<meta name="date" content="2023-01-11" />
+<meta name="date" content="2023-01-12" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -165,6 +165,7 @@ div.csl-indent {
 <li class="chapter" data-level="" data-path="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html"><a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#accessor-functions"><i class="fa fa-check"></i>Accessor functions</a></li>
 <li class="chapter" data-level="" data-path="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html"><a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#plotting-functions"><i class="fa fa-check"></i>Plotting functions</a></li>
 <li class="chapter" data-level="" data-path="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html"><a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#estimation-functions"><i class="fa fa-check"></i>Estimation functions</a></li>
+<li class="chapter" data-level="" data-path="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html"><a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#distribution-functions"><i class="fa fa-check"></i>Distribution functions</a></li>
 <li class="chapter" data-level="" data-path="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html"><a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#parameter-transformation-functions"><i class="fa fa-check"></i>Parameter transformation functions</a></li>
 </ul></li>
 <li class="chapter" data-level="" data-path="how-to-use-spatialsablefishassessment.html"><a href="how-to-use-spatialsablefishassessment.html"><i class="fa fa-check"></i>How to use <code>SpatialSablefishAssessment</code></a>
@@ -251,12 +252,12 @@ div.csl-indent {
 <span class="math display">\[\begin{align*}
 N_{a,r,y,s} =
 \begin{cases}
-R_{r,y} 0.5, &amp; a = a_1\\
+R_{r,y} p^R_{s,y}, &amp; a = a_1\\
 N_{a - 1,r,y - 1,s} \exp\bigg( -Z_{a - 1,r, y - 1,s} \bigg), &amp; a_1 &lt; a &lt; a_+\\
 N_{a - 1,r,y - 1,s} \exp\bigg( -Z_{a - 1,r, y - 1,s} \bigg) + N_{a,r,y - 1,s} \exp\bigg( -Z_{a,r, y - 1,s} \bigg), &amp;  a = a_+
 \end{cases}
 \end{align*}\]</span></p>
-<p>and movement is then applied</p>
+<p><span class="math inline">\(p^R_{s,y}\)</span> is proportion recruits for sex <span class="math inline">\(s\)</span> in year <span class="math inline">\(y\)</span> and movement is then applied</p>
 <p><span class="math display">\[\begin{equation*}
 \boldsymbol{N}&#39;_{a,y,s} = \boldsymbol{N}_{a,y,s} \boldsymbol{M} \ \ \forall \ a
 \end{equation*}\]</span></p>
@@ -504,86 +505,90 @@ f(x) = \frac{\left(n!\right)\Gamma\left(\sum \alpha_k\right)}{\Gamma\left(n+\sum
 <td>Average log-recruitment</td>
 </tr>
 <tr class="even">
+<td><span class="math inline">\(p^R_y\)</span></td>
+<td>proportion recruitment male</td>
+</tr>
+<tr class="odd">
 <td><span class="math inline">\(\ln \mu_{f}\)</span></td>
 <td>Average log-fishing mortality</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><span class="math inline">\(\phi_{y,g}\)</span></td>
 <td>annual fishing mortality deviation by gear (log space)</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><span class="math inline">\(\tau_{y}\)</span></td>
 <td>annual recruitment deviation <span class="math inline">\(\sim LogNormal\left(0,\sigma_r\right)\)</span></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><span class="math inline">\(\sigma_r\)</span></td>
 <td>Recruitment standard deviation</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><span class="math inline">\(N_{a,y,s}\)</span></td>
 <td>Numbers of fish at age <span class="math inline">\(a\)</span> in year <span class="math inline">\(y\)</span> of sex <span class="math inline">\(s\)</span></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><span class="math inline">\(M\)</span></td>
 <td>Natural mortality</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><span class="math inline">\(F^g_{a,y}\)</span></td>
 <td>Fishing mortality for year <span class="math inline">\(y\)</span>, age <span class="math inline">\(a\)</span> and gear <span class="math inline">\(g\)</span></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><span class="math inline">\(F_{hist}\)</span></td>
 <td>Historical proportion of Fishing mortality</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><span class="math inline">\(Z_{a,y}\)</span></td>
 <td>Total mortality for year <span class="math inline">\(y\)</span>, age <span class="math inline">\(a\)</span> <span class="math inline">\(=\sum\limits_g F^g_{a,y} + M\)</span></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><span class="math inline">\(R_{y}\)</span></td>
 <td>Annual recruitment</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><span class="math inline">\(B_{y}\)</span></td>
 <td>Spawning biomass in year <span class="math inline">\(y\)</span></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><span class="math inline">\(S^g_{a,y,s}\)</span></td>
 <td>Selectivity at age <span class="math inline">\(a\)</span> for gear type <span class="math inline">\(g\)</span> and sex <span class="math inline">\(s\)</span></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><span class="math inline">\(a_50\)</span></td>
 <td>age at 50% selection for ascending limb</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><span class="math inline">\(d_50\)</span></td>
 <td>age at 50% selection for descending limb</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><span class="math inline">\(\delta\)</span></td>
 <td>slope/shape parameters for different logistic curves</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><span class="math inline">\(\boldsymbol{A}\)</span></td>
 <td>ageing-error matrix dimensions <span class="math inline">\(n_a \ \times \ n_a\)</span></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><span class="math inline">\(\boldsymbol{A}^l_s\)</span></td>
 <td>age to length conversion matrix by sex. dimensions <span class="math inline">\(n_a \ \times \ n_l\)</span></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><span class="math inline">\(q_g\)</span></td>
 <td>abundance index catchability coeffecient by gear</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><span class="math inline">\(\lambda_x\)</span></td>
 <td>Statistical weight (penalty) for component <span class="math inline">\(x\)</span></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><span class="math inline">\(P^g_{l,y,s}\)</span></td>
 <td>Observed proportions at length for gear <span class="math inline">\(g\)</span> in year <span class="math inline">\(y\)</span> and sex <span class="math inline">\(s\)</span></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><span class="math inline">\(P^g_{a,y,s}\)</span></td>
 <td>Observed proportions at age for gear <span class="math inline">\(g\)</span> in year <span class="math inline">\(y\)</span> and sex <span class="math inline">\(s\)</span></td>
 </tr>
