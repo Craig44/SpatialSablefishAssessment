@@ -80,7 +80,7 @@ set_up_parameters(
 
 \item{est_srv_ll_AF_theta}{bool whether you want to estimate the theta parameter for longline survey AF}
 
-\item{est_prop_male_recruit}{string describing the type
+\item{est_prop_male_recruit}{vector of years that indicate time-blocks or one of the following strings
 \itemize{
 \item \code{off}: not estimated
 \item \code{constant}: single value for all years

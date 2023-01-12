@@ -283,6 +283,30 @@ test_that("test-shared-survey-selectivity-pars", {
 
   expect_equal(new_test_rep$prop_recruit_male, rep(new_prop_recruit_pars, length(data$years)), tolerance = 0.0001)
 
+  ## proportion male recruits time-blocks
+  prop_time_blocks = c(2011, 2014, 2018)
+  load(system.file("testdata", "MockSablefishModel.RData",package="SpatialSablefishAssessment"))
+  data$F_method = 1
+  ## fix survey sel slope parameters
+  na_map = set_up_parameters(data= data, parameters = parameters, srv_sel_first_param_shared_by_sex = T,
+                             tag_reporting_rate = "space",
+                             est_prop_male_recruit = prop_time_blocks)
+  test_model <- TMB::MakeADFun(data = data,
+                               parameters = parameters, map = na_map,
+                               DLL = "SpatialSablefishAssessment_TMBExports", silent  = T)
+
+
+  ##
+  prop_male_pars = test_model$par[names(test_model$par) %in% "logistic_prop_recruit_male"]
+  expect_true(length(prop_male_pars) == length(prop_time_blocks))
+
+  # alternative params
+  new_prop_recruit_pars = c(0.3, 0.6,0.8)
+  test_pars = test_model$par
+  test_pars[which(names(test_model$par) %in% "logistic_prop_recruit_male")] = logit(new_prop_recruit_pars)
+  new_test_rep = test_model$report(test_pars)
+  expect_equal(new_test_rep$prop_recruit_male, c(0.5, rep(0.3, 3), rep(0.6, 4), rep(0.8, 3)), tolerance = 0.0001)
+
 })
 
 #' test-get_negloglike

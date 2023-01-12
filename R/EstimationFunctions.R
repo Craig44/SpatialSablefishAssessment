@@ -184,7 +184,7 @@ fix_pars <- function(par_list, pars_to_exclude, vec_elements_to_exclude = NULL, 
 #' @param est_fixed_LF_theta bool whether you want to estimate the theta parameter for fixed gear LF
 #' @param est_trwl_LF_theta bool whether you want to estimate the theta parameter for trawl gear LF
 #' @param est_srv_ll_AF_theta bool whether you want to estimate the theta parameter for longline survey AF
-#' @param est_prop_male_recruit string describing the type
+#' @param est_prop_male_recruit vector of years that indicate time-blocks or one of the following strings
 #' \itemize{
 #'   \item `off`: not estimated
 #'   \item `constant`: single value for all years
@@ -218,8 +218,7 @@ set_up_parameters <- function(data, parameters,
 
   if(!tag_reporting_rate %in% c("ignore","constant", "time", "off", "space"))#, "spatio-temporal"))
     stop('tag_reporting_rate: needs to be one of the following "ignore", "constant", "time", "off", "space"')
-  if(!est_prop_male_recruit %in% c("constant", "off"))#, "spatio-temporal"))
-    stop('tag_reporting_rate: needs to be one of the following "constant", "off"')
+
   #
   map_to_fix = na_map
   parameters_completely_fixed = c()
@@ -252,13 +251,41 @@ set_up_parameters <- function(data, parameters,
 
   base_prop_male_recruit_vals = list()
   copy_prop_male_recruit_vals = list()
-  if(est_prop_male_recruit == "off") {
-    parameters_completely_fixed = c(parameters_completely_fixed, c("logistic_prop_recruit_male"))
-  } else if(est_prop_male_recruit == "constant") {
-    vectors_with_elements_fixed[["logistic_prop_recruit_male"]] = 2:length(data$years)
-    base_prop_male_recruit_vals = rep(list(logistic_prop_recruit_male = 1), length(parameters$logistic_prop_recruit_male) - 1)
-    copy_prop_male_recruit_vals = evalit(paste0("list(",paste(paste0("logistic_prop_recruit_male = ", 2:length(parameters$logistic_prop_recruit_male)), collapse = ", "),")"))
+
+  if(is.character(est_prop_male_recruit)) {
+    if(!est_prop_male_recruit %in% c("constant", "off"))#, "spatio-temporal"))
+      stop('tag_reporting_rate: needs to be one of the following "constant", "off"')
+    if(est_prop_male_recruit == "off") {
+      parameters_completely_fixed = c(parameters_completely_fixed, c("logistic_prop_recruit_male"))
+    } else if(est_prop_male_recruit == "constant") {
+      vectors_with_elements_fixed[["logistic_prop_recruit_male"]] = 2:length(data$years)
+      base_prop_male_recruit_vals = rep(list(logistic_prop_recruit_male = 1), length(parameters$logistic_prop_recruit_male) - 1)
+      copy_prop_male_recruit_vals = evalit(paste0("list(",paste(paste0("logistic_prop_recruit_male = ", 2:length(parameters$logistic_prop_recruit_male)), collapse = ", "),")"))
+    }
+  } else if (is.numeric(est_prop_male_recruit)) {
+    yr_ndx = which(data$years %in% est_prop_male_recruit)
+    vectors_with_elements_fixed[["logistic_prop_recruit_male"]] = which(!data$years %in% est_prop_male_recruit)
+
+    # rep per ndx
+    for(i in 1:length(yr_ndx)) {
+      if((i < length(yr_ndx)) & (i != length(yr_ndx))) {
+        rep_ndx = yr_ndx[i + 1] - yr_ndx[i] - 1
+        base_prop_male_recruit_vals = append(base_prop_male_recruit_vals, rep(evalit(paste0("list(",paste(paste0("logistic_prop_recruit_male = ", yr_ndx[i]), collapse = ", "),")")), rep_ndx))
+        copy_ndx = (yr_ndx[i] + 1):(yr_ndx[i + 1] - 1)
+        copy_prop_male_recruit_vals = append(copy_prop_male_recruit_vals, evalit(paste0("list(",paste(paste0("logistic_prop_recruit_male = ", copy_ndx), collapse = ", "),")")))
+      } else if(i == length(yr_ndx)) {
+        if(yr_ndx[i] != length(data$years)) {
+          rep_ndx = (yr_ndx[i] + 1):length(data$years)
+          base_prop_male_recruit_vals = append(base_prop_male_recruit_vals, rep(evalit(paste0("list(",paste(paste0("logistic_prop_recruit_male = ", yr_ndx[i]), collapse = ", "),")")), length(rep_ndx)))
+          copy_prop_male_recruit_vals = append(copy_prop_male_recruit_vals, evalit(paste0("list(",paste(paste0("logistic_prop_recruit_male = ", rep_ndx), collapse = ", "),")")))
+        }
+      }
+    }
+  } else {
+    stop("unknown type est_prop_male_recruit, needs to be a vector of years or character")
   }
+
+
 
   ## deal with theta parameters for the composition data sets
   ## if multinomial should never be estimated
