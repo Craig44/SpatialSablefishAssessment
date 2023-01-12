@@ -228,14 +228,25 @@ validate_input_data_and_parameters = function(data, parameters) {
 
   n_tag_recoveries = sum(data$tag_recovery_indicator_by_year)
   if(n_tag_recoveries > 0) {
-    ## tag_recovery_indicator_by_release_event_and_recovery_region
-    check = check_dim(data$tag_recovery_indicator, c(n_regions * (data$n_years_to_retain_tagged_cohorts_for + 1), n_regions, n_tag_recoveries))
-    if(!check$result)
-      return(paste0("tag_recovery_indicator_by_release_event_and_recovery_region: ", check$message))
-    ## obs_tag_recovery
-    check = check_dim(data$obs_tag_recovery, c(n_regions * (data$n_years_to_retain_tagged_cohorts_for + 1), n_regions, n_tag_recoveries))
-    if(!check$result)
-      return(paste0("obs_tag_recovery: ", check$message))
+    if(data$tag_likelihood %in% c(0,1)) {
+      ## tag_recovery_indicator
+      check = check_dim(data$tag_recovery_indicator, c(n_regions * (data$n_years_to_retain_tagged_cohorts_for + 1), n_regions, n_tag_recoveries))
+      if(!check$result)
+        return(paste0("tag_recovery_indicator: ", check$message))
+      ## obs_tag_recovery
+      check = check_dim(data$obs_tag_recovery, c(n_regions * (data$n_years_to_retain_tagged_cohorts_for + 1), n_regions, n_tag_recoveries))
+      if(!check$result)
+        return(paste0("obs_tag_recovery: ", check$message))
+    } else if(data$tag_likelihood %in% c(2)) {
+      ## tag_recovery_indicator
+      check = check_dim(data$tag_recovery_indicator, c(n_years, n_regions))
+      if(!check$result)
+        return(paste0("tag_recovery_indicator: ", check$message))
+      ## obs_tag_recovery
+      check = check_dim(data$obs_tag_recovery, c(n_regions * data$n_years_to_retain_tagged_cohorts_for + 1, n_regions, n_years))
+      if(!check$result)
+        return(paste0("obs_tag_recovery: ", check$message))
+    }
   }
 
   ## parameters

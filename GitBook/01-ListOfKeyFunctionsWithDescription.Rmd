@@ -45,6 +45,7 @@ All of these functions have descriptions and details on expected input parameter
 
 ## Estimation functions {-}
 
+- `profile_param` Run log-likelihood profiles on an estimated parameter
 - `set_up_parameters` Fix parameters, uses `fix_pars` and `set_pars_to_be_the_same` for the `TagIntegrated` model 
 - `pre_optim_sanity_checks` run some checks on a TMB model of type `TagIntegrated` before optimization
 - `post_optim_sanity_checks`  run some checks on a TMB model of type `TagIntegrated` after optimization
@@ -54,6 +55,15 @@ All of these functions have descriptions and details on expected input parameter
 - `fix_pars` turn off parameters so they aren't estimated, there are many parameters that shouldn't be estimated
 - `set_pars_to_be_the_same` set parameters to be estimated at the same value i.e., male female have the same selectivity parameters. or tag-reporting  to be the same among regions.
 - `rmvnorm_prec` simulate from a multivariate normal distribution using the precision matrix.
+
+## Distribution functions {-}
+
+- `ddirichmult` Dirichlet-multinomial pdf function
+- `dmultinom_upd` Multinomial pdf function, which is the same as TMB's. Differs from Rs base  `dmultinom` by allowing no-integers and not rounding the x values.
+- `lognormal_CI` calculate confidence intervals for the lognormal distribution
+- `log_cv` calculate cv for the lognormal distribution given standard deviation
+- `log_sigma` calculate standard deviation for the lognormal distribution given CV
+
 
 
 ## Parameter transformation functions {-}
@@ -74,6 +84,3 @@ Y =
 \]
 - `inv_bound_unit` inverse of `bound_unit`
 - `gm_mean` calculate the geometric mean
-- `log_cv` calculate cv for the lognormal distribution given standard deviation
-- `log_sigma` calculate standard deviation for the lognormal distribution given CV
-- `lognormal_CI` calculate confidence intervals for the lognormal distribution

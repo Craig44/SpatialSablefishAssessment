@@ -180,6 +180,11 @@ fix_pars <- function(par_list, pars_to_exclude, vec_elements_to_exclude = NULL, 
 #' @param est_movement bool whether you want to estimate movement parameters
 #' @param est_sigma_R bool whether you want to estimate the recruitment sd parameter
 #' @param est_sigma_init_dev bool whether you want to estimate the initial-dev sd parameter
+#' @param est_fixed_AF_theta bool whether you want to estimate the theta parameter for fixed gear AF
+#' @param est_fixed_LF_theta bool whether you want to estimate the theta parameter for fixed gear LF
+#' @param est_trwl_LF_theta bool whether you want to estimate the theta parameter for trawl gear LF
+#' @param est_srv_ll_AF_theta bool whether you want to estimate the theta parameter for longline survey AF
+
 #' @return a named list that can be used by the `map` input for the `TMB::MakeADFun` function. NAs mean parameters are not estimated and elements with the same factor level mean they will be estimated with a common coefficient i.e., shared parameters
 #' @export
 set_up_parameters <- function(data, parameters,
@@ -197,7 +202,12 @@ set_up_parameters <- function(data, parameters,
                               est_catch_sd = F,
                               est_movement = T,
                               est_sigma_R = F,
-                              est_sigma_init_dev = F
+                              est_sigma_init_dev = F,
+                              est_fixed_AF_theta = F,
+                              est_fixed_LF_theta = F,
+                              est_trwl_LF_theta = F,
+                              est_srv_ll_AF_theta = F
+
 ) {
 
   if(!tag_reporting_rate %in% c("ignore","constant", "time", "off"))#, "space", "spatio-temporal"))
@@ -231,6 +241,27 @@ set_up_parameters <- function(data, parameters,
     if(!"ln_sigma_init_devs" %in% parameters_completely_fixed)
       parameters_completely_fixed = c(parameters_completely_fixed, c("ln_sigma_init_devs"))
   }
+  ## deal with theta parameters for the composition data sets
+  ## if multinomial should never be estimated
+  if(data$fixed_catchatage_comp_likelihood == 0)
+    est_fixed_AF_theta = F
+  if(data$fixed_catchatlgth_comp_likelihood == 0)
+    est_fixed_LF_theta = F
+  if(data$trwl_catchatlgth_comp_likelihood == 0)
+    est_trwl_LF_theta = F
+  if(data$srv_dom_ll_catchatage_comp_likelihood == 0)
+    est_srv_ll_AF_theta = F
+
+  ## now fix them
+  if(!est_fixed_AF_theta)
+    parameters_completely_fixed = c(parameters_completely_fixed, c("trans_fixed_catchatage_error"))
+  if(!est_fixed_LF_theta)
+    parameters_completely_fixed = c(parameters_completely_fixed, c("trans_fixed_catchatlgth_error"))
+  if(!est_trwl_LF_theta)
+    parameters_completely_fixed = c(parameters_completely_fixed, c("trans_trwl_catchatlgth_error"))
+  if(!est_srv_ll_AF_theta)
+    parameters_completely_fixed = c(parameters_completely_fixed, c("trans_srv_dom_ll_catchatage_error"))
+
   ## survey catchability regional and annual
   base_q_vals = list()
   copy_q_vals = list()

@@ -21,7 +21,11 @@ set_up_parameters(
   est_catch_sd = F,
   est_movement = T,
   est_sigma_R = F,
-  est_sigma_init_dev = F
+  est_sigma_init_dev = F,
+  est_fixed_AF_theta = F,
+  est_fixed_LF_theta = F,
+  est_trwl_LF_theta = F,
+  est_srv_ll_AF_theta = F
 )
 }
 \arguments{
@@ -66,6 +70,14 @@ set_up_parameters(
 \item{est_sigma_R}{bool whether you want to estimate the recruitment sd parameter}
 
 \item{est_sigma_init_dev}{bool whether you want to estimate the initial-dev sd parameter}
+
+\item{est_fixed_AF_theta}{bool whether you want to estimate the theta parameter for fixed gear AF}
+
+\item{est_fixed_LF_theta}{bool whether you want to estimate the theta parameter for fixed gear LF}
+
+\item{est_trwl_LF_theta}{bool whether you want to estimate the theta parameter for trawl gear LF}
+
+\item{est_srv_ll_AF_theta}{bool whether you want to estimate the theta parameter for longline survey AF}
 }
 \value{
 a named list that can be used by the \code{map} input for the \code{TMB::MakeADFun} function. NAs mean parameters are not estimated and elements with the same factor level mean they will be estimated with a common coefficient i.e., shared parameters

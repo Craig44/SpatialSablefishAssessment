@@ -39,7 +39,7 @@ plot_input_observations = function(data, region_key = NULL) {
   years = data$years
   regions = 1:data$n_regions
   dimnames(data$fixed_catchatage_indicator) = dimnames(data$fixed_catchatlgth_indicator) = dimnames(data$trwl_catchatlgth_indicator) = dimnames(data$srv_dom_ll_catchatage_indicator) = dimnames(data$srv_dom_ll_bio_indicator) = list(regions, years)
-  dimnames(data$tag_recovery_indicator_by_release_event_and_recovery_region) = list(1:dim(data$tag_recovery_indicator_by_release_event_and_recovery_region)[1], regions, years[which(data$tag_recovery_indicator == 1)])
+  dimnames(data$tag_recovery_indicator) = list(1:dim(data$tag_recovery_indicator)[1], regions, years[which(data$tag_recovery_indicator_by_year == 1)])
   fixed_catchatage = reshape2::melt(data$fixed_catchatage_indicator)
   fixed_catchatlgth  = reshape2::melt(data$fixed_catchatlgth_indicator)
   trwl_catchatlgth = reshape2::melt(data$trwl_catchatlgth_indicator)
@@ -47,7 +47,7 @@ plot_input_observations = function(data, region_key = NULL) {
   srv_dom_ll_bio = reshape2::melt(data$srv_dom_ll_bio_indicator)
   tag_recovery_detailed = NULL
   if(sum(data$tag_recovery_indicator) != 0) {
-    tag_recovery_detailed = reshape2::melt(data$tag_recovery_indicator_by_release_event_and_recovery_region)
+    tag_recovery_detailed = reshape2::melt(data$tag_recovery_indicator)
     colnames(tag_recovery_detailed) = c("Tag release", "Region", "Year", "indicator")
     tag_recovery_detailed$label = "Tag recovery"
     ## collapse tag recoveries across release events
