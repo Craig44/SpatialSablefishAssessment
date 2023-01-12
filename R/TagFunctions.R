@@ -103,9 +103,11 @@ plot_frequency_of_tag_release_and_recoveries = function(data, region_key = NULL,
   if(!is.null(release_region_to_plt))
     subset_df = subset_df %>% dplyr::filter(release_region == release_region_to_plt)
 
+  subset_df$recovery_color = ifelse(subset_df$n_recoveries == 0, "zero", "positive")
   gplt = ggplot(subset_df, aes(x = factor(recovery_year), y = recovery_region)) +
-    geom_point(aes(size = n_recoveries)) +
+    geom_point(aes(size = n_recoveries, col = recovery_color)) +
     facet_wrap(~release_event_with_sample_size) +
+    guides(col = "none") +
     labs(x = "Recovery year", y = "Recovery region", size = "Recoveries") +
     theme_bw() +
     scale_size_area() +

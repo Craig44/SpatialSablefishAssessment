@@ -143,14 +143,18 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   DATA_IARRAY(tag_recovery_indicator);
   // if tag_likelihood %in% c(0,1)
   // dim: n_tag_release_events x n_regions x n_tag_recovery_years.  1 = calculate fitted values for tag-recoveries this year and region, 0 = don't calculate tag recovery observation for this year and region
-  // if tag_likelihood == 2
+  // if tag_likelihood %in% c(2,3)
   // dim: n_years (indicates release year) x n_release_regions
 
   DATA_ARRAY(obs_tag_recovery);
   // if tag_likelihood %in% c(0,1)
   // dim: n_tag_release_events x n_regions x n_tag_recovery_years.
-  // if tag_likelihood == 2
+  // if tag_likelihood %in% c(2)
   // dim:n_recapture_events + 1 (plus one for the NC group) x n_release_regions x n_years
+  // if tag_likelihood %in% c(3)
+  // dim: n_recovery_regions * (n_years_to_retain_tagged_cohorts_for - 1)  + 1 (plus one for the NC group) x n_release_regions x n_years.
+  // This differs from tag_likelihood == 2 because we don't include the first year in recoveries
+
   DATA_INTEGER(tag_likelihood);                                 // likelihood type 0 = Poisson, 1 = Negative Binomial, 2 = Multinomial release conditioned
   array<Type> pred_tag_recovery(obs_tag_recovery.dim);
 
@@ -189,10 +193,13 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   PARAMETER(ln_sigma_init_devs);                            // standard deviation for recruitment;
 
   // composition observation parameters
-  PARAMETER_VECTOR(trans_trwl_catchatlgth_error);         //
-  PARAMETER_VECTOR(trans_fixed_catchatlgth_error);        //
-  PARAMETER_VECTOR(trans_fixed_catchatage_error);         //
-  PARAMETER_VECTOR(trans_srv_dom_ll_catchatage_error);    //
+  PARAMETER_VECTOR(trans_trwl_catchatlgth_error);           //
+  PARAMETER_VECTOR(trans_fixed_catchatlgth_error);          //
+  PARAMETER_VECTOR(trans_fixed_catchatage_error);           //
+  PARAMETER_VECTOR(trans_srv_dom_ll_catchatage_error);      //
+
+  PARAMETER_VECTOR(logistic_prop_recruit_male);             //  logistic_prop_recruit_male. length: n_years
+
   // Initialise consistently used variables throughout the code
   int year_ndx;
   int age_ndx;
@@ -253,6 +260,14 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
       tag_reporting_rate(i, j) = invlogit(logistic_tag_reporting_rate(i,j));
     }
   }
+
+  vector<Type> prop_recruit_male(logistic_prop_recruit_male.size());
+  vector<Type> prop_recruit_female(logistic_prop_recruit_male.size());
+  for(int i = 0; i < logistic_prop_recruit_male.size(); ++i) {
+    prop_recruit_male(i) = invlogit(logistic_prop_recruit_male(i));
+    prop_recruit_female(i) = 1.0 - prop_recruit_male(i);
+  }
+
   Type init_F_hist = F_hist * prop_F_hist;
   Type catch_sd = exp(ln_catch_sd);
 
@@ -587,8 +602,8 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
     for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
       // Recruitment
       //fill in recruitment in current year - a slight ineffieciency as we have already done this for year i.e., year_ndx = 0 above but meh!
-      natage_m(0, region_ndx, year_ndx) = (mean_rec(region_ndx) * recruitment_multipliers(region_ndx, year_ndx)) / 2.0; // TODO: add sex ratio here currnetly 50:50
-      natage_f(0, region_ndx, year_ndx) = (mean_rec(region_ndx) * recruitment_multipliers(region_ndx, year_ndx)) / 2.0; // TODO: add sex ratio here currnetly 50:50
+      natage_m(0, region_ndx, year_ndx) = (mean_rec(region_ndx) * recruitment_multipliers(region_ndx, year_ndx)) * prop_recruit_male(year_ndx);
+      natage_f(0, region_ndx, year_ndx) = (mean_rec(region_ndx) * recruitment_multipliers(region_ndx, year_ndx)) * prop_recruit_female(year_ndx);
 
       recruitment_yr(year_ndx, region_ndx) = natage_m(0, region_ndx, year_ndx) + natage_f(0, region_ndx, year_ndx);
 
@@ -1248,6 +1263,10 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
 
   REPORT(tag_reporting_rate);
   REPORT(tag_phi);
+
+  REPORT( prop_recruit_male );
+  REPORT( prop_recruit_female );
+
   // Report model expected/predicted values
   REPORT(pred_fixed_catchatage);
   REPORT(pred_trwl_catchatlgth);

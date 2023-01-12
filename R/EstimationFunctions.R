@@ -184,6 +184,11 @@ fix_pars <- function(par_list, pars_to_exclude, vec_elements_to_exclude = NULL, 
 #' @param est_fixed_LF_theta bool whether you want to estimate the theta parameter for fixed gear LF
 #' @param est_trwl_LF_theta bool whether you want to estimate the theta parameter for trawl gear LF
 #' @param est_srv_ll_AF_theta bool whether you want to estimate the theta parameter for longline survey AF
+#' @param est_prop_male_recruit string describing the type
+#' \itemize{
+#'   \item `off`: not estimated
+#'   \item `constant`: single value for all years
+#' }
 
 #' @return a named list that can be used by the `map` input for the `TMB::MakeADFun` function. NAs mean parameters are not estimated and elements with the same factor level mean they will be estimated with a common coefficient i.e., shared parameters
 #' @export
@@ -206,12 +211,15 @@ set_up_parameters <- function(data, parameters,
                               est_fixed_AF_theta = F,
                               est_fixed_LF_theta = F,
                               est_trwl_LF_theta = F,
-                              est_srv_ll_AF_theta = F
+                              est_srv_ll_AF_theta = F,
+                              est_prop_male_recruit = "off"
 
 ) {
 
-  if(!tag_reporting_rate %in% c("ignore","constant", "time", "off"))#, "space", "spatio-temporal"))
-    stop('tag_reporting_rate: needs to be one of the following "ignore", "constant", "time", "off"')
+  if(!tag_reporting_rate %in% c("ignore","constant", "time", "off", "space"))#, "spatio-temporal"))
+    stop('tag_reporting_rate: needs to be one of the following "ignore", "constant", "time", "off", "space"')
+  if(!est_prop_male_recruit %in% c("constant", "off"))#, "spatio-temporal"))
+    stop('tag_reporting_rate: needs to be one of the following "constant", "off"')
   #
   map_to_fix = na_map
   parameters_completely_fixed = c()
@@ -241,6 +249,17 @@ set_up_parameters <- function(data, parameters,
     if(!"ln_sigma_init_devs" %in% parameters_completely_fixed)
       parameters_completely_fixed = c(parameters_completely_fixed, c("ln_sigma_init_devs"))
   }
+
+  base_prop_male_recruit_vals = list()
+  copy_prop_male_recruit_vals = list()
+  if(est_prop_male_recruit == "off") {
+    parameters_completely_fixed = c(parameters_completely_fixed, c("logistic_prop_recruit_male"))
+  } else if(est_prop_male_recruit == "constant") {
+    vectors_with_elements_fixed[["logistic_prop_recruit_male"]] = 2:length(data$years)
+    base_prop_male_recruit_vals = rep(list(logistic_prop_recruit_male = 1), length(parameters$logistic_prop_recruit_male) - 1)
+    copy_prop_male_recruit_vals = evalit(paste0("list(",paste(paste0("logistic_prop_recruit_male = ", 2:length(parameters$logistic_prop_recruit_male)), collapse = ", "),")"))
+  }
+
   ## deal with theta parameters for the composition data sets
   ## if multinomial should never be estimated
   if(data$fixed_catchatage_comp_likelihood == 0)
@@ -309,6 +328,15 @@ set_up_parameters <- function(data, parameters,
         counter = counter + data$n_regions
 
       }
+    } else if (tag_reporting_rate == "space") {
+      tag_report_fixd_elements = list(logistic_tag_reporting_rate = expand.grid(1:data$n_regions, 1:ncol(parameters$logistic_tag_reporting_rate))[-c(1:data$n_regions),])
+      arrays_with_elements_fixed[["logistic_tag_reporting_rate"]] = tag_report_fixd_elements$logistic_tag_reporting_rate
+
+
+      base_tag_report_vals = rep(evalit(paste0("list(",paste(paste0("logistic_tag_reporting_rate = ", 1:data$n_regions), collapse = ", "),")")), ncol(parameters$logistic_tag_reporting_rate) - 1)
+      #base_tag_report_vals = rep(list(logistic_tag_reporting_rate = 1:data$n_regions), ncol(parameters$logistic_tag_reporting_rate))
+      copy_tag_report_vals = evalit(paste0("list(",paste(paste0("logistic_tag_reporting_rate = ", (data$n_regions + 1):(dim(parameters$logistic_tag_reporting_rate)[1] * (dim(parameters$logistic_tag_reporting_rate)[2]))), collapse = ", "),")"))
+
     }
     ## negative binomial we estimate ln_tag_phi else it should be estimated
     if(data$tag_likelihood != 1)
@@ -459,11 +487,13 @@ set_up_parameters <- function(data, parameters,
   bse_params = append(bse_params, base_fixed_sel_param_vals)
   bse_params = append(bse_params, base_trwl_sel_param_vals)
   bse_params = append(bse_params, base_q_vals)
+  bse_params = append(bse_params, base_prop_male_recruit_vals)
 
   cpy_params = append(copy_tag_report_vals, copy_srv_sel_param_vals)
   cpy_params = append(cpy_params, copy_fixed_sel_param_vals)
   cpy_params = append(cpy_params, copy_trwl_sel_param_vals)
   cpy_params = append(cpy_params, copy_q_vals)
+  cpy_params = append(cpy_params, copy_prop_male_recruit_vals)
 
   if(length(bse_params) > 0) {
     ## some-times this wont be populated which means we won't be fixing any paramaeters

@@ -202,6 +202,8 @@ Type TagIntegrated(objective_function<Type>* obj) {
   PARAMETER_VECTOR(trans_fixed_catchatage_error);     //
   PARAMETER_VECTOR(trans_srv_dom_ll_catchatage_error);    //
 
+  PARAMETER_VECTOR(logistic_prop_recruit_male);             //  logistic_prop_recruit_male. length: n_years
+
   // Initialise consistently used variables throughout the code
   int year_ndx;
   int age_ndx;
@@ -260,6 +262,13 @@ Type TagIntegrated(objective_function<Type>* obj) {
     for(int j = 0; j < logistic_tag_reporting_rate.dim[1]; ++j) {
       tag_reporting_rate(i, j) = invlogit(logistic_tag_reporting_rate(i,j));
     }
+  }
+  // recruitment sex proportion
+  vector<Type> prop_recruit_male(logistic_prop_recruit_male.size());
+  vector<Type> prop_recruit_female(logistic_prop_recruit_male.size());
+  for(int i = 0; i < logistic_prop_recruit_male.size(); ++i) {
+    prop_recruit_male(i) = invlogit(logistic_prop_recruit_male(i));
+    prop_recruit_female(i) = 1.0 - prop_recruit_male(i);
   }
   Type init_F_hist = F_hist * prop_F_hist;
   Type catch_sd = exp(ln_catch_sd);
@@ -594,8 +603,8 @@ Type TagIntegrated(objective_function<Type>* obj) {
     for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
       // Recruitment
       //fill in recruitment in current year - a slight ineffieciency as we have already done this for year i.e., year_ndx = 0 above but meh!
-      natage_m(0, region_ndx, year_ndx) = (mean_rec(region_ndx) * recruitment_multipliers(region_ndx, year_ndx)) / 2.0; // TODO: add sex ratio here currnetly 50:50
-      natage_f(0, region_ndx, year_ndx) = (mean_rec(region_ndx) * recruitment_multipliers(region_ndx, year_ndx)) / 2.0; // TODO: add sex ratio here currnetly 50:50
+      natage_m(0, region_ndx, year_ndx) = (mean_rec(region_ndx) * recruitment_multipliers(region_ndx, year_ndx)) * prop_recruit_male(year_ndx);
+      natage_f(0, region_ndx, year_ndx) = (mean_rec(region_ndx) * recruitment_multipliers(region_ndx, year_ndx)) * prop_recruit_female(year_ndx);
 
       recruitment_yr(year_ndx, region_ndx) = natage_m(0, region_ndx, year_ndx) + natage_f(0, region_ndx, year_ndx);
 
@@ -1206,6 +1215,9 @@ Type TagIntegrated(objective_function<Type>* obj) {
   REPORT(tag_reporting_rate);
   REPORT(tag_phi);
 
+  REPORT( prop_recruit_male );
+  REPORT( prop_recruit_female );
+
   // Report model expected/predicted values
   REPORT(pred_fixed_catchatage);
   REPORT(pred_trwl_catchatlgth);
@@ -1253,7 +1265,6 @@ Type TagIntegrated(objective_function<Type>* obj) {
   REPORT( trwl_fishery_catch );
   REPORT( obs_tag_recovery )
 
-
   // AD reports this will report standard errors for these quantities
   // using TMB::sdreport() method
   ADREPORT(tag_reporting_rate);
@@ -1264,6 +1275,13 @@ Type TagIntegrated(objective_function<Type>* obj) {
   ADREPORT(annual_F_fixed);
   ADREPORT(annual_F_trwl);
   ADREPORT(init_F_hist);
+
+  ADREPORT(sel_fixed_m);
+  ADREPORT(sel_fixed_f);
+  ADREPORT(sel_trwl_f);
+  ADREPORT(sel_trwl_m);
+  ADREPORT(sel_srv_dom_ll_f);
+  ADREPORT(sel_srv_dom_ll_m);
 
   ADREPORT(sigma_R);
   ADREPORT(sigma_init_devs);

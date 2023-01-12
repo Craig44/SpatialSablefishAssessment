@@ -226,6 +226,63 @@ test_that("test-shared-survey-selectivity-pars", {
   expect_true(all(is.na(na_map$ln_trwl_F_avg)))
 
 
+
+  ## tag-reporting-space
+  load(system.file("testdata", "MockSablefishModel.RData",package="SpatialSablefishAssessment"))
+  data$F_method = 1
+  ## fix survey sel slope parameters
+  na_map = set_up_parameters(data= data, parameters = parameters, srv_sel_first_param_shared_by_sex = T, tag_reporting_rate = "space")
+
+  test_model <- TMB::MakeADFun(data = data,
+                               parameters = parameters, map = na_map,
+                               DLL = "SpatialSablefishAssessment_TMBExports", silent  = T)
+
+
+  ##
+  tag_report_pars = test_model$par[names(test_model$par) %in% "logistic_tag_reporting_rate"]
+  expect_true(length(tag_report_pars) == data$n_regions)
+  ## check
+  test_report = test_model$report()
+  expect_true(test_report$srv_dom_ll_sel_pars[1,1,1] == test_report$srv_dom_ll_sel_pars[1,1,2])
+
+  # alternative params
+  new_tag_report_pars = (c(0.1,0.2,0.3,0.4,0.5))
+  test_pars = test_model$par
+  test_pars[which(names(test_model$par) %in% "logistic_tag_reporting_rate")] = logit(new_tag_report_pars)
+  new_test_rep = test_model$report(test_pars)
+
+  for(r in 1:data$n_regions)
+    expect_equal(new_test_rep$tag_reporting_rate[r,], rep(new_tag_report_pars[r],ncol(new_test_rep$tag_reporting_rate)), tolerance = 0.0001)
+
+
+  ## proportion male recruits
+  load(system.file("testdata", "MockSablefishModel.RData",package="SpatialSablefishAssessment"))
+  data$F_method = 1
+  ## fix survey sel slope parameters
+  na_map = set_up_parameters(data= data, parameters = parameters, srv_sel_first_param_shared_by_sex = T,
+                             tag_reporting_rate = "space",
+                             est_prop_male_recruit = "constant")
+
+  test_model <- TMB::MakeADFun(data = data,
+                               parameters = parameters, map = na_map,
+                               DLL = "SpatialSablefishAssessment_TMBExports", silent  = T)
+
+
+  ##
+  prop_male_pars = test_model$par[names(test_model$par) %in% "logistic_prop_recruit_male"]
+  expect_true(length(prop_male_pars) == 1)
+  ## check
+  test_report = test_model$report()
+  expect_true(all(test_report$prop_recruit_male == test_report$prop_recruit_female))
+
+  # alternative params
+  new_prop_recruit_pars = 0.3
+  test_pars = test_model$par
+  test_pars[which(names(test_model$par) %in% "logistic_prop_recruit_male")] = logit(new_prop_recruit_pars)
+  new_test_rep = test_model$report(test_pars)
+
+  expect_equal(new_test_rep$prop_recruit_male, rep(new_prop_recruit_pars, length(data$years)), tolerance = 0.0001)
+
 })
 
 #' test-get_negloglike

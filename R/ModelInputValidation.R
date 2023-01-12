@@ -336,6 +336,53 @@ validate_input_data_and_parameters = function(data, parameters) {
     if(!check$result)
       return(paste0("ln_init_rec_dev: ", check$message))
   }
+  ## logistic_prop_recruit_male
+  check = check_length(parameters$logistic_prop_recruit_male, n_years)
+  if(!check$result)
+    return(paste0("logistic_prop_recruit_male: ", check$message))
+
+  ## trans_fixed_catchatage_error
+  if(data$fixed_catchatage_comp_likelihood == 1) {
+    ## dirichlet multinomial
+    check = check_length(parameters$trans_fixed_catchatage_error, 1)
+    if(!check$result)
+      return(paste0("trans_fixed_catchatage_error: ", check$message))
+  }
+  ## trans_fixed_catchatage_error
+  if(data$fixed_catchatage_comp_likelihood == 1) {
+    ## dirichlet multinomial
+    check = check_length(parameters$trans_fixed_catchatage_error, 1)
+    if(!check$result)
+      return(paste0("trans_fixed_catchatage_error: ", check$message))
+  }
+  ## trans_fixed_catchatage_error
+  if(data$fixed_catchatage_comp_likelihood == 1) {
+    ## dirichlet multinomial
+    check = check_length(parameters$trans_fixed_catchatage_error, 1)
+    if(!check$result)
+      return(paste0("trans_fixed_catchatage_error: ", check$message))
+  }
+  ## trans_fixed_catchatlgth_error
+  if(data$fixed_catchatlgth_comp_likelihood == 1) {
+    ## dirichlet multinomial
+    check = check_length(parameters$trans_fixed_catchatlgth_error, 1)
+    if(!check$result)
+      return(paste0("trans_fixed_catchatlgth_error: ", check$message))
+  }
+  ## trans_trwl_catchatlgth_error
+  if(data$trwl_catchatlgth_comp_likelihood == 1) {
+    ## dirichlet multinomial
+    check = check_length(parameters$trans_trwl_catchatlgth_error, 1)
+    if(!check$result)
+      return(paste0("trans_trwl_catchatlgth_error: ", check$message))
+  }
+  ## trans_trwl_catchatlgth_error
+  if(data$srv_dom_ll_catchatage_comp_likelihood == 1) {
+    ## dirichlet multinomial
+    check = check_length(parameters$trans_srv_dom_ll_catchatage_error, 1)
+    if(!check$result)
+      return(paste0("trans_srv_dom_ll_catchatage_error: ", check$message))
+  }
 
   print("Success!! Hopefully the model wont crash (no promises though)")
   return(TRUE)

@@ -15,13 +15,13 @@ Before movement, the partition is updated following
 \begin{align*}
 N_{a,r,y,s} = 
 \begin{cases}
-R_{r,y} 0.5, & a = a_1\\
+R_{r,y} p^R_{s,y}, & a = a_1\\
 N_{a - 1,r,y - 1,s} \exp\bigg( -Z_{a - 1,r, y - 1,s} \bigg), & a_1 < a < a_+\\
 N_{a - 1,r,y - 1,s} \exp\bigg( -Z_{a - 1,r, y - 1,s} \bigg) + N_{a,r,y - 1,s} \exp\bigg( -Z_{a,r, y - 1,s} \bigg), &  a = a_+
 \end{cases}
 \end{align*}
 
-and movement is then applied
+\(p^R_{s,y}\) is proportion recruits for sex \(s\) in year \(y\) and movement is then applied
 
 \begin{equation*}
 \boldsymbol{N}'_{a,y,s} = \boldsymbol{N}_{a,y,s} \boldsymbol{M} \ \ \forall \ a
@@ -266,6 +266,8 @@ When simulating from this distribution we first simulate the dirichlet variable,
 | \(p^s_{y}\)                | Proportion of recruits for sex \(s\). Often assumed = 0.5
 +----------------------------+-----------------------------------------------------------------------------+
 | \(\ln \mu_{r}\)            | Average log-recruitment
++----------------------------+-----------------------------------------------------------------------------+
+| \(p^R_y\)                  | proportion recruitment male
 +----------------------------+-----------------------------------------------------------------------------+
 | \(\ln \mu_{f}\)            | Average log-fishing mortality
 +----------------------------+-----------------------------------------------------------------------------+

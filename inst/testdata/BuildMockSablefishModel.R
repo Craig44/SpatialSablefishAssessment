@@ -271,6 +271,7 @@ parameters$trans_trwl_catchatlgth_error = log(1)
 parameters$trans_fixed_catchatlgth_error = log(1)
 parameters$trans_fixed_catchatage_error = log(1)
 parameters$trans_srv_dom_ll_catchatage_error = log(1)
+parameters$logistic_prop_recruit_male = rep(0, length(data$years))
 
 ## reporting rate
 parameters$logistic_tag_reporting_rate = array(logit(0.999), dim = c(n_regions, length(tag_recovery_years)))

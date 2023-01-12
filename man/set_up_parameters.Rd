@@ -25,7 +25,8 @@ set_up_parameters(
   est_fixed_AF_theta = F,
   est_fixed_LF_theta = F,
   est_trwl_LF_theta = F,
-  est_srv_ll_AF_theta = F
+  est_srv_ll_AF_theta = F,
+  est_prop_male_recruit = "off"
 )
 }
 \arguments{
@@ -78,6 +79,12 @@ set_up_parameters(
 \item{est_trwl_LF_theta}{bool whether you want to estimate the theta parameter for trawl gear LF}
 
 \item{est_srv_ll_AF_theta}{bool whether you want to estimate the theta parameter for longline survey AF}
+
+\item{est_prop_male_recruit}{string describing the type
+\itemize{
+\item \code{off}: not estimated
+\item \code{constant}: single value for all years
+}}
 }
 \value{
 a named list that can be used by the \code{map} input for the \code{TMB::MakeADFun} function. NAs mean parameters are not estimated and elements with the same factor level mean they will be estimated with a common coefficient i.e., shared parameters
