@@ -159,7 +159,7 @@ data$obs_srv_dom_ll_se = array(0.2, dim = c(n_regions, n_years))
 
 data$srv_dom_ll_bio_comp_likelihood = 0
 data$srv_dom_ll_q_by_year_indicator = rep(0, n_years)
-
+data$srv_dom_ll_q_transformation = 1 ## logistic
 tag_recovery_years = 2011:2020
 # drop any recovery years before release years
 #tag_recovery_years = tag_recovery_years[which(tag_recovery_years %in% (tag_release_years + 1))] ## the plus one is because we don't allow a recovery unless after a year at release
@@ -261,7 +261,7 @@ parameters$ln_trwl_F_avg = -2.965016
 parameters$ln_trwl_F_devs = array(0, dim = c(n_regions, n_projyears))
 
 parameters$ln_init_F_avg = parameters$ln_fixed_F_avg
-parameters$logistic_srv_dom_ll_q = array(logit(0.2), dim = c(data$n_regions, length(unique(data$srv_dom_ll_q_by_year_indicator))))
+parameters$trans_srv_dom_ll_q = array(logit(0.2), dim = c(data$n_regions, length(unique(data$srv_dom_ll_q_by_year_indicator))))
 parameters$ln_rec_dev = array(0, dim = c(1, n_years))
 parameters$ln_init_rec_dev = 0
 parameters$ln_catch_sd = log(0.02)

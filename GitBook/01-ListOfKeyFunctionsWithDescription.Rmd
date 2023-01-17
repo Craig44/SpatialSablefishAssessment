@@ -56,6 +56,26 @@ All of these functions have descriptions and details on expected input parameter
 - `set_pars_to_be_the_same` set parameters to be estimated at the same value i.e., male female have the same selectivity parameters. or tag-reporting  to be the same among regions.
 - `rmvnorm_prec` simulate from a multivariate normal distribution using the precision matrix.
 
+
+## Model comparison functions {-}
+
+Often you will run multiple models to explore alternative assumptions and hypothesis. There are a range of function available for extracting output convenient for plotting and summarizing. In order to use the following functions you need to create a list containing multiple runs e.g.
+
+```{r, echo=T, eval=FALSE}
+multi_runs <- list()
+multi_runs[[1]] <- low_M_model$report()
+multi_runs[[2]] <- high_M_model$report()
+run_labels = c("M = 0.08", "M = 0.2")
+
+ssb_df = get_multiple_ssbs(mle_ls = multi_runs, run_labels = run_labels)
+```
+
+
+- `get_multiple_ssbs` get multiple models SSBs
+- `get_multiple_catch_fits` Get multiple models catch fits
+- `get_multiple_nlls` get multiple models negative log-likelihood 
+
+
 ## Distribution functions {-}
 
 - `ddirichmult` Dirichlet-multinomial pdf function

@@ -3,7 +3,7 @@
 #' @return data frame with age-frequency info
 #' @export
 get_negloglike <- function(MLE_report) {
-  nll_df = data.frame(negloglike = round(MLE_report$nll,4), label = c("Fixed AF", "Trawl LF", "Fixed LF","Survey AF","Survey abund","Fixed catch","Trawl catch","Tag recovery", "Recruitment", "Initialisation devs", "posfun penalty"))
+  nll_df = data.frame(negloglike = round(MLE_report$nll,4), observations = c("Fixed AF", "Trawl LF", "Fixed LF","Survey AF","Survey abund","Fixed catch","Trawl catch","Tag recovery", "Recruitment", "Initialisation devs", "posfun penalty"))
   return(nll_df)
 }
 

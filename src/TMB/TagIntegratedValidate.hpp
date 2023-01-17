@@ -133,6 +133,7 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   DATA_INTEGER(srv_dom_ll_bio_comp_likelihood);               // 0 =
   array<Type> pred_srv_dom_ll_bio(obs_srv_dom_ll_bio.dim);    // Sex disaggregated predicted catch at age
   DATA_IVECTOR(srv_dom_ll_q_by_year_indicator);               // Catchability time-block to apply when deriving model predictions each year
+  DATA_INTEGER(srv_dom_ll_q_transformation);                  // 0 = log, 1 = logistic (bound between 0-1)
 
 
   // Tag recovery observations Sexually disaggregated?
@@ -183,7 +184,7 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   PARAMETER(ln_init_F_avg);                                 // log average initial Fishing mortality used when F_method == 1, else should not be estimated
   PARAMETER(ln_catch_sd);                                   // Shared across all gears
   //
-  PARAMETER_ARRAY(logistic_srv_dom_ll_q);                   // logistic catchabilities parameters for srv_dom_ll n_regions x n_q_time-blocks
+  PARAMETER_ARRAY(trans_srv_dom_ll_q);                      // transformed catchabilities parameters for srv_dom_ll n_regions x n_q_time-blocks
   PARAMETER_ARRAY(ln_srv_dom_ll_sel_pars);                  // log selectivity parameters for domestic longline surveyr, dim: time-blocks:  max(sel parameters): sex
   PARAMETER_ARRAY(logistic_tag_reporting_rate);             // dim: n_regions x n_tag_recovery_years
 
@@ -280,11 +281,19 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   array<Type> srv_dom_ll_sel_pars(ln_srv_dom_ll_sel_pars.dim);
   srv_dom_ll_sel_pars = exp(ln_srv_dom_ll_sel_pars);
 
-  array<Type> srv_dom_ll_q(logistic_srv_dom_ll_q.dim);
-  for(int i = 0; i < srv_dom_ll_q.dim(0); ++i) { // region
-    for(int j = 0; j < srv_dom_ll_q.dim(1); ++j) // time-blocks
-      srv_dom_ll_q(i,j) = invlogit(logistic_srv_dom_ll_q(i,j));
+  array<Type> srv_dom_ll_q(trans_srv_dom_ll_q.dim);
+  if(srv_dom_ll_q_transformation == 0) {
+    for(int i = 0; i < srv_dom_ll_q.dim(0); ++i) { // region
+      for(int j = 0; j < srv_dom_ll_q.dim(1); ++j) // time-blocks
+        srv_dom_ll_q(i,j) = exp(trans_srv_dom_ll_q(i,j));
+    }
+  } else if(srv_dom_ll_q_transformation == 1) {
+    for(int i = 0; i < srv_dom_ll_q.dim(0); ++i) { // region
+      for(int j = 0; j < srv_dom_ll_q.dim(1); ++j) // time-blocks
+        srv_dom_ll_q(i,j) = invlogit(trans_srv_dom_ll_q(i,j));
+    }
   }
+
   // deal with movement
   array<Type> movement_matrix(n_regions,n_regions);                  // n_regions x n_regions. Rows sum = 1 (aka source)
   vector<Type> cache_log_k_value(n_regions - 1);
@@ -1227,6 +1236,7 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   REPORT(annual_fixed_catch_pred);
 
   REPORT(movement_matrix);
+  REPORT(fixed_movement_matrix);
 
   REPORT(fixed_sel_pars);
   REPORT(trwl_sel_pars);
@@ -1303,6 +1313,9 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   REPORT( trwl_catchatlgth_comp_likelihood );
   REPORT( fixed_catchatlgth_comp_likelihood );
   REPORT( srv_dom_ll_catchatage_comp_likelihood );
+  REPORT( srv_dom_ll_q_transformation );
+  REPORT( apply_fixed_movement );
+
   // Report observations
   REPORT( obs_srv_dom_ll_bio );
   REPORT( obs_srv_dom_ll_se );
@@ -1312,7 +1325,7 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   REPORT( obs_fixed_catchatlgth );
   REPORT( fixed_fishery_catch );
   REPORT( trwl_fishery_catch );
-  REPORT( obs_tag_recovery )
+  REPORT( obs_tag_recovery );
 
   // REMOVE objects after this comment.
   // I created them for reporting interim calculations debugging etc

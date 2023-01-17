@@ -68,8 +68,11 @@ fix_pars <- function(par_list, pars_to_exclude, vec_elements_to_exclude = NULL, 
   }
   pars = names(par_list)
   mapped_pars = list();
-  if(!is.null(existing_map))
+  existing_na_map = F
+  if(!is.null(existing_map)) {
     mapped_pars = existing_map
+    existing_na_map = T
+  }
 
   if (!is.null(vec_elements_to_exclude)) {
     if (!all(names(vec_elements_to_exclude) %in% pars_to_exclude))
@@ -81,6 +84,12 @@ fix_pars <- function(par_list, pars_to_exclude, vec_elements_to_exclude = NULL, 
   }
   param_factor = 1;
   for(i in 1:length(pars)) {
+    if(existing_na_map) {
+      if(all(is.na(existing_map[[pars[i]]]))) {
+        next;
+      }
+    }
+
     if (pars[i] %in% pars_to_exclude) {
       params_in_this_par = par_list[[pars[i]]];
       if (pars[i] %in% names(vec_elements_to_exclude)) {
@@ -311,12 +320,24 @@ set_up_parameters <- function(data, parameters,
   ## survey catchability regional and annual
   base_q_vals = list()
   copy_q_vals = list()
-  if(!srv_q_spatial) {
-    ## regionally similar q's
-    logis_sel_q = list(logistic_srv_dom_ll_q = expand.grid(1:data$n_regions, 1:ncol(parameters$logistic_srv_dom_ll_q))[-1,])
-    arrays_with_elements_fixed[["logistic_srv_dom_ll_q"]] = logis_sel_q$logistic_srv_dom_ll_q
-    base_q_vals = rep(list(logistic_srv_dom_ll_q = 1), dim(parameters$logistic_srv_dom_ll_q)[1] * dim(parameters$logistic_srv_dom_ll_q)[2] - 1)
-    copy_q_vals = evalit(paste0("list(",paste(paste0("logistic_srv_dom_ll_q = ", 2:(dim(parameters$logistic_srv_dom_ll_q)[1] * dim(parameters$logistic_srv_dom_ll_q)[2])), collapse = ", "),")"))
+  qs_are_turned_off = FALSE
+  if(!is.null(na_map)) {
+    if(all(is.na(na_map$trans_srv_dom_ll_q)))
+      qs_are_turned_off = TRUE
+  }
+  if(!qs_are_turned_off) {
+    if(!srv_q_spatial) {
+      ## regionally similar q's
+      drop_first_ndx_for_space = seq(from = 1, to = ncol(parameters$trans_srv_dom_ll_q) * data$n_regions, by = data$n_regions)[1:ncol(parameters$trans_srv_dom_ll_q)]
+      logis_sel_q = list(trans_srv_dom_ll_q = expand.grid(1:data$n_regions, 1:ncol(parameters$trans_srv_dom_ll_q))[-drop_first_ndx_for_space,])
+      arrays_with_elements_fixed[["trans_srv_dom_ll_q"]] = logis_sel_q$trans_srv_dom_ll_q
+      start_vals = 1
+      for(j in 1:ncol(parameters$trans_srv_dom_ll_q)) {
+        base_q_vals = append(base_q_vals, rep(list(trans_srv_dom_ll_q = start_vals), data$n_regions - 1))
+        copy_q_vals = append(copy_q_vals, evalit(paste0("list(",paste(paste0("trans_srv_dom_ll_q = ", (start_vals + 1):(start_vals + data$n_regions - 1)), collapse = ", "),")")))
+        start_vals = start_vals + data$n_regions
+      }
+    }
   }
   ## no tag recovery observations
   base_tag_report_vals = list()
@@ -327,7 +348,6 @@ set_up_parameters <- function(data, parameters,
     if(tag_reporting_rate == "off") {
       parameters_completely_fixed = c(parameters_completely_fixed, c("logistic_tag_reporting_rate"))
     } else if(tag_reporting_rate == "ignore") {
-
       # don't do anything
 
     } else if(tag_reporting_rate == "constant") {
@@ -508,7 +528,7 @@ set_up_parameters <- function(data, parameters,
     }
   }
   ## initial fix pars
-  map_to_fix = fix_pars(parameters, pars_to_exclude = c(parameters_completely_fixed, names(arrays_with_elements_fixed), names(vectors_with_elements_fixed)), vec_elements_to_exclude = vectors_with_elements_fixed, array_elements_to_exclude = arrays_with_elements_fixed, existing_map = na_map)
+  map_to_fix = fix_pars(par_list = parameters, pars_to_exclude = c(parameters_completely_fixed, names(arrays_with_elements_fixed), names(vectors_with_elements_fixed)), vec_elements_to_exclude = vectors_with_elements_fixed, array_elements_to_exclude = arrays_with_elements_fixed, existing_map = na_map)
   ## append all base and copy lists elements
   bse_params = append(base_tag_report_vals, base_srv_sel_param_vals)
   bse_params = append(bse_params, base_fixed_sel_param_vals)
@@ -679,13 +699,24 @@ post_optim_sanity_checks <- function(mle_obj, mle_pars, max_abs_gradient = 0.000
     passed_post_sanity_checks = F
   }
   ## Survey Catchability
-  if(any(mle_report$srv_dom_ll_q > 0.95)){
-    cat("Found survey catchability greater than 0.95. This is an extreme value (possible convergence at bound)and worthy of furthur investigation.\n")
-    passed_post_sanity_checks = F
-  }
-  if(any(mle_report$srv_dom_ll_q < 0.00001)){
-    cat("Found survey catchability less than 0.00001. This is an extreme value (possible convergence at bound) and worthy of furthur investigation.\n")
-    passed_post_sanity_checks = F
+  if(mle_report$srv_dom_ll_q_transformation == 1) {
+    if(any(mle_report$srv_dom_ll_q > 0.95)){
+      cat("Found survey catchability greater than 0.95. This is an extreme value (possible convergence at bound)and worthy of furthur investigation.\n")
+      passed_post_sanity_checks = F
+    }
+    if(any(mle_report$srv_dom_ll_q < 0.00001)){
+      cat("Found survey catchability less than 0.00001. This is an extreme value (possible convergence at bound) and worthy of furthur investigation.\n")
+      passed_post_sanity_checks = F
+    }
+  } else if(mle_report$srv_dom_ll_q_transformation == 0) {
+    if(any(mle_report$srv_dom_ll_q > 20)){
+      cat("Found survey catchability greater than 20. This is an extreme value (possible convergence at bound)and worthy of furthur investigation.\n")
+      passed_post_sanity_checks = F
+    }
+    if(any(mle_report$srv_dom_ll_q < 1e-6)){
+      cat("Found survey catchability less than 1e-6. This is an extreme value (possible convergence at bound) and worthy of furthur investigation.\n")
+      passed_post_sanity_checks = F
+    }
   }
   ## tag reporting
   if(any(mle_report$tag_reporting_rate > 0.95)){
@@ -905,7 +936,7 @@ profile_param <- function(parameters, mle_obj, na_map, profile_param_label, elem
       try_improve
       if(inherits(try_improve, "error")) {
         cat("non-convergence for profile iteration ", i , " value = ",profile_values[i],"\n")
-        break;
+        next;
       }
       profile_mle_lst[[i]] = profile_obj$report(profile_mle$par)
     } else {
@@ -914,3 +945,4 @@ profile_param <- function(parameters, mle_obj, na_map, profile_param_label, elem
   }
   return(list(profile_mle = profile_mle_lst, na_map = na_map, data = data, parameters_ls = parameters_ls, profile_values = profile_values))
 }
+

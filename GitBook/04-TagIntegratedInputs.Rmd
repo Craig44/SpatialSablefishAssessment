@@ -95,7 +95,7 @@ Users need to population a `data` and `parameters` named list object that is the
 - `ln_trwl_F_devs` annual fishing mortality deviations from `ln_trwl_F_avg`. Expected dimensions are `n_regions` \(\times\)  `n_years`. Should be not estimated if `data$F_method = 1`
 - `ln_init_F_avg` scalar for the log fishing mortality applied during initialisation.
 - `ln_catch_sd` scalar for the log catch standard deviation
-- `logistic_srv_dom_ll_q` vector of logistic catchabilities. Should have length of q time-blocks which is defined by `data$srv_dom_ll_q_by_year_indicator`
+- `trans_srv_dom_ll_q` ann array of transformed catchabilities parameters. The type of transformation will depend on `srv_dom_ll_q_transformation`. Should have dimension  `n_regions`\(\times\) `length(unique(data$srv_dom_ll_q_by_year_indicator))` (number of time-blocks)
 
 - `ln_srv_dom_ll_sel_pars` array of log selectivity parameters for domestic longline fishery with dimension `n_time_blocks`\(\times\)  `max(sel parameters)`\(\times\)  `2` (for each sex) male parameters first followed by female. The number of time-blocks is defined by the data parameter `data$srv_dom_ll_sel_by_year_indicator` and max selectivity parameters controlled by `data$srv_dom_ll_sel_type` which defines the selectivity shape and thus number of parameters.
 - `logistic_tag_reporting_rate` logistic tag-reporting rates. Expected dimensions are `n_regions` \(\times\)  `n_tag_recovery_years`.

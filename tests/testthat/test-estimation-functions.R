@@ -307,6 +307,31 @@ test_that("test-shared-survey-selectivity-pars", {
   new_test_rep = test_model$report(test_pars)
   expect_equal(new_test_rep$prop_recruit_male, c(0.5, rep(0.3, 3), rep(0.6, 4), rep(0.8, 3)), tolerance = 0.0001)
 
+  ## Constant over space - Q
+  load(system.file("testdata", "MockSablefishModel.RData",package="SpatialSablefishAssessment"))
+  data$F_method = 1
+  data$srv_dom_ll_q_by_year_indicator[5:11] = 1
+  parameters$trans_srv_dom_ll_q = matrix(0, nrow = data$n_regions, ncol = length(unique(data$srv_dom_ll_q_by_year_indicator)))
+  ## fix survey sel slope parameters
+  na_map = set_up_parameters(data= data, parameters = parameters, srv_sel_first_param_shared_by_sex = T,
+                             srv_q_spatial = F)
+  test_model <- TMB::MakeADFun(data = data,
+                               parameters = parameters, map = na_map,
+                               DLL = "SpatialSablefishAssessment_TMBExports", silent  = T)
+
+  ##
+  trans_q = test_model$par[names(test_model$par) %in% "trans_srv_dom_ll_q"]
+  expect_true(length(trans_q) == 2)
+
+  # alternative params
+  new_q = c(0.3, 0.6)
+  test_pars = test_model$par
+  test_pars[which(names(test_model$par) %in% "trans_srv_dom_ll_q")] = logit(new_q)
+  new_test_rep = test_model$report(test_pars)
+  for(i in 1:length(new_q))
+    expect_equal(new_test_rep$srv_dom_ll_q[,i], rep(new_q[i], data$n_regions), tolerance = 0.0001)
+
+
 })
 
 #' test-get_negloglike
@@ -418,7 +443,7 @@ test_that("test-profile_param", {
   ## profile catchability
   profile_q_vals = (c(0.1, 0.2, 0.3,0.4))
   q_ndx = 1
-  test_profile = profile_param(parameters, test_model, na_map, profile_param_label = "logistic_srv_dom_ll_q", element = matrix(c(q_ndx,1),nrow = 1), profile_values = qlogis(profile_q_vals),  same_element = matrix(c(2,1,3,1, 4, 1, 5, 1), byrow = T, ncol = 2), no_estimation = T, verbose= F)
+  test_profile = profile_param(parameters, test_model, na_map, profile_param_label = "trans_srv_dom_ll_q", element = matrix(c(q_ndx,1),nrow = 1), profile_values = qlogis(profile_q_vals),  same_element = matrix(c(2,1,3,1, 4, 1, 5, 1), byrow = T, ncol = 2), no_estimation = T, verbose= F)
   for(i in 1:length(profile_q_vals)) {
     ## check the profiled value was set to the correct value
     expect_equal(as.numeric(test_profile$profile_mle[[i]]$srv_dom_ll_q),  rep(profile_q_vals[i], nrow(test_profile$profile_mle[[i]]$srv_dom_ll_q)), tolerance = 0.0001)
