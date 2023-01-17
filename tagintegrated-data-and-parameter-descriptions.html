@@ -23,7 +23,7 @@
 <meta name="author" content="C.Marsh" />
 
 
-<meta name="date" content="2023-01-12" />
+<meta name="date" content="2023-01-17" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -165,6 +165,7 @@ div.csl-indent {
 <li class="chapter" data-level="" data-path="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html"><a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#accessor-functions"><i class="fa fa-check"></i>Accessor functions</a></li>
 <li class="chapter" data-level="" data-path="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html"><a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#plotting-functions"><i class="fa fa-check"></i>Plotting functions</a></li>
 <li class="chapter" data-level="" data-path="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html"><a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#estimation-functions"><i class="fa fa-check"></i>Estimation functions</a></li>
+<li class="chapter" data-level="" data-path="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html"><a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#model-comparison-functions"><i class="fa fa-check"></i>Model comparison functions</a></li>
 <li class="chapter" data-level="" data-path="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html"><a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#distribution-functions"><i class="fa fa-check"></i>Distribution functions</a></li>
 <li class="chapter" data-level="" data-path="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html"><a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#parameter-transformation-functions"><i class="fa fa-check"></i>Parameter transformation functions</a></li>
 </ul></li>
@@ -320,7 +321,7 @@ div.csl-indent {
 <li><p><code>ln_trwl_F_devs</code> annual fishing mortality deviations from <code>ln_trwl_F_avg</code>. Expected dimensions are <code>n_regions</code> <span class="math inline">\(\times\)</span> <code>n_years</code>. Should be not estimated if <code>data$F_method = 1</code></p></li>
 <li><p><code>ln_init_F_avg</code> scalar for the log fishing mortality applied during initialisation.</p></li>
 <li><p><code>ln_catch_sd</code> scalar for the log catch standard deviation</p></li>
-<li><p><code>logistic_srv_dom_ll_q</code> vector of logistic catchabilities. Should have length of q time-blocks which is defined by <code>data$srv_dom_ll_q_by_year_indicator</code></p></li>
+<li><p><code>trans_srv_dom_ll_q</code> ann array of transformed catchabilities parameters. The type of transformation will depend on <code>srv_dom_ll_q_transformation</code>. Should have dimension <code>n_regions</code><span class="math inline">\(\times\)</span> <code>length(unique(data$srv_dom_ll_q_by_year_indicator))</code> (number of time-blocks)</p></li>
 <li><p><code>ln_srv_dom_ll_sel_pars</code> array of log selectivity parameters for domestic longline fishery with dimension <code>n_time_blocks</code><span class="math inline">\(\times\)</span> <code>max(sel parameters)</code><span class="math inline">\(\times\)</span> <code>2</code> (for each sex) male parameters first followed by female. The number of time-blocks is defined by the data parameter <code>data$srv_dom_ll_sel_by_year_indicator</code> and max selectivity parameters controlled by <code>data$srv_dom_ll_sel_type</code> which defines the selectivity shape and thus number of parameters.</p></li>
 <li><p><code>logistic_tag_reporting_rate</code> logistic tag-reporting rates. Expected dimensions are <code>n_regions</code> <span class="math inline">\(\times\)</span> <code>n_tag_recovery_years</code>.</p></li>
 <li><p><code>ln_tag_phi</code> scalar which is the log of the dispersion parameter. Only used if <code>data$tag_likelihood == 1</code> i.e. the negative binomial distribution is assumed.</p></li>
