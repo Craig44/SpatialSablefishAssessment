@@ -6,6 +6,8 @@ Type posfun(Type x, Type eps, Type &pen) {
   return CppAD::CondExpGe(x,eps,x,
                           eps*(1/(1+xp+pow(xp,2)+pow(xp,3)+pow(xp,4)+pow(xp,5))));
 }
+
+
 // Zerofun functions
 template <class Type>
 Type ZeroFun(Type x, Type delta) {

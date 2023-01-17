@@ -231,6 +231,40 @@ unpaste <- function (string, sep)  {
   return(unlist(strsplit(string, split = sep)))
 }
 
+#' Q_sum_to_zero_QR
+#' calculate QR vector for sum to zero hard constraint
+#' @param N integer number of elements in vector that we want to sum = 0
+#' @return a vector length N * 2 that will be used by sum_to_zero_QR
+#' @export
+Q_sum_to_zero_QR <- function(N) {
+  Q_r = vector(length = N * 2);
+
+  for(i in 1:(N - 1)) {
+    Q_r[i] = -sqrt((N-i)/(N-i+1.0));
+    Q_r[i+N] = 1.0 / sqrt((N-i) * (N-i+1));
+  }
+  return (Q_r);
+}
+
+#' sum_to_zero_QR
+#' take a vector of unconstrained values length (N - 1) and derive a vector of length N that sum = 0 using the QR method
+#' see here https://discourse.mc-stan.org/t/test-soft-vs-hard-sum-to-zero-constrain-choosing-the-right-prior-for-soft-constrain/3884
+#' @param x_raw vector of unconstrained values length N - 1
+#' @return a vector length N that sums = 0
+#' @export
+sum_to_zero_QR <- function(x_raw) {
+  N = length(x_raw) + 1;
+  Q_r = Q_sum_to_zero_QR(N);
+  x = vector(length = N) ;
+  x_aux = 0;
+
+  for(i in 1:(N-1)){
+    x[i] = x_aux + x_raw[i] * Q_r[i];
+    x_aux = x_aux + x_raw[i] * Q_r[i+N];
+  }
+  x[N] = x_aux;
+  return(x);
+}
 
 
 #'

@@ -65,12 +65,14 @@ get_multiple_nlls <- function(mle_ls, run_labels = NULL) {
     if(is.null(mle_ls[[i]]))
       next;
     this_nll = get_negloglike(MLE_report = mle_ls[[i]])
+    ## add totol
+    this_nll = rbind(this_nll, data.frame(negloglike = round(sum(this_nll$negloglike),4), observations = "Total"))
+    ## addd label
     if(!is.null(run_labels)) {
       this_nll$label = run_labels[i]
     } else {
       this_nll$label = i
     }
-    this_nll = rbind(this_nll, c(sum(this_nll$negloglike), observations = "Total"))
     full_nll_df = rbind(full_nll_df, this_nll)
   }
   full_nll_df$label = factor(full_nll_df$label)

@@ -422,7 +422,7 @@ test_that("test-profile_param", {
   test_rep = test_model$report()
   rec_vals = c(-1,0,1)
   rec_ndx = 11
-  test_rec = profile_param(parameters, test_model, na_map, profile_param_label = "ln_rec_dev", element = matrix(c(1,rec_ndx),nrow = 1), profile_values = rec_vals,  same_element = NULL, no_estimation = T, verbose= F)
+  test_rec = profile_param(parameters, test_model, na_map, profile_param_label = "trans_rec_dev", element = matrix(c(1,rec_ndx),nrow = 1), profile_values = rec_vals,  same_element = NULL, no_estimation = T, verbose= F)
   for(i in 1:length(rec_vals)) {
     expect_equal(test_rec$profile_mle[[i]]$recruitment_multipliers[,rec_ndx],  rep(exp(rec_vals[i] - 0.5 * test_rep$sigma_R^2), nrow(test_rec$profile_mle[[i]]$recruitment_multipliers)), tolerance = 0.0001)
   }

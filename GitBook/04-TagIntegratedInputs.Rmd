@@ -11,7 +11,9 @@ Users need to population a `data` and `parameters` named list object that is the
 - `n_projections_years` integer of future years to project the model `n_projyears = n_years + n_projections_years`
 - `do_projection` integer 0 means don't do projection 1 does a stochastic projection
 - `n_regions` integer needs to be greater than 1
-- `global_rec_devs` integer 1 means all regions share the same recruitment deviations. 0 means they have separate global recruitment deviations. This will effect the dimensions of the parameter `ln_rec_dev`
+- `global_rec_devs` integer 1 means all regions share the same recruitment deviations. 0 means they have separate global recruitment deviations. This will effect the dimensions of the parameter `trans_rec_dev`
+- `rec_devs_sum_to_zero` Should the recruit devs in each region sum to zero? yes = 1, no = 0. I yes then this the parameter `trans_rec_dev` has one less parameter
+
 - `n_init_rec_devs` number of initial n_age_deviations (`parameter$ln_init_rec_dev`) to multiply against the initial numbers at age to have non equilibrium initial age-structure. A value of zero will **not** apply these initial devs and expects `parameter$ln_init_rec_dev` to have length 1.
 
 - `M` Natural mortality array with dimensions `n_ages` \(\times\) `n_projyears`
@@ -70,7 +72,8 @@ Users need to population a `data` and `parameters` named list object that is the
 - `obs_srv_dom_ll_bio` domestic survey abundance observation `n_regions` \(\times\) `n_years`. This observation is in numbers (000's) which is equivalent to proportions times the effective sample size. Predicted proportions will sum = 1 over the age and sex dimension.
 - `obs_srv_dom_ll_se` Standard error for the domestic survey abundance observation
 - `srv_dom_ll_bio_comp_likelihood` integer, this is a place holder doesn't do anything yet, will be used when alternative composition likelihoods are available.
-- `srv_dom_ll_q_by_year_indicator` indicator vector, this indicates how many time-blocks for time-varying catchabilities are available. Each element links an element of the parameter `logistic_srv_dom_ll_q` for a year.
+- `srv_dom_ll_q_by_year_indicator` indicator vector, this indicates how many time-blocks for time-varying catchabilities are available. Each element links an element of the parameter `trans_srv_dom_ll_q` for a year.
+- `srv_dom_ll_q_transformation` integer, indicates what transformation is used for `trans_srv_dom_ll_q`. 0 indicates log, 1 indicates logistic where q is bound between 0 and 1.
 
 - `tag_recovery_indicator_by_year` an indicator vector for tag-recovery observations has length `n_years`. A one indicates there is a tag recovery observation in this year. A zero indicates no observation. This object is used to define `n_tag_recovery_years = sum(tag_recovery_indicator_by_year)`, which links to other tag-recovery structures. This input parameter is not used when `tag_likelihood %in% c(2)`.
 - `tag_recovery_indicator` an indicator vector for specific tag-release/tag-recovery observations to store. Dimensions of this will depend on `tag_likelihood`. If `tag_likelihood %in% c(0,1)` then the dimension is `n_tag_release_events` \(\times\) `n_regions` \(\times\) `n_tag_recovery_years`. If `tag_likelihood %in% c(2)` then the dimensions are `n_years` \(\times\) `n_regions` this indicates the release event that we wont to save all possible recovery predictions for.
@@ -82,7 +85,7 @@ Users need to population a `data` and `parameters` named list object that is the
 
 
 - `ln_mean_rec` vector of natural logarithm of mean recruitment (units are 000's) for each region. length `n_regions`. 
-- `ln_rec_dev` array of recruitment deviations. if `global_rec_devs` = 1 then this has dimension  `1` \(\times\)  `n_years`, else it has a row for each region and dimension `n_regions`\(\times\)  `n_years`
+- `trans_rec_dev` array of recruitment deviations. if `global_rec_devs` = 1 then this has dimension  `1` \(\times\)  `n_years`, else it has a row for each region and dimension `n_regions`\(\times\)  `n_years`
 - `ln_init_rec_dev` vector of initial devs to multiple to initial numbers at age for non-equilibrium age-structure. Must have length equal to `data$n_init_rec_devs`. The first dev, corresponds to the second age we the last value gets applied to all successive ages i.e., if `length(ln_init_rec_dev) = 10`, the first value `numbers_at_age[2] * exp(ln_init_rec_dev[1])`, and `numbers_at_age[11:n_ages] * exp(ln_init_rec_dev[10])`
 
 - `ln_fixed_sel_pars` array of log selectivity parameters for fixed gear fishery with dimension `n_time_blocks`\(\times\)  `max(sel parameters)`\(\times\)  `2` (for each sex) male parameters first followed by female. The number of time-blocks is defined by the data parameter `data$fixed_sel_by_year_indicator` and max selectivity parameters controlled by `data$fixed_sel_type` which defines the selectivity shape and thus number of parameters.

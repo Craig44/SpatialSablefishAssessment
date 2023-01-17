@@ -11,8 +11,8 @@ library(testthat)
 
 ## build package
 ## Note!! if you change source code (C++) and want to recompile
-## go to src/ and delete the .dll and .o files otherwise this compile function
-## wont register a change in source code.
+## go to src/ & src/TMB/ and delete all files with extension '.dll' and '.o',
+## otherwise this compile function wont register a change in source code.
 pkgbuild::compile_dll() # need to compile src first
 devtools::document()
 #devtools::check()

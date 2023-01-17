@@ -68,7 +68,7 @@ test_that("test-TagIntegratedAnnualCycle-spatial_recruitment-movement", {
   data$apply_Z_on_tagged_fish = 0
   data$apply_fixed_movement = 1 ## no movement initial age-structure should be only a function of ageing and M
   data$global_rec_devs = 0
-  parameters$ln_rec_dev = matrix(0, ncol = length(data$years), nrow = data$n_regions)
+  parameters$trans_rec_dev = matrix(0, ncol = length(data$years), nrow = data$n_regions)
 
   test_model <- TMB::MakeADFun(data = data,
                                parameters = parameters,
@@ -84,4 +84,49 @@ test_that("test-TagIntegratedAnnualCycle-spatial_recruitment-movement", {
 
   ## run test
   expect_equal(expected_mat, test_report$natage_f[,,12], tolerance = 0.001)
+})
+
+
+
+#' test-TagIntegratedAnnualCycle-recruitment-sumtozero
+#' @description test sum to zero constraint for recruit devs
+#'
+test_that("test-TagIntegratedAnnualCycle-recruitment-sumtozero", {
+  ## Read in mock data
+  load(system.file("testdata", "MockSablefishModel.RData",package="SpatialSablefishAssessment"))
+  data$model = "TagIntegrated"
+  data$rec_devs_sum_to_zero = 1
+  ## no Z or movement
+  data$apply_Z_on_tagged_fish = 0
+  data$apply_fixed_movement = 1 ## no movement initial age-structure should be only a function of ageing and M
+  data$global_rec_devs = 0
+  parameters$trans_rec_dev = matrix(rnorm(data$n_regions * (length(data$years) - 1)), ncol = length(data$years) - 1, nrow = data$n_regions)
+
+  test_model <- TMB::MakeADFun(data = data,
+                               parameters = parameters,
+                               DLL = "SpatialSablefishAssessment_TMBExports", silent  = T)
+
+  test_report = test_model$report()
+
+  for(r in 1:data$n_regions) {
+    expect_equal(sum(test_report$recruitment_devs[r, ]), 0, tolerance = 0.000001)
+    # compare with R function
+    expect_equal(test_report$recruitment_devs[r, ], sum_to_zero_QR(parameters$trans_rec_dev[r,]), tolerance = 0.000001)
+
+  }
+  ## not global rec devs
+  data$global_rec_devs = 1
+  parameters$trans_rec_dev = matrix(rnorm( (length(data$years) - 1)), ncol = length(data$years) - 1, nrow = 1)
+
+  test_model <- TMB::MakeADFun(data = data,
+                               parameters = parameters,
+                               DLL = "SpatialSablefishAssessment_TMBExports", silent  = T)
+
+  test_report = test_model$report()
+  for(r in 1:data$n_regions) {
+    expect_equal(sum(test_report$recruitment_devs[r, ]), 0, tolerance = 0.000001)
+  }
+  # compare with R function
+  expect_equal(test_report$recruitment_devs[1, ], sum_to_zero_QR(parameters$trans_rec_dev), tolerance = 0.000001)
+
 })

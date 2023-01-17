@@ -104,3 +104,4 @@ Y =
 \]
 - `inv_bound_unit` inverse of `bound_unit`
 - `gm_mean` calculate the geometric mean
+- `sum_to_zero_QR` take an unconstrained vector of length `N - 1` and calculate a vector of length `N` that sums = 1.

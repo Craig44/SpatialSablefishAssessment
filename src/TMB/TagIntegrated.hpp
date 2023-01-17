@@ -48,6 +48,9 @@ Type TagIntegrated(objective_function<Type>* obj) {
 
   // Biology parameters
   DATA_INTEGER(global_rec_devs);                    // Are there recruit devs parameters for each region (= 0), or do all regions have the same rec devs (=1)
+  DATA_INTEGER(rec_devs_sum_to_zero);               // Should the recruit devs in each region sum to zero? yes = 1, no = 0. I yes then this the parameter trans_rec_dev has one less parameter
+  DATA_VECTOR(Q_r_for_sum_to_zero);                 // A vector that has length (trans_rec_dev.dim(1) + 1) * 2. Only used if rec_devs_sum_to_zero = 1. Should have been created by the R function Q_sum_to_zero_QR
+
   DATA_INTEGER(n_init_rec_devs);                    // Number of initial recruitment devs parameters "init_ln_rec_dev" Note: should cannot be greater than n_ages - 2 (we don't apply it to first age or plus group)
 
   // this will effect the expected size of the parameter 'ln_rec_dev', if global_rec_devs = 1. then ln_rec_dev.size() = n_years + n_ages + 1 else n_regions * (n_years + n_ages + 1). with the first (n_years + n_ages + 1) corresponding to region 1 and so in block
@@ -169,8 +172,8 @@ Type TagIntegrated(objective_function<Type>* obj) {
    *
    */
   PARAMETER_VECTOR(ln_mean_rec);                        // Unfish equil recruitment (logged) (estimated) for each spatial region
-  PARAMETER_ARRAY(ln_rec_dev);                         // Recruitment deviations they include years before the asssessment starts to final year: length = n_years
-  PARAMETER_VECTOR(ln_init_rec_dev);                    // Recruitment deviations to apply during initialization they include years before the assessment starts: length = n_init_rec_devs
+  PARAMETER_ARRAY(trans_rec_dev);                       // Transformed Recruitment deviations. If rec_devs_sum_to_zero = 0 these are logged values, otherwise they are sum to zero values of which there are n_years-1 for each region
+  PARAMETER_VECTOR(ln_init_rec_dev);                    // Initial age deviations to apply during initialization they include years before the assessment starts: length = n_init_rec_devs
 
   // Fishery selectivities
   PARAMETER_ARRAY(ln_fixed_sel_pars);                       // log selectivity parameters for fixed gear, dim: time-blocks:  max(sel parameters): sex
@@ -238,16 +241,56 @@ Type TagIntegrated(objective_function<Type>* obj) {
   vector<Type> init_rec_dev = exp(ln_init_rec_dev);
   array<Type> recruitment_multipliers(n_regions, n_projyears);
   recruitment_multipliers.fill(0.0);
-  if(global_rec_devs == 1) {
-    for(year_ndx = 0; year_ndx < ln_rec_dev.dim(1); ++year_ndx) {
-      for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
-        recruitment_multipliers(region_ndx, year_ndx) = exp(ln_rec_dev(0, year_ndx) - sigma_R_sq/2);
+  array<Type> recruitment_devs(n_regions, n_projyears);
+  recruitment_devs.fill(0.0);
+  if(rec_devs_sum_to_zero == 0) {
+    if(global_rec_devs == 1) {
+      for(year_ndx = 0; year_ndx < trans_rec_dev.dim(1); ++year_ndx) {
+        for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
+          recruitment_devs(region_ndx, year_ndx) = trans_rec_dev(0, year_ndx);
+          recruitment_multipliers(region_ndx, year_ndx) = exp(recruitment_devs(region_ndx, year_ndx) - sigma_R_sq/2);
+        }
+      }
+    } else {
+      for(year_ndx = 0; year_ndx < trans_rec_dev.dim(1); ++year_ndx) {
+        for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
+          recruitment_devs(region_ndx, year_ndx) = trans_rec_dev(region_ndx, year_ndx);
+          recruitment_multipliers(region_ndx, year_ndx) = exp(recruitment_devs(region_ndx, year_ndx) - sigma_R_sq/2);
+        }
       }
     }
-  } else {
-    for(year_ndx = 0; year_ndx < ln_rec_dev.dim(1); ++year_ndx) {
+  } else if(rec_devs_sum_to_zero == 1) {
+    int N = trans_rec_dev.dim(1) + 1;
+
+    if(global_rec_devs == 1) {
+      Type rec_aux = 0.0;
+      Type rec_multi_temp = 0.0;
+      for(year_ndx = 0; year_ndx < trans_rec_dev.dim(1); ++year_ndx) {
+        rec_multi_temp = rec_aux + trans_rec_dev(0, year_ndx) * Q_r_for_sum_to_zero(year_ndx);
+        rec_aux += trans_rec_dev(0, year_ndx) * Q_r_for_sum_to_zero(year_ndx + N);
+        for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
+          recruitment_devs(region_ndx, year_ndx) = rec_multi_temp;
+          recruitment_multipliers(region_ndx, year_ndx) = exp(recruitment_devs(region_ndx, year_ndx) - sigma_R_sq/2.0); // do we need to add the -sigma^2
+        }
+      }
+      // the last group
       for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
-        recruitment_multipliers(region_ndx, year_ndx) = exp(ln_rec_dev(region_ndx, year_ndx) - sigma_R_sq/2);
+        recruitment_devs(region_ndx, N - 1) = rec_aux;
+        recruitment_multipliers(region_ndx, N - 1) = exp(recruitment_devs(region_ndx, N - 1) - sigma_R_sq/2.0);
+      }
+    } else {
+      for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
+        Type rec_aux = 0.0;
+        Type rec_multi_temp = 0.0;
+        for(year_ndx = 0; year_ndx < trans_rec_dev.dim(1); ++year_ndx) {
+          rec_multi_temp = rec_aux + trans_rec_dev(region_ndx, year_ndx) * Q_r_for_sum_to_zero(year_ndx);
+          rec_aux += trans_rec_dev(region_ndx, year_ndx) * Q_r_for_sum_to_zero(year_ndx + N);
+          recruitment_devs(region_ndx, year_ndx) = rec_multi_temp;
+          recruitment_multipliers(region_ndx, year_ndx) = exp(recruitment_devs(region_ndx, year_ndx) - sigma_R_sq/2.0); // do we need to add the -sigma^2
+        }
+        // the last group
+        recruitment_devs(region_ndx, N - 1) = rec_aux;
+        recruitment_multipliers(region_ndx, N - 1) = exp(recruitment_devs(region_ndx, N - 1) - sigma_R_sq/2.0);
       }
     }
   }
@@ -1140,10 +1183,19 @@ Type TagIntegrated(objective_function<Type>* obj) {
 
   // Recruitment Penalty
   Type n_rec_devs = 0.0;
-  for(region_ndx = 0; region_ndx < ln_rec_dev.dim(0); ++region_ndx) {
-    for(year_ndx = 0; year_ndx < ln_rec_dev.dim(1); ++year_ndx) {
-      nll(8) += square(ln_rec_dev(region_ndx, year_ndx) - sigma_R_sq / 2.0)/(2.0* sigma_R_sq);
-      n_rec_devs += 1.0;
+  if(rec_devs_sum_to_zero == 0) {
+    for(region_ndx = 0; region_ndx < trans_rec_dev.dim(0); ++region_ndx) {
+      for(year_ndx = 0; year_ndx < trans_rec_dev.dim(1); ++year_ndx) {
+        nll(8) += square(trans_rec_dev(region_ndx, year_ndx) - sigma_R_sq / 2.0)/(2.0* sigma_R_sq);
+        n_rec_devs += 1.0;
+      }
+    }
+  } else {
+    for(region_ndx = 0; region_ndx < recruitment_devs.dim(0); ++region_ndx) {
+      for(year_ndx = 0; year_ndx < recruitment_devs.dim(1); ++year_ndx) {
+        nll(8) += square(log(recruitment_devs(region_ndx, year_ndx)) - sigma_R_sq / 2.0)/(2.0* sigma_R_sq);
+        n_rec_devs += 1.0;
+      }
     }
   }
   nll(8) += (n_rec_devs) * ln_sigma_R;
@@ -1164,6 +1216,7 @@ Type TagIntegrated(objective_function<Type>* obj) {
   REPORT(nll);
   REPORT(mean_rec);
   REPORT(recruitment_multipliers);
+  REPORT( recruitment_devs );
   REPORT(init_rec_dev);
   REPORT(Bzero);
   REPORT(init_natage_f);

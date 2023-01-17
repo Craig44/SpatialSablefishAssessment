@@ -36,6 +36,19 @@ n_years = length(data$years)
 projyears = min(data$years):(max(data$years) + data$n_projections_years)
 
 data$global_rec_devs = 1
+data$rec_devs_sum_to_zero = 0
+#' used for sum to zero constraint
+Q_sum_to_zero_QR <- function(N) {
+  Q_r = vector(length = N * 2);
+
+  for(i in 1:(N - 1)) {
+    Q_r[i] = -sqrt((N-i)/(N-i+1.0));
+    Q_r[i+N] = 1.0 / sqrt((N-i) * (N-i+1));
+  }
+  return (Q_r);
+}
+
+data$Q_r_for_sum_to_zero = Q_sum_to_zero_QR(n_years);
 data$n_init_rec_devs = 0
 data$M = matrix(0.104884, nrow = n_ages, ncol = n_projyears)
 maturity = c(0.02,0.05,0.09,0.18,0.31,0.49,0.67,0.81,0.9,0.95,0.98,0.99,0.99,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1)
@@ -262,7 +275,7 @@ parameters$ln_trwl_F_devs = array(0, dim = c(n_regions, n_projyears))
 
 parameters$ln_init_F_avg = parameters$ln_fixed_F_avg
 parameters$trans_srv_dom_ll_q = array(logit(0.2), dim = c(data$n_regions, length(unique(data$srv_dom_ll_q_by_year_indicator))))
-parameters$ln_rec_dev = array(0, dim = c(1, n_years))
+parameters$trans_rec_dev = array(0, dim = c(1, n_years))
 parameters$ln_init_rec_dev = 0
 parameters$ln_catch_sd = log(0.02)
 parameters$ln_sigma_init_devs = log(0.2)
@@ -281,7 +294,7 @@ save(data, parameters, region_key, file = file.path("inst", "testdata", "MockSab
 
 validate_input_data_and_parameters(data, parameters)
 ## rm functions so we don't get a namespace clash
-rm(list = c("get_tag_release_ndx", "logit", "simplex"))
+rm(list = c("get_tag_release_ndx", "logit", "simplex","Q_sum_to_zero_QR"))
 ########################
 ## Check this model data parameter combo doesn't cause issues when making the AD object
 ########################

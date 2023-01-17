@@ -117,9 +117,9 @@ test_that("test-TagIntegratedInitialisation-no_movement-init_rec_devs", {
   expect_equal(expect_init_age, test_report$init_natage_f, tolerance = 0.001)
 
   ## 10 devs
-  devs = rnorm(n = 10, mean = 1, sd = 0.4)
+  devs = rnorm(n = 10, mean = 0, sd = 1)
   data$n_init_rec_devs = 10
-  parameters$ln_init_rec_dev = log(devs)
+  parameters$ln_init_rec_dev = (devs)
 
   test_model <- TMB::MakeADFun(data = data,
                                parameters = parameters,
@@ -128,9 +128,9 @@ test_that("test-TagIntegratedInitialisation-no_movement-init_rec_devs", {
   test_report = test_model$report()
   ## account for multiplier
   expect_init_age = equlibrium_init_age
-  expect_init_age[2:10,] = expect_init_age[2:10,] * devs[1:9]
+  expect_init_age[2:10,] = expect_init_age[2:10,] * exp( devs[1:9])
   ## the last one applies to a range of older ages
-  expect_init_age[11:(length(data$ages) - 1),] = expect_init_age[11:(length(data$ages) - 1),] * devs[10]
+  expect_init_age[11:(length(data$ages) - 1),] = expect_init_age[11:(length(data$ages) - 1),] * exp(devs[10])
 
   ## run test
   expect_equal(expect_init_age, test_report$init_natage_f, tolerance = 0.001)
