@@ -1137,7 +1137,7 @@ Type TagIntegrated(objective_function<Type>* obj) {
         for(age_ndx = 0; age_ndx < n_ages; age_ndx++)
           pred_srv_dom_ll_bio(region_ndx, year_ndx) += natage_m(age_ndx, region_ndx, year_ndx) * sel_srv_dom_ll_m(age_ndx, srv_dom_ll_sel_by_year_indicator(year_ndx)) * S_m_mid(age_ndx, region_ndx, year_ndx) + natage_f(age_ndx, region_ndx, year_ndx) * sel_srv_dom_ll_f(age_ndx, srv_dom_ll_sel_by_year_indicator(year_ndx)) * S_f_mid(age_ndx, region_ndx, year_ndx) ;
         pred_srv_dom_ll_bio(region_ndx, year_ndx) *= srv_dom_ll_q(region_ndx, srv_dom_ll_q_by_year_indicator(year_ndx));
-        nll(4) -= dnorm(log(obs_srv_dom_ll_bio(region_ndx, year_ndx)), log(pred_srv_dom_ll_bio(region_ndx, year_ndx)) - 0.5 * obs_srv_dom_ll_se(region_ndx, year_ndx) * obs_srv_dom_ll_se(region_ndx, year_ndx), obs_srv_dom_ll_se(region_ndx, year_ndx), true);
+        nll(4) -= dlnorm(obs_srv_dom_ll_bio(region_ndx, year_ndx), log(pred_srv_dom_ll_bio(region_ndx, year_ndx)) - 0.5 * obs_srv_dom_ll_se(region_ndx, year_ndx) * obs_srv_dom_ll_se(region_ndx, year_ndx), obs_srv_dom_ll_se(region_ndx, year_ndx), true);
         SIMULATE {
           obs_srv_dom_ll_bio(region_ndx, year_ndx) = exp(rnorm(log(pred_srv_dom_ll_bio(region_ndx, year_ndx)) - 0.5 * obs_srv_dom_ll_se(region_ndx, year_ndx) * obs_srv_dom_ll_se(region_ndx, year_ndx), obs_srv_dom_ll_se(region_ndx, year_ndx)));
         }
@@ -1183,22 +1183,14 @@ Type TagIntegrated(objective_function<Type>* obj) {
 
   // Recruitment Penalty
   Type n_rec_devs = 0.0;
-  if(rec_devs_sum_to_zero == 0) {
-    for(region_ndx = 0; region_ndx < trans_rec_dev.dim(0); ++region_ndx) {
-      for(year_ndx = 0; year_ndx < trans_rec_dev.dim(1); ++year_ndx) {
-        nll(8) += square(trans_rec_dev(region_ndx, year_ndx) - sigma_R_sq / 2.0)/(2.0* sigma_R_sq);
-        n_rec_devs += 1.0;
-      }
-    }
-  } else {
-    for(region_ndx = 0; region_ndx < recruitment_devs.dim(0); ++region_ndx) {
-      for(year_ndx = 0; year_ndx < recruitment_devs.dim(1); ++year_ndx) {
-        nll(8) += square(log(recruitment_devs(region_ndx, year_ndx)) - sigma_R_sq / 2.0)/(2.0* sigma_R_sq);
-        n_rec_devs += 1.0;
-      }
+  for(region_ndx = 0; region_ndx < trans_rec_dev.dim(0); ++region_ndx) {
+    for(year_ndx = 0; year_ndx < trans_rec_dev.dim(1); ++year_ndx) {
+      nll(8) += square(trans_rec_dev(region_ndx, year_ndx) - sigma_R_sq / 2.0)/(2.0* sigma_R_sq);
+      n_rec_devs += 1.0;
     }
   }
   nll(8) += (n_rec_devs) * ln_sigma_R;
+
   // Init-dev Penalty
   if(n_init_rec_devs > 0) {
     n_rec_devs = 0.0;

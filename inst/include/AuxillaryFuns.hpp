@@ -8,6 +8,24 @@ Type posfun(Type x, Type eps, Type &pen) {
 }
 
 
+// dlnorm
+template<class Type>
+Type dlnorm(Type x, Type meanlog, Type sdlog, int give_log=0){
+  //return 1/(sqrt(2*M_PI)*sd) * exp(-.5*pow((x-mean)/sd,2));
+  Type logres = dnorm( log(x), meanlog, sdlog, true) - log(x);
+  if(give_log) return logres; else return exp(logres);
+}
+
+// dinverse_gaussian
+template<class Type>
+Type dinverse_gaussian(Type x, Type mean, Type cv, int give_log=0){
+  //return sqrt(lambda/(2*M_PI*pow(x,3))) * exp( -1.0 * lambda*pow(x-mean,2) / (2*pow(mean,2)*x) );
+  Type sd = cv * mean;
+  Type lambda = pow(mean,3.0) / pow(sd,2.0);
+  Type logres = 0.5*(log(lambda) - 3.0*log(x) - log(2.0*M_PI)) - ( lambda*pow(x-mean,2.0) / (2.0*pow(mean,2.0)*x) );
+  if(give_log) return logres; else return exp(logres);
+}
+
 // Zerofun functions
 template <class Type>
 Type ZeroFun(Type x, Type delta) {

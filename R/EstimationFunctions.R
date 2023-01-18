@@ -399,7 +399,7 @@ set_up_parameters <- function(data, parameters,
     } else {
       ln_rec_dev_elements_to_fix = matrix(c(rep(1:data$n_regions, each = length(yr_ndx)), rep(yr_ndx, data$n_regions)), byrow = F, ncol = 2)
     }
-    arrays_with_elements_fixed[["ln_rec_dev"]] = ln_rec_dev_elements_to_fix
+    arrays_with_elements_fixed[["trans_rec_dev"]] = ln_rec_dev_elements_to_fix
   }
   ## are we sharing selectivity parameters
   base_srv_sel_param_vals = list()

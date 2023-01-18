@@ -1,10 +1,10 @@
 ![Check package](https://github.com/Craig44/SpatialSablefishAssessment/actions/workflows/r.yml/badge.svg)
-# SpatialSablefishAssessment
-A R package that contains TMB models that can be used as operating models (OMs) or Estimation Models (EMs), it also contains a bunch of utility R functions for checking inputs and visualizing/summarizing model outputs and fits to observations. The models are developed for the Alaskan sablefish stock area, but the TMB models can in theory be applied to any assessment that has two fisheries and an annual cycle (time-step). There are two online gitbook resources that are related to this package. The first is the [online documentation](https://craig44.github.io/SpatialSablefishAssessment/) which describes the TMB models, expected inputs and functions to investigate and summaries model fits. An additional online Gitbook that relates to my post-doctoral research which uses this R package [can be found here](https://craig44.github.io/SableFishResearch/).
+# About
+`SpatialSablefishAssessment` is a R package that contains TMB models that can be used as operating models (OMs) or Estimation Models (EMs), it also contains a bunch of utility R functions for checking inputs and visualizing/summarizing model outputs/fits to observations. The models are developed for the Alaskan sablefish stock region, but the TMB models are fairly general and can be applied to any assessment that has two fisheries, two sexes and assumes an annual cycle (time-step). There are two online Gitbook resources that are related to this package. The first is the [online documentation](https://craig44.github.io/SpatialSablefishAssessment/) which describes the TMB models, expected inputs and functions to investigate and summaries model fits. There is an additional online Gitbook that relates to my post-doctoral research which uses this R package [can be found here](https://craig44.github.io/SableFishResearch/).
 
-There is currently three TMB models contained in this package
+There are currently three TMB models contained in this package
 
-- `TagIntegrated` A generalized spatially disaggregated model that assumes two fisheries
+- `TagIntegrated` A generalized spatially disaggregated model that assumes two fisheries, two sexes and an annual cycle
 - `TagIntegratedValidate` This model is used to unit-test `TagIntegrated`. Any change to `TagIntegrated` should be incorporated into `TagIntegratedValidate`
 - `Assessment` The closest version to the current ADMB model that is used for the current assessment (needs further testing and comparisons to current ADMB assessment model before being used for management advice).
 

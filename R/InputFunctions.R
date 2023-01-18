@@ -56,13 +56,16 @@ plot_input_observations = function(data, region_key = NULL) {
   }
   colnames(fixed_catchatage) = colnames(fixed_catchatlgth) = colnames(trwl_catchatlgth) = colnames(srv_dom_ll_catchatage) = colnames(srv_dom_ll_bio) = c("Region", "Year", "indicator")
   ## tag releases
-  dimnames(data$male_tagged_cohorts_by_age) = dimnames(data$female_tagged_cohorts_by_age) = list(data$ages, regions,  data$years[which(data$tag_release_event_this_year == 1)])
-  tag_releases_m = reshape2::melt(data$male_tagged_cohorts_by_age)
-  tag_releases_f = reshape2::melt(data$female_tagged_cohorts_by_age)
-  tag_releases = rbind(tag_releases_m, tag_releases_f)
-  colnames(tag_releases) = c("Age", "Region", "Year", "releases")
-  tag_release_df = tag_releases %>% group_by(Region, Year) %>% summarise(indicator = ifelse(sum(releases) > 0, 1, 0))
-  tag_release_df$label = "Tag Releases"
+  tag_release_df = NULL
+  if((sum(data$male_tagged_cohorts_by_age) + sum(data$female_tagged_cohorts_by_age)) > 0) {
+    dimnames(data$male_tagged_cohorts_by_age) = dimnames(data$female_tagged_cohorts_by_age) = list(data$ages, regions,  data$years[which(data$tag_release_event_this_year == 1)])
+    tag_releases_m = reshape2::melt(data$male_tagged_cohorts_by_age)
+    tag_releases_f = reshape2::melt(data$female_tagged_cohorts_by_age)
+    tag_releases = rbind(tag_releases_m, tag_releases_f)
+    colnames(tag_releases) = c("Age", "Region", "Year", "releases")
+    tag_release_df = tag_releases %>% group_by(Region, Year) %>% summarise(indicator = ifelse(sum(releases) > 0, 1, 0))
+    tag_release_df$label = "Tag Releases"
+  }
   fixed_catchatlgth$label = "Fishery Fixed LF"
   fixed_catchatage$label = "Fishery Fixed AF"
   trwl_catchatlgth$label = "Fishery Trawl LF"
@@ -70,6 +73,7 @@ plot_input_observations = function(data, region_key = NULL) {
   srv_dom_ll_bio$label = "Survey LL Biomass"
   ## combine
   full_df = rbind(fixed_catchatage, trwl_catchatlgth, srv_dom_ll_catchatage, srv_dom_ll_bio, fixed_catchatlgth, tag_recovery_detailed, tag_release_df)
+
   if(is.null(region_key)) {
     full_df$Region = paste0("Region ", full_df$Region)
   } else {
