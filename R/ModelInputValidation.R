@@ -323,9 +323,15 @@ validate_input_data_and_parameters = function(data, parameters) {
     return(paste0("trans_srv_dom_ll_q: ", check$message))
 
   # movement parameters transformed_movement_pars
-  check = check_dim(parameters$transformed_movement_pars, c(n_regions - 1, n_regions))
-  if(!check$result)
-    return(paste0("transformed_movement_pars: ", check$message))
+  if(n_regions > 1) {
+    check = check_dim(parameters$transformed_movement_pars, c(n_regions - 1, n_regions))
+    if(!check$result)
+      return(paste0("transformed_movement_pars: ", check$message))
+  } else {
+    check = check_dim(parameters$transformed_movement_pars, c(1, 1))
+    if(!check$result)
+      return(paste0("transformed_movement_pars: ", check$message))
+  }
 
   # ln_fixed_F_devs
   check = check_dim(parameters$ln_fixed_F_devs, c(n_regions, n_years))

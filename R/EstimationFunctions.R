@@ -326,16 +326,18 @@ set_up_parameters <- function(data, parameters,
       qs_are_turned_off = TRUE
   }
   if(!qs_are_turned_off) {
-    if(!srv_q_spatial) {
-      ## regionally similar q's
-      drop_first_ndx_for_space = seq(from = 1, to = ncol(parameters$trans_srv_dom_ll_q) * data$n_regions, by = data$n_regions)[1:ncol(parameters$trans_srv_dom_ll_q)]
-      logis_sel_q = list(trans_srv_dom_ll_q = expand.grid(1:data$n_regions, 1:ncol(parameters$trans_srv_dom_ll_q))[-drop_first_ndx_for_space,])
-      arrays_with_elements_fixed[["trans_srv_dom_ll_q"]] = logis_sel_q$trans_srv_dom_ll_q
-      start_vals = 1
-      for(j in 1:ncol(parameters$trans_srv_dom_ll_q)) {
-        base_q_vals = append(base_q_vals, rep(list(trans_srv_dom_ll_q = start_vals), data$n_regions - 1))
-        copy_q_vals = append(copy_q_vals, evalit(paste0("list(",paste(paste0("trans_srv_dom_ll_q = ", (start_vals + 1):(start_vals + data$n_regions - 1)), collapse = ", "),")")))
-        start_vals = start_vals + data$n_regions
+    if(data$n_regions > 1) {
+      if(!srv_q_spatial) {
+        ## regionally similar q's
+        drop_first_ndx_for_space = seq(from = 1, to = ncol(parameters$trans_srv_dom_ll_q) * data$n_regions, by = data$n_regions)[1:ncol(parameters$trans_srv_dom_ll_q)]
+        logis_sel_q = list(trans_srv_dom_ll_q = expand.grid(1:data$n_regions, 1:ncol(parameters$trans_srv_dom_ll_q))[-drop_first_ndx_for_space,])
+        arrays_with_elements_fixed[["trans_srv_dom_ll_q"]] = logis_sel_q$trans_srv_dom_ll_q
+        start_vals = 1
+        for(j in 1:ncol(parameters$trans_srv_dom_ll_q)) {
+          base_q_vals = append(base_q_vals, rep(list(trans_srv_dom_ll_q = start_vals), data$n_regions - 1))
+          copy_q_vals = append(copy_q_vals, evalit(paste0("list(",paste(paste0("trans_srv_dom_ll_q = ", (start_vals + 1):(start_vals + data$n_regions - 1)), collapse = ", "),")")))
+          start_vals = start_vals + data$n_regions
+        }
       }
     }
   }

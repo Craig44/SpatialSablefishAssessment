@@ -142,6 +142,7 @@ Type TagIntegrated(objective_function<Type>* obj) {
   DATA_ARRAY(obs_srv_dom_ll_se);                              // Longline domestic survey biomass standard errors
   DATA_ARRAY_INDICATOR(keep_srv_dom_ll_bio_comp, obs_srv_dom_ll_bio); // Used for OSA residuals, when not using the multinomial likelihood
   DATA_INTEGER(srv_dom_ll_bio_comp_likelihood);               // 0 =
+  DATA_INTEGER(srv_dom_ll_obs_is_abundance);                     // 1 = Abundance (Numbers), 0 = Biomass (Weight)
   array<Type> pred_srv_dom_ll_bio(obs_srv_dom_ll_bio.dim);    // Sex disaggregated predicted catch at age
   DATA_IVECTOR(srv_dom_ll_q_by_year_indicator);               // Catchability time-block to apply when deriving model predictions each year
   DATA_INTEGER(srv_dom_ll_q_transformation);                  // 0 = log, 1 = logistic (bound between 0-1)
@@ -342,18 +343,21 @@ Type TagIntegrated(objective_function<Type>* obj) {
 
   // deal with movement
   array<Type> movement_matrix(n_regions,n_regions);                  // n_regions x n_regions. Rows sum = 1 (aka source)
-  vector<Type> cache_log_k_value(n_regions - 1);
-  for(int k = 0; k < (n_regions - 1); k++)
-    cache_log_k_value[k] = log(n_regions - 1 - k);
+  movement_matrix.fill(1.0);
+  if(n_regions > 1) {
+    vector<Type> cache_log_k_value(n_regions - 1);
+    for(int k = 0; k < (n_regions - 1); k++)
+      cache_log_k_value[k] = log(n_regions - 1 - k);
 
-  for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
-    Type stick_length = 1.0;
-    for (int k = 0; k < (n_regions - 1); ++k) {
-      movement_matrix(region_ndx, k) = stick_length * invlogit(transformed_movement_pars(k, region_ndx) - cache_log_k_value(k));
-      stick_length -= movement_matrix(region_ndx, k);
+    for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
+      Type stick_length = 1.0;
+      for (int k = 0; k < (n_regions - 1); ++k) {
+        movement_matrix(region_ndx, k) = stick_length * invlogit(transformed_movement_pars(k, region_ndx) - cache_log_k_value(k));
+        stick_length -= movement_matrix(region_ndx, k);
+      }
+      // plus group
+      movement_matrix(region_ndx, n_regions - 1) = stick_length;
     }
-    // plus group
-    movement_matrix(region_ndx, n_regions - 1) = stick_length;
   }
   Type tag_phi = exp(ln_tag_phi);
 
@@ -1134,8 +1138,16 @@ Type TagIntegrated(objective_function<Type>* obj) {
       }
       // Check if we have Survey Longline biomass obsevation in this region and year
       if(srv_dom_ll_bio_indicator(region_ndx, year_ndx) == 1) {
-        for(age_ndx = 0; age_ndx < n_ages; age_ndx++)
-          pred_srv_dom_ll_bio(region_ndx, year_ndx) += natage_m(age_ndx, region_ndx, year_ndx) * sel_srv_dom_ll_m(age_ndx, srv_dom_ll_sel_by_year_indicator(year_ndx)) * S_m_mid(age_ndx, region_ndx, year_ndx) + natage_f(age_ndx, region_ndx, year_ndx) * sel_srv_dom_ll_f(age_ndx, srv_dom_ll_sel_by_year_indicator(year_ndx)) * S_f_mid(age_ndx, region_ndx, year_ndx) ;
+        if(srv_dom_ll_obs_is_abundance == 1) {
+          // numbers calculation
+          for(age_ndx = 0; age_ndx < n_ages; age_ndx++)
+            pred_srv_dom_ll_bio(region_ndx, year_ndx) += natage_m(age_ndx, region_ndx, year_ndx) * sel_srv_dom_ll_m(age_ndx, srv_dom_ll_sel_by_year_indicator(year_ndx)) * S_m_mid(age_ndx, region_ndx, year_ndx) + natage_f(age_ndx, region_ndx, year_ndx) * sel_srv_dom_ll_f(age_ndx, srv_dom_ll_sel_by_year_indicator(year_ndx)) * S_f_mid(age_ndx, region_ndx, year_ndx) ;
+        } else if (srv_dom_ll_obs_is_abundance == 0) {
+          // Weight calculation
+          for(age_ndx = 0; age_ndx < n_ages; age_ndx++)
+            pred_srv_dom_ll_bio(region_ndx, year_ndx) += natage_m(age_ndx, region_ndx, year_ndx) * sel_srv_dom_ll_m(age_ndx, srv_dom_ll_sel_by_year_indicator(year_ndx)) * male_mean_weight_by_age(age_ndx, year_ndx) * S_m_mid(age_ndx, region_ndx, year_ndx) + natage_f(age_ndx, region_ndx, year_ndx) * sel_srv_dom_ll_f(age_ndx, srv_dom_ll_sel_by_year_indicator(year_ndx)) * female_mean_weight_by_age(age_ndx, year_ndx) * S_f_mid(age_ndx, region_ndx, year_ndx) ;
+        }
+        // apply catchability
         pred_srv_dom_ll_bio(region_ndx, year_ndx) *= srv_dom_ll_q(region_ndx, srv_dom_ll_q_by_year_indicator(year_ndx));
         nll(4) -= dlnorm(obs_srv_dom_ll_bio(region_ndx, year_ndx), log(pred_srv_dom_ll_bio(region_ndx, year_ndx)) - 0.5 * obs_srv_dom_ll_se(region_ndx, year_ndx) * obs_srv_dom_ll_se(region_ndx, year_ndx), obs_srv_dom_ll_se(region_ndx, year_ndx), true);
         SIMULATE {

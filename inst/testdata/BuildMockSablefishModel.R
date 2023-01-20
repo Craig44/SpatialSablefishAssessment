@@ -171,6 +171,7 @@ data$obs_srv_dom_ll_bio = array(1, dim = c(n_regions, n_years))
 data$obs_srv_dom_ll_se = array(0.2, dim = c(n_regions, n_years))
 
 data$srv_dom_ll_bio_comp_likelihood = 0
+data$srv_dom_ll_obs_is_abundance = 1
 data$srv_dom_ll_q_by_year_indicator = rep(0, n_years)
 data$srv_dom_ll_q_transformation = 1 ## logistic
 tag_recovery_years = 2011:2020
@@ -292,9 +293,11 @@ parameters$ln_tag_phi = log(1)
 data$model = "TagIntegratedValidate"
 save(data, parameters, region_key, file = file.path("inst", "testdata", "MockSablefishModel.RData"))
 
-validate_input_data_and_parameters(data, parameters)
 ## rm functions so we don't get a namespace clash
 rm(list = c("get_tag_release_ndx", "logit", "simplex","Q_sum_to_zero_QR"))
+
+validate_input_data_and_parameters(data, parameters)
+
 ########################
 ## Check this model data parameter combo doesn't cause issues when making the AD object
 ########################
