@@ -23,7 +23,7 @@
 <meta name="author" content="C.Marsh" />
 
 
-<meta name="date" content="2023-01-18" />
+<meta name="date" content="2023-01-20" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -300,6 +300,7 @@ div.csl-indent {
 <li><p><code>obs_srv_dom_ll_bio</code> domestic survey abundance observation <code>n_regions</code> <span class="math inline">\(\times\)</span> <code>n_years</code>. This observation is in numbers (000’s) which is equivalent to proportions times the effective sample size. Predicted proportions will sum = 1 over the age and sex dimension.</p></li>
 <li><p><code>obs_srv_dom_ll_se</code> Standard error for the domestic survey abundance observation</p></li>
 <li><p><code>srv_dom_ll_bio_comp_likelihood</code> integer, this is a place holder doesn’t do anything yet, will be used when alternative composition likelihoods are available.</p></li>
+<li><p><code>srv_dom_ll_obs_is_abundance</code> integer, a value of 0 indicates the observation is biomass or weight. A value of 1 indicates the observation is abundance or numbers</p></li>
 <li><p><code>srv_dom_ll_q_by_year_indicator</code> indicator vector, this indicates how many time-blocks for time-varying catchabilities are available. Each element links an element of the parameter <code>trans_srv_dom_ll_q</code> for a year.</p></li>
 <li><p><code>srv_dom_ll_q_transformation</code> integer, indicates what transformation is used for <code>trans_srv_dom_ll_q</code>. 0 indicates log, 1 indicates logistic where q is bound between 0 and 1.</p></li>
 <li><p><code>tag_recovery_indicator_by_year</code> an indicator vector for tag-recovery observations has length <code>n_years</code>. A one indicates there is a tag recovery observation in this year. A zero indicates no observation. This object is used to define <code>n_tag_recovery_years = sum(tag_recovery_indicator_by_year)</code>, which links to other tag-recovery structures. This input parameter is not used when <code>tag_likelihood %in% c(2)</code>.</p></li>
