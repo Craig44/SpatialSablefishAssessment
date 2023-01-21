@@ -265,7 +265,14 @@ sum_to_zero_QR <- function(x_raw) {
   x[N] = x_aux;
   return(x);
 }
-
+#'
+#' pow
+#' utility function to mimic TMB code and likelihood evaluations
+#' @param val base value
+#' @param exponent exponent to take to the power
+#' @return val to the exponent
+#' @export
+pow <- function(val,exponent) {val^exponent}
 
 #'
 #' posfun
@@ -276,7 +283,6 @@ sum_to_zero_QR <- function(x_raw) {
 #' @return a modified value of x which is larger than eps in a differential manor
 #' @export
 posfun <- function(x, eps, pen = NULL) {
-  pow <- function(val,exponent) {x^exponent}
   xp = -(x/eps-1);
   if(x >= eps) {
     return(x)
