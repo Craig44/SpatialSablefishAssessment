@@ -1152,7 +1152,10 @@ Type TagIntegrated(objective_function<Type>* obj) {
 
         if(srv_dom_ll_bio_comp_likelihood == 0) {
           nll(4) += square((log(obs_srv_dom_ll_bio(region_ndx, year_ndx) + 0.0001) - log(pred_srv_dom_ll_bio(region_ndx, year_ndx) + 0.0001) ))/ (2.0 * square(obs_srv_dom_ll_se(region_ndx, year_ndx) / obs_srv_dom_ll_bio(region_ndx, year_ndx)));
-          // not sure how to simulate from this likelihood
+          // not sure how best to simulate from this likelihood. I think this is right but worth having another look
+          SIMULATE {
+            obs_srv_dom_ll_bio(region_ndx, year_ndx) = exp(rnorm(log(pred_srv_dom_ll_bio(region_ndx, year_ndx) + 0.0001), obs_srv_dom_ll_se(region_ndx, year_ndx) / obs_srv_dom_ll_bio(region_ndx, year_ndx)));
+          }
         } else if(srv_dom_ll_bio_comp_likelihood == 1) {
           nll(4) -= dlnorm(obs_srv_dom_ll_bio(region_ndx, year_ndx), log(pred_srv_dom_ll_bio(region_ndx, year_ndx)) - 0.5 * obs_srv_dom_ll_se(region_ndx, year_ndx) * obs_srv_dom_ll_se(region_ndx, year_ndx), obs_srv_dom_ll_se(region_ndx, year_ndx), true);
           SIMULATE {

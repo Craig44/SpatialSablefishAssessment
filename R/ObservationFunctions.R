@@ -11,12 +11,16 @@ get_negloglike <- function(MLE_report) {
 #' @param MLE_report a list that is output from obj$report() usually once an optimsation routine has been done.
 #' @param label character labeling the observation you want to plot. See below for options
 #' \itemize{
-#'   \item trwl
-#'   \item fixed
-#'   \item srv_dom_ll
+#'   \item `fixed`
+#'   \item `srv_dom_ll`
 #' }
 #' @param subset_years vector of years to plot it for
 #' @param sex character that allows users to specify if the want sex specific plots
+#' \itemize{
+#'   \item `both`
+#'   \item `male`
+#'   \item `female`
+#' }
 #' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
 #' @return data frame with age-frequency info
 #' @export
@@ -67,6 +71,9 @@ get_AF <- function(MLE_report, label = "fixed", subset_years = NULL, sex = "both
   if(sex == "female")
     full_df = full_df %>% dplyr::filter(Sex == "Female")
   full_df$label = label
+
+  ## remove rows that have observed NA
+  full_df = full_df %>% dplyr::filter(!is.na(Observed))
 
   return(full_df)
 }
@@ -228,6 +235,9 @@ get_LF = function(MLE_report, label = "fixed", subset_years = NULL, sex = "both"
   if(sex == "female")
     full_df = full_df %>% dplyr::filter(Sex == "Female")
   full_df$label = label
+  ## remove rows that have observed NA
+  full_df = full_df %>% dplyr::filter(!is.na(Observed))
+
   return(full_df)
 }
 
@@ -448,4 +458,55 @@ Francis_reweighting <- function(MLE_report, region_key = NULL) {
   length_multipliers = mean_len_df %>% group_by(Region, label) %>% summarise(multiplier = 1/var(resid_mean_length * sqrt(Nassumed)/stand_mean_length, na.rm = T))
   age_multipliers = mean_age_df %>% group_by(Region, label) %>% summarise(multiplier = 1/var(resid_mean_age * sqrt(Nassumed)/stand_mean_age, na.rm = T))
   return(list(length_multipliers = length_multipliers, age_multipliers = age_multipliers, mean_age_df = mean_age_df, mean_len_df = mean_len_df))
+}
+
+
+#'
+#'
+#' simulate_observations
+#' @details Simulate observations conditional on MLE estimates
+#' @param obj A TMB object that has been build using `TMB::MakeADFun`
+#' @param n_sims an integer specifying how many simulated data sets you want
+#' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
+#' @return named list containing simualted observations for all key obsevations
+#' @export
+
+simulate_observations <- function(obj, n_sims = 200, region_key = NULL) {
+  fixed_effect_pars = get_tmb_fixed_effects(obj)
+  all_pars = obj$env$last.par.best
+  sd_rep = sdreport(obj, getJointPrecision = T)
+  sim_pars =  MASS::mvrnorm(n = n_sims, mu = fixed_effect_pars, Sigma = sd_rep$cov.fixed)
+  sim_srv_bio = sim_srv_AF = sim_fixed_AF = sim_fixed_LF = sim_trwl_LF = sim_tag_recovery = NULL
+  for(sim_iter in 1:n_sims) {
+    if(sim_iter %% 50 == 0)
+      cat("simulation iteration: ", sim_iter, "\n")
+    ## simualte
+    this_sim = obj$simulate(par = sim_pars[sim_iter,], complete = T)
+    ## store sim obs
+    # survey biomass
+    index_df = get_index(this_sim, region_key = region_key)
+    index_df$sim = sim_iter
+    sim_srv_bio = rbind(sim_srv_bio, index_df)
+    # survey AF
+    srv_AF = get_AF(MLE_report = this_sim, label = "srv_dom_ll", region_key = region_key)
+    srv_AF$sim = sim_iter
+    sim_srv_AF = rbind(sim_srv_AF, srv_AF)
+    # Fixed AF
+    fixed_AF = get_AF(MLE_report = this_sim, label = "fixed", region_key = region_key)
+    fixed_AF$sim = sim_iter
+    sim_fixed_AF = rbind(sim_fixed_AF, fixed_AF)
+    # Fixed LF
+    fixed_LF = get_LF(MLE_report = this_sim, label = "fixed", region_key = region_key)
+    fixed_LF$sim = sim_iter
+    sim_fixed_LF = rbind(sim_fixed_LF, fixed_LF)
+    # Trawl LF
+    trwl_LF = get_LF(MLE_report = this_sim, label = "trwl", region_key = region_key)
+    trwl_LF$sim = sim_iter
+    sim_trwl_LF = rbind(sim_trwl_LF, trwl_LF)
+    # Tag data
+    tag_data = get_tag_recovery_obs_fitted_values(MLE_report = this_sim, region_key = region_key)
+    tag_data$sim = sim_iter
+    sim_tag_recovery = rbind(sim_tag_recovery, tag_data)
+  }
+  return(list(sim_tag_recovery = sim_tag_recovery, sim_trwl_LF = sim_trwl_LF, sim_fixed_LF = sim_fixed_LF, sim_fixed_AF = sim_fixed_AF, sim_srv_AF = sim_srv_AF, sim_srv_bio = sim_srv_bio))
 }
