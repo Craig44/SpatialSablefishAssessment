@@ -15,7 +15,7 @@ logis<- function(x, x50, a95, amax = 1.0) {
 #' @return selectivity along x
 #' @export
 logis_alt = function (x, x50, delta, amax = 1.0) {
-  amax/(1 + exp(-delta * (x - x50)))
+  return(amax/(1 + exp(-delta * (x - x50))))
 }
 
 #' double_normal a double normal selectivity
@@ -26,7 +26,7 @@ logis_alt = function (x, x50, delta, amax = 1.0) {
 #' @export
 double_normal = function (x, x50, delta, amax = 1.0) {
   square <- function(val) {val*val}
-  (pow(x / x50, x50 / (0.5*(sqrt(square(x50)+4*square(delta)) - x50)))*exp((x50 - x)/(0.5*(sqrt(square(x50)+4*square(delta))-x50))));
+  return (pow(x / x50, x50 / (0.5*(sqrt(square(x50)+4*square(delta)) - x50)))*exp((x50 - x)/(0.5*(sqrt(square(x50)+4*square(delta))-x50))));
 }
 
 #' constant_sel constant selectivity

@@ -71,7 +71,7 @@ Users need to population a `data` and `parameters` named list object that is the
 - `srv_dom_ll_bio_indicator` an indicator array for survey longline abundance observation with dimensions `n_regions` \(\times\) `n_years`. A one indicates there is an abundance observation for the longline survey in this region and year. A zero indicates no observation.
 - `obs_srv_dom_ll_bio` domestic survey abundance observation `n_regions` \(\times\) `n_years`. This observation is in numbers (000's) which is equivalent to proportions times the effective sample size. Predicted proportions will sum = 1 over the age and sex dimension.
 - `obs_srv_dom_ll_se` Standard error for the domestic survey abundance observation
-- `srv_dom_ll_bio_comp_likelihood` integer, this is a place holder doesn't do anything yet, will be used when alternative composition likelihoods are available.
+- `srv_dom_ll_bio_comp_likelihood` integer, a value of 0 is the old lognormal call (SE is normal distribution converted to CV by the likelihood evaluation), a value of 1 uses the `dlnorm` call, standard error are specified in as the lognormal disribution (different to the other value)
 - `srv_dom_ll_obs_is_abundance` integer, a value of 0 indicates the observation is biomass or weight. A value of 1 indicates the observation is abundance or numbers
 - `srv_dom_ll_q_by_year_indicator` indicator vector, this indicates how many time-blocks for time-varying catchabilities are available. Each element links an element of the parameter `trans_srv_dom_ll_q` for a year.
 - `srv_dom_ll_q_transformation` integer, indicates what transformation is used for `trans_srv_dom_ll_q`. 0 indicates log, 1 indicates logistic where q is bound between 0 and 1.

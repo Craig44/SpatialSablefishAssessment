@@ -22,6 +22,25 @@ test_that("test-Selectivities", {
   parameters$ln_trwl_sel_pars[2,2,1] = 2.4150
   parameters$ln_trwl_sel_pars[2,1,2] = 1.011
   parameters$ln_trwl_sel_pars[2,2,2] = 2.21150
+
+  ## srv with 3 time-block
+  data$srv_dom_ll_sel_type = c(0,0,0)
+
+  parameters$ln_srv_dom_ll_sel_pars  = array(0, dim = c(3, 2, 2))
+  parameters$ln_srv_dom_ll_sel_pars[1,1,1] = 2.111
+  parameters$ln_srv_dom_ll_sel_pars[1,2,1] = -0.711
+  parameters$ln_srv_dom_ll_sel_pars[1,1,2] = 1.576
+  parameters$ln_srv_dom_ll_sel_pars[1,2,2] = -0.7118
+  parameters$ln_srv_dom_ll_sel_pars[2,1,1] = 2.111
+  parameters$ln_srv_dom_ll_sel_pars[2,2,1] = -0.711
+  parameters$ln_srv_dom_ll_sel_pars[2,1,2] = 1.576
+  parameters$ln_srv_dom_ll_sel_pars[2,2,2] = -0.7118
+  parameters$ln_srv_dom_ll_sel_pars[3,1,1] = 2.111
+  parameters$ln_srv_dom_ll_sel_pars[3,2,1] = -0.711
+  parameters$ln_srv_dom_ll_sel_pars[3,1,2] = 1.576
+  parameters$ln_srv_dom_ll_sel_pars[3,2,2] = -0.7118
+
+
   test_model <- TMB::MakeADFun(data = data,
                                parameters = parameters,
                                DLL = "SpatialSablefishAssessment_TMBExports", silent  = T)
@@ -47,5 +66,9 @@ test_that("test-Selectivities", {
   # Male
   expect_equal(test_report$sel_fixed_m[,1], logis_alt(x = data$ages, x50 = exp(parameters$ln_fixed_sel_pars[1,1,1]), delta = exp(parameters$ln_fixed_sel_pars[1,2,1])))
 
+  ## test log and exp change
+  expect_true(all(test_report$fixed_sel_pars == exp(parameters$ln_fixed_sel_pars)))
+  expect_true(all(!(test_report$trwl_sel_pars - exp(parameters$ln_trwl_sel_pars)) > 0.000001))
+  expect_true(all(!(test_report$srv_dom_ll_sel_pars - exp(parameters$ln_srv_dom_ll_sel_pars)) > 0.000001))
 
 })

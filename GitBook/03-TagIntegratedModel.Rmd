@@ -131,7 +131,20 @@ where, \(\delta_y \in (0,1)\) is the proportion of time in the year that the obs
 \begin{equation} 
   \widehat{I}^s_{r,y} = \sum_s\sum_a \widehat{N}^s_{a,r,y,s} \bar{w}_{a,y,s}
 \end{equation} 
-where, \(\bar{w}_{a,y,s}\) is mean weight at age, this can be omitted if the observation is in numbers i.e., abundance instead of biomass.
+where, \(\bar{w}_{a,y,s}\) is mean weight at age, this can be omitted if the observation is in numbers i.e., abundance instead of biomass using `data$srv_dom_ll_obs_is_abundance = 1`. There are currently two likelihoods available for this observation
+
+
+- if `data$srv_dom_ll_bio_comp_likelihood == 0`
+\[
+  ll_{r,y} = \frac{\left( \log {I}^s_{r,y} + 0.0001 - \log \widehat{I}^s_{r,y} + 0.0001 \right)^2}{2 \left( SE[{I}^s_{r,y}] / {I}^s_{r,y} \right)}
+\]
+
+- if `data$srv_dom_ll_bio_comp_likelihood == 1`
+\[
+ll_{r,y} = \frac{1}{{I}^s_{r,y} SE[{I}^s_{r,y}] \sqrt{ 2\pi}} \exp \left( - \frac{ \left(\log {I}^s_{r,y} - \log \widehat{I}^s_{r,y} - 0.5SE[{I}^s_{r,y}]^2\right)^2}{2 SE[{I}^s_{r,y}]^2}\right)
+\]
+
+
 
 ### Tag recovery observations {-}
 
