@@ -10,7 +10,7 @@ There are currently three TMB models contained in this package
 
 
 # Install 
-Before installing, it is advised to check that the R package is passing all unit-tests and you have Rtools correctly installed [(see here)](https://cran.r-project.org/bin/windows/Rtools/). It is advised that you have TMB installed before attempting to install this package. In addition to installing TMB, make sure you can compile a TMB example model i.e., `TMB::compile(file = system.file("examples", "simple.cpp",package = "TMB"))`. Once TMB is installed and you can compile an a model, you should be able to install this package following
+Before installing, it is advised to check that the R package is passing all unit-tests and you have Rtools correctly installed [(see here)](https://cran.r-project.org/bin/windows/Rtools/). It is advised that you have TMB installed before attempting to install this package. In addition to installing TMB, make sure you can compile a TMB example model i.e., `TMB::compile(file = system.file("examples", "simple.cpp",package = "TMB"))`. Once TMB is installed and you can successfully compile a TMB model, you should be able to install this package following
 
 ```r
 devtools::install_github("Craig44/SpatialSablefishAssessment")
@@ -19,7 +19,7 @@ devtools::install_github("Craig44/SpatialSablefishAssessment")
 # Using `SpatialSablefishAssessment`
 
 ## Configuring and checking model inputs (data and parameters)
-This package contains TMB models and summarizing and plotting functions for a range of models used during my sablefish research. Users are responsible for configuring the `data` and `parameter` structures that are passed to the TMB `MakeADFun` function which compiles the model. Each of these models will expect slightly different input data and parameters lists see
+This package contains TMB models and summarizing and plotting functions for a range of models used during my sablefish research. Users are responsible for configuring the `data` and `parameter` structures that are passed to the `TMB::MakeADFun` function which compiles the model. Each model type (defined by `data$model`) will expect slightly different input data and parameters structures. For
 
 - `TagIntegrated` has described inputs [found here](https://craig44.github.io/SpatialSablefishAssessment/TagIntegrated.html)
 - `Assessment` I haven't documented this model yet, the best place to look is the source TMB code [found here](https://github.com/Craig44/SpatialSablefishAssessment/blob/master/src/TMB/CurrentAssessment.hpp)
@@ -62,18 +62,11 @@ my_model = TMB::MakeADFun(data = data,
 ```
 
 ### Simple sanity checks
-It is possible to configure a model that has zero gradients for parameters, and you want to check this is not the case using the 
+It is possible to configure a model that has zero gradients for parameters, as well as NaN or Inf in the likelihood evaluations. These usually occur when users ask the model to calculate a predicted value in a region or year that has no fish which can cause undefined behavior in some likelihood functions. To check this is not the case use the following function
 ```r
-check_gradients(my_model)
+pre_optim_sanity_checks(my_model)
 ```
 
-Check the likelihoods are all finite. It is easy to ask the model to calculate a predicted value in a region or year that has no fish which can cause undefined behaviour in some likelihood functions.
-```
-if(!all(is.finite(my_model$report()$nll)))
-  print("Found Inf in log-likelihood, you will need to resolve this before optimisation")
-if(!all(!is.na(my_model$report()$nll)))
-  print("Found NA in log-likelihood, you will need to resolve this before optimisation")
-```
 
 ## Optimisation
 
@@ -95,9 +88,11 @@ try_improve
 
 
 ### Check convergence
+
+After a model has successfully converged during optimization, you should check there are no parameters at bounds, gradients are small and you have a positive definite hessian matrix. This can be achieved by using the following function.
+
 ```r
-## largest gradient 
-names(mle_optim$par)[which.max(abs(my_model$gr(mle_optim$par)))]
+post_optim_sanity_checks(my_model)
 ```
 
 
@@ -106,10 +101,13 @@ names(mle_optim$par)[which.max(abs(my_model$gr(mle_optim$par)))]
 ?fix_pars()
 ```
 
-### Sharing parameter estimates among estimable variables i.e., male and female having a common selectivity
+### Sharing parameter estimates among estimable variables i.e., male and female having a common selectivity or survey catchability the same among spatial regions
 ```r
 ?set_pars_to_be_the_same()
 ```
+
+If you are using the `TagIntegrated` model then there is a special function called `set_up_parameters` that will set a range of parameters as fixed or shared depending on user inputs.
+
 
 ## Model Summary
 Once you are satisfied that the model has converged at global minimum, then you can get the model to report model quantities

@@ -26,7 +26,7 @@ region_key
 - `get_tag_recovery_obs_fitted_values`
 - `get_tag_release_AF` get age-frequency of tag-releases
 - `get_negloglike` get negative loglikelihoods for each contribution
-- `simulate_observations` this function will take a TMB object and simulate a number of observations, used to create simualted residauls.
+- `simulate_observations` this function will take a TMB object and simulate a number of observations, used to create simulated residuals.
 
 ## Plotting functions {-}
 
