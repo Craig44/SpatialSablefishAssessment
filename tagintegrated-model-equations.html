@@ -350,7 +350,17 @@ where, <span class="math inline">\(\delta_y \in (0,1)\)</span> is the proportion
 <p><span class="math display">\[\begin{equation}
   \widehat{I}^s_{r,y} = \sum_s\sum_a \widehat{N}^s_{a,r,y,s} \bar{w}_{a,y,s}
 \end{equation}\]</span>
-where, <span class="math inline">\(\bar{w}_{a,y,s}\)</span> is mean weight at age, this can be omitted if the observation is in numbers i.e., abundance instead of biomass.</p>
+where, <span class="math inline">\(\bar{w}_{a,y,s}\)</span> is mean weight at age, this can be omitted if the observation is in numbers i.e., abundance instead of biomass using <code>data$srv_dom_ll_obs_is_abundance = 1</code>. There are currently two likelihoods available for this observation</p>
+<ul>
+<li><p>if <code>data$srv_dom_ll_bio_comp_likelihood == 0</code>
+<span class="math display">\[
+ll_{r,y} = \frac{\left( \log {I}^s_{r,y} + 0.0001 - \log \widehat{I}^s_{r,y} + 0.0001 \right)^2}{2 \left( SE[{I}^s_{r,y}] / {I}^s_{r,y} \right)}
+\]</span></p></li>
+<li><p>if <code>data$srv_dom_ll_bio_comp_likelihood == 1</code>
+<span class="math display">\[
+ll_{r,y} = \frac{1}{{I}^s_{r,y} SE[{I}^s_{r,y}] \sqrt{ 2\pi}} \exp \left( - \frac{ \left(\log {I}^s_{r,y} - \log \widehat{I}^s_{r,y} - 0.5SE[{I}^s_{r,y}]^2\right)^2}{2 SE[{I}^s_{r,y}]^2}\right)
+\]</span></p></li>
+</ul>
 </div>
 <div id="tag-recovery-observations" class="section level3 unnumbered hasAnchor">
 <h3>Tag recovery observations<a href="tagintegrated-model-equations.html#tag-recovery-observations" class="anchor-section" aria-label="Anchor link to header"></a></h3>
