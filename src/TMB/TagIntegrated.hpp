@@ -439,15 +439,15 @@ Type TagIntegrated(objective_function<Type>* obj) {
   array<Type> F_trwl_m(n_ages, n_regions, n_projyears);              // Male Fishing mortality Trawl at age from start year to end year
   array<Type> F_trwl_f(n_ages, n_regions, n_projyears);              // Female Fishing mortality Trawl at age from start year to end year
 
-  array<Type> catchatage_fixed_m(n_ages, n_regions, n_years);           // Male Catch at age Longline at age from start year to end year
-  array<Type> catchatage_fixed_f(n_ages, n_regions, n_years);           // Female Catch at age Longline at age from start year to end year
-  array<Type> catchatage_trwl_m(n_ages, n_regions, n_years);         // Male Catch at age Trawl at age from start year to end year
-  array<Type> catchatage_trwl_f(n_ages, n_regions, n_years);         // Female Catch at age Trawl at age from start year to end year
+  array<Type> catchatage_fixed_m(n_ages, n_regions, n_projyears);           // Male Catch at age Longline at age from start year to end year
+  array<Type> catchatage_fixed_f(n_ages, n_regions, n_projyears);           // Female Catch at age Longline at age from start year to end year
+  array<Type> catchatage_trwl_m(n_ages, n_regions, n_projyears);         // Male Catch at age Trawl at age from start year to end year
+  array<Type> catchatage_trwl_f(n_ages, n_regions, n_projyears);         // Female Catch at age Trawl at age from start year to end year
 
-  array<Type> annual_F_fixed(n_regions, n_years);                      // Fishing mortality for longline gear for each model year
-  array<Type> annual_fixed_catch_pred(n_regions, n_years);             // Fishing mortality for longline gear for each model year
-  array<Type> annual_F_trwl(n_regions, n_years);                    // Fishing mortality for trawl gear for each model year
-  array<Type> annual_trwl_catch_pred(n_regions, n_years);           // Fishing mortality for trawl gear for each model year
+  array<Type> annual_F_fixed(n_regions, n_projyears);                      // Fishing mortality for longline gear for each model year
+  array<Type> annual_fixed_catch_pred(n_regions, n_projyears);             // Fishing mortality for longline gear for each model year
+  array<Type> annual_F_trwl(n_regions, n_projyears);                    // Fishing mortality for trawl gear for each model year
+  array<Type> annual_trwl_catch_pred(n_regions, n_projyears);           // Fishing mortality for trawl gear for each model year
   annual_fixed_catch_pred.fill(0.0);
   annual_trwl_catch_pred.fill(0.0);
   SSB_all_areas.setZero();
@@ -1235,10 +1235,30 @@ Type TagIntegrated(objective_function<Type>* obj) {
    */
 
   if(do_projection == 1) {
+    // first populate projection elements of population containers
+    for(proj_year_ndx = n_years; proj_year_ndx < n_projyears; ++proj_year_ndx) {
+      for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
+        for(age_ndx = 0; age_ndx < n_ages; ++age_ndx) {
+          Z_f(age_ndx, region_ndx, proj_year_ndx) = M(age_ndx, proj_year_ndx);
+          Z_m(age_ndx, region_ndx, proj_year_ndx) = M(age_ndx, proj_year_ndx);
+          S_f(age_ndx, region_ndx, proj_year_ndx) = exp(-1.0 * Z_f(age_ndx, region_ndx, proj_year_ndx));
+          S_m(age_ndx, region_ndx, proj_year_ndx) = exp(-1.0 * Z_m(age_ndx, region_ndx, proj_year_ndx));
+          S_f_mid(age_ndx, region_ndx, proj_year_ndx) = exp(-0.5 * Z_f(age_ndx, region_ndx, proj_year_ndx));
+          S_m_mid(age_ndx, region_ndx, proj_year_ndx) = exp(-0.5 * Z_m(age_ndx, region_ndx, proj_year_ndx));
+        }
+      }
+    }
     // Calculate projection period recruitment deviations
 
+    // Deal with Future F or catch
+
+    /*
+     * Run projection annual cycle
+     */
     for(proj_year_ndx = n_years; proj_year_ndx < n_projyears; ++proj_year_ndx) {
+      //std::cerr << "proj year ndx = " << proj_year_ndx <<"\n";
       // in each region we want to calculate recruitment, Ageing and total mortality
+
       for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
         // Recruitment
         //fill in recruitment in current year - a slight ineffieciency as we have already done this for year i.e., proj_year_ndx = 0 above but meh!
@@ -1283,8 +1303,11 @@ Type TagIntegrated(objective_function<Type>* obj) {
         natage_m.col(proj_year_ndx + 1) = (natage_m.col(proj_year_ndx + 1).matrix() * movement_matrix.matrix()).array();
         natage_f.col(proj_year_ndx + 1) = (natage_f.col(proj_year_ndx + 1).matrix() * movement_matrix.matrix()).array();
       }
+
     } //     for(proj_year_ndx = n_years; proj_year_ndx < (n_years + n_projections_years); ++proj_year_ndx) {
   } //if(do_projection == 1) {
+
+
 
 
 

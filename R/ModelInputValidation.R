@@ -86,7 +86,7 @@ validate_input_data_and_parameters = function(data, parameters) {
 
   if(data$do_projection == 1) {
     ## check projection variables
-    if(data$n_projections_years > 0)
+    if(data$n_projections_years <= 0)
       stop("data$n_projections_years must be greater than max(data$years)")
   } else {
     if(data$n_projections_years != 0)
