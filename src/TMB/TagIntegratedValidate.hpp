@@ -208,6 +208,7 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
 
   // Initialise consistently used variables throughout the code
   int year_ndx;
+  int proj_year_ndx;
   int age_ndx;
   //int len_ndx;
   int region_ndx;
@@ -239,7 +240,7 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   vector<Type> init_rec_dev = exp(ln_init_rec_dev);
 
   array<Type> recruitment_multipliers(n_regions, n_projyears);
-  recruitment_multipliers.fill(0.0);
+  recruitment_multipliers.fill(1.0);
   array<Type> recruitment_devs(n_regions, n_projyears);
   recruitment_devs.fill(0.0);
   if(rec_devs_sum_to_zero == 0) {
@@ -305,9 +306,11 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
       tag_reporting_rate(i, j) = invlogit(logistic_tag_reporting_rate(i,j));
     }
   }
-
-  vector<Type> prop_recruit_male(logistic_prop_recruit_male.size());
-  vector<Type> prop_recruit_female(logistic_prop_recruit_male.size());
+  // initial as 0.5
+  vector<Type> prop_recruit_male(n_projyears);
+  prop_recruit_male.fill(0.5);
+  vector<Type> prop_recruit_female(n_projyears);
+  prop_recruit_female.fill(0.5);
   for(int i = 0; i < logistic_prop_recruit_male.size(); ++i) {
     prop_recruit_male(i) = invlogit(logistic_prop_recruit_male(i));
     prop_recruit_female(i) = 1.0 - prop_recruit_male(i);
@@ -1271,6 +1274,66 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   }
   // pos fun penalty for
   nll(10) = pen_posfun;
+
+  /*
+   *  Projection component of the model should never do this during estimation
+   *  Strictly a post optimization section of code
+   *
+   */
+
+  if(do_projection == 1) {
+    // Calculate projection period recruitment deviations
+
+    for(proj_year_ndx = n_years; proj_year_ndx < n_projyears; ++proj_year_ndx) {
+      // in each region we want to calculate recruitment, Ageing and total mortality
+      for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
+        // Recruitment
+        //fill in recruitment in current year - a slight ineffieciency as we have already done this for year i.e., proj_year_ndx = 0 above but meh!
+        natage_m(0, region_ndx, proj_year_ndx) = (mean_rec(region_ndx) * recruitment_multipliers(region_ndx, proj_year_ndx)) * prop_recruit_male(proj_year_ndx);
+        natage_f(0, region_ndx, proj_year_ndx) = (mean_rec(region_ndx) * recruitment_multipliers(region_ndx, proj_year_ndx)) * prop_recruit_female(proj_year_ndx);
+
+        recruitment_yr(proj_year_ndx, region_ndx) = natage_m(0, region_ndx, proj_year_ndx) + natage_f(0, region_ndx, proj_year_ndx);
+
+        // Do something for F or catch
+
+
+        // Z + Ageing
+        m_plus_group = natage_m(n_ages - 1, region_ndx, proj_year_ndx);
+        f_plus_group = natage_f(n_ages - 1, region_ndx, proj_year_ndx);
+        for(age_ndx = 0; age_ndx < (n_ages - 1); age_ndx++) {
+          natage_m(age_ndx + 1, region_ndx, proj_year_ndx + 1) =  natage_m(age_ndx, region_ndx, proj_year_ndx) * S_m(age_ndx, region_ndx, proj_year_ndx);
+          natage_f(age_ndx + 1, region_ndx, proj_year_ndx + 1) =  natage_f(age_ndx, region_ndx, proj_year_ndx) * S_f(age_ndx, region_ndx, proj_year_ndx);
+          SSB_yr(proj_year_ndx, region_ndx) += natage_f(age_ndx, region_ndx, proj_year_ndx) * pow(S_f(age_ndx, region_ndx, proj_year_ndx), spawning_time_proportion(proj_year_ndx)) * weight_maturity_prod_f(age_ndx, proj_year_ndx);
+        }
+        // SSB for the plus group
+        SSB_yr(proj_year_ndx, region_ndx) += natage_f(n_ages - 1, region_ndx, proj_year_ndx) * pow(S_f(n_ages - 1, region_ndx, proj_year_ndx), spawning_time_proportion(proj_year_ndx)) * weight_maturity_prod_f(n_ages - 1, proj_year_ndx);
+        // plus group accumulation
+        natage_m(n_ages - 1, region_ndx, proj_year_ndx + 1) +=  m_plus_group * S_m(n_ages - 1, region_ndx, proj_year_ndx);
+        natage_f(n_ages - 1, region_ndx, proj_year_ndx + 1) +=  f_plus_group * S_f(n_ages - 1, region_ndx, proj_year_ndx);
+        // Calculate Catch at age
+        for(age_ndx = 0; age_ndx < n_ages; age_ndx++) {
+          catchatage_fixed_m(age_ndx, region_ndx, proj_year_ndx) = F_fixed_m(age_ndx, region_ndx, proj_year_ndx) / Z_m(age_ndx, region_ndx, proj_year_ndx) * natage_m(age_ndx, region_ndx, proj_year_ndx) * (1.0 - S_m(age_ndx, region_ndx, proj_year_ndx));
+          catchatage_fixed_f(age_ndx, region_ndx, proj_year_ndx) = F_fixed_f(age_ndx, region_ndx, proj_year_ndx) / Z_f(age_ndx, region_ndx, proj_year_ndx) * natage_f(age_ndx, region_ndx, proj_year_ndx) * (1.0 - S_f(age_ndx, region_ndx, proj_year_ndx));
+          catchatage_trwl_m(age_ndx, region_ndx, proj_year_ndx) = F_trwl_m(age_ndx, region_ndx, proj_year_ndx) / Z_m(age_ndx, region_ndx, proj_year_ndx) * natage_m(age_ndx, region_ndx, proj_year_ndx) * (1.0 - S_m(age_ndx, region_ndx, proj_year_ndx));
+          catchatage_trwl_f(age_ndx, region_ndx, proj_year_ndx) = F_trwl_f(age_ndx, region_ndx, proj_year_ndx) / Z_f(age_ndx, region_ndx, proj_year_ndx) * natage_f(age_ndx, region_ndx, proj_year_ndx) * (1.0 - S_f(age_ndx, region_ndx, proj_year_ndx));
+
+        }
+        // Account for tagged fish in Catch at age
+
+      } // for(region_ndx = 0; region_ndx < n_regions; ++region_ndx)
+
+      // movement
+      if(apply_fixed_movement) {
+        natage_m.col(proj_year_ndx + 1) = (natage_m.col(proj_year_ndx + 1).matrix() * fixed_movement_matrix).array();
+        natage_f.col(proj_year_ndx + 1) = (natage_f.col(proj_year_ndx + 1).matrix() * fixed_movement_matrix).array();
+      } else {
+        natage_m.col(proj_year_ndx + 1) = (natage_m.col(proj_year_ndx + 1).matrix() * movement_matrix.matrix()).array();
+        natage_f.col(proj_year_ndx + 1) = (natage_f.col(proj_year_ndx + 1).matrix() * movement_matrix.matrix()).array();
+      }
+    } //     for(proj_year_ndx = n_years; proj_year_ndx < (n_years + n_projections_years); ++proj_year_ndx) {
+  } //if(do_projection == 1) {
+
+
 
   /*
    * Report section

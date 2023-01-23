@@ -9,8 +9,8 @@ Users need to population a `data` and `parameters` named list object that is the
 - `years` vector of years from start year to current year. length `n_years`
 - `length_bins` vector of length bin midpoints. length. `n_length_bins`
 - `n_projections_years` integer of future years to project the model `n_projyears = n_years + n_projections_years`
-- `do_projection` integer 0 means don't do projection 1 does a stochastic projection
-- `n_regions` integer needs to be greater than 1
+- `do_projection` integer 0 means don't do projection 1 does a stochastic projection (**Not Implemented**)
+- `n_regions` integer needs to be greater than or equal to 1
 - `global_rec_devs` integer 1 means all regions share the same recruitment deviations. 0 means they have separate global recruitment deviations. This will effect the dimensions of the parameter `trans_rec_dev`
 - `rec_devs_sum_to_zero` Should the recruit devs in each region sum to zero? yes = 1, no = 0. I yes then this the parameter `trans_rec_dev` has one less parameter
 
