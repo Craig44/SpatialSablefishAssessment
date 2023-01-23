@@ -23,7 +23,7 @@
 <meta name="author" content="C.Marsh" />
 
 
-<meta name="date" content="2023-01-22" />
+<meta name="date" content="2023-01-23" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -246,8 +246,8 @@ div.csl-indent {
 <li><p><code>years</code> vector of years from start year to current year. length <code>n_years</code></p></li>
 <li><p><code>length_bins</code> vector of length bin midpoints. length. <code>n_length_bins</code></p></li>
 <li><p><code>n_projections_years</code> integer of future years to project the model <code>n_projyears = n_years + n_projections_years</code></p></li>
-<li><p><code>do_projection</code> integer 0 means don’t do projection 1 does a stochastic projection</p></li>
-<li><p><code>n_regions</code> integer needs to be greater than 1</p></li>
+<li><p><code>do_projection</code> integer 0 means don’t do projection 1 does a stochastic projection (<strong>Not Implemented</strong>)</p></li>
+<li><p><code>n_regions</code> integer needs to be greater than or equal to 1</p></li>
 <li><p><code>global_rec_devs</code> integer 1 means all regions share the same recruitment deviations. 0 means they have separate global recruitment deviations. This will effect the dimensions of the parameter <code>trans_rec_dev</code></p></li>
 <li><p><code>rec_devs_sum_to_zero</code> Should the recruit devs in each region sum to zero? yes = 1, no = 0. I yes then this the parameter <code>trans_rec_dev</code> has one less parameter</p></li>
 <li><p><code>n_init_rec_devs</code> number of initial n_age_deviations (<code>parameter$ln_init_rec_dev</code>) to multiply against the initial numbers at age to have non equilibrium initial age-structure. A value of zero will <strong>not</strong> apply these initial devs and expects <code>parameter$ln_init_rec_dev</code> to have length 1.</p></li>
