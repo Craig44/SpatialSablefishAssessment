@@ -14,6 +14,12 @@ region_key
 
 - `validate_input_data_and_parameters` This should always be run before `TMB::MakeADFun`
 
+## Data grooming functions {-}
+
+- `record_grooming_rule` this will create a table of how much catch and how many records are removed from applying some data grooming rules
+- `apply_grooming_rule` equivalent to the `subset` function
+
+
 ## Accessor functions {-}
 
 - `get_AF` get age-frequency observed and predicted values from a model
@@ -114,3 +120,8 @@ Y =
 - `inv_bound_unit` inverse of `bound_unit`
 - `gm_mean` calculate the geometric mean
 - `sum_to_zero_QR` take an unconstrained vector of length `N - 1` and calculate a vector of length `N` that sums = 1.
+
+## Auxillary functions {-}
+
+- `VAlignPlots` a plotting function that joins multiple ggplots into a single panel with aligned legends and extents
+

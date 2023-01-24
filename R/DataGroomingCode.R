@@ -66,7 +66,11 @@ record_grooming_rule = function(df, index, catch.col, record = NULL, rule, year.
       stop(paste0("Could not find the year.col colname ", year.col, " in colnames of dataframe"))
     }
     use_year = T
-    years = sort(unique(df[, year.col]))
+    if(is.null(record)) {
+      years = sort(unique(df[, year.col]))
+    } else {
+      years = colnames(record)
+    }
   }
   if(is.null(record)) {
     first_record = T
@@ -84,29 +88,41 @@ record_grooming_rule = function(df, index, catch.col, record = NULL, rule, year.
   }
   if(use_year) {
     #init calcs
-    catch_by_year = tapply(df[, catch.col], INDEX = df[, year.col], FUN = sum, na.rm = T)
-    events_by_year = tapply(df[, catch.col], INDEX = df[, year.col], FUN = length)
+    catch_df = df %>% group_by(!!sym(year.col)) %>% summarise(catch = sum(!!sym(catch.col), na.rm = T))
+    event_df = df %>% group_by(!!sym(year.col)) %>% summarise(events = n())
+    catch_df = catch_df %>% mutate_if(is.character, factor, levels = years)
+    event_df = event_df %>% mutate_if(is.character, factor, levels = years)
+
+    catch_df = catch_df %>% complete(!!sym(year.col), fill = list(catch = 0.0)) %>%
+      pivot_wider(names_from = year.col, values_from = !year.col)
+    event_df = event_df %>% complete(!!sym(year.col), fill = list(events = 0.0)) %>%
+      pivot_wider(names_from = year.col, values_from = !year.col)
+
     # apply rule
     new_df = subset(df, index)
-    upd_catch_by_year = tapply(new_df[, catch.col], INDEX = new_df[, year.col], FUN = sum, na.rm = T)
-    upd_events_by_year = tapply(new_df[, catch.col], INDEX = new_df[, year.col], FUN = length)
+    sub_catch_df = new_df %>% group_by(!!sym(year.col)) %>% summarise(catch = sum(!!sym(catch.col), na.rm = T))
+    sub_event_df = new_df %>% group_by(!!sym(year.col)) %>% summarise(events = n())
+    sub_catch_df = sub_catch_df %>% mutate_if(is.character, factor, levels = years)
+    sub_event_df = sub_event_df %>% mutate_if(is.character, factor, levels = years)
+
+    sub_catch_df = sub_catch_df %>% complete(!!sym(year.col), fill = list(catch = 0.0)) %>%
+      pivot_wider(names_from = year.col, values_from = !year.col)
+    sub_event_df = sub_event_df %>% complete(!!sym(year.col), fill = list(events = 0.0)) %>%
+      pivot_wider(names_from = year.col, values_from = !year.col)
+
     new_record = NULL
     if(attr_ndx == 1) {
-      catch_removed = round(catch_by_year - upd_catch_by_year, 2)
-      new_record = as.data.frame(t(catch_removed))
+      new_record = round(catch_df - sub_catch_df, 2)
     } else if(attr_ndx == 2) {
-      events_removed = round(events_by_year - upd_events_by_year, 2)
-      new_record = as.data.frame(t(events_removed))
+      new_record = round(event_df - sub_event_df, 2)
     } else if(attr_ndx == 3) {
-      catch_percent = round((upd_catch_by_year - catch_by_year) / catch_by_year * 100, 2)
-      new_record = as.data.frame(t(catch_percent))
+      new_record = round((sub_catch_df - catch_df) / catch_df * 100, 2)
     } else if(attr_ndx == 4) {
-      event_percent = round((upd_events_by_year - events_by_year) / events_by_year * 100, 2)
-      new_record = as.data.frame(t(event_percent))
+      new_record = round((sub_event_df - event_df) / event_df * 100, 2)
     } else if(attr_ndx == 5) {
-      new_record = as.data.frame(t(upd_catch_by_year))
+      new_record = sub_event_df
     } else  {
-      new_record = as.data.frame(t(upd_events_by_year))
+      new_record = sub_catch_df
     }
 
     if(first_record) {

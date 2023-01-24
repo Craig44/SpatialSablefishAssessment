@@ -259,7 +259,7 @@ There are two methods for future recruitment, parametric and empirical. Parametr
 \]
 resulting recruitment multipliers, also termed year class strengths (\(YCS_y\)) are bias adjusted \(YCS_y = \exp(\epsilon_y - 0.5\sigma_R^2)\)
 
-- Empirical `future_recruitment_type == 1` this will sample with replacement input recruitment deviations between the values specified in `year_ndx_for_empirical_resampling`. `year_ndx_for_empirical_resampling` this contains the C++ elements if `year_ndx_for_empirical_resampling = c(0,n_years - 1)` this will resample from all input recruitment deviations. if `year_ndx_for_empirical_resampling = c(0,9)` this will resample from the first 10 input recruitment deviations. if `year_ndx_for_empirical_resampling = c((n_years - 9):(n_years - 1))` this will resample from the last 10 input recruitment deviations.
+- Empirical `future_recruitment_type == 1` this will sample with replacement input recruitment deviations between the values specified in `year_ndx_for_empirical_resampling`. Note elements of `year_ndx_for_empirical_resampling` are C++ vector dimensions. If `year_ndx_for_empirical_resampling = c(0,n_years - 1)` this will resample from all input recruitment deviations. if `year_ndx_for_empirical_resampling = c(0,9)` this will resample from the first 10 input recruitment deviations. if `year_ndx_for_empirical_resampling = c((n_years - 9):(n_years - 1))` this will resample from the last 10 input recruitment deviations.
 
 ### Fishing {-}
 
