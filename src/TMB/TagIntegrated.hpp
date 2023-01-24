@@ -167,6 +167,18 @@ Type TagIntegrated(objective_function<Type>* obj) {
   DATA_INTEGER(tag_likelihood);                                 // likelihood type 0 = Poisson, 1 = Negative Binomial, 2 = Multinomial release conditioned
   array<Type> pred_tag_recovery(obs_tag_recovery.dim);
 
+  /*
+   * Projection inputs
+   */
+  DATA_INTEGER(future_recruitment_type);   // Future recruitent type 0 = simulate from lognormal distribution, 1 = empirically resample input recruitment devs
+  DATA_IVECTOR(year_ndx_for_empirical_resampling); // if future_recruitment_type == 1, then this specifies the upper and lower index to resample i.e., 0,n_years would resample from all years if (n_years - 10), n_years this would resample from the last ten years
+  DATA_INTEGER(future_fishing_type);   // place holder
+
+
+
+
+
+
 
   /*
    *  Estimable parameters
@@ -1421,6 +1433,7 @@ Type TagIntegrated(objective_function<Type>* obj) {
   REPORT( trwl_catchatlgth_comp_likelihood );
   REPORT( fixed_catchatlgth_comp_likelihood );
   REPORT( srv_dom_ll_catchatage_comp_likelihood );
+  REPORT( srv_dom_ll_bio_comp_likelihood );
   // Report observations
   REPORT( obs_srv_dom_ll_bio );
   REPORT( obs_srv_dom_ll_se );

@@ -397,6 +397,11 @@ get_index = function(MLE_report, region_key = NULL) {
   colnames(index_obs) = c("Region", "Year", "Observed")
   colnames(index_fit) = c("Region", "Year", "Predicted")
   colnames(index_se) = c("Region", "Year", "SE")
+  ## convert the SE of an estimator to a standard deviation that is the
+  ## right scale for the lognormal distribution
+  ## first calculate CV = sigma/mean then pass this to the log_sigma function
+  index_se$SE = log_sigma(index_se$SE / index_se$Observed)
+
   CIs = lognormal_CI(index_obs$Observed, sigma = index_se$SE, CI = 0.95)
   index_obs$Predicted = index_fit$Predicted
   index_obs$SE = index_se$SE

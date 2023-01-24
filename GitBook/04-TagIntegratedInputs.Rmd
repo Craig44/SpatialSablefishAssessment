@@ -82,6 +82,16 @@ Users need to population a `data` and `parameters` named list object that is the
 
 - `tag_likelihood` integer specifying the tag-likelihood, 0 = Poisson, 1 = negative binomial, 2 = Multinomial (release conditioned)
 
+- `future_recruitment_type` integer specifying the future recruitment deviation process. 0 = simulate from lognormal distribution with using the sigma R, 1 = empirically re sample input recruitment deviations
+- `year_ndx_for_empirical_resampling` integer vector specifying years to empirically resample from if future_recruitment_type == 1, then this specifies the upper and lower index to resample e.g., `year_ndx_for_empirical_resampling = c(0,n_years - 1)` then this would resample from all years if `year_ndx_for_empirical_resampling = c((n_years - 10), n_years - 1)`, then this would resample from the last ten years of the input recruitment deviations
+
+### Additional data inputs for `TagIntegratedValidate` {-}
+
+- `apply_Z_on_tagged_fish` integer 0 no, 1 yes
+- `apply_fishery_tag_reporting` integer 0 no, 1 yes
+- `apply_tag_reporting_rate` integer 0 no, 1 yes
+
+
 ## `parameters` {-}
 
 

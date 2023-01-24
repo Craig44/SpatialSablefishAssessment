@@ -164,6 +164,15 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   DATA_INTEGER(tag_likelihood);                                 // likelihood type 0 = Poisson, 1 = Negative Binomial, 2 = Multinomial release conditioned
   array<Type> pred_tag_recovery(obs_tag_recovery.dim);
 
+
+
+  /*
+   * Projection inputs
+   */
+  DATA_INTEGER(future_recruitment_type);   // Future recruitment type 0 = simulate from lognormal distribution, 1 = empirically resample input recruitment devs
+  DATA_IVECTOR(year_ndx_for_empirical_resampling); // if future_recruitment_type == 1, then this specifies the upper and lower index to resample i.e., 0,n_years would resample from all years if (n_years - 10), n_years this would resample from the last ten years
+  DATA_INTEGER(future_fishing_type);   // place holder
+
   /*
    *  Estimable parameters
    *
@@ -1282,9 +1291,40 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
    */
 
   if(do_projection == 1) {
+    Type future_rec_dev = 0.0;
+    int empirical_recruitment_ndx;
     // first populate projection elements of population containers
     for(proj_year_ndx = n_years; proj_year_ndx < n_projyears; ++proj_year_ndx) {
+      if(future_recruitment_type == 0) {
+        if(global_rec_devs == 1)
+          future_rec_dev = rnorm(Type(0), sigma_R);
+      } else if (future_recruitment_type == 1) {
+        if(global_rec_devs == 1) {
+          empirical_recruitment_ndx = round(runif(year_ndx_for_empirical_resampling(0) - 0.499, year_ndx_for_empirical_resampling(1) + 0.499));
+          //std::cerr << "empirical ndx = " << empirical_recruitment_ndx << "\n";
+        }
+      }
+
       for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
+        if(future_recruitment_type == 0) {
+          // generate future recruitment based on prior and sigma R
+          if(global_rec_devs == 1) {
+            recruitment_devs(region_ndx, proj_year_ndx) = future_rec_dev;
+            recruitment_multipliers(region_ndx, region_ndx) = exp(recruitment_devs(region_ndx, proj_year_ndx) - sigma_R_sq/2.0);
+          } else {
+            recruitment_devs(region_ndx, proj_year_ndx) = rnorm(Type(0), sigma_R);
+            recruitment_multipliers(region_ndx, region_ndx) = exp(recruitment_devs(region_ndx, proj_year_ndx) - sigma_R_sq/2.0);
+          }
+        } else if(future_recruitment_type == 1) {
+          // Empirically resample from input devs
+          if(global_rec_devs == 1) {
+            recruitment_devs(region_ndx, proj_year_ndx) = recruitment_devs(region_ndx, empirical_recruitment_ndx);
+          } else {
+            empirical_recruitment_ndx = runif(year_ndx_for_empirical_resampling(0), year_ndx_for_empirical_resampling(1));
+            //std::cerr << "empirical ndx = " << empirical_recruitment_ndx << "\n";
+            recruitment_devs(region_ndx, proj_year_ndx) = recruitment_devs(region_ndx, empirical_recruitment_ndx);
+          }
+        }
         for(age_ndx = 0; age_ndx < n_ages; ++age_ndx) {
           Z_f(age_ndx, region_ndx, proj_year_ndx) = M(age_ndx, proj_year_ndx);
           Z_m(age_ndx, region_ndx, proj_year_ndx) = M(age_ndx, proj_year_ndx);
@@ -1460,6 +1500,7 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   REPORT( trwl_catchatlgth_comp_likelihood );
   REPORT( fixed_catchatlgth_comp_likelihood );
   REPORT( srv_dom_ll_catchatage_comp_likelihood );
+  REPORT( srv_dom_ll_bio_comp_likelihood );
   REPORT( srv_dom_ll_q_transformation );
   REPORT( apply_fixed_movement );
 

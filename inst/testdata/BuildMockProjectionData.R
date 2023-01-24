@@ -202,6 +202,11 @@ for(y_ndx in 1:length(tag_release_years)) {
 
 data$tag_likelihood = 0
 
+data$future_recruitment_type = 0
+data$year_ndx_for_empirical_resampling = c(0,n_years - 1)
+data$future_fishing_type = 0
+
+
 #' logit bounds X which is between 0-1 to -inf -> inf based on the logit transformation
 #' equivalent to qlogis(X)
 #' @param X scalar range [0,1]

@@ -248,6 +248,12 @@ validate_input_data_and_parameters = function(data, parameters) {
         return(paste0("obs_tag_recovery: ", check$message))
     }
   }
+  ## check projection inputs. TODO: should only really check these if do_projection == 1
+  if(!data$future_recruitment_type %in% c(0,1))
+    return("Unknown value for future_recruitment_type, expected either 0 or 1")
+  check = check_length(data$year_ndx_for_empirical_resampling, 2)
+  if(!check$result)
+    return(paste0("year_ndx_for_empirical_resampling: ", check$message))
 
   ## parameters
   # ln_mean_rec
