@@ -210,6 +210,7 @@ div.csl-indent {
 <li class="chapter" data-level="" data-path="tagintegrated-model-equations.html"><a href="tagintegrated-model-equations.html#projecting"><i class="fa fa-check"></i>Projecting</a>
 <ul>
 <li class="chapter" data-level="" data-path="tagintegrated-model-equations.html"><a href="tagintegrated-model-equations.html#recruitment-1"><i class="fa fa-check"></i>Recruitment</a></li>
+<li class="chapter" data-level="" data-path="tagintegrated-model-equations.html"><a href="tagintegrated-model-equations.html#fishing"><i class="fa fa-check"></i>Fishing</a></li>
 </ul></li>
 <li class="chapter" data-level="" data-path="tagintegrated-model-equations.html"><a href="tagintegrated-model-equations.html#symbol-notation"><i class="fa fa-check"></i>Symbol Notation</a></li>
 </ul></li>
@@ -460,6 +461,14 @@ f(x) = \frac{\left(n!\right)\Gamma\left(\sum \alpha_k\right)}{\Gamma\left(n+\sum
 \]</span>
 resulting recruitment multipliers, also termed year class strengths (<span class="math inline">\(YCS_y\)</span>) are bias adjusted <span class="math inline">\(YCS_y = \exp(\epsilon_y - 0.5\sigma_R^2)\)</span></p></li>
 <li><p>Empirical <code>future_recruitment_type == 1</code> this will sample with replacement input recruitment deviations between the values specified in <code>year_ndx_for_empirical_resampling</code>. <code>year_ndx_for_empirical_resampling</code> this contains the C++ elements if <code>year_ndx_for_empirical_resampling = c(0,n_years - 1)</code> this will resample from all input recruitment deviations. if <code>year_ndx_for_empirical_resampling = c(0,9)</code> this will resample from the first 10 input recruitment deviations. if <code>year_ndx_for_empirical_resampling = c((n_years - 9):(n_years - 1))</code> this will resample from the last 10 input recruitment deviations.</p></li>
+</ul>
+</div>
+<div id="fishing" class="section level3 unnumbered hasAnchor">
+<h3>Fishing<a href="tagintegrated-model-equations.html#fishing" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>Fishing selectivity that was assumed in the last year of the model is used during the projection period. There are two methods users can use for future fishing, assume fishing mortality rates or catches.</p>
+<ul>
+<li><p>User specifies F values during projection (unlikely useage) <code>future_fishing_type = 0</code> populate <code>future_fishing_inputs_trwl</code> and <code>future_fishing_inputs_fixed</code> with F values</p></li>
+<li><p>User specifies Catch values during projection (more likely) <code>future_fishing_type = 1</code> populate <code>future_fishing_inputs_trwl</code> and <code>future_fishing_inputs_fixed</code> with future catches. An F is calculated based on the hybrid fishing mortality method, which should result in predicted catches close to these but not exact.</p></li>
 </ul>
 </div>
 </div>
