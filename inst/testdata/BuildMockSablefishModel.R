@@ -204,6 +204,8 @@ data$tag_likelihood = 0
 data$future_recruitment_type = 0
 data$year_ndx_for_empirical_resampling = c(0,n_years - 1)
 data$future_fishing_type = 0
+data$future_fishing_inputs_trwl = array(0.1, dim = c(data$n_regions, data$n_projections_years))
+data$future_fishing_inputs_fixed = array(0.1, dim = c(data$n_regions, data$n_projections_years))
 
 #' logit bounds X which is between 0-1 to -inf -> inf based on the logit transformation
 #' equivalent to qlogis(X)

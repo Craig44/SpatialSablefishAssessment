@@ -84,6 +84,9 @@ Users need to population a `data` and `parameters` named list object that is the
 
 - `future_recruitment_type` integer specifying the future recruitment deviation process. 0 = simulate from lognormal distribution with using the sigma R, 1 = empirically re sample input recruitment deviations
 - `year_ndx_for_empirical_resampling` integer vector specifying years to empirically resample from if future_recruitment_type == 1, then this specifies the upper and lower index to resample e.g., `year_ndx_for_empirical_resampling = c(0,n_years - 1)` then this would resample from all years if `year_ndx_for_empirical_resampling = c((n_years - 10), n_years - 1)`, then this would resample from the last ten years of the input recruitment deviations
+- `future_fishing_type` integer 0 means users have supplied fishing mortality rates in future fishing input containers. If 1 then user supplied catchs in future fishing input containers.
+- `future_fishing_inputs_fixed` an array with dimensions `n_regions` \(\times\) `n_projections_years`. Will be F's or catches fir the fixed gear fishery depending on the value of `future_fishing_type`
+- `future_fishing_inputs_trwl` an array with dimensions `n_regions` \(\times\) `n_projections_years`. Will be F's or catches fir the trawl gear fishery depending on the value of `future_fishing_type`
 
 ### Additional data inputs for `TagIntegratedValidate` {-}
 

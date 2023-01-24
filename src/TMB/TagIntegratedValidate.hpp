@@ -171,7 +171,10 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
    */
   DATA_INTEGER(future_recruitment_type);   // Future recruitment type 0 = simulate from lognormal distribution, 1 = empirically resample input recruitment devs
   DATA_IVECTOR(year_ndx_for_empirical_resampling); // if future_recruitment_type == 1, then this specifies the upper and lower index to resample i.e., 0,n_years would resample from all years if (n_years - 10), n_years this would resample from the last ten years
-  DATA_INTEGER(future_fishing_type);   // place holder
+  DATA_INTEGER(future_fishing_type);       // 0 = user supplied F, 1 = user supplied Catch, 2 = Fmsy calculation
+  DATA_ARRAY(future_fishing_inputs_fixed);      // if future_fishing_type = 0 there are Fs, future_fishing_type = 1 these are catches, if future_fishing_type = 2 this can be ignored: dim n_regions x n_projections_years
+  DATA_ARRAY(future_fishing_inputs_trwl);       // if future_fishing_type = 0 there are Fs, future_fishing_type = 1 these are catches, if future_fishing_type = 2 this can be ignored: dim n_regions x n_projections_years
+  // dimensions n_regions x n_projections_years
 
   /*
    *  Estimable parameters
@@ -1291,6 +1294,7 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
    */
 
   if(do_projection == 1) {
+    // Future Recruitment
     Type future_rec_dev = 0.0;
     int empirical_recruitment_ndx;
     // first populate projection elements of population containers
@@ -1325,19 +1329,26 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
             recruitment_devs(region_ndx, proj_year_ndx) = recruitment_devs(region_ndx, empirical_recruitment_ndx);
           }
         }
-        for(age_ndx = 0; age_ndx < n_ages; ++age_ndx) {
-          Z_f(age_ndx, region_ndx, proj_year_ndx) = M(age_ndx, proj_year_ndx);
-          Z_m(age_ndx, region_ndx, proj_year_ndx) = M(age_ndx, proj_year_ndx);
-          S_f(age_ndx, region_ndx, proj_year_ndx) = exp(-1.0 * Z_f(age_ndx, region_ndx, proj_year_ndx));
-          S_m(age_ndx, region_ndx, proj_year_ndx) = exp(-1.0 * Z_m(age_ndx, region_ndx, proj_year_ndx));
-          S_f_mid(age_ndx, region_ndx, proj_year_ndx) = exp(-0.5 * Z_f(age_ndx, region_ndx, proj_year_ndx));
-          S_m_mid(age_ndx, region_ndx, proj_year_ndx) = exp(-0.5 * Z_m(age_ndx, region_ndx, proj_year_ndx));
+        // User supplied F's
+        if(future_fishing_type == 0) {
+          annual_F_fixed(region_ndx, proj_year_ndx) = future_fishing_inputs_fixed(region_ndx, proj_year_ndx - n_years);
+          annual_F_trwl(region_ndx, proj_year_ndx) = future_fishing_inputs_trwl(region_ndx, proj_year_ndx - n_years);
+          for(age_ndx = 0; age_ndx < n_ages; ++age_ndx) {
+            F_fixed_m(age_ndx, region_ndx, proj_year_ndx) = annual_F_fixed(region_ndx, proj_year_ndx) * sel_fixed_m(age_ndx, fixed_sel_by_year_indicator(n_years - 1));
+            F_fixed_f(age_ndx, region_ndx, proj_year_ndx) = annual_F_fixed(region_ndx, proj_year_ndx) * sel_fixed_f(age_ndx, fixed_sel_by_year_indicator(n_years - 1));
+            F_trwl_m(age_ndx, region_ndx, proj_year_ndx) = annual_F_trwl(region_ndx, proj_year_ndx) * sel_trwl_m(age_ndx, trwl_sel_by_year_indicator(n_years - 1));
+            F_trwl_f(age_ndx, region_ndx, proj_year_ndx) = annual_F_trwl(region_ndx, proj_year_ndx) * sel_trwl_f(age_ndx, trwl_sel_by_year_indicator(n_years - 1));
+            Z_f(age_ndx, region_ndx, proj_year_ndx) = M(age_ndx, proj_year_ndx) + F_fixed_f(age_ndx, region_ndx, proj_year_ndx) + F_trwl_f(age_ndx, region_ndx, proj_year_ndx);
+            Z_m(age_ndx, region_ndx, proj_year_ndx) = M(age_ndx, proj_year_ndx) + F_fixed_m(age_ndx, region_ndx, proj_year_ndx) + F_trwl_m(age_ndx, region_ndx, proj_year_ndx);
+            S_f(age_ndx, region_ndx, proj_year_ndx) = exp(-1.0 * Z_f(age_ndx, region_ndx, proj_year_ndx));
+            S_m(age_ndx, region_ndx, proj_year_ndx) = exp(-1.0 * Z_m(age_ndx, region_ndx, proj_year_ndx));
+            S_f_mid(age_ndx, region_ndx, proj_year_ndx) = exp(-0.5 * Z_f(age_ndx, region_ndx, proj_year_ndx));
+            S_m_mid(age_ndx, region_ndx, proj_year_ndx) = exp(-0.5 * Z_m(age_ndx, region_ndx, proj_year_ndx));
+          } // for(age_ndx = 0; age_ndx < n_ages; ++age_ndx) {
         }
-      }
-    }
-    // Calculate projection period recruitment deviations
+      } // // for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
+    } // for(proj_year_ndx = n_years; proj_year_ndx < n_projyears; ++proj_year_ndx)
 
-    // Deal with Future F or catch
 
     /*
      * Run projection annual cycle
@@ -1354,7 +1365,88 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
 
         recruitment_yr(proj_year_ndx, region_ndx) = natage_m(0, region_ndx, proj_year_ndx) + natage_f(0, region_ndx, proj_year_ndx);
 
-        // Do something for F or catch
+        // User has supplied Catches for future projection period
+        // so we will solve for F's
+        if(future_fishing_type == 1) {
+          // calculate vulnerable and initial calculations
+          catch_this_year(0) = future_fishing_inputs_fixed(region_ndx, proj_year_ndx - n_years);
+          catch_this_year(1) = future_fishing_inputs_trwl(region_ndx, proj_year_ndx - n_years);
+
+          total_catch_this_year = catch_this_year.sum();
+          for(age_ndx = 0; age_ndx < n_ages; ++age_ndx) {
+            // possibly add switches to turn off fisheries in some years
+            vulnerable_bio(0) = natage_m(age_ndx, region_ndx, proj_year_ndx) * exp_half_natural_mortality(age_ndx, proj_year_ndx) * sel_fixed_m(age_ndx, fixed_sel_by_year_indicator(n_years - 1)) * male_mean_weight_by_age(age_ndx, proj_year_ndx);
+            vulnerable_bio(0) += natage_f(age_ndx, region_ndx, proj_year_ndx) * exp_half_natural_mortality(age_ndx, proj_year_ndx) * sel_fixed_f(age_ndx, fixed_sel_by_year_indicator(n_years - 1)) * female_mean_weight_by_age(age_ndx, proj_year_ndx);
+            vulnerable_bio(1) = natage_m(age_ndx, region_ndx, proj_year_ndx) * exp_half_natural_mortality(age_ndx, proj_year_ndx) * sel_trwl_m(age_ndx, trwl_sel_by_year_indicator(n_years - 1)) * male_mean_weight_by_age(age_ndx, proj_year_ndx);
+            vulnerable_bio(1) += natage_f(age_ndx, region_ndx, proj_year_ndx) * exp_half_natural_mortality(age_ndx, proj_year_ndx) * sel_trwl_f(age_ndx, trwl_sel_by_year_indicator(n_years - 1)) * female_mean_weight_by_age(age_ndx, proj_year_ndx);
+          }
+          for(fishery_ndx = 0; fishery_ndx < 2; ++fishery_ndx) {
+            init_popes_rate(fishery_ndx) = catch_this_year(fishery_ndx) / (vulnerable_bio(fishery_ndx) + 0.1 * catch_this_year(fishery_ndx)); //  Pope's rate  robust A.1.22 of SS appendix
+            steep_jointer(fishery_ndx) = 1.0 / (1.0 + exp(30.0 * (init_popes_rate(fishery_ndx) - 0.95))); // steep logistic joiner at harvest rate of 0.95 //steep logistic joiner at harvest rate of 0.95
+            exploitation_rate(fishery_ndx) = steep_jointer(fishery_ndx)  * init_popes_rate(fishery_ndx) + (1.0 - steep_jointer(fishery_ndx) ) * 0.95;
+            init_F(fishery_ndx) = -log(1.0 - exploitation_rate(fishery_ndx));
+          }
+          // Now solve;
+          for(int f_iter = 0; f_iter < F_iterations; ++f_iter) {
+            interim_total_catch = 0;
+            // Use calculate an initial Z
+            for(age_ndx = 0; age_ndx < n_ages; ++age_ndx) {
+              temp_Z_vals_m(age_ndx) = M(age_ndx, proj_year_ndx);
+              temp_Z_vals_f(age_ndx) = M(age_ndx, proj_year_ndx);
+              temp_Z_vals_m(age_ndx) += init_F(0) * sel_fixed_m(age_ndx, fixed_sel_by_year_indicator(n_years - 1));
+              temp_Z_vals_f(age_ndx) += init_F(0) * sel_fixed_f(age_ndx, fixed_sel_by_year_indicator(n_years - 1));
+              temp_Z_vals_m(age_ndx) += init_F(1) * sel_trwl_m(age_ndx, trwl_sel_by_year_indicator(n_years - 1));
+              temp_Z_vals_f(age_ndx) += init_F(1) * sel_trwl_f(age_ndx, trwl_sel_by_year_indicator(n_years - 1));
+            }
+            // The survivorship is calculated as:
+            for(age_ndx = 0; age_ndx < n_ages; ++age_ndx) {
+              survivorship_m(age_ndx) = (1.0 - exp(-temp_Z_vals_m(age_ndx))) / temp_Z_vals_m(age_ndx);
+              survivorship_f(age_ndx) = (1.0 - exp(-temp_Z_vals_f(age_ndx))) / temp_Z_vals_f(age_ndx);
+            }
+            // Calculate the expected total catch that would occur with the current Hrates and Z
+            interim_total_catch += (natage_m.col(proj_year_ndx).col(region_ndx).vec() * init_F(0) * sel_fixed_m.col(fixed_sel_by_year_indicator(n_years - 1)).vec() * survivorship_m * male_mean_weight_by_age.col(proj_year_ndx).vec()).sum();
+            interim_total_catch += (natage_f.col(proj_year_ndx).col(region_ndx).vec() * init_F(0) * sel_fixed_f.col(fixed_sel_by_year_indicator(n_years - 1)).vec() * survivorship_f * female_mean_weight_by_age.col(proj_year_ndx).vec()).sum();
+            interim_total_catch += (natage_m.col(proj_year_ndx).col(region_ndx).vec() * init_F(1) * sel_trwl_m.col(trwl_sel_by_year_indicator(n_years - 1)).vec() * survivorship_m * male_mean_weight_by_age.col(proj_year_ndx).vec()).sum();
+            interim_total_catch += (natage_f.col(proj_year_ndx).col(region_ndx).vec() * init_F(1) * sel_trwl_f.col(trwl_sel_by_year_indicator(n_years - 1)).vec() * survivorship_f * female_mean_weight_by_age.col(proj_year_ndx).vec()).sum();
+            // make Z adjustments
+            z_adjustment = total_catch_this_year / (interim_total_catch + 0.0001);
+
+            for(age_ndx = 0; age_ndx < n_ages; ++age_ndx) {
+              temp_Z_vals_m(age_ndx) = M(age_ndx, proj_year_ndx) + z_adjustment * (temp_Z_vals_m(age_ndx) - M(age_ndx, proj_year_ndx));
+              temp_Z_vals_f(age_ndx) = M(age_ndx, proj_year_ndx) + z_adjustment * (temp_Z_vals_f(age_ndx) - M(age_ndx, proj_year_ndx));
+              survivorship_m(age_ndx) = (1.0 - exp(-temp_Z_vals_m(age_ndx))) / temp_Z_vals_m(age_ndx);
+              survivorship_f(age_ndx) = (1.0 - exp(-temp_Z_vals_f(age_ndx))) / temp_Z_vals_f(age_ndx);
+            }
+            // Now re-calculate a new pope rate using a vulnerable biomass based
+            // on the newly adjusted F
+            vulnerable_bio(0) = (natage_m.col(proj_year_ndx).col(region_ndx).vec() * sel_fixed_m.col(fixed_sel_by_year_indicator(n_years - 1)).vec() * survivorship_m * male_mean_weight_by_age.col(proj_year_ndx).vec()).sum();
+            vulnerable_bio(0) += (natage_f.col(proj_year_ndx).col(region_ndx).vec() * sel_fixed_f.col(fixed_sel_by_year_indicator(n_years - 1)).vec() * survivorship_f * female_mean_weight_by_age.col(proj_year_ndx).vec()).sum();
+            vulnerable_bio(1) = (natage_m.col(proj_year_ndx).col(region_ndx).vec() * sel_trwl_m.col(trwl_sel_by_year_indicator(n_years - 1)).vec() * survivorship_m * male_mean_weight_by_age.col(proj_year_ndx).vec()).sum();
+            vulnerable_bio(1) += (natage_f.col(proj_year_ndx).col(region_ndx).vec() * sel_trwl_f.col(trwl_sel_by_year_indicator(n_years - 1)).vec() * survivorship_f * female_mean_weight_by_age.col(proj_year_ndx).vec()).sum();
+
+            for(fishery_ndx = 0; fishery_ndx < 2; ++fishery_ndx) {
+              exploitation_rate(fishery_ndx) = catch_this_year(fishery_ndx) / (vulnerable_bio(fishery_ndx) + 0.0001); //  Pope's rate  robust A.1.22 of SS appendix
+              steep_jointer(fishery_ndx) = 1.0 / (1.0 + exp(30.0 * (exploitation_rate(fishery_ndx) - 0.95 * F_max))); // steep logistic joiner at harvest rate of 0.95 //steep logistic joiner at harvest rate of 0.95
+              init_F(fishery_ndx) = steep_jointer(fishery_ndx) * exploitation_rate(fishery_ndx) + (1.0 - steep_jointer(fishery_ndx)) * F_max;
+              annual_Fs(fishery_ndx) = init_F(fishery_ndx);
+            }
+          } // for(int f_iter = 0; f_iter < F_iterations; ++f_iter) {
+          annual_F_fixed(region_ndx, proj_year_ndx) = annual_Fs(0);
+          annual_F_trwl(region_ndx, proj_year_ndx) = annual_Fs(1);
+          // calculate Z and S for this projection year
+          for(age_ndx = 0; age_ndx < n_ages; ++age_ndx) {
+            F_fixed_m(age_ndx, region_ndx, proj_year_ndx) = annual_F_fixed(region_ndx, proj_year_ndx) * sel_fixed_m(age_ndx, fixed_sel_by_year_indicator(n_years - 1));
+            F_fixed_f(age_ndx, region_ndx, proj_year_ndx) = annual_F_fixed(region_ndx, proj_year_ndx) * sel_fixed_f(age_ndx, fixed_sel_by_year_indicator(n_years - 1));
+            F_trwl_m(age_ndx, region_ndx, proj_year_ndx) = annual_F_trwl(region_ndx, proj_year_ndx) * sel_trwl_m(age_ndx, trwl_sel_by_year_indicator(n_years - 1));
+            F_trwl_f(age_ndx, region_ndx, proj_year_ndx) = annual_F_trwl(region_ndx, proj_year_ndx) * sel_trwl_f(age_ndx, trwl_sel_by_year_indicator(n_years - 1));
+            Z_f(age_ndx, region_ndx, proj_year_ndx) = M(age_ndx, proj_year_ndx) + F_fixed_f(age_ndx, region_ndx, proj_year_ndx) + F_trwl_f(age_ndx, region_ndx, proj_year_ndx);
+            Z_m(age_ndx, region_ndx, proj_year_ndx) = M(age_ndx, proj_year_ndx) + F_fixed_m(age_ndx, region_ndx, proj_year_ndx) + F_trwl_m(age_ndx, region_ndx, proj_year_ndx);
+            S_f(age_ndx, region_ndx, proj_year_ndx) = exp(-1.0 * Z_f(age_ndx, region_ndx, proj_year_ndx));
+            S_m(age_ndx, region_ndx, proj_year_ndx) = exp(-1.0 * Z_m(age_ndx, region_ndx, proj_year_ndx));
+            S_f_mid(age_ndx, region_ndx, proj_year_ndx) = exp(-0.5 * Z_f(age_ndx, region_ndx, proj_year_ndx));
+            S_m_mid(age_ndx, region_ndx, proj_year_ndx) = exp(-0.5 * Z_m(age_ndx, region_ndx, proj_year_ndx));
+          } // for(age_ndx = 0; age_ndx < n_ages; ++age_ndx) {
+        } //        if(future_fishing_type == 1) {
 
 
         // Z + Ageing
@@ -1376,10 +1468,10 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
           catchatage_fixed_f(age_ndx, region_ndx, proj_year_ndx) = F_fixed_f(age_ndx, region_ndx, proj_year_ndx) / Z_f(age_ndx, region_ndx, proj_year_ndx) * natage_f(age_ndx, region_ndx, proj_year_ndx) * (1.0 - S_f(age_ndx, region_ndx, proj_year_ndx));
           catchatage_trwl_m(age_ndx, region_ndx, proj_year_ndx) = F_trwl_m(age_ndx, region_ndx, proj_year_ndx) / Z_m(age_ndx, region_ndx, proj_year_ndx) * natage_m(age_ndx, region_ndx, proj_year_ndx) * (1.0 - S_m(age_ndx, region_ndx, proj_year_ndx));
           catchatage_trwl_f(age_ndx, region_ndx, proj_year_ndx) = F_trwl_f(age_ndx, region_ndx, proj_year_ndx) / Z_f(age_ndx, region_ndx, proj_year_ndx) * natage_f(age_ndx, region_ndx, proj_year_ndx) * (1.0 - S_f(age_ndx, region_ndx, proj_year_ndx));
-
+          // Calculate expected catch per method.
+          annual_fixed_catch_pred(region_ndx, proj_year_ndx) += catchatage_fixed_f(age_ndx, region_ndx, proj_year_ndx) * female_mean_weight_by_age(age_ndx, proj_year_ndx) + catchatage_fixed_m(age_ndx, region_ndx, proj_year_ndx) * male_mean_weight_by_age(age_ndx, proj_year_ndx);
+          annual_trwl_catch_pred(region_ndx, proj_year_ndx) += catchatage_trwl_f(age_ndx, region_ndx, proj_year_ndx) * female_mean_weight_by_age(age_ndx, proj_year_ndx) + catchatage_trwl_m(age_ndx, region_ndx, proj_year_ndx) * male_mean_weight_by_age(age_ndx, proj_year_ndx);
         }
-        // Account for tagged fish in Catch at age
-
       } // for(region_ndx = 0; region_ndx < n_regions; ++region_ndx)
 
       // movement

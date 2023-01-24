@@ -246,6 +246,22 @@ In the paper by @thorson2017model, the Dirichlet multinomial with observed propo
 When simulating from this distribution we first simulate the dirichlet variable, using independent gamma draws (normalised), with shape parameter set as the fitted proportion. Then draw from the multinomial with expected composition based on the dirichlet draw.
 
 
+
+## Projecting {-}
+
+### Recruitment {-}
+
+There are two methods for future recruitment, parametric and empirical. Parametric will simulate from the the lognormal distribution with \(\sigma_R\). Empirical will resample input recruitment deviations between certain years
+
+- Parametric `future_recruitment_type == 0`
+\[
+\epsilon_y \sim \mathcal{N}\left(0, \sigma_R^2 \right)
+\]
+resulting recruitment multipliers, also termed year class strengths (\(YCS_y\)) are bias adjusted \(YCS_y = \exp(\epsilon_y - 0.5\sigma_R^2)\)
+
+- Empirical `future_recruitment_type == 1` this will sample with replacement input recruitment deviations between the values specified in `year_ndx_for_empirical_resampling`. `year_ndx_for_empirical_resampling` this contains the C++ elements if `year_ndx_for_empirical_resampling = c(0,n_years - 1)` this will resample from all input recruitment deviations. if `year_ndx_for_empirical_resampling = c(0,9)` this will resample from the first 10 input recruitment deviations. if `year_ndx_for_empirical_resampling = c((n_years - 9):(n_years - 1))` this will resample from the last 10 input recruitment deviations.
+
+
 ## Symbol Notation {-}
 +----------------------------+-----------------------------------------------------------------------------+
 | Symbol                     | Description                            

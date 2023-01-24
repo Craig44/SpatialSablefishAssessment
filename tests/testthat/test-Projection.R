@@ -1,9 +1,9 @@
 
 
-#' test-Projection
+#' test-Projection-Recruitment
 #' @description this is just to test the projection component of TagIntegrateModel currently just checks the model doesn't crash
 #'
-test_that("test-Projection", {
+test_that("test-Projection-Recruitment", {
   ## Read in mock data
   load(system.file("testdata", "MockProjectionData.RData",package="SpatialSablefishAssessment"))
   data$model = "TagIntegratedValidate"
@@ -69,3 +69,45 @@ test_that("test-Projection", {
 
 })
 
+
+
+#' test-Projection-Recruitment
+#' @description this is just to test the projection component of TagIntegrateModel currently just checks the model doesn't crash
+#'
+test_that("test-Projection-Mortality", {
+  ## Read in mock data
+  load(system.file("testdata", "MockProjectionData.RData",package="SpatialSablefishAssessment"))
+  data$model = "TagIntegratedValidate"
+  ## no Z or movement
+  data$apply_fixed_movement = 1 ## no movement initial age-structure should be only a function of ageing and M
+  data$future_fishing_type = 0
+  ## make sure it doesn't crash
+  expect_no_condition(test_model <- TMB::MakeADFun(data = data,
+                                                   parameters = parameters,
+                                                   DLL = "SpatialSablefishAssessment_TMBExports", silent  = T))
+
+  proj_rep = test_model$report()
+  ## check Future Fs are the same as the input
+  expect_equal(data$future_fishing_inputs_fixed, proj_rep$annual_F_fixed[, (length(data$years) + 1):(length(data$years) + data$n_projections_years)], tolerance = 0.00001)
+  expect_equal(data$future_fishing_inputs_trwl, proj_rep$annual_F_trwl[, (length(data$years) + 1):(length(data$years) + data$n_projections_years)], tolerance = 0.00001)
+
+
+  data$future_fishing_type = 1
+  data$future_fishing_inputs_trwl = array(mean(proj_rep$annual_trwl_catch_pred), dim = c(data$n_regions, data$n_projections_years))
+  data$future_fishing_inputs_fixed = array(mean(proj_rep$annual_fixed_catch_pred), dim = c(data$n_regions, data$n_projections_years))
+
+  ## make sure it doesn't crash
+  expect_no_condition(test_model <- TMB::MakeADFun(data = data,
+                                                   parameters = parameters,
+                                                   DLL = "SpatialSablefishAssessment_TMBExports", silent  = T))
+
+  proj_rep = test_model$report()
+  ## check predicted catch is close to input catch
+  expect_equal(data$future_fishing_inputs_fixed, proj_rep$annual_fixed_catch_pred[, (length(data$years) + 1):(length(data$years) + data$n_projections_years)], tolerance = 0.01)
+  expect_equal(data$future_fishing_inputs_trwl, proj_rep$annual_trwl_catch_pred[, (length(data$years) + 1):(length(data$years) + data$n_projections_years)], tolerance = 0.01)
+
+  ## check  Fs are greater than zero
+  expect_true(all(proj_rep$annual_F_fixed[, (length(data$years) + 1):(length(data$years) + data$n_projections_years)] > 0))
+  expect_true(all(proj_rep$annual_F_trwl[, (length(data$years) + 1):(length(data$years) + data$n_projections_years)] > 0))
+
+})
