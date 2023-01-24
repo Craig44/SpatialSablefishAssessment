@@ -261,6 +261,14 @@ resulting recruitment multipliers, also termed year class strengths (\(YCS_y\)) 
 
 - Empirical `future_recruitment_type == 1` this will sample with replacement input recruitment deviations between the values specified in `year_ndx_for_empirical_resampling`. `year_ndx_for_empirical_resampling` this contains the C++ elements if `year_ndx_for_empirical_resampling = c(0,n_years - 1)` this will resample from all input recruitment deviations. if `year_ndx_for_empirical_resampling = c(0,9)` this will resample from the first 10 input recruitment deviations. if `year_ndx_for_empirical_resampling = c((n_years - 9):(n_years - 1))` this will resample from the last 10 input recruitment deviations.
 
+### Fishing {-}
+
+Fishing selectivity that was assumed in the last year of the model is used during the projection period. There are two methods users can use for future fishing, assume fishing mortality rates or catches.
+
+- User specifies F values during projection (unlikely useage) `future_fishing_type = 0` populate `future_fishing_inputs_trwl` and `future_fishing_inputs_fixed` with F values
+
+- User specifies Catch values during projection (more likely) `future_fishing_type = 1` populate `future_fishing_inputs_trwl` and `future_fishing_inputs_fixed` with future catches. An F is calculated based on the hybrid fishing mortality method, which should result in predicted catches close to these but not exact.
+
 
 ## Symbol Notation {-}
 +----------------------------+-----------------------------------------------------------------------------+
