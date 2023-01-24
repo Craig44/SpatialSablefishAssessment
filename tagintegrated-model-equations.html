@@ -23,7 +23,7 @@
 <meta name="author" content="C.Marsh" />
 
 
-<meta name="date" content="2023-01-23" />
+<meta name="date" content="2023-01-24" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -207,11 +207,18 @@ div.csl-indent {
 <li class="chapter" data-level="" data-path="tagintegrated-model-equations.html"><a href="tagintegrated-model-equations.html#multinomial"><i class="fa fa-check"></i>Multinomial</a></li>
 <li class="chapter" data-level="" data-path="tagintegrated-model-equations.html"><a href="tagintegrated-model-equations.html#dirichlet-multinomial"><i class="fa fa-check"></i>Dirichlet-Multinomial</a></li>
 </ul></li>
+<li class="chapter" data-level="" data-path="tagintegrated-model-equations.html"><a href="tagintegrated-model-equations.html#projecting"><i class="fa fa-check"></i>Projecting</a>
+<ul>
+<li class="chapter" data-level="" data-path="tagintegrated-model-equations.html"><a href="tagintegrated-model-equations.html#recruitment-1"><i class="fa fa-check"></i>Recruitment</a></li>
+</ul></li>
 <li class="chapter" data-level="" data-path="tagintegrated-model-equations.html"><a href="tagintegrated-model-equations.html#symbol-notation"><i class="fa fa-check"></i>Symbol Notation</a></li>
 </ul></li>
 <li class="chapter" data-level="" data-path="tagintegrated-data-and-parameter-descriptions.html"><a href="tagintegrated-data-and-parameter-descriptions.html"><i class="fa fa-check"></i><code>TagIntegrated</code> <code>data</code> and <code>parameter</code> descriptions</a>
 <ul>
-<li class="chapter" data-level="" data-path="tagintegrated-data-and-parameter-descriptions.html"><a href="tagintegrated-data-and-parameter-descriptions.html#data"><i class="fa fa-check"></i><code>data</code></a></li>
+<li class="chapter" data-level="" data-path="tagintegrated-data-and-parameter-descriptions.html"><a href="tagintegrated-data-and-parameter-descriptions.html#data"><i class="fa fa-check"></i><code>data</code></a>
+<ul>
+<li class="chapter" data-level="" data-path="tagintegrated-data-and-parameter-descriptions.html"><a href="tagintegrated-data-and-parameter-descriptions.html#additional-data-inputs-for-tagintegratedvalidate"><i class="fa fa-check"></i>Additional data inputs for <code>TagIntegratedValidate</code></a></li>
+</ul></li>
 <li class="chapter" data-level="" data-path="tagintegrated-data-and-parameter-descriptions.html"><a href="tagintegrated-data-and-parameter-descriptions.html#parameters"><i class="fa fa-check"></i><code>parameters</code></a></li>
 </ul></li>
 <li class="chapter" data-level="" data-path="contributing-to-spatialsablefishassessment.html"><a href="contributing-to-spatialsablefishassessment.html"><i class="fa fa-check"></i>Contributing to <code>SpatialSablefishAssessment</code></a></li>
@@ -439,6 +446,21 @@ f(x) = \frac{\left(n!\right)\Gamma\left(\sum \alpha_k\right)}{\Gamma\left(n+\sum
 \end{equation}\]</span></p>
 <p>In the paper by <span class="citation">Thorson et al. (<a href="#ref-thorson2017model" role="doc-biblioref">2017</a>)</span>, the Dirichlet multinomial with observed proportions denoted by <span class="math inline">\(\tilde{\pi}\)</span> fitted proportions <span class="math inline">\(\pi\)</span> and over dispersion parameter <span class="math inline">\(\beta\)</span> and effective sample size <span class="math inline">\(n_{eff}\)</span>. This relates to the classic parametersiation above with <span class="math inline">\(x_k = \tilde{\pi}_k n_{eff}\)</span>, <span class="math inline">\(\alpha_k = \beta \pi_k\)</span> and <span class="math inline">\(n = n_{eff}\)</span>. When this likelihood is implemented it has an estimable parameter <span class="math inline">\(\theta = \beta/n_{eff}\)</span>.</p>
 <p>When simulating from this distribution we first simulate the dirichlet variable, using independent gamma draws (normalised), with shape parameter set as the fitted proportion. Then draw from the multinomial with expected composition based on the dirichlet draw.</p>
+</div>
+</div>
+<div id="projecting" class="section level2 unnumbered hasAnchor">
+<h2>Projecting<a href="tagintegrated-model-equations.html#projecting" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<div id="recruitment-1" class="section level3 unnumbered hasAnchor">
+<h3>Recruitment<a href="tagintegrated-model-equations.html#recruitment-1" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>There are two methods for future recruitment, parametric and empirical. Parametric will simulate from the the lognormal distribution with <span class="math inline">\(\sigma_R\)</span>. Empirical will resample input recruitment deviations between certain years</p>
+<ul>
+<li><p>Parametric <code>future_recruitment_type == 0</code>
+<span class="math display">\[
+\epsilon_y \sim \mathcal{N}\left(0, \sigma_R^2 \right)
+\]</span>
+resulting recruitment multipliers, also termed year class strengths (<span class="math inline">\(YCS_y\)</span>) are bias adjusted <span class="math inline">\(YCS_y = \exp(\epsilon_y - 0.5\sigma_R^2)\)</span></p></li>
+<li><p>Empirical <code>future_recruitment_type == 1</code> this will sample with replacement input recruitment deviations between the values specified in <code>year_ndx_for_empirical_resampling</code>. <code>year_ndx_for_empirical_resampling</code> this contains the C++ elements if <code>year_ndx_for_empirical_resampling = c(0,n_years - 1)</code> this will resample from all input recruitment deviations. if <code>year_ndx_for_empirical_resampling = c(0,9)</code> this will resample from the first 10 input recruitment deviations. if <code>year_ndx_for_empirical_resampling = c((n_years - 9):(n_years - 1))</code> this will resample from the last 10 input recruitment deviations.</p></li>
+</ul>
 </div>
 </div>
 <div id="symbol-notation" class="section level2 unnumbered hasAnchor">

@@ -23,7 +23,7 @@
 <meta name="author" content="C.Marsh" />
 
 
-<meta name="date" content="2023-01-23" />
+<meta name="date" content="2023-01-24" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -207,11 +207,18 @@ div.csl-indent {
 <li class="chapter" data-level="" data-path="tagintegrated-model-equations.html"><a href="tagintegrated-model-equations.html#multinomial"><i class="fa fa-check"></i>Multinomial</a></li>
 <li class="chapter" data-level="" data-path="tagintegrated-model-equations.html"><a href="tagintegrated-model-equations.html#dirichlet-multinomial"><i class="fa fa-check"></i>Dirichlet-Multinomial</a></li>
 </ul></li>
+<li class="chapter" data-level="" data-path="tagintegrated-model-equations.html"><a href="tagintegrated-model-equations.html#projecting"><i class="fa fa-check"></i>Projecting</a>
+<ul>
+<li class="chapter" data-level="" data-path="tagintegrated-model-equations.html"><a href="tagintegrated-model-equations.html#recruitment-1"><i class="fa fa-check"></i>Recruitment</a></li>
+</ul></li>
 <li class="chapter" data-level="" data-path="tagintegrated-model-equations.html"><a href="tagintegrated-model-equations.html#symbol-notation"><i class="fa fa-check"></i>Symbol Notation</a></li>
 </ul></li>
 <li class="chapter" data-level="" data-path="tagintegrated-data-and-parameter-descriptions.html"><a href="tagintegrated-data-and-parameter-descriptions.html"><i class="fa fa-check"></i><code>TagIntegrated</code> <code>data</code> and <code>parameter</code> descriptions</a>
 <ul>
-<li class="chapter" data-level="" data-path="tagintegrated-data-and-parameter-descriptions.html"><a href="tagintegrated-data-and-parameter-descriptions.html#data"><i class="fa fa-check"></i><code>data</code></a></li>
+<li class="chapter" data-level="" data-path="tagintegrated-data-and-parameter-descriptions.html"><a href="tagintegrated-data-and-parameter-descriptions.html#data"><i class="fa fa-check"></i><code>data</code></a>
+<ul>
+<li class="chapter" data-level="" data-path="tagintegrated-data-and-parameter-descriptions.html"><a href="tagintegrated-data-and-parameter-descriptions.html#additional-data-inputs-for-tagintegratedvalidate"><i class="fa fa-check"></i>Additional data inputs for <code>TagIntegratedValidate</code></a></li>
+</ul></li>
 <li class="chapter" data-level="" data-path="tagintegrated-data-and-parameter-descriptions.html"><a href="tagintegrated-data-and-parameter-descriptions.html#parameters"><i class="fa fa-check"></i><code>parameters</code></a></li>
 </ul></li>
 <li class="chapter" data-level="" data-path="contributing-to-spatialsablefishassessment.html"><a href="contributing-to-spatialsablefishassessment.html"><i class="fa fa-check"></i>Contributing to <code>SpatialSablefishAssessment</code></a></li>
@@ -307,7 +314,20 @@ div.csl-indent {
 <li><p><code>tag_recovery_indicator</code> an indicator vector for specific tag-release/tag-recovery observations to store. Dimensions of this will depend on <code>tag_likelihood</code>. If <code>tag_likelihood %in% c(0,1)</code> then the dimension is <code>n_tag_release_events</code> <span class="math inline">\(\times\)</span> <code>n_regions</code> <span class="math inline">\(\times\)</span> <code>n_tag_recovery_years</code>. If <code>tag_likelihood %in% c(2)</code> then the dimensions are <code>n_years</code> <span class="math inline">\(\times\)</span> <code>n_regions</code> this indicates the release event that we wont to save all possible recovery predictions for.</p></li>
 <li><p><code>obs_tag_recovery</code> tag-recovery observations. Dimension will depend on <code>tag_likelihood</code>. If <code>tag_likelihood %in% c(0,1)</code> then the dimensions are <code>n_tag_release_events</code> <span class="math inline">\(\times\)</span> <code>n_regions</code> <span class="math inline">\(\times\)</span> <code>n_tag_recovery_years</code>. Units are numbers (can be non-integer) of recoveries. If <code>tag_likelihood %in% c(2)</code> then the dimensions are <code>n_regions * n_years_to_retain_tagged_cohorts_for + 1</code> <span class="math inline">\(\times\)</span> <code>n_regions</code> <span class="math inline">\(\times\)</span> <code>n_years</code>. The first dimensions relate to a release event, the last dimension relates to all possible recovery events and plus one for the not recovered group.</p></li>
 <li><p><code>tag_likelihood</code> integer specifying the tag-likelihood, 0 = Poisson, 1 = negative binomial, 2 = Multinomial (release conditioned)</p></li>
+<li><p><code>future_recruitment_type</code> integer specifying the future recruitment deviation process. 0 = simulate from lognormal distribution with using the sigma R, 1 = empirically re sample input recruitment deviations</p></li>
+<li><p><code>year_ndx_for_empirical_resampling</code> integer vector specifying years to empirically resample from if future_recruitment_type == 1, then this specifies the upper and lower index to resample e.g., <code>year_ndx_for_empirical_resampling = c(0,n_years - 1)</code> then this would resample from all years if <code>year_ndx_for_empirical_resampling = c((n_years - 10), n_years - 1)</code>, then this would resample from the last ten years of the input recruitment deviations</p></li>
+<li><p><code>future_fishing_type</code> integer 0 means users have supplied fishing mortality rates in future fishing input containers. If 1 then user supplied catchs in future fishing input containers.</p></li>
+<li><p><code>future_fishing_inputs_fixed</code> an array with dimensions <code>n_regions</code> <span class="math inline">\(\times\)</span> <code>n_projections_years</code>. Will be F’s or catches fir the fixed gear fishery depending on the value of <code>future_fishing_type</code></p></li>
+<li><p><code>future_fishing_inputs_trwl</code> an array with dimensions <code>n_regions</code> <span class="math inline">\(\times\)</span> <code>n_projections_years</code>. Will be F’s or catches fir the trawl gear fishery depending on the value of <code>future_fishing_type</code></p></li>
 </ul>
+<div id="additional-data-inputs-for-tagintegratedvalidate" class="section level3 unnumbered hasAnchor">
+<h3>Additional data inputs for <code>TagIntegratedValidate</code><a href="tagintegrated-data-and-parameter-descriptions.html#additional-data-inputs-for-tagintegratedvalidate" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<ul>
+<li><code>apply_Z_on_tagged_fish</code> integer 0 no, 1 yes</li>
+<li><code>apply_fishery_tag_reporting</code> integer 0 no, 1 yes</li>
+<li><code>apply_tag_reporting_rate</code> integer 0 no, 1 yes</li>
+</ul>
+</div>
 </div>
 <div id="parameters" class="section level2 unnumbered hasAnchor">
 <h2><code>parameters</code><a href="tagintegrated-data-and-parameter-descriptions.html#parameters" class="anchor-section" aria-label="Anchor link to header"></a></h2>
