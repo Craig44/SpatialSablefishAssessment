@@ -400,7 +400,8 @@ get_index = function(MLE_report, region_key = NULL) {
   ## convert the SE of an estimator to a standard deviation that is the
   ## right scale for the lognormal distribution
   ## first calculate CV = sigma/mean then pass this to the log_sigma function
-  index_se$SE = log_sigma(index_se$SE / index_se$Observed)
+  if(MLE_report$srv_dom_ll_bio_comp_likelihood == 0)
+    index_se$SE = log_sigma(index_se$SE / index_obs$Observed)
 
   CIs = lognormal_CI(index_obs$Observed, sigma = index_se$SE, CI = 0.95)
   index_obs$Predicted = index_fit$Predicted
