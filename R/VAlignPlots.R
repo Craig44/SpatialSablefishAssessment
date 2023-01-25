@@ -15,6 +15,7 @@
 #' @return The gtable containing the aligned plots.
 #' @export
 #' @examples
+#' \dontrun{
 #' x = seq(0, 10, length.out = 200)
 #' y1 = sin(x)
 #' y2 = cos(x)
@@ -27,6 +28,7 @@
 #' g <- VAlignPlots(g1, g2, globalTitle = "Alignment test")
 #' grid::grid.newpage()
 #' grid::grid.draw(g)
+#' }
 VAlignPlots <- function(...,
                         globalTitle = "",
                         keepTitles = FALSE,

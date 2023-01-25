@@ -37,6 +37,7 @@ It assumes that the graphs share the same range of x data.
 from https://stackoverflow.com/questions/41569817/align-multiple-plots-in-ggplot2-when-some-have-legends-and-others-dont
 }
 \examples{
+\dontrun{
 x = seq(0, 10, length.out = 200)
 y1 = sin(x)
 y2 = cos(x)
@@ -49,4 +50,5 @@ g2 <- ggplot2::ggplot(df2, ggplot2::aes(x, y3)) + ggplot2::geom_line()
 g <- VAlignPlots(g1, g2, globalTitle = "Alignment test")
 grid::grid.newpage()
 grid::grid.draw(g)
+}
 }
