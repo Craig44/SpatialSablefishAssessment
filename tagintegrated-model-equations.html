@@ -193,6 +193,7 @@ div.csl-indent {
 <li class="chapter" data-level="" data-path="tagintegrated-model-equations.html"><a href="tagintegrated-model-equations.html#initialisation"><i class="fa fa-check"></i>Initialisation</a></li>
 <li class="chapter" data-level="" data-path="tagintegrated-model-equations.html"><a href="tagintegrated-model-equations.html#growth"><i class="fa fa-check"></i>Growth</a></li>
 <li class="chapter" data-level="" data-path="tagintegrated-model-equations.html"><a href="tagintegrated-model-equations.html#recruitment"><i class="fa fa-check"></i>Recruitment</a></li>
+<li class="chapter" data-level="" data-path="tagintegrated-model-equations.html"><a href="tagintegrated-model-equations.html#spawning-biomass"><i class="fa fa-check"></i>Spawning biomass</a></li>
 <li class="chapter" data-level="" data-path="tagintegrated-model-equations.html"><a href="tagintegrated-model-equations.html#fishing-mortality"><i class="fa fa-check"></i>Fishing mortality</a></li>
 <li class="chapter" data-level="" data-path="tagintegrated-model-equations.html"><a href="tagintegrated-model-equations.html#tag-release-events"><i class="fa fa-check"></i>Tag release events</a></li>
 </ul></li>
@@ -289,15 +290,16 @@ To help with estimation there is a penalty on <span class="math inline">\(\epsil
 \epsilon_a \sim \mathcal{N}(0, \sigma_{\epsilon})
 \]</span></p>
 <p>In general these parameters can be highly uncertain. The variance on these deviation parameters is often fixed at a low value which requires a strong signal in the data to deviate away from the initial equilibrium age-structure.</p>
-<p>You can also apply/estimate additional fishing mortality during the initial equilibrium calculation denoted by <span class="math inline">\(F^{init}\)</span>. If <code>F_method = 0</code> then
+<p>You can also apply/estimate additional fishing mortality during the initial equilibrium calculation denoted by <span class="math inline">\(F^{init}_{a,s}\)</span> for age <span class="math inline">\(a\)</span> and sex <span class="math inline">\(s\)</span>. If <code>F_method = 0</code> then
 <span class="math display">\[
-F^{init} = F^{LL} p_{hist}
+F^{init}_{a,s} = F^{fixed} S_{a,s}^{fixed} p_{hist}
 \]</span>
-where, <span class="math inline">\(F^{LL}\)</span> is the average annual fishing mortality for the fixed gear (<code>ln_fixed_F_avg</code>) and <span class="math inline">\(p_{hist}\)</span> is an input value that specifies the proportion of average longline fishing mortality to apply during initialisation. If <code>F_method = 1</code> then
+where, <span class="math inline">\(F^{fixed}\)</span> is the average annual fishing mortality for the fixed gear (<code>ln_fixed_F_avg</code>), <span class="math inline">\(S_{a,s}^{fixed}\)</span> is the fixed gear selectivity in the first time-block and <span class="math inline">\(p_{hist}\)</span> is an input value that specifies the proportion of average longline fishing mortality to apply during initialisation. If <code>F_method = 1</code> then
 <span class="math display">\[
-F^{init} =  \widehat{F}^{init} p_{hist}
+F^{init} =  \widehat{F}^{init}S_{a,s}^{fixed} p_{hist}
 \]</span>
 where, <span class="math inline">\(\widehat{F}^{init}\)</span> is the estimable parameter <code>ln_init_F_avg</code>. It is advised to set <span class="math inline">\(p_{hist} = 1.0\)</span> so that the estimated parameter has a natural interpretation.</p>
+<p>There are two initial biomass quantities that are reported, these are <code>Bzero</code> and <code>Binit</code>. <code>Bzero</code> is the spawning biomass from a population that has been exposed to natural mortality, recruitment (R0), and movement. <code>Binit</code> is the spawning biomass from a population that has been exposed to natural mortality and initial fishing mortality, recruitment (R0), and movement.</p>
 </div>
 <div id="growth" class="section level3 unnumbered hasAnchor">
 <h3>Growth<a href="tagintegrated-model-equations.html#growth" class="anchor-section" aria-label="Anchor link to header"></a></h3>
@@ -310,6 +312,14 @@ where, <span class="math inline">\(\widehat{F}^{init}\)</span> is the estimable 
 <div id="recruitment" class="section level3 unnumbered hasAnchor">
 <h3>Recruitment<a href="tagintegrated-model-equations.html#recruitment" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>How to spatially apportion recruits in a way that is consistent with the data and isn’t confounded with movement of young fish? There are two considerations, firstly looking at the AF and LFs there are regions that seem to have more young fish than others (link to figure and describe). However, there is very little information on spawning grounds and behavior. This coupled with a complex early life history make it difficult to a priori set regional apportionment of recruits, which would be ideal, an alternative is to estimate these as free parameters. This may introduce confounding when we start estimating movement which is believed to be ontogenetic.</p>
+</div>
+<div id="spawning-biomass" class="section level3 unnumbered hasAnchor">
+<h3>Spawning biomass<a href="tagintegrated-model-equations.html#spawning-biomass" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>Spawning biomass is based on mature female weight. SSB in a given year and region is calculated as,</p>
+<p><span class="math display">\[
+SSB_{y,r} \sum\limits_a N_{a,s = 2, r, y} S^{mat}_{a,y} \bar{w}_{a,s = 2, y}
+\]</span></p>
+<p>where, <span class="math inline">\(s = 2\)</span> denotes the female sex, <span class="math inline">\(S^{mat}_{a,y}\)</span> is the maturity at age and <span class="math inline">\(\bar{w}_{a,s = 2, y}\)</span> is female mean weight at age</p>
 </div>
 <div id="fishing-mortality" class="section level3 unnumbered hasAnchor">
 <h3>Fishing mortality<a href="tagintegrated-model-equations.html#fishing-mortality" class="anchor-section" aria-label="Anchor link to header"></a></h3>
