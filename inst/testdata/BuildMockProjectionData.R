@@ -201,6 +201,7 @@ for(y_ndx in 1:length(tag_release_years)) {
 }
 
 data$tag_likelihood = 0
+data$evaluate_tag_likelihood = 1
 
 data$future_recruitment_type = 0
 data$year_ndx_for_empirical_resampling = c(0,n_years - 1)

@@ -18,8 +18,8 @@ Users need to population a `data` and `parameters` named list object that is the
 
 - `M` Natural mortality array with dimensions `n_ages` \(\times\) `n_projyears`
 - `maturity` proportion mature array with dimensions `n_ages` \(\times\) `n_projyears`
-- `male_mean_weight_by_age` male mean weight at age array with dimensions `n_ages` \(\times\) `n_projyears`. Units are in kgs, this is because we track 000's of fish in the partition.
-- `female_mean_weight_by_age` female mean weight at age array with dimensions `n_ages` \(\times\) `n_projyears`. Units are in kgs, this is because we track 000's of fish in the partition.
+- `male_mean_weight_by_age` male mean weight at age array with dimensions `n_ages` \(\times\) `n_projyears`. Units are in kgs, this is because we track millions of fish in the partition, so any weight calculation is in kilo tonnes
+- `female_mean_weight_by_age` female mean weight at age array with dimensions `n_ages` \(\times\) `n_projyears`. Units are in kgs, this is because we track millions of fish in the partition, so any weight calculation is in kilo tonnes
 - `male_age_length_transition` male age-length transtion matrix for each year. An array with dimensions `n_ages` \(\times\)`n_length_bins` \(\times\) `n_projyears`
 - `female_age_length_transition` female age-length transtion matrix for each year. An array with dimensions `n_ages` \(\times\)`n_length_bins` \(\times\) `n_projyears`
 - `SrType` Stock recruitment type 1 = Beverton holt, 2 = Ricker, 3 = average
@@ -40,8 +40,8 @@ Users need to population a `data` and `parameters` named list object that is the
 - `srv_dom_ll_sel_type` vector of integers specifying the selectivity type in each time-block, `length(unique(srv_dom_ll_sel_by_year_indicator))`. Values 0 = logistic, 1  = Double normal, 2 = power function, 3 = alternative logistic formulation
 - `srv_dom_ll_sel_by_year_indicator` vector of integers specifying which selectivity time-block to apply in each year (C++ indexing so start at zero)
 - `tag_release_event_this_year` vector of integers specifying whether tags are released in each year. Length `n_years`. `n_years_with_tag_releases = sum(tag_release_event_this_year)`
-- `male_tagged_cohorts_by_age` Numbers of male tagged fish. Dimension `n_ages` \(\times\)  `n_region` \(\times\) `n_years_with_tag_releases`. These are in actual numbers **not** 1000's of fish, like the recruitment parameters
-- `female_tagged_cohorts_by_age` Numbers of female tagged fish. Dimension `n_ages` \(\times\)  `n_region` \(\times\) `n_years_with_tag_releases`. These are in actual numbers **not** 1000's of fish, like the recruitment parameters
+- `male_tagged_cohorts_by_age` Numbers of male tagged fish. Dimension `n_ages` \(\times\)  `n_region` \(\times\) `n_years_with_tag_releases`. These are in actual numbers **not** millions of fish, like the recruitment parameters and other model abundance quantities
+- `female_tagged_cohorts_by_age` Numbers of female tagged fish. Dimension `n_ages` \(\times\)  `n_region` \(\times\) `n_years_with_tag_releases`. These are in actual numbers **not** millions of fish, like the recruitment parameters and other model abundance quantities
 - `n_years_to_retain_tagged_cohorts_for` integer, number of years to keep release event information on tag-releases
 - `initial_tag_induced_mortality` vector or initial tag release mortality with length `n_years_with_tag_releases`
 - `annual_tag_shedding_rate` scalar for annual tag-shedding rate
@@ -81,6 +81,7 @@ Users need to population a `data` and `parameters` named list object that is the
 - `obs_tag_recovery` tag-recovery observations. Dimension will depend on `tag_likelihood`. If `tag_likelihood %in% c(0,1)` then the dimensions are `n_tag_release_events` \(\times\) `n_regions` \(\times\) `n_tag_recovery_years`. Units are numbers (can be non-integer) of recoveries. If `tag_likelihood %in% c(2)` then the dimensions are `n_regions * n_years_to_retain_tagged_cohorts_for + 1` \(\times\) `n_regions` \(\times\) `n_years`. The first dimensions relate to a release event, the last dimension relates to all possible recovery events and plus one for the not recovered group. 
 
 - `tag_likelihood` integer specifying the tag-likelihood, 0 = Poisson, 1 = negative binomial, 2 = Multinomial (release conditioned)
+- `evaluate_tag_likelihood` integer specifying whether to evaluate the likelihood (=1) or not (=0) useful when asking the model to calculate predicted values but not evaluate the likelihood for debugging.
 
 - `future_recruitment_type` integer specifying the future recruitment deviation process. 0 = simulate from lognormal distribution with using the sigma R, 1 = empirically re sample input recruitment deviations
 - `year_ndx_for_empirical_resampling` integer vector specifying years to empirically resample from if future_recruitment_type == 1, then this specifies the upper and lower index to resample e.g., `year_ndx_for_empirical_resampling = c(0,n_years - 1)` then this would resample from all years if `year_ndx_for_empirical_resampling = c((n_years - 10), n_years - 1)`, then this would resample from the last ten years of the input recruitment deviations
@@ -98,7 +99,7 @@ Users need to population a `data` and `parameters` named list object that is the
 ## `parameters` {-}
 
 
-- `ln_mean_rec` vector of natural logarithm of mean recruitment (units are 000's) for each region. length `n_regions`. 
+- `ln_mean_rec` vector of natural logarithm of mean recruitment (units are log millions) for each region. length `n_regions`. 
 - `trans_rec_dev` array of recruitment deviations. if `global_rec_devs` = 1 then this has dimension  `1` \(\times\)  `n_years`, else it has a row for each region and dimension `n_regions`\(\times\)  `n_years`
 - `ln_init_rec_dev` vector of initial devs to multiple to initial numbers at age for non-equilibrium age-structure. Must have length equal to `data$n_init_rec_devs`. The first dev, corresponds to the second age we the last value gets applied to all successive ages i.e., if `length(ln_init_rec_dev) = 10`, the first value `numbers_at_age[2] * exp(ln_init_rec_dev[1])`, and `numbers_at_age[11:n_ages] * exp(ln_init_rec_dev[10])`
 

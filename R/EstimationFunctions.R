@@ -390,6 +390,16 @@ set_up_parameters <- function(data, parameters,
     ## negative binomial we estimate ln_tag_phi else it should be estimated
     if(data$tag_likelihood != 1)
       parameters_completely_fixed = c(parameters_completely_fixed, c("ln_tag_phi"))
+
+    tag_phi_turned_off = FALSE
+    if(!is.null(na_map)) {
+      if(all(is.na(na_map$ln_tag_phi)))
+        tag_phi_turned_off = TRUE
+    }
+    if(tag_phi_turned_off) {
+      if(!"ln_tag_phi" %in% parameters_completely_fixed)
+        parameters_completely_fixed = c(parameters_completely_fixed, c("ln_tag_phi"))
+    }
   }
 
   ## deal with recruit devs

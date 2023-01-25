@@ -162,6 +162,9 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   // This differs from tag_likelihood == 2 because we don't include the first year in recoveries
 
   DATA_INTEGER(tag_likelihood);                                 // likelihood type 0 = Poisson, 1 = Negative Binomial, 2 = Multinomial release conditioned
+
+  DATA_INTEGER(evaluate_tag_likelihood);                        // = 0 generate predicted values but don't evaluate likelihood, = 1 generate predicted values and evaluate likelihood
+
   array<Type> pred_tag_recovery(obs_tag_recovery.dim);
 
 
@@ -424,9 +427,11 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
    * this is important when ageing and applying mortality
    * use the get_tag_release_event_ndx() function defined in AuxillaryFuns.h to retrieve the correct ndx for a given release region and release year.
    *
-   * Additional Note: tagged fish are in actual numbers this is in contrast to the rest of the partition where 1 = a 1000 fish
-   * you will see everytime tagged fish contribute to catch or ssb there is divide by 1000 to account for this.
+   *
+   * Additional Note: tagged fish are in actual numbers this is in contrast to the rest of the partition where 1 = 1 000 000 individuals
+   * you will see everytime tagged fish contribute to catch or ssb there is divide by this scalar to account for the difference in units.
    */
+  Type tag_number_multiplier = 1000000;
 
   array<Type> tagged_natage_m(n_ages, n_regions, (n_years_to_retain_tagged_cohorts_for + 1) * n_regions); // tagged Male number partition at age, we only retain tagged fish for n_years_to_retain_tagged_cohorts_for years then they move back to a pooled tagged group. This is to reduce computational burden
   array<Type> tagged_natage_f(n_ages, n_regions, (n_years_to_retain_tagged_cohorts_for + 1) * n_regions); // tagged Female numbers partition at age, we only retain tagged fish for n_years_to_retain_tagged_cohorts_for years then they move back to a pooled tagged group. This is to reduce computational burden
@@ -785,10 +790,10 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
             for(tag_ndx = 0; tag_ndx <= n_years_to_retain_tagged_cohorts_for; ++tag_ndx) {
               for(release_region_ndx = 0; release_region_ndx < n_regions; ++release_region_ndx) {
                 tag_release_event_ndx = get_tag_release_event_ndx(release_region_ndx, tag_ndx, n_regions);
-                catchatage_fixed_m(age_ndx, region_ndx, year_ndx) += F_fixed_m(age_ndx, region_ndx, year_ndx) / Z_m(age_ndx, region_ndx, year_ndx) * tagged_natage_m(age_ndx, region_ndx, tag_release_event_ndx) / 1000 * (1.0 - S_m(age_ndx, region_ndx, year_ndx));
-                catchatage_fixed_f(age_ndx, region_ndx, year_ndx) += F_fixed_f(age_ndx, region_ndx, year_ndx) / Z_f(age_ndx, region_ndx, year_ndx) * tagged_natage_f(age_ndx, region_ndx, tag_release_event_ndx) / 1000 * (1.0 - S_f(age_ndx, region_ndx, year_ndx));
-                catchatage_trwl_m(age_ndx, region_ndx, year_ndx) += F_trwl_m(age_ndx, region_ndx, year_ndx) / Z_m(age_ndx, region_ndx, year_ndx) * tagged_natage_m(age_ndx, region_ndx, tag_release_event_ndx) / 1000 * (1.0 - S_m(age_ndx, region_ndx, year_ndx));
-                catchatage_trwl_f(age_ndx, region_ndx, year_ndx) += F_trwl_f(age_ndx, region_ndx, year_ndx) / Z_f(age_ndx, region_ndx, year_ndx) * tagged_natage_f(age_ndx, region_ndx, tag_release_event_ndx) / 1000 * (1.0 - S_f(age_ndx, region_ndx, year_ndx));
+                catchatage_fixed_m(age_ndx, region_ndx, year_ndx) += F_fixed_m(age_ndx, region_ndx, year_ndx) / Z_m(age_ndx, region_ndx, year_ndx) * tagged_natage_m(age_ndx, region_ndx, tag_release_event_ndx) / tag_number_multiplier * (1.0 - S_m(age_ndx, region_ndx, year_ndx));
+                catchatage_fixed_f(age_ndx, region_ndx, year_ndx) += F_fixed_f(age_ndx, region_ndx, year_ndx) / Z_f(age_ndx, region_ndx, year_ndx) * tagged_natage_f(age_ndx, region_ndx, tag_release_event_ndx) / tag_number_multiplier * (1.0 - S_f(age_ndx, region_ndx, year_ndx));
+                catchatage_trwl_m(age_ndx, region_ndx, year_ndx) += F_trwl_m(age_ndx, region_ndx, year_ndx) / Z_m(age_ndx, region_ndx, year_ndx) * tagged_natage_m(age_ndx, region_ndx, tag_release_event_ndx) / tag_number_multiplier * (1.0 - S_m(age_ndx, region_ndx, year_ndx));
+                catchatage_trwl_f(age_ndx, region_ndx, year_ndx) += F_trwl_f(age_ndx, region_ndx, year_ndx) / Z_f(age_ndx, region_ndx, year_ndx) * tagged_natage_f(age_ndx, region_ndx, tag_release_event_ndx) / tag_number_multiplier * (1.0 - S_f(age_ndx, region_ndx, year_ndx));
               }
             }
           }
@@ -806,7 +811,7 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
           for(release_region_ndx = 0; release_region_ndx < n_regions; ++release_region_ndx) {
             tag_release_event_ndx = get_tag_release_event_ndx(release_region_ndx, tag_ndx, n_regions);
             for(age_ndx = 0; age_ndx < n_ages; age_ndx++)
-              SSB_yr(year_ndx, region_ndx) += tagged_natage_f(age_ndx, region_ndx, tag_release_event_ndx) / 1000 * pow(S_f(age_ndx, region_ndx, year_ndx), spawning_time_proportion(year_ndx)) * weight_maturity_prod_f(age_ndx, year_ndx);
+              SSB_yr(year_ndx, region_ndx) += tagged_natage_f(age_ndx, region_ndx, tag_release_event_ndx) / tag_number_multiplier * pow(S_f(age_ndx, region_ndx, year_ndx), spawning_time_proportion(year_ndx)) * weight_maturity_prod_f(age_ndx, year_ndx);
           }
         }
 
@@ -877,21 +882,23 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
                   predicted_tags = posfun(predicted_tags, eps_for_posfun, pen_posfun);
                   pred_tag_recovery(tag_release_event_ndx, region_ndx, tag_recovery_counter) = predicted_tags;
 
-                  // likelihood contribution
-                  if(tag_likelihood == 0) {
-                    nll(7) -= dpois(obs_tag_recovery(tag_release_event_ndx, region_ndx, tag_recovery_counter), predicted_tags, true);
-                    SIMULATE {
-                      // store the simulated tag-observation in the first age-sex bin of obs_tag_recovery
-                      obs_tag_recovery(tag_release_event_ndx, region_ndx, tag_recovery_counter) = rpois(predicted_tags);
-                    }
-                  } else if(tag_likelihood == 1) {
-                    s1 = log(predicted_tags);                          // log(mu)
-                    s2 = 2. * s1 - ln_tag_phi;                         // log(var - mu)
-                    nll(7) -= dnbinom_robust(obs_tag_recovery(tag_release_event_ndx, region_ndx, tag_recovery_counter), s1, s2, true);
-                    SIMULATE{
-                      s1 = predicted_tags;
-                      s2 = predicted_tags * (1.0 + tag_phi);  // (1+phi) guarantees that var >= mu
-                      obs_tag_recovery(tag_release_event_ndx, region_ndx, tag_recovery_counter) = rnbinom2(s1, s2);
+                  if(evaluate_tag_likelihood == 1) {
+                    // likelihood contribution
+                    if(tag_likelihood == 0) {
+                      nll(7) -= dpois(obs_tag_recovery(tag_release_event_ndx, region_ndx, tag_recovery_counter), predicted_tags, true);
+                      SIMULATE {
+                        // store the simulated tag-observation in the first age-sex bin of obs_tag_recovery
+                        obs_tag_recovery(tag_release_event_ndx, region_ndx, tag_recovery_counter) = rpois(predicted_tags);
+                      }
+                    } else if(tag_likelihood == 1) {
+                      s1 = log(predicted_tags);                          // log(mu)
+                      s2 = 2. * s1 - ln_tag_phi;                         // log(var - mu)
+                      nll(7) -= dnbinom_robust(obs_tag_recovery(tag_release_event_ndx, region_ndx, tag_recovery_counter), s1, s2, true);
+                      SIMULATE{
+                        s1 = predicted_tags;
+                        s2 = predicted_tags * (1.0 + tag_phi);  // (1+phi) guarantees that var >= mu
+                        obs_tag_recovery(tag_release_event_ndx, region_ndx, tag_recovery_counter) = rnbinom2(s1, s2);
+                      }
                     }
                   }
                 }
@@ -1240,12 +1247,13 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
           pred_recoveries_multinomial_release(pred_recoveries_multinomial_release.size() - 1) = 1 - sum(pred_recoveries_multinomial_release);
           // Save proportions into container
           pred_tag_recovery.col(year_ndx).col(region_ndx) = pred_recoveries_multinomial_release;
-          // Evaluate likelihood
-          nll(7) -= dmultinom(obs_recoveries_multinomial_release, pred_recoveries_multinomial_release, true);
-
-          SIMULATE {
-            obs_recoveries_multinomial_release = rmultinom(pred_recoveries_multinomial_release, number_of_tag_releases);
-            obs_tag_recovery.col(year_ndx).col(region_ndx) = obs_recoveries_multinomial_release;
+          if(evaluate_tag_likelihood == 1) {
+            // Evaluate likelihood
+            nll(7) -= dmultinom(obs_recoveries_multinomial_release, pred_recoveries_multinomial_release, true);
+            SIMULATE {
+              obs_recoveries_multinomial_release = rmultinom(pred_recoveries_multinomial_release, number_of_tag_releases);
+              obs_tag_recovery.col(year_ndx).col(region_ndx) = obs_recoveries_multinomial_release;
+            }
           }
         }
       }
