@@ -50,6 +50,16 @@ To help with estimation there is a penalty on \(\epsilon_a\) that assumes a cent
 In general these parameters can be highly uncertain. The variance on these deviation parameters is often fixed at a low value which requires a strong signal in the data to deviate away from the initial equilibrium age-structure.
 
 
+You can also apply/estimate additional fishing mortality during the initial equilibrium calculation denoted by \(F^{init}\). If `F_method = 0` then 
+\[
+F^{init} = F^{LL} p_{hist}
+\]
+where, \(F^{LL}\) is the average annual fishing mortality for the fixed gear (`ln_fixed_F_avg`) and \(p_{hist}\) is an input value that specifies the proportion of average longline fishing mortality to apply during initialisation. If `F_method = 1` then 
+\[
+F^{init} =  \widehat{F}^{init} p_{hist}
+\]
+where, \(\widehat{F}^{init}\) is the estimable parameter `ln_init_F_avg`. It is advised to set \( p_{hist}  = 1.0\) so that the estimated parameter has a natural interpretation.
+
 ### Growth {-}
 
 Empirical length at age matrices are supplied for all years where sufficient age-length data was available and growth was assumed the same across all regions. Mean weight at age was calculated using an allometric length weight relationship with time and space invariant parameters \(\alpha\) and \(\beta\)
