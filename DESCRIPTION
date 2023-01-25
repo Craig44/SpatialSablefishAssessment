@@ -18,7 +18,9 @@ Depends:
     purrr,
     dplyr
 Imports:
-    Rdpack
+    Rdpack,
+    grid,
+    gridExtra
 LinkingTo: 
     TMB
 RdMacros: 
