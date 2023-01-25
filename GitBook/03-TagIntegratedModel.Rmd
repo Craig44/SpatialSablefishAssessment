@@ -50,15 +50,17 @@ To help with estimation there is a penalty on \(\epsilon_a\) that assumes a cent
 In general these parameters can be highly uncertain. The variance on these deviation parameters is often fixed at a low value which requires a strong signal in the data to deviate away from the initial equilibrium age-structure.
 
 
-You can also apply/estimate additional fishing mortality during the initial equilibrium calculation denoted by \(F^{init}\). If `F_method = 0` then 
+You can also apply/estimate additional fishing mortality during the initial equilibrium calculation denoted by \(F^{init}_{a,s}\) for age \(a\) and sex \(s\). If `F_method = 0` then 
 \[
-F^{init} = F^{LL} p_{hist}
+F^{init}_{a,s} = F^{fixed} S_{a,s}^{fixed} p_{hist}
 \]
-where, \(F^{LL}\) is the average annual fishing mortality for the fixed gear (`ln_fixed_F_avg`) and \(p_{hist}\) is an input value that specifies the proportion of average longline fishing mortality to apply during initialisation. If `F_method = 1` then 
+where, \(F^{fixed}\) is the average annual fishing mortality for the fixed gear (`ln_fixed_F_avg`), \(S_{a,s}^{fixed}\) is the fixed gear selectivity in the first time-block and \(p_{hist}\) is an input value that specifies the proportion of average longline fishing mortality to apply during initialisation. If `F_method = 1` then 
 \[
-F^{init} =  \widehat{F}^{init} p_{hist}
+F^{init} =  \widehat{F}^{init}S_{a,s}^{fixed} p_{hist}
 \]
 where, \(\widehat{F}^{init}\) is the estimable parameter `ln_init_F_avg`. It is advised to set \( p_{hist}  = 1.0\) so that the estimated parameter has a natural interpretation.
+
+There are two initial biomass quantities that are reported, these are `Bzero` and `Binit`. `Bzero` is the spawning biomass from a population that has been exposed to natural mortality, recruitment (R0), and movement. `Binit` is the spawning biomass from a population that has been exposed to natural mortality and initial fishing mortality, recruitment (R0), and movement. 
 
 ### Growth {-}
 
@@ -72,6 +74,16 @@ Empirical length at age matrices are supplied for all years where sufficient age
 
 ### Recruitment {-}
 How to spatially apportion recruits in a way that is consistent with the data and isn't confounded with movement of young fish? There are two considerations, firstly looking at the AF and LFs there are regions that seem to have more young fish than others (link to figure and describe). However, there is very little information on spawning grounds and behavior. This coupled with a complex early life history make it difficult to a priori set regional apportionment of recruits, which would be ideal, an alternative is to estimate these as free parameters. This may introduce confounding when we start estimating movement which is believed to be ontogenetic.
+
+### Spawning biomass {-}
+
+Spawning biomass is based on mature female weight. SSB in a given year and region is calculated as,
+
+\[
+SSB_{y,r} \sum\limits_a N_{a,s = 2, r, y} S^{mat}_{a,y} \bar{w}_{a,s = 2, y}
+\]
+
+where, \(s = 2\) denotes the female sex, \(S^{mat}_{a,y}\) is the maturity at age and \(\bar{w}_{a,s = 2, y}\) is female mean weight at age
 
 ### Fishing mortality {-}
 When the hybrid \(F\) method is assumed, tagged fish were not included when internally solving the fishing mortality nuisance parameters. The ratio of tagged to untagged numbers of fish in the partition in any year was assumed to be small enough not to effect \(F\) estimates. However, tagged fish were included when the model calculates predicted catch-at-age/length and catch for a fleet. This decision was made to reduce the computational overhead this would require to implement. When \(F\) parameters are estimated as free parameters, then this is not a problem and \(F\) will be applied to both tagged and untagged fish.

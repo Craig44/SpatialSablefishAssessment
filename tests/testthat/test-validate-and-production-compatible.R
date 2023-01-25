@@ -50,6 +50,9 @@ test_that("compatibility-single-release-with-movement-and-Z", {
   validate_report = validate_model$report()
   production_report = production_model$report()
 
+  # check Bzero and Binit calcualtions are consistent when F_init = 0
+  expect_equal(production_report$Bzero, production_report$Binit, tolerance = 0.0001)
+  ## get tag recoveries
   validate_predicted_recoveries = plot_tag_recovery_obs(validate_report, region_key = region_key, sex = "both", release_ndx_to_plot = 1:5)
   validate_predicted_recoveries = validate_predicted_recoveries$data
   production_predicted_recoveries = plot_tag_recovery_obs(production_report, region_key = region_key, sex = "both", release_ndx_to_plot = 1:5)

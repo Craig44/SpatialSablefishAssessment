@@ -236,6 +236,8 @@ Type TagIntegrated(objective_function<Type>* obj) {
 
   Type m_plus_group = 0.0;
   Type f_plus_group = 0.0;
+  Type m_plus_group_equilibrium = 0.0;
+  Type f_plus_group_equilibrium = 0.0;
   Type effective_sample_size = 0.0;
   Type predicted_tags;
   Type pen_posfun = 0; // this is passed to the utility posfun function and added to the likelihood as apenalty
@@ -400,9 +402,13 @@ Type TagIntegrated(objective_function<Type>* obj) {
   array<Type>  recruitment_yr(n_projyears, n_regions);
   array<Type> init_natage_m(n_ages, n_regions);                     // Initial numbers at age Males
   array<Type> init_natage_f(n_ages, n_regions);                     // Initial numbers at age Females
+  array<Type> equilibrium_natage_m(n_ages, n_regions);                     // Initial numbers at age Males
+  array<Type> equilibrium_natage_f(n_ages, n_regions);                     // Initial numbers at age Females
 
   array<Type> cache_natage_m(n_ages, n_regions);                     // Initial numbers at age Males
   array<Type> cache_natage_f(n_ages, n_regions);                     // Initial numbers at age Females
+  array<Type> cache_equilibrium_natage_m(n_ages, n_regions);                     // Initial numbers at age Males
+  array<Type> cache_equilibrium_natage_f(n_ages, n_regions);                     // Initial numbers at age Females
 
   array<Type> weight_maturity_prod_f(n_ages, n_projyears);// Female weight and proportion mature, used to calcualte SSBs etc
   array<Type> natage_m(n_ages, n_regions, n_projyears + 1);          // Male numbers at age at the beginning of the year from start year to end of last projection year
@@ -480,7 +486,11 @@ Type TagIntegrated(objective_function<Type>* obj) {
   Type beta = 0.0;                                        // beta for the stock recruit relationship
   Type N_eff = 0.0;
 
-  vector<Type> Bzero(n_regions);
+  vector<Type> Bzero(n_regions); // just M and R0
+  vector<Type> Binit(n_regions); // M + init_F and R0
+  Bzero.setZero();
+  Binit.setZero();
+
   // Initialise Derived quantities
   /*
    * Calculate some initial Derived quantities
@@ -566,64 +576,103 @@ Type TagIntegrated(objective_function<Type>* obj) {
     // TODO: consider how to include the init devs into this calculation.
     cache_natage_f = init_natage_f;
     cache_natage_m = init_natage_m;
+    cache_equilibrium_natage_m = equilibrium_natage_m;
+    cache_equilibrium_natage_f = equilibrium_natage_f;
     for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
       init_natage_m(0, region_ndx) = mean_rec(region_ndx)/2; //mean_rec * exp((sigma_R*sigma_R)/2)/2;
       init_natage_f(0, region_ndx) = mean_rec(region_ndx)/2;
+      equilibrium_natage_m(0, region_ndx) = mean_rec(region_ndx)/2;
+      equilibrium_natage_f(0, region_ndx) = mean_rec(region_ndx)/2;
       // Ageing + Z
       m_plus_group = cache_natage_m(n_ages - 1, region_ndx);
       f_plus_group = cache_natage_f(n_ages - 1, region_ndx);
+      m_plus_group_equilibrium = cache_equilibrium_natage_m(n_ages - 1, region_ndx);
+      f_plus_group_equilibrium = cache_equilibrium_natage_f(n_ages - 1, region_ndx);
       for(age_ndx = 1; age_ndx < n_ages; age_ndx++) {
         init_natage_f(age_ndx, region_ndx) = cache_natage_f(age_ndx - 1, region_ndx) * exp(- (M(age_ndx - 1, 0) + init_F_hist * sel_fixed_f(age_ndx, 0)));
         init_natage_m(age_ndx, region_ndx) = cache_natage_m(age_ndx - 1, region_ndx) * exp(- (M(age_ndx - 1, 0) + init_F_hist * sel_fixed_m(age_ndx, 0)));
+        equilibrium_natage_f(age_ndx, region_ndx) = cache_equilibrium_natage_f(age_ndx - 1, region_ndx) * exp(- (M(age_ndx - 1, 0)));
+        equilibrium_natage_m(age_ndx, region_ndx) = cache_equilibrium_natage_m(age_ndx - 1, region_ndx) * exp(- (M(age_ndx - 1, 0)));
       }
       // plus group
       init_natage_f(n_ages - 1, region_ndx) += f_plus_group *  exp(- (M(n_ages - 1, 0) + init_F_hist * sel_fixed_f(n_ages - 1, 0)));
       init_natage_m(n_ages - 1, region_ndx) += m_plus_group *  exp(- (M(n_ages - 1, 0) + init_F_hist * sel_fixed_f(n_ages - 1, 0)));
+      equilibrium_natage_f(n_ages - 1, region_ndx) += f_plus_group_equilibrium *  exp(- (M(n_ages - 1, 0)));
+      equilibrium_natage_m(n_ages - 1, region_ndx) += m_plus_group_equilibrium *  exp(- (M(n_ages - 1, 0)));
+
     }
     // Movement
     if(apply_fixed_movement) {
       init_natage_f = (init_natage_f.matrix() * fixed_movement_matrix).array();
       init_natage_m = (init_natage_m.matrix() * fixed_movement_matrix).array();
+      equilibrium_natage_f = (equilibrium_natage_f.matrix() * fixed_movement_matrix).array();
+      equilibrium_natage_m = (equilibrium_natage_m.matrix() * fixed_movement_matrix).array();
+
     } else {
       init_natage_f = (init_natage_f.matrix() * movement_matrix.matrix()).array();
       init_natage_m = (init_natage_m.matrix() * movement_matrix.matrix()).array();
+      equilibrium_natage_f = (equilibrium_natage_f.matrix() * movement_matrix.matrix()).array();
+      equilibrium_natage_m = (equilibrium_natage_m.matrix() * movement_matrix.matrix()).array();
     }
   }
   // Cache age-structure
   cache_natage_f = init_natage_f;
   cache_natage_m = init_natage_m;
+  cache_equilibrium_natage_f = equilibrium_natage_f;
+  cache_equilibrium_natage_m = equilibrium_natage_m;
+
   // Run annual cycle one more time
   for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
     init_natage_m(0, region_ndx) = mean_rec(region_ndx)/2; //mean_rec * exp((sigma_R*sigma_R)/2)/2;
     init_natage_f(0, region_ndx) = mean_rec(region_ndx)/2;
+    equilibrium_natage_m(0, region_ndx) = mean_rec(region_ndx)/2;
+    equilibrium_natage_f(0, region_ndx) = mean_rec(region_ndx)/2;
     m_plus_group = init_natage_m(n_ages - 1, region_ndx);
     f_plus_group = init_natage_f(n_ages - 1, region_ndx);
+    m_plus_group_equilibrium = cache_equilibrium_natage_m(n_ages - 1, region_ndx);
+    f_plus_group_equilibrium = cache_equilibrium_natage_f(n_ages - 1, region_ndx);
     // Ageing + Z
     for(age_ndx = 1; age_ndx < n_ages; age_ndx++) {
       init_natage_f(age_ndx, region_ndx) = cache_natage_f(age_ndx - 1, region_ndx) * exp(- (M(age_ndx - 1, 0) + init_F_hist * sel_fixed_f(age_ndx, 0)));
       init_natage_m(age_ndx, region_ndx) = cache_natage_m(age_ndx - 1, region_ndx) * exp(- (M(age_ndx - 1, 0) + init_F_hist * sel_fixed_m(age_ndx, 0)));
+      equilibrium_natage_f(age_ndx, region_ndx) = cache_equilibrium_natage_f(age_ndx - 1, region_ndx) * exp(- (M(age_ndx - 1, 0)));
+      equilibrium_natage_m(age_ndx, region_ndx) = cache_equilibrium_natage_m(age_ndx - 1, region_ndx) * exp(- (M(age_ndx - 1, 0)));
     }
     // plus group
     init_natage_f(n_ages - 1, region_ndx) += f_plus_group *  exp(- (M(age_ndx - 1, 0) + init_F_hist * sel_fixed_f(n_ages - 1, 0)));
     init_natage_m(n_ages - 1, region_ndx) += m_plus_group *  exp(- (M(age_ndx - 1, 0) + init_F_hist * sel_fixed_m(n_ages - 1, 0)));
+    equilibrium_natage_f(n_ages - 1, region_ndx) += f_plus_group_equilibrium *  exp(- (M(n_ages - 1, 0)));
+    equilibrium_natage_m(n_ages - 1, region_ndx) += m_plus_group_equilibrium *  exp(- (M(n_ages - 1, 0)));
   }
   // Movement
   if(apply_fixed_movement) {
     init_natage_f = (init_natage_f.matrix() * fixed_movement_matrix).array();
     init_natage_m = (init_natage_m.matrix() * fixed_movement_matrix).array();
+    equilibrium_natage_f = (equilibrium_natage_f.matrix() * fixed_movement_matrix).array();
+    equilibrium_natage_m = (equilibrium_natage_m.matrix() * fixed_movement_matrix).array();
+
   } else {
     init_natage_f = (init_natage_f.matrix() * movement_matrix.matrix()).array();
     init_natage_m = (init_natage_m.matrix() * movement_matrix.matrix()).array();
+    equilibrium_natage_f = (equilibrium_natage_f.matrix() * movement_matrix.matrix()).array();
+    equilibrium_natage_m = (equilibrium_natage_m.matrix() * movement_matrix.matrix()).array();
   }
   // Approximate plus group
   for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
+    // first for the initial age-structure
     plus_c = init_natage_f(n_ages - 1, region_ndx) / cache_natage_f(n_ages - 1, region_ndx) - 1.0;
     init_natage_f(n_ages - 1, region_ndx) = cache_natage_f(n_ages - 1, region_ndx) * 1 / (1 - plus_c);
     plus_c = init_natage_m(n_ages - 1, region_ndx) / cache_natage_m(n_ages - 1, region_ndx) - 1.0;
     init_natage_m(n_ages - 1, region_ndx) = cache_natage_m(n_ages - 1, region_ndx) * 1 / (1 - plus_c);
     for(age_ndx = 0; age_ndx < n_ages; age_ndx++)
-      Bzero(region_ndx) += init_natage_f(age_ndx, region_ndx) * pow(exp(- 0.5 * (M(age_ndx, 0) + init_F_hist * sel_fixed_f(age_ndx, 0))), spawning_time_proportion(0)) * weight_maturity_prod_f(age_ndx, 0);
-
+      Binit(region_ndx) += init_natage_f(age_ndx, region_ndx) * pow(exp(- 1.0 * (M(age_ndx, 0) + init_F_hist * sel_fixed_f(age_ndx, 0))), spawning_time_proportion(0)) * weight_maturity_prod_f(age_ndx, 0);
+    // Then for the equilibrium age-structure
+    plus_c = equilibrium_natage_f(n_ages - 1, region_ndx) / cache_equilibrium_natage_f(n_ages - 1, region_ndx) - 1.0;
+    equilibrium_natage_f(n_ages - 1, region_ndx) = cache_equilibrium_natage_f(n_ages - 1, region_ndx) * 1 / (1 - plus_c);
+    plus_c = equilibrium_natage_m(n_ages - 1, region_ndx) / cache_equilibrium_natage_m(n_ages - 1, region_ndx) - 1.0;
+    equilibrium_natage_m(n_ages - 1, region_ndx) = cache_equilibrium_natage_f(n_ages - 1, region_ndx) * 1 / (1 - plus_c);
+    for(age_ndx = 0; age_ndx < n_ages; age_ndx++)
+      Bzero(region_ndx) += equilibrium_natage_f(age_ndx, region_ndx) * pow(exp(-M(age_ndx, 0)), spawning_time_proportion(0)) * weight_maturity_prod_f(age_ndx, 0);
   }
   // apply init rec devs
   if(n_init_rec_devs > 0) {
@@ -1450,6 +1499,7 @@ Type TagIntegrated(objective_function<Type>* obj) {
   REPORT( recruitment_devs );
   REPORT(init_rec_dev);
   REPORT(Bzero);
+  REPORT(Binit);
   REPORT(init_natage_f);
   REPORT(init_natage_m);
   REPORT(SSB_yr);
