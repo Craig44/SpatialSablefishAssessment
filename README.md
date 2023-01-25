@@ -71,6 +71,14 @@ pre_optim_sanity_checks(my_model)
 ## Optimisation
 
 ```r
+## if your model is producing NA's or weird behaviour during optimisation the following can be useful
+DEBUG_estimation = F
+if(DEBUG_estimation) {
+  mle_obj$env$tracepar = F
+  options(warn=2) # covert warnings to errors and stop optimisations
+}
+
+## optimise
 mle_optim = nlminb(start = my_model$par, objective = my_model$fn, gradient  = my_model$gr, control = list(iter.max = 10000, eval.max = 10000))
 
 # Try and improve the optimsation running the model for two additional Newton Raphson iterations
