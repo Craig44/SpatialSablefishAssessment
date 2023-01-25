@@ -20,6 +20,8 @@ rcmdcheck::rcmdcheck(args = "--no-manual", error_on = "error")
 ## Run unit tests for Package
 result = devtools::test(stop_on_failure = F)
 
+devtools::build()
+
 test_active_file(file.path("tests","testthat","test-validate-and-production-compatible.R"))
 ## build Gitbook
 bookdown::render_book(input = 'Gitbook')

@@ -44,7 +44,7 @@ jobs:
         run: rcmdcheck::rcmdcheck(args = c("--no-manual","--no-multiarch","--force"), error_on = "error")
         shell: Rscript {0}
 
-      - name: Install SpatialSablefishAssessment
+      - name: Install SpatialSablefishAssessment from github
         env:
            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # https://github.com/settings/tokens
         run: Rscript -e "devtools::install_github('Craig44/SpatialSablefishAssessment', dependencies = F, INSTALL_opts = '--no-multiarch')"
@@ -58,6 +58,18 @@ jobs:
         with:
           name: _book
           path: GitBook/_book/
+
+      - name: Build SpatialSablefishAssessment locally for artifacting
+        env:
+           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # https://github.com/settings/tokens
+        run: Rscript -e 'devtools::build(path = getwd())'
+
+      - name: artifact SpatialSablefishAssessment
+        uses: actions/upload-artifact@v1
+        with:
+          name: SpatialSablefishAssessment.tar.gz
+          path: SpatialSablefishAssessment_1.0.1.tar.gz
+
 # Need to first create an empty gh-pages branch
 # see https://pkgdown.r-lib.org/reference/deploy_site_github.html
 # and also add secrets for a GH_PAT and EMAIL to the repository
