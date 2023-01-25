@@ -289,6 +289,15 @@ To help with estimation there is a penalty on <span class="math inline">\(\epsil
 \epsilon_a \sim \mathcal{N}(0, \sigma_{\epsilon})
 \]</span></p>
 <p>In general these parameters can be highly uncertain. The variance on these deviation parameters is often fixed at a low value which requires a strong signal in the data to deviate away from the initial equilibrium age-structure.</p>
+<p>You can also apply/estimate additional fishing mortality during the initial equilibrium calculation denoted by <span class="math inline">\(F^{init}\)</span>. If <code>F_method = 0</code> then
+<span class="math display">\[
+F^{init} = F^{LL} p_{hist}
+\]</span>
+where, <span class="math inline">\(F^{LL}\)</span> is the average annual fishing mortality for the fixed gear (<code>ln_fixed_F_avg</code>) and <span class="math inline">\(p_{hist}\)</span> is an input value that specifies the proportion of average longline fishing mortality to apply during initialisation. If <code>F_method = 1</code> then
+<span class="math display">\[
+F^{init} =  \widehat{F}^{init} p_{hist}
+\]</span>
+where, <span class="math inline">\(\widehat{F}^{init}\)</span> is the estimable parameter <code>ln_init_F_avg</code>. It is advised to set <span class="math inline">\(p_{hist} = 1.0\)</span> so that the estimated parameter has a natural interpretation.</p>
 </div>
 <div id="growth" class="section level3 unnumbered hasAnchor">
 <h3>Growth<a href="tagintegrated-model-equations.html#growth" class="anchor-section" aria-label="Anchor link to header"></a></h3>
