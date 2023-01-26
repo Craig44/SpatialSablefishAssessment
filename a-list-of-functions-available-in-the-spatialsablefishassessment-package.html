@@ -23,7 +23,7 @@
 <meta name="author" content="C.Marsh" />
 
 
-<meta name="date" content="2023-01-25" />
+<meta name="date" content="2023-01-26" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -162,13 +162,13 @@ div.csl-indent {
 <li class="chapter" data-level="" data-path="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html"><a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html"><i class="fa fa-check"></i>A list of functions available in the <code>SpatialSablefishAssessment</code> package</a>
 <ul>
 <li class="chapter" data-level="" data-path="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html"><a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#validate-functions"><i class="fa fa-check"></i>Validate functions</a></li>
-<li class="chapter" data-level="" data-path="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html"><a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#data-grooming-functions"><i class="fa fa-check"></i>Data grooming functions</a></li>
 <li class="chapter" data-level="" data-path="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html"><a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#accessor-functions"><i class="fa fa-check"></i>Accessor functions</a></li>
 <li class="chapter" data-level="" data-path="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html"><a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#plotting-functions"><i class="fa fa-check"></i>Plotting functions</a></li>
 <li class="chapter" data-level="" data-path="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html"><a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#estimation-functions"><i class="fa fa-check"></i>Estimation functions</a></li>
 <li class="chapter" data-level="" data-path="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html"><a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#model-comparison-functions"><i class="fa fa-check"></i>Model comparison functions</a></li>
 <li class="chapter" data-level="" data-path="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html"><a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#distribution-functions"><i class="fa fa-check"></i>Distribution functions</a></li>
 <li class="chapter" data-level="" data-path="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html"><a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#parameter-transformation-functions"><i class="fa fa-check"></i>Parameter transformation functions</a></li>
+<li class="chapter" data-level="" data-path="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html"><a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#data-grooming-functions"><i class="fa fa-check"></i>Data grooming functions</a></li>
 <li class="chapter" data-level="" data-path="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html"><a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#auxillary-functions"><i class="fa fa-check"></i>Auxillary functions</a></li>
 </ul></li>
 <li class="chapter" data-level="" data-path="how-to-use-spatialsablefishassessment.html"><a href="how-to-use-spatialsablefishassessment.html"><i class="fa fa-check"></i>How to use <code>SpatialSablefishAssessment</code></a>
@@ -259,21 +259,14 @@ div.csl-indent {
 ## 3 WGOA       2
 ## 4 CGOA       3
 ## 5 EGOA       4</code></pre>
-<div id="validate-functions" class="section level2 unnumbered hasAnchor">
-<h2>Validate functions<a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#validate-functions" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<div id="validate-functions" class="section level3 unnumbered hasAnchor">
+<h3>Validate functions<a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#validate-functions" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <ul>
 <li><code>validate_input_data_and_parameters</code> This should always be run before <code>TMB::MakeADFun</code></li>
 </ul>
 </div>
-<div id="data-grooming-functions" class="section level2 unnumbered hasAnchor">
-<h2>Data grooming functions<a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#data-grooming-functions" class="anchor-section" aria-label="Anchor link to header"></a></h2>
-<ul>
-<li><code>record_grooming_rule</code> this will create a table of how much catch and how many records are removed from applying some data grooming rules</li>
-<li><code>apply_grooming_rule</code> equivalent to the <code>subset</code> function</li>
-</ul>
-</div>
-<div id="accessor-functions" class="section level2 unnumbered hasAnchor">
-<h2>Accessor functions<a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#accessor-functions" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<div id="accessor-functions" class="section level3 unnumbered hasAnchor">
+<h3>Accessor functions<a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#accessor-functions" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <ul>
 <li><code>get_AF</code> get age-frequency observed and predicted values from a model</li>
 <li><code>get_LF</code> get length-frequency observed and predicted values from a model</li>
@@ -288,8 +281,8 @@ div.csl-indent {
 <li><code>simulate_observations</code> this function will take a TMB object and simulate a number of observations, used to create simulated residuals.</li>
 </ul>
 </div>
-<div id="plotting-functions" class="section level2 unnumbered hasAnchor">
-<h2>Plotting functions<a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#plotting-functions" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<div id="plotting-functions" class="section level3 unnumbered hasAnchor">
+<h3>Plotting functions<a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#plotting-functions" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <ul>
 <li><code>plot_AF</code> plot age frequency observation</li>
 <li><code>plot_age_length_matrix</code> plot input age-length transition matrices</li>
@@ -314,8 +307,8 @@ div.csl-indent {
 <li><code>plot_tag_release_AF</code> plot the numbers at age by sex for each release event</li>
 </ul>
 </div>
-<div id="estimation-functions" class="section level2 unnumbered hasAnchor">
-<h2>Estimation functions<a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#estimation-functions" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<div id="estimation-functions" class="section level3 unnumbered hasAnchor">
+<h3>Estimation functions<a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#estimation-functions" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <ul>
 <li><code>profile_param</code> Run log-likelihood profiles on an estimated parameter</li>
 <li><code>set_up_parameters</code> Fix parameters, uses <code>fix_pars</code> and <code>set_pars_to_be_the_same</code> for the <code>TagIntegrated</code> model</li>
@@ -329,8 +322,8 @@ div.csl-indent {
 <li><code>rmvnorm_prec</code> simulate from a multivariate normal distribution using the precision matrix.</li>
 </ul>
 </div>
-<div id="model-comparison-functions" class="section level2 unnumbered hasAnchor">
-<h2>Model comparison functions<a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#model-comparison-functions" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<div id="model-comparison-functions" class="section level3 unnumbered hasAnchor">
+<h3>Model comparison functions<a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#model-comparison-functions" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>Often you will run multiple models to explore alternative assumptions and hypothesis. There are a range of function available for extracting output convenient for plotting and summarizing. In order to use the following functions you need to create a list containing multiple runs e.g.</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#cb4-1" aria-hidden="true" tabindex="-1"></a>multi_runs <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
 <span id="cb4-2"><a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#cb4-2" aria-hidden="true" tabindex="-1"></a>multi_runs[[<span class="dv">1</span>]] <span class="ot">&lt;-</span> low_M_model<span class="sc">$</span><span class="fu">report</span>()</span>
@@ -344,8 +337,8 @@ div.csl-indent {
 <li><code>get_multiple_nlls</code> get multiple models negative log-likelihood</li>
 </ul>
 </div>
-<div id="distribution-functions" class="section level2 unnumbered hasAnchor">
-<h2>Distribution functions<a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#distribution-functions" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<div id="distribution-functions" class="section level3 unnumbered hasAnchor">
+<h3>Distribution functions<a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#distribution-functions" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <ul>
 <li><code>ddirichmult</code> Dirichlet-multinomial pdf function</li>
 <li><code>dmultinom_upd</code> Multinomial pdf function, which is the same as TMB’s. Differs from Rs base <code>dmultinom</code> by allowing no-integers and not rounding the x values.</li>
@@ -354,8 +347,8 @@ div.csl-indent {
 <li><code>log_sigma</code> calculate standard deviation for the lognormal distribution given CV</li>
 </ul>
 </div>
-<div id="parameter-transformation-functions" class="section level2 unnumbered hasAnchor">
-<h2>Parameter transformation functions<a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#parameter-transformation-functions" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<div id="parameter-transformation-functions" class="section level3 unnumbered hasAnchor">
+<h3>Parameter transformation functions<a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#parameter-transformation-functions" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <ul>
 <li><code>restoresimplex</code> go from simplex to unit vector</li>
 <li><code>simplex</code> go from unit vector to simplex</li>
@@ -376,8 +369,16 @@ Y =
 <li><code>sum_to_zero_QR</code> take an unconstrained vector of length <code>N - 1</code> and calculate a vector of length <code>N</code> that sums = 1.</li>
 </ul>
 </div>
-<div id="auxillary-functions" class="section level2 unnumbered hasAnchor">
-<h2>Auxillary functions<a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#auxillary-functions" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<div id="data-grooming-functions" class="section level3 unnumbered hasAnchor">
+<h3>Data grooming functions<a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#data-grooming-functions" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>These aren’t related to the model per se. These are useful when grooming raw data sets that are ultimately used as inputs into the model.</p>
+<ul>
+<li><code>record_grooming_rule</code> this will create a table of how much catch and how many records are removed from applying some data grooming rules</li>
+<li><code>apply_grooming_rule</code> equivalent to the <code>subset</code> function</li>
+</ul>
+</div>
+<div id="auxillary-functions" class="section level3 unnumbered hasAnchor">
+<h3>Auxillary functions<a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#auxillary-functions" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <ul>
 <li><code>VAlignPlots</code> a plotting function that joins multiple ggplots into a single panel with aligned legends and extents</li>
 </ul>
