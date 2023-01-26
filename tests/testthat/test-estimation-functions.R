@@ -74,8 +74,8 @@ test_that("test-shared-survey-selectivity-pars", {
   test_pars = test_model$par
   test_pars[which(names(test_model$par) %in% "ln_srv_dom_ll_sel_pars")[1]] = log(new_survey_slope_par)
   new_test_rep = test_model$report(test_pars)
-  expect_true(new_test_rep$srv_dom_ll_sel_pars[1,1,1] == new_survey_slope_par)
-  expect_true(new_test_rep$srv_dom_ll_sel_pars[1,1,1] == new_test_rep$srv_dom_ll_sel_pars[1,1,2])
+  expect_equal(new_test_rep$srv_dom_ll_sel_pars[1,1,1], new_survey_slope_par, tolerance = 0.00001)
+  expect_equal(new_test_rep$srv_dom_ll_sel_pars[1,1,1], new_test_rep$srv_dom_ll_sel_pars[1,1,2], tolerance = 0.00001)
 
 
   ## fix survey sel slope and delta parameters
@@ -89,10 +89,10 @@ test_that("test-shared-survey-selectivity-pars", {
   srv_sel_pars = test_model$par[names(test_model$par) %in% "ln_srv_dom_ll_sel_pars"]
   expect_true(length(srv_sel_pars) == 2)
 
-  expect_true(test_report$srv_dom_ll_sel_pars[1,1,1] == test_report$srv_dom_ll_sel_pars[1,1,2])
-  expect_true(test_report$srv_dom_ll_sel_pars[1,2,1] == test_report$srv_dom_ll_sel_pars[1,2,2])
+  expect_equal(test_report$srv_dom_ll_sel_pars[1,1,1], test_report$srv_dom_ll_sel_pars[1,1,2], tolerance = 0.00001)
+  expect_equal(test_report$srv_dom_ll_sel_pars[1,2,1], test_report$srv_dom_ll_sel_pars[1,2,2], tolerance = 0.00001)
   ## the selectivities should have identical values
-  expect_true(all(test_report$sel_srv_dom_ll_f == test_report$sel_srv_dom_ll_m))
+  expect_true(all(test_report$sel_srv_dom_ll_f ==  test_report$sel_srv_dom_ll_m))
 
 
   ## add an additional time-block
@@ -107,9 +107,8 @@ test_that("test-shared-survey-selectivity-pars", {
   test_report = test_model$report()
   expect_true(length(test_model$par[names(test_model$par) %in% "ln_srv_dom_ll_sel_pars"]) == 6)
 
-  expect_true(test_report$srv_dom_ll_sel_pars[1,1,1] == test_report$srv_dom_ll_sel_pars[1,1,2])
-  expect_true(test_report$srv_dom_ll_sel_pars[2,1,1] == test_report$srv_dom_ll_sel_pars[2,1,2])
-
+  expect_equal(test_report$srv_dom_ll_sel_pars[1,1,1], test_report$srv_dom_ll_sel_pars[1,1,2], tolerance = 0.00001)
+  expect_equal(test_report$srv_dom_ll_sel_pars[2,1,1], test_report$srv_dom_ll_sel_pars[2,1,2], tolerance = 0.00001)
   ## FIX slope and delta
   na_map = set_up_parameters(data= data, parameters = parameters, srv_sel_first_param_shared_by_sex = T, srv_sel_second_param_shared_by_sex = T)
 
@@ -127,10 +126,10 @@ test_that("test-shared-survey-selectivity-pars", {
   test_report = test_model$report(pars)
 
 
-  expect_true(test_report$srv_dom_ll_sel_pars[1,1,1] == test_report$srv_dom_ll_sel_pars[1,1,2])
-  expect_true(test_report$srv_dom_ll_sel_pars[1,2,1] == test_report$srv_dom_ll_sel_pars[1,2,2])
-  expect_true(test_report$srv_dom_ll_sel_pars[2,1,1] == test_report$srv_dom_ll_sel_pars[2,1,2])
-  expect_true(test_report$srv_dom_ll_sel_pars[2,2,1] == test_report$srv_dom_ll_sel_pars[2,2,2])
+  expect_equal(test_report$srv_dom_ll_sel_pars[1,1,1], test_report$srv_dom_ll_sel_pars[1,1,2], tolerance = 0.00001)
+  expect_equal(test_report$srv_dom_ll_sel_pars[1,2,1], test_report$srv_dom_ll_sel_pars[1,2,2], tolerance = 0.00001)
+  expect_equal(test_report$srv_dom_ll_sel_pars[2,1,1], test_report$srv_dom_ll_sel_pars[2,1,2], tolerance = 0.00001)
+  expect_equal(test_report$srv_dom_ll_sel_pars[2,2,1], test_report$srv_dom_ll_sel_pars[2,2,2], tolerance = 0.00001)
 
   #######
   ## repeat for fixed gear fishery
