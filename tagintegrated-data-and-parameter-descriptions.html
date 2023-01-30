@@ -23,7 +23,7 @@
 <meta name="author" content="C.Marsh" />
 
 
-<meta name="date" content="2023-01-26" />
+<meta name="date" content="2023-01-30" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -196,6 +196,7 @@ div.csl-indent {
 <li class="chapter" data-level="" data-path="tagintegrated-model-equations.html"><a href="tagintegrated-model-equations.html#spawning-biomass"><i class="fa fa-check"></i>Spawning biomass</a></li>
 <li class="chapter" data-level="" data-path="tagintegrated-model-equations.html"><a href="tagintegrated-model-equations.html#fishing-mortality"><i class="fa fa-check"></i>Fishing mortality</a></li>
 <li class="chapter" data-level="" data-path="tagintegrated-model-equations.html"><a href="tagintegrated-model-equations.html#tag-release-events"><i class="fa fa-check"></i>Tag release events</a></li>
+<li class="chapter" data-level="" data-path="tagintegrated-model-equations.html"><a href="tagintegrated-model-equations.html#selectivities"><i class="fa fa-check"></i>Selectivities</a></li>
 </ul></li>
 <li class="chapter" data-level="" data-path="tagintegrated-model-equations.html"><a href="tagintegrated-model-equations.html#observation-equations"><i class="fa fa-check"></i>Observation equations</a>
 <ul>
@@ -279,11 +280,11 @@ div.csl-indent {
 <li><p><code>fixed_fishery_catch</code> vector of annual catch for the fixed gear fishery. Units are kilo tonnes</p></li>
 <li><p><code>trwl_fishery_catch</code> vector of annual catch for the Trawl gear fishery. Units are kilo tonnes</p></li>
 <li><p><code>fixed_sel_type</code> vector of integers specifying the selectivity type in each time-block <code>length(unique(fixed_sel_by_year_indicator))</code>. Values 0 = logistic, 1 = Double normal, 2 = power function, 3 = alternative logistic formulation</p></li>
-<li><p><code>fixed_sel_by_year_indicator</code> vector of integers specifying which selectivity time-block to apply in each year (C++ indexing so start at zero)</p></li>
+<li><p><code>fixed_sel_by_year_indicator</code> vector of integers specifying which selectivity time-block to apply in each year (C++ indexing so start at zero). Expected length is <code>n_projyears</code></p></li>
 <li><p><code>trwl_sel_type</code> vector of integers specifying the selectivity type in each time-block <code>length(unique(trwl_sel_by_year_indicator))</code>. Values 0 = logistic, 1 = Double normal, 2 = power function, 3 = alternative logistic formulation</p></li>
-<li><p><code>trwl_sel_by_year_indicator</code> vector of integers specifying which selectivity time-block to apply in each year (C++ indexing so start at zero)</p></li>
+<li><p><code>trwl_sel_by_year_indicator</code> vector of integers specifying which selectivity time-block to apply in each year (C++ indexing so start at zero). Expected length is <code>n_projyears</code></p></li>
 <li><p><code>srv_dom_ll_sel_type</code> vector of integers specifying the selectivity type in each time-block, <code>length(unique(srv_dom_ll_sel_by_year_indicator))</code>. Values 0 = logistic, 1 = Double normal, 2 = power function, 3 = alternative logistic formulation</p></li>
-<li><p><code>srv_dom_ll_sel_by_year_indicator</code> vector of integers specifying which selectivity time-block to apply in each year (C++ indexing so start at zero)</p></li>
+<li><p><code>srv_dom_ll_sel_by_year_indicator</code> vector of integers specifying which selectivity time-block to apply in each year (C++ indexing so start at zero). Expected length is <code>n_projyears</code></p></li>
 <li><p><code>tag_release_event_this_year</code> vector of integers specifying whether tags are released in each year. Length <code>n_years</code>. <code>n_years_with_tag_releases = sum(tag_release_event_this_year)</code></p></li>
 <li><p><code>male_tagged_cohorts_by_age</code> Numbers of male tagged fish. Dimension <code>n_ages</code> <span class="math inline">\(\times\)</span> <code>n_region</code> <span class="math inline">\(\times\)</span> <code>n_years_with_tag_releases</code>. These are in actual numbers <strong>not</strong> millions of fish, like the recruitment parameters and other model abundance quantities</p></li>
 <li><p><code>female_tagged_cohorts_by_age</code> Numbers of female tagged fish. Dimension <code>n_ages</code> <span class="math inline">\(\times\)</span> <code>n_region</code> <span class="math inline">\(\times\)</span> <code>n_years_with_tag_releases</code>. These are in actual numbers <strong>not</strong> millions of fish, like the recruitment parameters and other model abundance quantities</p></li>
@@ -319,7 +320,7 @@ div.csl-indent {
 <li><p><code>obs_tag_recovery</code> tag-recovery observations. Dimension will depend on <code>tag_likelihood</code>. If <code>tag_likelihood %in% c(0,1)</code> then the dimensions are <code>n_tag_release_events</code> <span class="math inline">\(\times\)</span> <code>n_regions</code> <span class="math inline">\(\times\)</span> <code>n_tag_recovery_years</code>. Units are numbers (can be non-integer) of recoveries. If <code>tag_likelihood %in% c(2)</code> then the dimensions are <code>n_regions * n_years_to_retain_tagged_cohorts_for + 1</code> <span class="math inline">\(\times\)</span> <code>n_regions</code> <span class="math inline">\(\times\)</span> <code>n_years</code>. The first dimensions relate to a release event, the last dimension relates to all possible recovery events and plus one for the not recovered group.</p></li>
 <li><p><code>tag_likelihood</code> integer specifying the tag-likelihood, 0 = Poisson, 1 = negative binomial, 2 = Multinomial (release conditioned)</p></li>
 <li><p><code>evaluate_tag_likelihood</code> integer specifying whether to evaluate the likelihood (=1) or not (=0) useful when asking the model to calculate predicted values but not evaluate the likelihood for debugging.</p></li>
-<li><p><code>future_recruitment_type</code> integer specifying the future recruitment deviation process. 0 = simulate from lognormal distribution with using the sigma R, 1 = empirically re sample input recruitment deviations</p></li>
+<li><p><code>future_recruitment_type</code> integer specifying the future recruitment deviation process. 0 = simulate from lognormal distribution with using the sigma R, 1 = empirically re sample input recruitment deviations, 2 = recruitment multiplers = 1 which results in the model applying mean recruitment for all future years</p></li>
 <li><p><code>year_ndx_for_empirical_resampling</code> integer vector specifying years to empirically resample from if future_recruitment_type == 1, then this specifies the upper and lower index to resample e.g., <code>year_ndx_for_empirical_resampling = c(0,n_years - 1)</code> then this would resample from all years if <code>year_ndx_for_empirical_resampling = c((n_years - 10), n_years - 1)</code>, then this would resample from the last ten years of the input recruitment deviations</p></li>
 <li><p><code>future_fishing_type</code> integer 0 means users have supplied fishing mortality rates in future fishing input containers. If 1 then user supplied catchs in future fishing input containers.</p></li>
 <li><p><code>future_fishing_inputs_fixed</code> an array with dimensions <code>n_regions</code> <span class="math inline">\(\times\)</span> <code>n_projections_years</code>. Will be F’s or catches fir the fixed gear fishery depending on the value of <code>future_fishing_type</code></p></li>

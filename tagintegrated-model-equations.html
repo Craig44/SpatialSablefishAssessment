@@ -23,7 +23,7 @@
 <meta name="author" content="C.Marsh" />
 
 
-<meta name="date" content="2023-01-26" />
+<meta name="date" content="2023-01-30" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -196,6 +196,7 @@ div.csl-indent {
 <li class="chapter" data-level="" data-path="tagintegrated-model-equations.html"><a href="tagintegrated-model-equations.html#spawning-biomass"><i class="fa fa-check"></i>Spawning biomass</a></li>
 <li class="chapter" data-level="" data-path="tagintegrated-model-equations.html"><a href="tagintegrated-model-equations.html#fishing-mortality"><i class="fa fa-check"></i>Fishing mortality</a></li>
 <li class="chapter" data-level="" data-path="tagintegrated-model-equations.html"><a href="tagintegrated-model-equations.html#tag-release-events"><i class="fa fa-check"></i>Tag release events</a></li>
+<li class="chapter" data-level="" data-path="tagintegrated-model-equations.html"><a href="tagintegrated-model-equations.html#selectivities"><i class="fa fa-check"></i>Selectivities</a></li>
 </ul></li>
 <li class="chapter" data-level="" data-path="tagintegrated-model-equations.html"><a href="tagintegrated-model-equations.html#observation-equations"><i class="fa fa-check"></i>Observation equations</a>
 <ul>
@@ -299,15 +300,11 @@ where, <span class="math inline">\(F^{fixed}\)</span> is the average annual fish
 F^{init} =  \widehat{F}^{init}S_{a,s}^{fixed} p_{hist}
 \]</span>
 where, <span class="math inline">\(\widehat{F}^{init}\)</span> is the estimable parameter <code>ln_init_F_avg</code>. It is advised to set <span class="math inline">\(p_{hist} = 1.0\)</span> so that the estimated parameter has a natural interpretation.</p>
-<p>There are two initial biomass quantities that are reported, these are <code>Bzero</code> and <code>Binit</code>. <code>Bzero</code> is the spawning biomass from a population that has been exposed to natural mortality, recruitment (R0), and movement. <code>Binit</code> is the spawning biomass from a population that has been exposed to natural mortality and initial fishing mortality, recruitment (R0), and movement.</p>
+<p>There are two initial biomass quantities that are reported, these are <code>Bzero</code> and <code>Binit</code>. <code>Bzero</code> is the spawning biomass from a population that has been exposed to natural mortality, recruitment (R0), and movement only. <code>Binit</code> is the spawning biomass from a population that has been exposed to natural mortality and initial fishing mortality (<span class="math inline">\(F^{init}\)</span>), recruitment (R0), and movement.</p>
 </div>
 <div id="growth" class="section level3 unnumbered hasAnchor">
 <h3>Growth<a href="tagintegrated-model-equations.html#growth" class="anchor-section" aria-label="Anchor link to header"></a></h3>
-<p>Empirical length at age matrices are supplied for all years where sufficient age-length data was available and growth was assumed the same across all regions. Mean weight at age was calculated using an allometric length weight relationship with time and space invariant parameters <span class="math inline">\(\alpha\)</span> and <span class="math inline">\(\beta\)</span></p>
-<p><span class="math display">\[
-\bar{w}_{a,y} = \alpha \bar{l}_{a,y}^{\beta}
-\]</span></p>
-<p><strong>TODO</strong> add the adjustment for lognormal distribution as in Casal2.</p>
+<p>Empirical length at age matrices are supplied for all years where sufficient age-length data was available and growth was assumed the same across all regions. Mean weight at age is also an user input. Growth cannot vary across regions in the current models, so users must supply length at age matrices and weight at age vectors for each year, age and sex in the model.</p>
 </div>
 <div id="recruitment" class="section level3 unnumbered hasAnchor">
 <h3>Recruitment<a href="tagintegrated-model-equations.html#recruitment" class="anchor-section" aria-label="Anchor link to header"></a></h3>
@@ -327,18 +324,46 @@ SSB_{y,r} \sum\limits_a N_{a,s = 2, r, y} S^{mat}_{a,y} \bar{w}_{a,s = 2, y}
 </div>
 <div id="tag-release-events" class="section level3 unnumbered hasAnchor">
 <h3>Tag release events<a href="tagintegrated-model-equations.html#tag-release-events" class="anchor-section" aria-label="Anchor link to header"></a></h3>
-<p>Tags release event denoted by the index <span class="math inline">\(k\)</span> have an implied region <span class="math inline">\(r\)</span> and year <span class="math inline">\(y\)</span> dimension. Each tag release event has known sex and age frequency at release. This is derived using the age-length key from the survey. Tagged fish from release event <span class="math inline">\(k\)</span> are denoted in the partition by <span class="math inline">\(N^k_{a,r,y,s}\)</span>, and are tracked for <span class="math inline">\(n_{T}\)</span> years before migrating into a pooled tag group, at which point we loose release-event information because we loose the year information but we do maintain its region of release. At present, tagged fish are assumed to take on the exact same population processes as the untagged elements of the partition.</p>
-<p>Most of the tagged fish in the available have unknown sex. Sex disaggregated age-frequencies were derived using an ALK that was disaggregrated by sex in the age dimension but sex aggregated in the length dimension. This meant when we multiplied an unsexed length frequency through this ALK we obtained sex disaggregated age frequency. The negative of this approach is a tagged fish that would have an exact age, sex and length will be represented in the model as a fraction of a fish across multiple ages and sexes.</p>
-<p>Age length keys were not available in all years when tagged fish were released, particularly in the early period. Tag release age frequencies before 1981 were based on age-length keys pooled over years 1981, 1985 and 1987. After that period, if an age-length key was not available we used the age length key from the closest year that has an age-length key. (<strong>How can we explore uncertainty in this input?</strong> re-run the model with numbers at age and length from bootstrapping age-length keys?)</p>
+<p>Tags release event denoted by the index <span class="math inline">\(k\)</span> have an implied region <span class="math inline">\(r\)</span> and year <span class="math inline">\(y\)</span> dimension. Each tag release event has known sex and age frequency at release. Often tagging data has only length at release information, we have used age-length keys to convert numbers at length of release to numbers at age and sex at release that are then input into the model (<code>data$male_tagged_cohorts_by_age</code> and <code>data$female_tagged_cohorts_by_age</code>). Tagged fish from release event <span class="math inline">\(k\)</span> are denoted in the partition by <span class="math inline">\(N^k_{a,r,y,s}\)</span>, and are tracked for <span class="math inline">\(n_{T}\)</span> (<code>data$n_years_to_retain_tagged_cohorts_for</code>) years before migrating into an accumulation tag group, at which point we loose release-year information but do maintain release region. At present, tagged fish are assumed to take on the exact same population processes as the untagged elements of the partition i.e., no mixing periods.</p>
+<ul>
+<li>Something to consider, given there is uncertainty in the age-length key method, when converting numbers at length to numbers at age and sex and the numbers of tag-releases are assumed known without error. Consider rerunning the model with bootstrapped tag releases from bootstrapped age-length keys. This will give you an indication of the uncertainty the model has to this input assumption.</li>
+</ul>
+</div>
+<div id="selectivities" class="section level3 unnumbered hasAnchor">
+<h3>Selectivities<a href="tagintegrated-model-equations.html#selectivities" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>Describe the functional forms available in the models. The selectivity component is quite modular and you can easily add a new selectivity function in the <a href="https://github.com/Craig44/SpatialSablefishAssessment/blob/master/inst/include/SetupSelectivities.hpp">source code here</a>. There are three selectivities in the model one for the survey and two for the fisheries. Selectivities types are set by the model data objects ending with <code>sel_type</code> e.g., <code>fixed_sel_type</code>, <code>trwl_sel_type</code> and <code>srv_dom_ll_sel_type</code>. These objects are vectors each element defines a selectivity type that is applied in a time-block. The time-block is defined by the corresponding <code>sel_by_year_indicator</code> objects. The following is an example of how to specify and interpret these containers. Say <code>data$years = c(1990, 1991, 1992, 1993)</code> and we were not interested in doing projections (require more elements in <code>sel_by_year_indicator</code> objects). Say we wanted to have 1990 and 1991 have one logistic selectivity and then 1992 and 1993 to have seperate logistic selectivity for the fixed gear fishery, you would specify the containers as</p>
+<ul>
+<li><code>data$fixed_sel_type = c(0, 0)</code></li>
+<li><code>data$fixed_sel_by_year_indicator = c(0, 0, 1, 1)</code> this points each model year to a selectivity in <code>data$fixed_sel_type</code></li>
+</ul>
+<p>Selectivity types are</p>
+<ul>
+<li><p><code>0</code> Logistic
+<span class="math display">\[
+S(a | \theta_1, \theta_2) = \frac{1}{1 + \exp(-\theta_2 \times (a - \theta_1)}
+\]</span></p></li>
+<li><p><code>1</code> Double normal - Punt et. al 1996 gamma parameterization (that is a comment from the ADMB assessment code)
+<span class="math display">\[
+S(a | \theta_1, \theta_2) = \frac{a}{\theta_1}^{\theta_1/0.5\sqrt{\theta_1^2 + 4\theta_2^2}} exp\left(\frac{\theta_1 - a}{0.5 \left( \sqrt{\theta_1^2 + 4\theta_2^2} - \theta_1 \right)} \right)
+\]</span></p></li>
+<li><p><code>2</code> power function (Be careful with this selectivity, if your min age is not = 1. Then I don’t think you will end up with a max selectivity value of 1)
+<span class="math display">\[
+S(a | \theta_1) = \frac{1}{a ^{\theta_1}}
+\]</span></p></li>
+<li><p><code>3</code> Alternative logistic
+<span class="math display">\[
+S(a | \theta_1, \theta_2) = \frac{1}{1 + 19^{(\theta_1 - a) / \theta_2}}
+\]</span></p></li>
+</ul>
 </div>
 </div>
 <div id="observation-equations" class="section level2 unnumbered hasAnchor">
 <h2>Observation equations<a href="tagintegrated-model-equations.html#observation-equations" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <p>There are five observation types available in the <code>TagIntegrated</code> model</p>
 <ul>
-<li>Relative indices of abundance from the longline survey</li>
+<li>Relative indices of abundance from a longline survey (its called longline survey but could be any survey)</li>
 <li>Age composition disaggregated by sex for the fixed gear fishery and longline survey</li>
-<li>Length composition disaggregated by sex for the trawl and early period of the fixed gear fishery</li>
+<li>Length composition disaggregated by sex for the trawl and fixed gear fishery</li>
 <li>Annual observed catch by fishery</li>
 <li>Tag recoveries from the fixed gear fishery</li>
 </ul>
@@ -482,6 +507,7 @@ f(x) = \frac{\left(n!\right)\Gamma\left(\sum \alpha_k\right)}{\Gamma\left(n+\sum
 \]</span>
 resulting recruitment multipliers, also termed year class strengths (<span class="math inline">\(YCS_y\)</span>) are bias adjusted <span class="math inline">\(YCS_y = \exp(\epsilon_y - 0.5\sigma_R^2)\)</span></p></li>
 <li><p>Empirical <code>future_recruitment_type == 1</code> this will sample with replacement input recruitment deviations between the values specified in <code>year_ndx_for_empirical_resampling</code>. Note elements of <code>year_ndx_for_empirical_resampling</code> are C++ vector dimensions. If <code>year_ndx_for_empirical_resampling = c(0,n_years - 1)</code> this will resample from all input recruitment deviations. if <code>year_ndx_for_empirical_resampling = c(0,9)</code> this will resample from the first 10 input recruitment deviations. if <code>year_ndx_for_empirical_resampling = c((n_years - 9):(n_years - 1))</code> this will resample from the last 10 input recruitment deviations.</p></li>
+<li><p>Deterministic recruitment <code>future_recruitment_type == 2</code>. This will assume <span class="math inline">\(YCS_y = 1\)</span> which result in the model applying mean recruitment for all future years</p></li>
 </ul>
 </div>
 <div id="fishing" class="section level3 unnumbered hasAnchor">
