@@ -92,6 +92,7 @@ test_that("test-Projection-Mortality", {
   ## no Z or movement
   data$apply_fixed_movement = 1 ## no movement initial age-structure should be only a function of ageing and M
   data$future_fishing_type = 0
+  data$future_recruitment_type = 2
   ## make sure it doesn't crash
   expect_no_condition(test_model <- TMB::MakeADFun(data = data,
                                                    parameters = parameters,

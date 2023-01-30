@@ -9,6 +9,9 @@
 #' @importFrom stats optimHess pnbinom pnorm  ppois
 #' @importFrom grid unit.pmax
 #' @importFrom gridExtra grid.arrange
+#' @importFrom TMB sdreport MakeADFun
+#' @importFrom MASS mvrnorm
+
 # The following block is used by usethis to automatically manage
 # roxygen namespace tags. Modify with care!
 ## usethis namespace: start
