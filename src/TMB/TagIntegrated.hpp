@@ -1313,21 +1313,28 @@ Type TagIntegrated(objective_function<Type>* obj) {
           // generate future recruitment based on prior and sigma R
           if(global_rec_devs == 1) {
             recruitment_devs(region_ndx, proj_year_ndx) = future_rec_dev;
-            recruitment_multipliers(region_ndx, region_ndx) = exp(recruitment_devs(region_ndx, proj_year_ndx) - sigma_R_sq/2.0);
+            recruitment_multipliers(region_ndx, proj_year_ndx) = exp(recruitment_devs(region_ndx, proj_year_ndx) - sigma_R_sq/2.0);
           } else {
             recruitment_devs(region_ndx, proj_year_ndx) = rnorm(Type(0), sigma_R);
-            recruitment_multipliers(region_ndx, region_ndx) = exp(recruitment_devs(region_ndx, proj_year_ndx) - sigma_R_sq/2.0);
+            recruitment_multipliers(region_ndx, proj_year_ndx) = exp(recruitment_devs(region_ndx, proj_year_ndx) - sigma_R_sq/2.0);
           }
         } else if(future_recruitment_type == 1) {
           // Empirically resample from input devs
           if(global_rec_devs == 1) {
             recruitment_devs(region_ndx, proj_year_ndx) = recruitment_devs(region_ndx, empirical_recruitment_ndx);
+            recruitment_multipliers(region_ndx, proj_year_ndx) = recruitment_multipliers(region_ndx, empirical_recruitment_ndx);
           } else {
-            empirical_recruitment_ndx = runif(year_ndx_for_empirical_resampling(0), year_ndx_for_empirical_resampling(1));
+            // resample each year
+            empirical_recruitment_ndx = round(runif(year_ndx_for_empirical_resampling(0) - 0.499, year_ndx_for_empirical_resampling(1) + 0.499));
             //std::cerr << "empirical ndx = " << empirical_recruitment_ndx << "\n";
             recruitment_devs(region_ndx, proj_year_ndx) = recruitment_devs(region_ndx, empirical_recruitment_ndx);
+            recruitment_multipliers(region_ndx, proj_year_ndx) = recruitment_multipliers(region_ndx, empirical_recruitment_ndx);
           }
         }
+        // if future_recruitment_type >= 2 then this algorithm will do nothing and recruitment multipliers will take initialised value which = 1 i.e., mean recruitment
+
+
+
         // User supplied F's
         if(future_fishing_type == 0) {
           annual_F_fixed(region_ndx, proj_year_ndx) = future_fishing_inputs_fixed(region_ndx, proj_year_ndx - n_years);
@@ -1622,6 +1629,9 @@ Type TagIntegrated(objective_function<Type>* obj) {
   ADREPORT(annual_F_fixed);
   ADREPORT(annual_F_trwl);
   ADREPORT(init_F_hist);
+
+  ADREPORT(Bzero);
+  ADREPORT(Binit);
 
   ADREPORT(sel_fixed_m);
   ADREPORT(sel_fixed_f);

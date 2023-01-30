@@ -34,11 +34,11 @@ Users need to population a `data` and `parameters` named list object that is the
 - `fixed_fishery_catch` vector of annual catch for the fixed gear fishery. Units are kilo tonnes
 - `trwl_fishery_catch` vector of annual catch for the Trawl gear fishery. Units are kilo tonnes
 - `fixed_sel_type` vector of integers specifying the selectivity type in each time-block `length(unique(fixed_sel_by_year_indicator))`. Values 0 = logistic, 1  = Double normal, 2 = power function, 3 = alternative logistic formulation
-- `fixed_sel_by_year_indicator` vector of integers specifying which selectivity time-block to apply in each year (C++ indexing so start at zero)
+- `fixed_sel_by_year_indicator` vector of integers specifying which selectivity time-block to apply in each year (C++ indexing so start at zero). Expected length is `n_projyears`
 - `trwl_sel_type` vector of integers specifying the selectivity type in each time-block `length(unique(trwl_sel_by_year_indicator))`. Values 0 = logistic, 1  = Double normal, 2 = power function, 3 = alternative logistic formulation
-- `trwl_sel_by_year_indicator` vector of integers specifying which selectivity time-block to apply in each year (C++ indexing so start at zero)
+- `trwl_sel_by_year_indicator` vector of integers specifying which selectivity time-block to apply in each year (C++ indexing so start at zero). Expected length is `n_projyears`
 - `srv_dom_ll_sel_type` vector of integers specifying the selectivity type in each time-block, `length(unique(srv_dom_ll_sel_by_year_indicator))`. Values 0 = logistic, 1  = Double normal, 2 = power function, 3 = alternative logistic formulation
-- `srv_dom_ll_sel_by_year_indicator` vector of integers specifying which selectivity time-block to apply in each year (C++ indexing so start at zero)
+- `srv_dom_ll_sel_by_year_indicator` vector of integers specifying which selectivity time-block to apply in each year (C++ indexing so start at zero). Expected length is `n_projyears`
 - `tag_release_event_this_year` vector of integers specifying whether tags are released in each year. Length `n_years`. `n_years_with_tag_releases = sum(tag_release_event_this_year)`
 - `male_tagged_cohorts_by_age` Numbers of male tagged fish. Dimension `n_ages` \(\times\)  `n_region` \(\times\) `n_years_with_tag_releases`. These are in actual numbers **not** millions of fish, like the recruitment parameters and other model abundance quantities
 - `female_tagged_cohorts_by_age` Numbers of female tagged fish. Dimension `n_ages` \(\times\)  `n_region` \(\times\) `n_years_with_tag_releases`. These are in actual numbers **not** millions of fish, like the recruitment parameters and other model abundance quantities
@@ -83,7 +83,7 @@ Users need to population a `data` and `parameters` named list object that is the
 - `tag_likelihood` integer specifying the tag-likelihood, 0 = Poisson, 1 = negative binomial, 2 = Multinomial (release conditioned)
 - `evaluate_tag_likelihood` integer specifying whether to evaluate the likelihood (=1) or not (=0) useful when asking the model to calculate predicted values but not evaluate the likelihood for debugging.
 
-- `future_recruitment_type` integer specifying the future recruitment deviation process. 0 = simulate from lognormal distribution with using the sigma R, 1 = empirically re sample input recruitment deviations
+- `future_recruitment_type` integer specifying the future recruitment deviation process. 0 = simulate from lognormal distribution with using the sigma R, 1 = empirically re sample input recruitment deviations, 2 = recruitment multiplers = 1 which results in the model applying mean recruitment for all future years
 - `year_ndx_for_empirical_resampling` integer vector specifying years to empirically resample from if future_recruitment_type == 1, then this specifies the upper and lower index to resample e.g., `year_ndx_for_empirical_resampling = c(0,n_years - 1)` then this would resample from all years if `year_ndx_for_empirical_resampling = c((n_years - 10), n_years - 1)`, then this would resample from the last ten years of the input recruitment deviations
 - `future_fishing_type` integer 0 means users have supplied fishing mortality rates in future fishing input containers. If 1 then user supplied catchs in future fishing input containers.
 - `future_fishing_inputs_fixed` an array with dimensions `n_regions` \(\times\) `n_projections_years`. Will be F's or catches fir the fixed gear fishery depending on the value of `future_fishing_type`

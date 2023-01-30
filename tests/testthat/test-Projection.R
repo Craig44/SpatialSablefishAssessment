@@ -1,7 +1,7 @@
 
 
 #' test-Projection-Recruitment
-#' @description this is just to test the projection component of TagIntegrateModel currently just checks the model doesn't crash
+#' @description this is to test projected recruitment works as expected
 #'
 test_that("test-Projection-Recruitment", {
   ## Read in mock data
@@ -67,12 +67,23 @@ test_that("test-Projection-Recruitment", {
                                                    parameters = parameters,
                                                    DLL = "SpatialSablefishAssessment_TMBExports", silent  = T))
 
+
+
+  ####### test constant recruitment
+  data$future_recruitment_type = 2
+  expect_no_condition(test_model <- TMB::MakeADFun(data = data,
+                                                   parameters = parameters,
+                                                   DLL = "SpatialSablefishAssessment_TMBExports", silent  = T))
+  proj_rep = test_model$report()
+  ## check multiplers are all = 1.0
+  expect_equal(proj_rep$recruitment_multipliers[1,(length(data$years) + 1):(length(data$years) + data$n_projections_years)], rep(1, data$n_projections_years), tolerance = 0.0001)
+
 })
 
 
 
-#' test-Projection-Recruitment
-#' @description this is just to test the projection component of TagIntegrateModel currently just checks the model doesn't crash
+#' test-Projection-Mortality
+#' @description this is to test projected F methods work as expected
 #'
 test_that("test-Projection-Mortality", {
   ## Read in mock data

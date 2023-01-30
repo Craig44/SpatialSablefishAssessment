@@ -60,17 +60,11 @@ F^{init} =  \widehat{F}^{init}S_{a,s}^{fixed} p_{hist}
 \]
 where, \(\widehat{F}^{init}\) is the estimable parameter `ln_init_F_avg`. It is advised to set \( p_{hist}  = 1.0\) so that the estimated parameter has a natural interpretation.
 
-There are two initial biomass quantities that are reported, these are `Bzero` and `Binit`. `Bzero` is the spawning biomass from a population that has been exposed to natural mortality, recruitment (R0), and movement. `Binit` is the spawning biomass from a population that has been exposed to natural mortality and initial fishing mortality, recruitment (R0), and movement. 
+There are two initial biomass quantities that are reported, these are `Bzero` and `Binit`. `Bzero` is the spawning biomass from a population that has been exposed to natural mortality, recruitment (R0), and movement only. `Binit` is the spawning biomass from a population that has been exposed to natural mortality and initial fishing mortality (\(F^{init}\)), recruitment (R0), and movement. 
 
 ### Growth {-}
 
-Empirical length at age matrices are supplied for all years where sufficient age-length data was available and growth was assumed the same across all regions. Mean weight at age was calculated using an allometric length weight relationship with time and space invariant parameters \(\alpha\) and \(\beta\)
-
-\[
-\bar{w}_{a,y} = \alpha \bar{l}_{a,y}^{\beta} 
-\]
-
-**TODO** add the adjustment for lognormal distribution as in Casal2.
+Empirical length at age matrices are supplied for all years where sufficient age-length data was available and growth was assumed the same across all regions. Mean weight at age is also an user input. Growth cannot vary across regions in the current models, so users must supply length at age matrices and weight at age vectors for each year, age and sex in the model.
 
 ### Recruitment {-}
 How to spatially apportion recruits in a way that is consistent with the data and isn't confounded with movement of young fish? There are two considerations, firstly looking at the AF and LFs there are regions that seem to have more young fish than others (link to figure and describe). However, there is very little information on spawning grounds and behavior. This coupled with a complex early life history make it difficult to a priori set regional apportionment of recruits, which would be ideal, an alternative is to estimate these as free parameters. This may introduce confounding when we start estimating movement which is believed to be ontogenetic.
@@ -91,22 +85,53 @@ When the hybrid \(F\) method is assumed, tagged fish were not included when inte
 
 ### Tag release events {-}
 
-Tags release event denoted by the index \(k\) have an implied region \(r\) and year \(y\) dimension. Each tag release event has known sex and age frequency at release. This is derived using the age-length key from the survey. Tagged fish from release event \(k\) are denoted in the partition by \(N^k_{a,r,y,s}\), and are tracked for \(n_{T}\) years before migrating into a pooled tag group, at which point we loose release-event information because we loose the year information but we do maintain its region of release. At present, tagged fish are assumed to take on the exact same population processes as the untagged elements of the partition.
+Tags release event denoted by the index \(k\) have an implied region \(r\) and year \(y\) dimension. Each tag release event has known sex and age frequency at release. Often tagging data has only length at release information, we have used age-length keys to convert numbers at length of release to numbers at age and sex at release that are then input into the model (`data$male_tagged_cohorts_by_age` and `data$female_tagged_cohorts_by_age`). Tagged fish from release event \(k\) are denoted in the partition by \(N^k_{a,r,y,s}\), and are tracked for \(n_{T}\) (`data$n_years_to_retain_tagged_cohorts_for`) years before migrating into an accumulation tag group, at which point we loose release-year information but do maintain release region. At present, tagged fish are assumed to take on the exact same population processes as the untagged elements of the partition i.e., no mixing periods.
+
+- Something to consider, given there is uncertainty in the age-length key method, when converting numbers at length to numbers at age and sex and the numbers of tag-releases are assumed known without error. Consider rerunning the model with bootstrapped tag releases from bootstrapped age-length keys. This will give you an indication of the uncertainty the model has to this input assumption.
 
 
-Most of the tagged fish in the available have unknown sex. Sex disaggregated age-frequencies were derived using an ALK that was disaggregrated by sex in the age dimension but sex aggregated in the length dimension. This meant when we multiplied an unsexed length frequency through this ALK we obtained sex disaggregated age frequency. The negative of this approach is a tagged fish that would have an exact age, sex and length will be represented in the model as a fraction of a fish across multiple ages and sexes.
+
+### Selectivities {-}
+
+Describe the functional forms available in the models. The selectivity component is quite modular and you can easily add a new selectivity function in the [source code here](https://github.com/Craig44/SpatialSablefishAssessment/blob/master/inst/include/SetupSelectivities.hpp). There are three selectivities in the model one for the survey and two for the fisheries. Selectivities types are set by the model data objects ending with `sel_type` e.g., `fixed_sel_type`, `trwl_sel_type` and `srv_dom_ll_sel_type`. These objects are vectors each element defines a selectivity type that is applied in a time-block. The time-block is defined by the corresponding `sel_by_year_indicator` objects. The following is an example of how to specify and interpret these containers. Say `data$years = c(1990, 1991, 1992, 1993)` and we were not interested in doing projections (require more elements in `sel_by_year_indicator` objects). Say we wanted to have 1990 and 1991 have one logistic selectivity and then 1992 and 1993 to have seperate logistic selectivity for the fixed gear fishery, you would specify the containers as
+
+- `data$fixed_sel_type = c(0, 0)`
+- `data$fixed_sel_by_year_indicator = c(0, 0, 1, 1)` this points each model year to a selectivity in `data$fixed_sel_type`
 
 
-Age length keys were not available in all years when tagged fish were released, particularly in the early period. Tag release age frequencies before 1981 were based on age-length keys pooled over years 1981, 1985 and 1987. After that period, if an age-length key was not available we used the age length key from the closest year that has an age-length key. (**How can we explore uncertainty in this input?** re-run the model with numbers at age and length from bootstrapping age-length keys?)
+Selectivity types are
+
+- `0` Logistic 
+\[
+S(a | \theta_1, \theta_2) = \frac{1}{1 + \exp(-\theta_2 \times (a - \theta_1)}
+\]
+- `1` Double normal - Punt et. al 1996 gamma parameterization (that is a comment from the ADMB assessment code)
+\[
+S(a | \theta_1, \theta_2) = \frac{a}{\theta_1}^{\theta_1/0.5\sqrt{\theta_1^2 + 4\theta_2^2}} exp\left(\frac{\theta_1 - a}{0.5 \left( \sqrt{\theta_1^2 + 4\theta_2^2} - \theta_1 \right)} \right)
+\]
+
+- `2` power function (Be careful with this selectivity, if your min age is not = 1. Then I don't think you will end up with a max selectivity value of 1)
+\[
+S(a | \theta_1) = \frac{1}{a ^{\theta_1}}
+\]
+
+- `3` Alternative logistic
+\[
+S(a | \theta_1, \theta_2) = \frac{1}{1 + 19^{(\theta_1 - a) / \theta_2}}
+\]
+
+
+
+
 
 
 ## Observation equations {-}
 
 There are five observation types available in the `TagIntegrated` model
 
-- Relative indices of abundance from the longline survey
+- Relative indices of abundance from a longline survey (its called longline survey but could be any survey)
 - Age composition disaggregated by sex for the fixed gear fishery and longline survey
-- Length composition disaggregated by sex for the trawl and early period of the fixed gear fishery 
+- Length composition disaggregated by sex for the trawl and fixed gear fishery 
 - Annual observed catch by fishery
 - Tag recoveries from the fixed gear fishery
 
@@ -282,6 +307,9 @@ There are two methods for future recruitment, parametric and empirical. Parametr
 resulting recruitment multipliers, also termed year class strengths (\(YCS_y\)) are bias adjusted \(YCS_y = \exp(\epsilon_y - 0.5\sigma_R^2)\)
 
 - Empirical `future_recruitment_type == 1` this will sample with replacement input recruitment deviations between the values specified in `year_ndx_for_empirical_resampling`. Note elements of `year_ndx_for_empirical_resampling` are C++ vector dimensions. If `year_ndx_for_empirical_resampling = c(0,n_years - 1)` this will resample from all input recruitment deviations. if `year_ndx_for_empirical_resampling = c(0,9)` this will resample from the first 10 input recruitment deviations. if `year_ndx_for_empirical_resampling = c((n_years - 9):(n_years - 1))` this will resample from the last 10 input recruitment deviations.
+
+- Deterministic recruitment `future_recruitment_type == 2`. This will assume \(YCS_y = 1\) which result in the model applying mean recruitment for all future years
+
 
 ### Fishing {-}
 
