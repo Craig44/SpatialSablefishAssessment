@@ -313,13 +313,20 @@ validate_input_data_and_parameters = function(data, parameters) {
   if(!check$result)
     return(paste0("ln_srv_dom_ll_sel_pars: ", check$message))
 
+
   # srv_dom_ll_q_by_year_indicator
   check = check_length(data$srv_dom_ll_q_by_year_indicator, n_years)
   if(!check$result)
     return(paste0("srv_dom_ll_q_by_year_indicator: ", check$message))
-  n_fixed_survey_q_time_blocks = length(unique(data$srv_dom_ll_q_by_year_indicator))
-  if(!any(data$srv_dom_ll_q_by_year_indicator == 0))
-    return("Could not find a 0 index in srv_dom_ll_q_by_year_indicator, this is likely an error")
+
+  if(data$q_is_nuisance == 0) {
+    n_fixed_survey_q_time_blocks = length(unique(data$srv_dom_ll_q_by_year_indicator))
+    if(!any(data$srv_dom_ll_q_by_year_indicator == 0))
+      return("Could not find a 0 index in srv_dom_ll_q_by_year_indicator, this is likely an error")
+  } else if(data$q_is_nuisance == 1) {
+    if(!all(data$srv_dom_ll_q_by_year_indicator == 0))
+      return("When data$q_is_nuisance = 1, then srv_dom_ll_q_by_year_indicator must be all zeros")
+  }
 
   check = check_dim(parameters$trans_srv_dom_ll_q, c(n_regions, length(unique(data$srv_dom_ll_q_by_year_indicator))))
   if(!check$result)

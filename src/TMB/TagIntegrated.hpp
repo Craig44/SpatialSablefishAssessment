@@ -146,6 +146,7 @@ Type TagIntegrated(objective_function<Type>* obj) {
   array<Type> pred_srv_dom_ll_bio(obs_srv_dom_ll_bio.dim);    // Sex disaggregated predicted catch at age
   DATA_IVECTOR(srv_dom_ll_q_by_year_indicator);               // Catchability time-block to apply when deriving model predictions each year
   DATA_INTEGER(srv_dom_ll_q_transformation);                  // 0 = log, 1 = logistic (bound between 0-1)
+  DATA_INTEGER(q_is_nuisance);                                // 0 means we estimate the q parameter (trans_srv_dom_ll_q) as a free parameter. 1 means we calculate the nuisance q based on the MLE value given the set of parameters. When 1 then the free parameter needs to be turned off during estimation
 
 
   // Tag recovery observations Sexually disaggregated?
@@ -345,15 +346,19 @@ Type TagIntegrated(objective_function<Type>* obj) {
   srv_dom_ll_sel_pars = exp(ln_srv_dom_ll_sel_pars);
 
   array<Type> srv_dom_ll_q(trans_srv_dom_ll_q.dim);
-  if(srv_dom_ll_q_transformation == 0) {
-    for(int i = 0; i < srv_dom_ll_q.dim(0); ++i) { // region
-      for(int j = 0; j < srv_dom_ll_q.dim(1); ++j) // time-blocks
-        srv_dom_ll_q(i,j) = exp(trans_srv_dom_ll_q(i,j));
-    }
-  } else if(srv_dom_ll_q_transformation == 1) {
-    for(int i = 0; i < srv_dom_ll_q.dim(0); ++i) { // region
-      for(int j = 0; j < srv_dom_ll_q.dim(1); ++j) // time-blocks
-        srv_dom_ll_q(i,j) = invlogit(trans_srv_dom_ll_q(i,j));
+  srv_dom_ll_q.fill(1.0); // if nuisance expected values will be initially calculated assuming q = 1
+  // Are we estimating q as a free parameter of deriving it as a nuisance parameter
+  if(q_is_nuisance == 0) {
+    if(srv_dom_ll_q_transformation == 0) {
+      for(int i = 0; i < srv_dom_ll_q.dim(0); ++i) { // region
+        for(int j = 0; j < srv_dom_ll_q.dim(1); ++j) // time-blocks
+          srv_dom_ll_q(i,j) = exp(trans_srv_dom_ll_q(i,j));
+      }
+    } else if(srv_dom_ll_q_transformation == 1) {
+      for(int i = 0; i < srv_dom_ll_q.dim(0); ++i) { // region
+        for(int j = 0; j < srv_dom_ll_q.dim(1); ++j) // time-blocks
+          srv_dom_ll_q(i,j) = invlogit(trans_srv_dom_ll_q(i,j));
+      }
     }
   }
 
@@ -1196,6 +1201,7 @@ Type TagIntegrated(objective_function<Type>* obj) {
           }
         }
       }
+
       // Check if we have Survey Longline biomass obsevation in this region and year
       if(srv_dom_ll_bio_indicator(region_ndx, year_ndx) == 1) {
         if(srv_dom_ll_obs_is_abundance == 1) {
@@ -1207,21 +1213,7 @@ Type TagIntegrated(objective_function<Type>* obj) {
           for(age_ndx = 0; age_ndx < n_ages; age_ndx++)
             pred_srv_dom_ll_bio(region_ndx, year_ndx) += natage_m(age_ndx, region_ndx, year_ndx) * sel_srv_dom_ll_m(age_ndx, srv_dom_ll_sel_by_year_indicator(year_ndx)) * male_mean_weight_by_age(age_ndx, year_ndx) * S_m_mid(age_ndx, region_ndx, year_ndx) + natage_f(age_ndx, region_ndx, year_ndx) * sel_srv_dom_ll_f(age_ndx, srv_dom_ll_sel_by_year_indicator(year_ndx)) * female_mean_weight_by_age(age_ndx, year_ndx) * S_f_mid(age_ndx, region_ndx, year_ndx) ;
         }
-        // apply catchability
         pred_srv_dom_ll_bio(region_ndx, year_ndx) *= srv_dom_ll_q(region_ndx, srv_dom_ll_q_by_year_indicator(year_ndx));
-
-        if(srv_dom_ll_bio_comp_likelihood == 0) {
-          nll(4) += square((log(obs_srv_dom_ll_bio(region_ndx, year_ndx) + 0.0001) - log(pred_srv_dom_ll_bio(region_ndx, year_ndx) + 0.0001) ))/ (2.0 * square(obs_srv_dom_ll_se(region_ndx, year_ndx) / obs_srv_dom_ll_bio(region_ndx, year_ndx)));
-          // not sure how best to simulate from this likelihood. I think this is right but worth having another look
-          SIMULATE {
-            obs_srv_dom_ll_bio(region_ndx, year_ndx) = exp(rnorm(log(pred_srv_dom_ll_bio(region_ndx, year_ndx) + 0.0001), obs_srv_dom_ll_se(region_ndx, year_ndx) / obs_srv_dom_ll_bio(region_ndx, year_ndx)));
-          }
-        } else if(srv_dom_ll_bio_comp_likelihood == 1) {
-          nll(4) -= dlnorm(obs_srv_dom_ll_bio(region_ndx, year_ndx), log(pred_srv_dom_ll_bio(region_ndx, year_ndx)) - 0.5 * obs_srv_dom_ll_se(region_ndx, year_ndx) * obs_srv_dom_ll_se(region_ndx, year_ndx), obs_srv_dom_ll_se(region_ndx, year_ndx), true);
-          SIMULATE {
-            obs_srv_dom_ll_bio(region_ndx, year_ndx) = exp(rnorm(log(pred_srv_dom_ll_bio(region_ndx, year_ndx)) - 0.5 * obs_srv_dom_ll_se(region_ndx, year_ndx) * obs_srv_dom_ll_se(region_ndx, year_ndx), obs_srv_dom_ll_se(region_ndx, year_ndx)));
-          }
-        }
       }
       // Calculate the Not captured group if tag-likelihood is multinomial release conditioned
       if(tag_likelihood == 2) {
@@ -1249,6 +1241,58 @@ Type TagIntegrated(objective_function<Type>* obj) {
       }
     }
   }
+
+  /*
+   *  Evaluate the survey abundance index here, this way we can calculate nuisance q's if the user asks for it
+   */
+  if(q_is_nuisance == 1) {
+    // calculate nuisance q
+    Type S3 = 0.0;
+    Type S4 = 0.0;
+    Type n_obs = 0.0;
+    for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
+      S3 = 0.0;
+      S4 = 0.0;
+      n_obs = 0.0;
+      for(year_ndx = 0; year_ndx < n_years; ++year_ndx) {
+        if(srv_dom_ll_bio_indicator(region_ndx, year_ndx) == 1) {
+          n_obs += 1.0;
+          if(srv_dom_ll_bio_comp_likelihood == 0) {
+            S3 += log(obs_srv_dom_ll_bio(region_ndx, year_ndx) / pred_srv_dom_ll_bio(region_ndx, year_ndx))/square(obs_srv_dom_ll_se(region_ndx, year_ndx) / obs_srv_dom_ll_bio(region_ndx, year_ndx));
+            S4 += 1.0 / square(obs_srv_dom_ll_se(region_ndx, year_ndx) / obs_srv_dom_ll_bio(region_ndx, year_ndx));
+          } else if(srv_dom_ll_bio_comp_likelihood == 1) {
+            S3 += log(obs_srv_dom_ll_bio(region_ndx, year_ndx) / pred_srv_dom_ll_bio(region_ndx, year_ndx))/square(obs_srv_dom_ll_se(region_ndx, year_ndx));
+            S4 += 1.0 / square(obs_srv_dom_ll_se(region_ndx, year_ndx));
+          }
+        }
+      }
+      // the final calculation
+      srv_dom_ll_q(region_ndx, 0) = exp((0.5*n_obs + S3) / S4);
+    }
+  }
+
+  for(year_ndx = 0; year_ndx < n_years; ++year_ndx) {
+    for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
+      if(srv_dom_ll_bio_indicator(region_ndx, year_ndx) == 1) {
+        if(q_is_nuisance == 1)
+          pred_srv_dom_ll_bio(region_ndx, year_ndx) *= srv_dom_ll_q(region_ndx, 0);
+
+        if(srv_dom_ll_bio_comp_likelihood == 0) {
+          nll(4) += square((log(obs_srv_dom_ll_bio(region_ndx, year_ndx) + 0.0001) - log(pred_srv_dom_ll_bio(region_ndx, year_ndx) + 0.0001) ))/ (2.0 * square(obs_srv_dom_ll_se(region_ndx, year_ndx) / obs_srv_dom_ll_bio(region_ndx, year_ndx)));
+          // not sure how best to simulate from this likelihood. I think this is right but worth having another look
+          SIMULATE {
+            obs_srv_dom_ll_bio(region_ndx, year_ndx) = exp(rnorm(log(pred_srv_dom_ll_bio(region_ndx, year_ndx) + 0.0001), obs_srv_dom_ll_se(region_ndx, year_ndx) / obs_srv_dom_ll_bio(region_ndx, year_ndx)));
+          }
+        } else if(srv_dom_ll_bio_comp_likelihood == 1) {
+          nll(4) -= dlnorm(obs_srv_dom_ll_bio(region_ndx, year_ndx), log(pred_srv_dom_ll_bio(region_ndx, year_ndx)) - 0.5 * obs_srv_dom_ll_se(region_ndx, year_ndx) * obs_srv_dom_ll_se(region_ndx, year_ndx), obs_srv_dom_ll_se(region_ndx, year_ndx), true);
+          SIMULATE {
+            obs_srv_dom_ll_bio(region_ndx, year_ndx) = exp(rnorm(log(pred_srv_dom_ll_bio(region_ndx, year_ndx)) - 0.5 * obs_srv_dom_ll_se(region_ndx, year_ndx) * obs_srv_dom_ll_se(region_ndx, year_ndx), obs_srv_dom_ll_se(region_ndx, year_ndx)));
+          }
+        }
+      }
+    }
+  }
+
   /*
    * Additional objective function components that are not observations
    */

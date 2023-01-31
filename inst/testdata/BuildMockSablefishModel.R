@@ -174,6 +174,8 @@ data$srv_dom_ll_bio_comp_likelihood = 1
 data$srv_dom_ll_obs_is_abundance = 1
 data$srv_dom_ll_q_by_year_indicator = rep(0, n_years)
 data$srv_dom_ll_q_transformation = 1 ## logistic
+data$q_is_nuisance = 0
+
 tag_recovery_years = 2011:2020
 # drop any recovery years before release years
 #tag_recovery_years = tag_recovery_years[which(tag_recovery_years %in% (tag_release_years + 1))] ## the plus one is because we don't allow a recovery unless after a year at release

@@ -66,6 +66,10 @@ region_key
 - `set_pars_to_be_the_same` set parameters to be estimated at the same value i.e., male female have the same selectivity parameters. or tag-reporting  to be the same among regions.
 - `rmvnorm_prec` simulate from a multivariate normal distribution using the precision matrix.
 
+### Projection/Reference point functions {-}
+
+- `find_fref` this will find a constant F assuming future deterministic recruitment that achieves some specified target percent \(B_{0}\). Users must specify how much of that F is allocated to each fishery in each region.
+
 
 ### Model comparison functions {-}
 
