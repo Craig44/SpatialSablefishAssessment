@@ -216,6 +216,7 @@ div.csl-indent {
 <ul>
 <li class="chapter" data-level="" data-path="tagintegrated-model-equations.html"><a href="tagintegrated-model-equations.html#recruitment-1"><i class="fa fa-check"></i>Recruitment</a></li>
 <li class="chapter" data-level="" data-path="tagintegrated-model-equations.html"><a href="tagintegrated-model-equations.html#fishing"><i class="fa fa-check"></i>Fishing</a></li>
+<li class="chapter" data-level="" data-path="tagintegrated-model-equations.html"><a href="tagintegrated-model-equations.html#example-code-snippets"><i class="fa fa-check"></i>Example code snippets</a></li>
 </ul></li>
 <li class="chapter" data-level="" data-path="tagintegrated-model-equations.html"><a href="tagintegrated-model-equations.html#symbol-notation"><i class="fa fa-check"></i>Symbol Notation</a></li>
 </ul></li>
@@ -310,6 +311,7 @@ where, <span class="math inline">\(\widehat{F}^{init}\)</span> is the estimable 
 <div id="recruitment" class="section level3 unnumbered hasAnchor">
 <h3>Recruitment<a href="tagintegrated-model-equations.html#recruitment" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>How to spatially apportion recruits in a way that is consistent with the data and isn’t confounded with movement of young fish? There are two considerations, firstly looking at the AF and LFs there are regions that seem to have more young fish than others (link to figure and describe). However, there is very little information on spawning grounds and behavior. This coupled with a complex early life history make it difficult to a priori set regional apportionment of recruits, which would be ideal, an alternative is to estimate these as free parameters. This may introduce confounding when we start estimating movement which is believed to be ontogenetic.</p>
+<p>Terminology regarding recruitment and spatial population structures can be ambiguous and confusing. There is a fair bit of literature describing and comparing metapopulations, panmictic populations and spatially heterogeneous populations. I believe this model can represent the later two A metapopulation implies there is some natal identifiability when fish are mixing which this model doesn’t do. However, this would only be advantageous when there is some sort of natal dynamic e.g. natal homing or natal productivity difference such as growth. Neither of these are really evident in the observed data for sablefish and so having a natal attribute in the partition doesn’t make much sense.</p>
 </div>
 <div id="spawning-biomass" class="section level3 unnumbered hasAnchor">
 <h3>Spawning biomass<a href="tagintegrated-model-equations.html#spawning-biomass" class="anchor-section" aria-label="Anchor link to header"></a></h3>
@@ -418,19 +420,19 @@ ll_{r,y} = \frac{1}{{I}^s_{r,y} SE[{I}^s_{r,y}] \sqrt{ 2\pi}} \exp \left( - \fra
 </ul>
 <p>The catchability coefficient can also be calculated as a nuisance parameter instead of a free estimable parameter using the input <code>data$q_is_nuisance = 1</code>. This will solve the value for q in each region conditional on the other input free parameters. If the abundance or biomass observation is assumed to be lognormally distributed, then we can algebraically solve for the catchability coefficient.</p>
 <p>For simplicity in the following equations we use <span class="math inline">\(E_i\)</span> to denote the model expected value <span class="math inline">\(O_i\)</span> to denote the observed value and <span class="math inline">\(\sigma_i\)</span> to denote the standard error for element <span class="math inline">\(i\)</span> of a series. In this case a time-series is within each region. So we will calculate a nuisance q for each region.</p>
-<p>Technically, this derivation is only correct when <code>data$srv_dom_ll_bio_comp_likelihood == 1</code> however it will be approximately close for the other likelihood. Assuming a specific element contributes to the likelihood in the following manor,</p>
+<p>Technically, this derivation is only correct when <code>data$srv_dom_ll_bio_comp_likelihood == 1</code> however, it will be considered an approximation for the other likelihood. Assuming a specific element contributes to the negative log likelihood in the following manor,</p>
 <p><span class="math display">\[
 -ll = \sum_i log (\sigma_i) + 0.5\sum_i \bigg(\frac{log(O_i) - log(qE_i) + 0.5\sigma_i^2}{\sigma_i} \bigg)^2 \ ,
 \]</span></p>
-<p>then, if differentiate the negative log-likelihood with respect to <span class="math inline">\(q\)</span>
+<p>then, if you differentiate this term with respect to <span class="math inline">\(q\)</span> you get
 <span class="math display">\[
-\frac{\partial }{\partial q}(-ll) = \frac{-1}{q} \sum_i\bigg( \frac{log(O_i/E_i) - log(q) + 0.5\sigma_i^2}{\sigma_i^2}\bigg)
+\frac{\partial }{\partial q}(-ll) = \frac{-1}{q} \sum_i\bigg( \frac{log(O_i/E_i) - log(q) + 0.5\sigma_i^2}{\sigma_i^2}\bigg) \,
 \]</span></p>
-<p>we can solve for when the derivative is zero (MLE estimate) and obtain the following result</p>
+<p>if you solve for when the derivative is zero (MLE estimate) then you obtain the following result</p>
 <p><span class="math display">\[
 \hat q = exp\frac{0.5n + S_3}{S_4} \,
 \]</span>
-where <span class="math inline">\(S_3 = \sum_i (log(O_i /E_I)/\sigma_i^2)\)</span> and <span class="math inline">\(S_4 = \sum_i(1/\sigma_i^2)\)</span>.</p>
+where <span class="math inline">\(S_3 = \sum_i (log(O_i /E_I)/\sigma_i^2)\)</span> and <span class="math inline">\(S_4 = \sum_i(1/\sigma_i^2)\)</span>. <span class="math inline">\(E_i\)</span> in the initial calculation is derived assuming a <span class="math inline">\(q = 1\)</span>, before <span class="math inline">\(\hat q\)</span> is calculated.</p>
 </div>
 <div id="tag-recovery-observations" class="section level3 unnumbered hasAnchor">
 <h3>Tag recovery observations<a href="tagintegrated-model-equations.html#tag-recovery-observations" class="anchor-section" aria-label="Anchor link to header"></a></h3>
@@ -533,6 +535,24 @@ resulting recruitment multipliers, also termed year class strengths (<span class
 <li><p>User specifies F values during projection (unlikely useage) <code>future_fishing_type = 0</code> populate <code>future_fishing_inputs_trwl</code> and <code>future_fishing_inputs_fixed</code> with F values</p></li>
 <li><p>User specifies Catch values during projection (more likely) <code>future_fishing_type = 1</code> populate <code>future_fishing_inputs_trwl</code> and <code>future_fishing_inputs_fixed</code> with future catches. An F is calculated based on the hybrid fishing mortality method, which should result in predicted catches close to these but not exact.</p></li>
 </ul>
+</div>
+<div id="example-code-snippets" class="section level3 unnumbered hasAnchor">
+<h3>Example code snippets<a href="tagintegrated-model-equations.html#example-code-snippets" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="tagintegrated-model-equations.html#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="do">## once you have done MLE and evaluated fits to a model</span></span>
+<span id="cb15-2"><a href="tagintegrated-model-equations.html#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="do">## then you can running the following code to find</span></span>
+<span id="cb15-3"><a href="tagintegrated-model-equations.html#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="do">## deterministic reference points based on %B0</span></span>
+<span id="cb15-4"><a href="tagintegrated-model-equations.html#cb15-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-5"><a href="tagintegrated-model-equations.html#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="co"># setup projection data</span></span>
+<span id="cb15-6"><a href="tagintegrated-model-equations.html#cb15-6" aria-hidden="true" tabindex="-1"></a>proj_data <span class="ot">=</span> <span class="fu">setup_proj_data</span>(<span class="at">mle_obj =</span> mle_obj, <span class="at">n_proj_years  =</span> <span class="dv">100</span>)</span>
+<span id="cb15-7"><a href="tagintegrated-model-equations.html#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="co"># check projection data</span></span>
+<span id="cb15-8"><a href="tagintegrated-model-equations.html#cb15-8" aria-hidden="true" tabindex="-1"></a><span class="fu">validate_input_data_and_parameters</span>(<span class="at">data =</span> proj_data, <span class="at">parameters =</span> parameters)</span>
+<span id="cb15-9"><a href="tagintegrated-model-equations.html#cb15-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Get MLE parameters</span></span>
+<span id="cb15-10"><a href="tagintegrated-model-equations.html#cb15-10" aria-hidden="true" tabindex="-1"></a>proj_pars <span class="ot">=</span> mle_spatial<span class="sc">$</span>par</span>
+<span id="cb15-11"><a href="tagintegrated-model-equations.html#cb15-11" aria-hidden="true" tabindex="-1"></a><span class="co"># build proj object</span></span>
+<span id="cb15-12"><a href="tagintegrated-model-equations.html#cb15-12" aria-hidden="true" tabindex="-1"></a>proj_obj <span class="ot">&lt;-</span> <span class="fu">MakeADFun</span>(proj_data, parameters, <span class="at">map =</span> map_fixed_pars,</span>
+<span id="cb15-13"><a href="tagintegrated-model-equations.html#cb15-13" aria-hidden="true" tabindex="-1"></a>                      <span class="at">DLL=</span><span class="st">&quot;SpatialSablefishAssessment_TMBExports&quot;</span>, <span class="at">hessian =</span> T, <span class="at">silent =</span> T)</span>
+<span id="cb15-14"><a href="tagintegrated-model-equations.html#cb15-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Find F-reference based on deterministic recruitment to achieve 40% bzero in each region</span></span>
+<span id="cb15-15"><a href="tagintegrated-model-equations.html#cb15-15" aria-hidden="true" tabindex="-1"></a>region_F_ref <span class="ot">=</span> <span class="fu">find_regional_fref</span>(proj_obj, proj_pars, <span class="at">percent_Bzero =</span> <span class="dv">40</span>)</span></code></pre></div>
 </div>
 </div>
 <div id="symbol-notation" class="section level2 unnumbered hasAnchor">
