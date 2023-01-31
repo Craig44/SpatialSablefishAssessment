@@ -289,3 +289,38 @@ posfun <- function(x, eps, pen = NULL) {
   }
   return(eps*(1/(1+xp+pow(xp,2)+pow(xp,3)+pow(xp,4)+pow(xp,5))))
 }
+
+
+#' extend_vec_last_val
+#' @param vector a vector to add n elements to, all of which have the same value as the last value in vector
+#' @param n number of elements to concatenate
+#' @return a vector with length(vector) + n all the last n values have the same value as length(vector)
+#' @export
+extend_vec_last_val <- function(vector, n) {
+  new_vec = c(vector, rep(vector[length(vector)], n))
+  return(new_vec)
+}
+
+#' extend_2darray
+#' @param array_2d an array with 2 dimensions or matrix
+#' @param n number of times to concatenate the last element in the 2 dimension
+#' @param colwise boolean whether to append columns (TRUE) or rows (FALSE)
+#' @return a two dimensional array that has had the either the first or second dimension concatenated
+#' @export
+extend_2darray <- function(array_2d, n, colwise= TRUE) {
+  if(colwise) {
+    return(cbind(array_2d, replicate(array_2d[,ncol(array_2d)], n = n)))
+  } else {
+    return(rbind(array_2d, replicate(array_2d[nrow(array_2d),], n = n)))
+  }
+  return(NULL)
+}
+#' extend_3darray_last_dim
+#' @param array_3d an array with 3 dimensions
+#' @param n number of times to concatenate the last element in the 3 dimension
+#' @return a three dimensional array that has had the 3dimension concatenated
+#' @export
+extend_3darray_last_dim <- function(array_3d, n) {
+  new_3d_array = abind(array_3d, replicate(array_3d[,,dim(array_3d)[3]], n = n), along = 3)
+  return(new_3d_array)
+}

@@ -22,11 +22,12 @@ plot_fishing_mortalities = function(MLE_report, region_key = NULL) {
 #' @export
 get_fishing_mortalities = function(MLE_report, region_key = NULL) {
   years = MLE_report$years
+  projyears = min(MLE_report$years):(max(MLE_report$years) + MLE_report$n_projections_years)
   regions = 1:MLE_report$n_regions
   fixed_F = MLE_report$annual_F_fixed
   trwl_F = MLE_report$annual_F_trwl
 
-  dimnames(fixed_F) = dimnames(trwl_F) = list(regions, years)
+  dimnames(fixed_F) = dimnames(trwl_F) = list(regions, projyears)
   molten_fixed_F = reshape2::melt(fixed_F)
   molten_trwl_F = reshape2::melt(trwl_F)
 
@@ -89,7 +90,7 @@ get_catches = function(MLE_report, region_key = NULL) {
 #' @return ggplot2
 #' @export
 plot_movement = function(MLE_report, region_key = NULL) {
-  regions = paste0("Region ", 1:data$n_regions)
+  regions = paste0("Region ", 1:MLE_report$n_regions)
   if(!is.null(region_key))
     regions = region_key$area[region_key$TMB_ndx + 1]
 
@@ -143,11 +144,12 @@ plot_selectivities = function(MLE_report) {
 #' @export
 #'
 plot_recruitment = function(MLE_report, region_key = NULL) {
-  regions = paste0("Region ", 1:data$n_regions)
+  regions = paste0("Region ", 1:MLE_report$n_regions)
   if(!is.null(region_key))
     regions = region_key$area[region_key$TMB_ndx + 1]
+  projyears = min(MLE_report$years):(max(MLE_report$years) + MLE_report$n_projections_years)
 
-  dimnames(MLE_report$recruitment_yr) = list(data$years, regions)
+  dimnames(MLE_report$recruitment_yr) = list(projyears, regions)
   names(MLE_report$mean_rec) = regions
   recruit_df = reshape2::melt(MLE_report$recruitment_yr)
   mean_recruit_df = reshape2::melt(as.matrix(MLE_report$mean_rec))
@@ -162,3 +164,65 @@ plot_recruitment = function(MLE_report, region_key = NULL) {
 
   return(gplt)
 }
+
+#'
+#' get_SSB
+#' @param MLE_report a list that is output from obj$report() usually once an optimsation routine has been done.
+#' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
+#' @param depletion boolean if true we will scale values by Bzero
+#' @return ggplot2 object that will plot if an observation occurs in a year and region
+#' @export
+get_SSB = function(MLE_report, region_key = NULL, depletion = F) {
+  years = MLE_report$years
+  projyears = min(MLE_report$years):(max(MLE_report$years) + MLE_report$n_projections_years)
+
+  regions = 1:MLE_report$n_regions
+  ssbs = MLE_report$SSB_yr
+  if(depletion)
+    ssbs = sweep(ssbs, MARGIN = 2, STATS = MLE_report$Bzero, FUN = "/") * 100
+
+  dimnames(ssbs) = list(projyears, regions)
+  molten_ssbs = reshape2::melt(ssbs)
+
+  colnames(molten_ssbs) = c("Year", "Region", "SSB")
+  if(depletion)
+    colnames(molten_ssbs) = c("Year", "Region", "Depletion")
+
+  if(is.null(region_key)) {
+    molten_ssbs$Region = paste0("Region ", molten_ssbs$Region)
+  } else {
+    molten_ssbs$Region = region_key$area[match(molten_ssbs$Region, (region_key$TMB_ndx + 1))]
+  }
+  return(molten_ssbs);
+}
+
+#'
+#' plot_SSB
+#' @param MLE_report a list that is output from obj$report() usually once an optimsation routine has been done.
+#' @param data list that is passed to the MakeADfun for the TMB model
+#' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
+#' @param depletion boolean if true we will scale values by Bzero
+#' @return ggplot2 object that will plot if an observation occurs in a year and region
+#' @export
+plot_SSB = function(MLE_report, region_key = NULL, depletion = F) {
+  molten_ssbs = get_SSB(MLE_report, region_key, depletion = depletion)
+  gplt = NULL
+  if(depletion) {
+    gplt = ggplot(molten_ssbs) +
+      geom_line(aes(x = Year, y = Depletion, col = Region), linewidth= 1.1) +
+      guides(colour = "none", linewidth = "none") +
+      labs(y = "Depletion (SSB/B0 %)") +
+      facet_wrap(~Region) +
+      theme_bw()
+  } else {
+    gplt = ggplot(molten_ssbs) +
+      geom_line(aes(x = Year, y = SSB, col = Region), linewidth= 1.1) +
+      guides(colour = "none", linewidth = "none") +
+      labs(y = "Spawning Stock Biomass (SSB)") +
+      facet_wrap(~Region) +
+      theme_bw()
+  }
+
+  return(gplt)
+}
+

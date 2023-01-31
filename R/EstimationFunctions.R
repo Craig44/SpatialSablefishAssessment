@@ -325,6 +325,11 @@ set_up_parameters <- function(data, parameters,
     if(all(is.na(na_map$trans_srv_dom_ll_q)))
       qs_are_turned_off = TRUE
   }
+  ## check if q is nuisance and so turn off free estimated parameters
+  if(data$q_is_nuisance == 1) {
+    qs_are_turned_off = TRUE
+    parameters_completely_fixed = c(parameters_completely_fixed, c("trans_srv_dom_ll_q"))
+  }
   if(!qs_are_turned_off) {
     if(data$n_regions > 1) {
       if(!srv_q_spatial) {

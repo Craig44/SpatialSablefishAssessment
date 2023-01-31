@@ -3,26 +3,6 @@
 #
 #
 
-#'
-#' get_SSB
-#' @param MLE_report a list that is output from obj$report() usually once an optimsation routine has been done.
-#' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
-#' @return ggplot2 object that will plot if an observation occurs in a year and region
-#' @export
-get_SSB = function(MLE_report, region_key = NULL) {
-  years = MLE_report$years
-  regions = 1:MLE_report$n_regions
-  ssbs = MLE_report$SSB_yr
-  dimnames(ssbs) = list(years, regions)
-  molten_ssbs = reshape2::melt(ssbs)
-  colnames(molten_ssbs) = c("Year", "Region", "SSB")
-  if(is.null(region_key)) {
-    molten_ssbs$Region = paste0("Region ", molten_ssbs$Region)
-  } else {
-    molten_ssbs$Region = region_key$area[match(molten_ssbs$Region, (region_key$TMB_ndx + 1))]
-  }
-  return(molten_ssbs);
-}
 
 #' get_partition
 #' @param MLE_report a list that is output from obj$report() usually once an optimsation routine has been done.
@@ -52,25 +32,6 @@ get_partition = function(MLE_report, region_key = NULL) {
   }
   return(full_df);
 }
-
-#'
-#' plot_SSB
-#' @param MLE_report a list that is output from obj$report() usually once an optimsation routine has been done.
-#' @param data list that is passed to the MakeADfun for the TMB model
-#' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
-#' @return ggplot2 object that will plot if an observation occurs in a year and region
-#' @export
-plot_SSB = function(MLE_report, region_key = NULL) {
-  molten_ssbs = get_SSB(MLE_report, region_key)
-  gplt = ggplot(molten_ssbs) +
-    geom_line(aes(x = Year, y = SSB, col = Region), linewidth= 1.1) +
-    guides(colour = "none", linewidth = "none") +
-    labs(y = "Spawning Stock Biomass (SSB)") +
-    facet_wrap(~Region) +
-    theme_bw()
-  return(gplt)
-}
-
 
 #'
 #' plot_init_nage plot initial numbers at age

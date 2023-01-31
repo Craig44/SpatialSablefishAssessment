@@ -21,7 +21,8 @@ Imports:
     tidyr,
     purrr,
     ggplot2,
-    dplyr
+    dplyr,
+    abind
 LinkingTo: 
     TMB
 RdMacros: 

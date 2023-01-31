@@ -88,6 +88,15 @@ validate_input_data_and_parameters = function(data, parameters) {
     ## check projection variables
     if(data$n_projections_years <= 0)
       stop("data$n_projections_years must be greater than max(data$years)")
+
+    ## future fishing containers
+    check = check_dim(data$future_fishing_inputs_fixed, c(n_regions, data$n_projections_years))
+    if(!check$result)
+      return(paste0("future_fishing_inputs_fixed: ", check$message))
+    check = check_dim(data$future_fishing_inputs_trwl, c(n_regions, data$n_projections_years))
+    if(!check$result)
+      return(paste0("future_fishing_inputs_trwl: ", check$message))
+
   }
 
   ## check model inputs dimensions
@@ -246,8 +255,8 @@ validate_input_data_and_parameters = function(data, parameters) {
     }
   }
   ## check projection inputs. TODO: should only really check these if do_projection == 1
-  if(!data$future_recruitment_type %in% c(0,1))
-    return("Unknown value for future_recruitment_type, expected either 0 or 1")
+  if(!data$future_recruitment_type %in% c(0,1,2))
+    return("Unknown value for future_recruitment_type, expected either 0, 1, or 2")
   check = check_length(data$year_ndx_for_empirical_resampling, 2)
   if(!check$result)
     return(paste0("year_ndx_for_empirical_resampling: ", check$message))

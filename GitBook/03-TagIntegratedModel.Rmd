@@ -69,6 +69,10 @@ Empirical length at age matrices are supplied for all years where sufficient age
 ### Recruitment {-}
 How to spatially apportion recruits in a way that is consistent with the data and isn't confounded with movement of young fish? There are two considerations, firstly looking at the AF and LFs there are regions that seem to have more young fish than others (link to figure and describe). However, there is very little information on spawning grounds and behavior. This coupled with a complex early life history make it difficult to a priori set regional apportionment of recruits, which would be ideal, an alternative is to estimate these as free parameters. This may introduce confounding when we start estimating movement which is believed to be ontogenetic.
 
+
+Terminology regarding recruitment and spatial population structures can be ambiguous and confusing. There is a fair bit of literature describing and comparing metapopulations, panmictic populations and spatially heterogeneous populations. I believe this model can represent the later two A metapopulation implies there is some natal identifiability when fish are mixing which this model doesn't do. However, this would only be advantageous when there is some sort of natal dynamic e.g. natal homing or natal productivity difference such as growth. Neither of these are really evident in the observed data for sablefish and so having a natal attribute in the partition doesn't make much sense.
+
+
 ### Spawning biomass {-}
 
 Spawning biomass is based on mature female weight. SSB in a given year and region is calculated as,
@@ -193,24 +197,23 @@ The catchability coefficient can also be calculated as a nuisance parameter inst
 
 For simplicity in the following equations we use \(E_i\) to denote the model expected value \(O_i\) to denote the observed value and \(\sigma_i\) to denote the standard error for element \(i\) of a series. In this case a time-series is within each region. So we will calculate a nuisance q for each region. 
 
-Technically, this derivation is only correct when `data$srv_dom_ll_bio_comp_likelihood == 1` however it will be approximately close for the other likelihood. Assuming a specific element contributes to the likelihood in the following manor,
+Technically, this derivation is only correct when `data$srv_dom_ll_bio_comp_likelihood == 1` however, it will be considered an approximation for the other likelihood. Assuming a specific element contributes to the negative log likelihood in the following manor,
 
 \[
 -ll = \sum_i log (\sigma_i) + 0.5\sum_i \bigg(\frac{log(O_i) - log(qE_i) + 0.5\sigma_i^2}{\sigma_i} \bigg)^2 \ ,
 \]
 
-then, if differentiate the negative log-likelihood with respect to \(q\) 
+then, if you differentiate this term with respect to \(q\) you get
 \[
-\frac{\partial }{\partial q}(-ll) = \frac{-1}{q} \sum_i\bigg( \frac{log(O_i/E_i) - log(q) + 0.5\sigma_i^2}{\sigma_i^2}\bigg)
+\frac{\partial }{\partial q}(-ll) = \frac{-1}{q} \sum_i\bigg( \frac{log(O_i/E_i) - log(q) + 0.5\sigma_i^2}{\sigma_i^2}\bigg) \,
 \]
 
-we can solve for when the derivative is zero (MLE estimate) and obtain the following result
+if you solve for when the derivative is zero (MLE estimate) then you obtain the following result
 
 \[
 \hat q = exp\frac{0.5n + S_3}{S_4} \,
 \]
-where $S_3 = \sum_i (log(O_i /E_I)/\sigma_i^2)$ and $S_4 = \sum_i(1/\sigma_i^2)$.
-
+where $S_3 = \sum_i (log(O_i /E_I)/\sigma_i^2)$ and $S_4 = \sum_i(1/\sigma_i^2)$. \(E_i\) in the initial calculation is derived assuming a \(q = 1\), before \(\hat q\) is calculated. 
 
 ### Tag recovery observations {-}
 
@@ -337,6 +340,28 @@ Fishing selectivity that was assumed in the last year of the model is used durin
 - User specifies F values during projection (unlikely useage) `future_fishing_type = 0` populate `future_fishing_inputs_trwl` and `future_fishing_inputs_fixed` with F values
 
 - User specifies Catch values during projection (more likely) `future_fishing_type = 1` populate `future_fishing_inputs_trwl` and `future_fishing_inputs_fixed` with future catches. An F is calculated based on the hybrid fishing mortality method, which should result in predicted catches close to these but not exact.
+
+
+### Example code snippets {-}
+
+```{r, echo = T, eval = F}
+## once you have done MLE and evaluated fits to a model
+## then you can running the following code to find
+## deterministic reference points based on %B0
+
+# setup projection data
+proj_data = setup_proj_data(mle_obj = mle_obj, n_proj_years  = 100)
+# check projection data
+validate_input_data_and_parameters(data = proj_data, parameters = parameters)
+# Get MLE parameters
+proj_pars = mle_spatial$par
+# build proj object
+proj_obj <- MakeADFun(proj_data, parameters, map = map_fixed_pars,
+                      DLL="SpatialSablefishAssessment_TMBExports", hessian = T, silent = T)
+# Find F-reference based on deterministic recruitment to achieve 40% bzero in each region
+region_F_ref = find_regional_fref(proj_obj, proj_pars, percent_Bzero = 40)
+
+```
 
 
 ## Symbol Notation {-}

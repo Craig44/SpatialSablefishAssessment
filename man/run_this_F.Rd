@@ -3,12 +3,13 @@
 \name{run_this_F}
 \alias{run_this_F}
 \title{run_this_F
-This function is run by the \code{find_fref} method}
+This function is run by the \code{find_apportioned_fref} method}
 \usage{
 run_this_F(
   trial_F,
+  input_pars,
   target_percent_Bzero,
-  mle_obj,
+  proj_obj,
   fixed_F_allocation_by_region,
   trwl_F_allocation_by_region
 )
@@ -16,9 +17,11 @@ run_this_F(
 \arguments{
 \item{trial_F}{F value to F that is being trialed}
 
+\item{input_pars}{vector of input parameters that are passed to proj_obj$report()}
+
 \item{target_percent_Bzero}{global percent B0 that we are trying to solve for}
 
-\item{mle_obj}{an optimised obj that has been created by \code{TMB::MakeADFun}}
+\item{proj_obj}{an obj that has been created by \code{TMB::MakeADFun}}
 
 \item{fixed_F_allocation_by_region}{vector of proportions to allocated to each region for the fixed gear fishery}
 
@@ -29,7 +32,7 @@ sum of squares difference between the the trial F's Bzero and the value we are t
 }
 \description{
 run_this_F
-This function is run by the \code{find_fref} method
+This function is run by the \code{find_apportioned_fref} method
 }
 \details{
 the \code{trial_F} is allocated among both \code{fixed_F_allocation_by_region} and \code{trwl_F_allocation_by_region} which must sum = 0
