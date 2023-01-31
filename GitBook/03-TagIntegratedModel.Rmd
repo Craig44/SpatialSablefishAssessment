@@ -122,9 +122,6 @@ S(a | \theta_1, \theta_2) = \frac{1}{1 + 19^{(\theta_1 - a) / \theta_2}}
 
 
 
-
-
-
 ## Observation equations {-}
 
 There are five observation types available in the `TagIntegrated` model
@@ -192,6 +189,28 @@ ll_{r,y} = \frac{1}{{I}^s_{r,y} SE[{I}^s_{r,y}] \sqrt{ 2\pi}} \exp \left( - \fra
 \]
 
 
+The catchability coefficient can also be calculated as a nuisance parameter instead of a free estimable parameter using the input `data$q_is_nuisance = 1`. This will solve the value for q in each region conditional on the other input free parameters. If the abundance or biomass observation is assumed to be lognormally distributed, then we can algebraically solve for the catchability coefficient.
+
+For simplicity in the following equations we use \(E_i\) to denote the model expected value \(O_i\) to denote the observed value and \(\sigma_i\) to denote the standard error for element \(i\) of a series. In this case a time-series is within each region. So we will calculate a nuisance q for each region. 
+
+Technically, this derivation is only correct when `data$srv_dom_ll_bio_comp_likelihood == 1` however it will be approximately close for the other likelihood. Assuming a specific element contributes to the likelihood in the following manor,
+
+\[
+-ll = \sum_i log (\sigma_i) + 0.5\sum_i \bigg(\frac{log(O_i) - log(qE_i) + 0.5\sigma_i^2}{\sigma_i} \bigg)^2 \ ,
+\]
+
+then, if differentiate the negative log-likelihood with respect to \(q\) 
+\[
+\frac{\partial }{\partial q}(-ll) = \frac{-1}{q} \sum_i\bigg( \frac{log(O_i/E_i) - log(q) + 0.5\sigma_i^2}{\sigma_i^2}\bigg)
+\]
+
+we can solve for when the derivative is zero (MLE estimate) and obtain the following result
+
+\[
+\hat q = exp\frac{0.5n + S_3}{S_4} \,
+\]
+where $S_3 = \sum_i (log(O_i /E_I)/\sigma_i^2)$ and $S_4 = \sum_i(1/\sigma_i^2)$.
+
 
 ### Tag recovery observations {-}
 
@@ -213,7 +232,7 @@ N^k_{m} \sim \mathcal{Poisson}(\widehat{N}^k_{m})
 N^k_{m} \sim \mathcal{NB}(\widehat{N}^k_{m}, \hat{\phi})
 \]
 where, \(\hat{\phi}\) is the estimable dispersion parameter
-- Multinomial (Not implemented)
+- Multinomial (`tag_likelihood = 2`)
 \[
 \boldsymbol{N^k}  \sim \text{Multinomial}\left(\boldsymbol{\hat{\theta}}^k, \text{Neff}^k\right)
 \]
