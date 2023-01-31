@@ -416,6 +416,21 @@ ll_{r,y} = \frac{\left( \log {I}^s_{r,y} + 0.0001 - \log \widehat{I}^s_{r,y} + 0
 ll_{r,y} = \frac{1}{{I}^s_{r,y} SE[{I}^s_{r,y}] \sqrt{ 2\pi}} \exp \left( - \frac{ \left(\log {I}^s_{r,y} - \log \widehat{I}^s_{r,y} - 0.5SE[{I}^s_{r,y}]^2\right)^2}{2 SE[{I}^s_{r,y}]^2}\right)
 \]</span></p></li>
 </ul>
+<p>The catchability coefficient can also be calculated as a nuisance parameter instead of a free estimable parameter using the input <code>data$q_is_nuisance = 1</code>. This will solve the value for q in each region conditional on the other input free parameters. If the abundance or biomass observation is assumed to be lognormally distributed, then we can algebraically solve for the catchability coefficient.</p>
+<p>For simplicity in the following equations we use <span class="math inline">\(E_i\)</span> to denote the model expected value <span class="math inline">\(O_i\)</span> to denote the observed value and <span class="math inline">\(\sigma_i\)</span> to denote the standard error for element <span class="math inline">\(i\)</span> of a series. In this case a time-series is within each region. So we will calculate a nuisance q for each region.</p>
+<p>Technically, this derivation is only correct when <code>data$srv_dom_ll_bio_comp_likelihood == 1</code> however it will be approximately close for the other likelihood. Assuming a specific element contributes to the likelihood in the following manor,</p>
+<p><span class="math display">\[
+-ll = \sum_i log (\sigma_i) + 0.5\sum_i \bigg(\frac{log(O_i) - log(qE_i) + 0.5\sigma_i^2}{\sigma_i} \bigg)^2 \ ,
+\]</span></p>
+<p>then, if differentiate the negative log-likelihood with respect to <span class="math inline">\(q\)</span>
+<span class="math display">\[
+\frac{\partial }{\partial q}(-ll) = \frac{-1}{q} \sum_i\bigg( \frac{log(O_i/E_i) - log(q) + 0.5\sigma_i^2}{\sigma_i^2}\bigg)
+\]</span></p>
+<p>we can solve for when the derivative is zero (MLE estimate) and obtain the following result</p>
+<p><span class="math display">\[
+\hat q = exp\frac{0.5n + S_3}{S_4} \,
+\]</span>
+where <span class="math inline">\(S_3 = \sum_i (log(O_i /E_I)/\sigma_i^2)\)</span> and <span class="math inline">\(S_4 = \sum_i(1/\sigma_i^2)\)</span>.</p>
 </div>
 <div id="tag-recovery-observations" class="section level3 unnumbered hasAnchor">
 <h3>Tag recovery observations<a href="tagintegrated-model-equations.html#tag-recovery-observations" class="anchor-section" aria-label="Anchor link to header"></a></h3>
@@ -435,7 +450,7 @@ N^k_{m} \sim \mathcal{Poisson}(\widehat{N}^k_{m})
 N^k_{m} \sim \mathcal{NB}(\widehat{N}^k_{m}, \hat{\phi})
 \]</span>
 where, <span class="math inline">\(\hat{\phi}\)</span> is the estimable dispersion parameter</li>
-<li>Multinomial (Not implemented)
+<li>Multinomial (<code>tag_likelihood = 2</code>)
 <span class="math display">\[
 \boldsymbol{N^k}  \sim \text{Multinomial}\left(\boldsymbol{\hat{\theta}}^k, \text{Neff}^k\right)
 \]</span>
