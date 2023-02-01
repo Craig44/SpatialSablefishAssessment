@@ -9,12 +9,12 @@ Users need to population a `data` and `parameters` named list object that is the
 - `years` vector of years from start year to current year. length `n_years`
 - `length_bins` vector of length bin midpoints. length. `n_length_bins`
 - `n_projections_years` integer of future years to project the model `n_projyears = n_years + n_projections_years`
-- `do_projection` integer 0 means don't do projection 1 does a stochastic projection (**Not Implemented**)
+- `do_projection` integer 0 means don't do projection 1 does a stochastic projection (**should be turned off during estimation**)
 - `n_regions` integer needs to be greater than or equal to 1
-- `global_rec_devs` integer 1 means all regions share the same recruitment deviations. 0 means they have separate global recruitment deviations. This will effect the dimensions of the parameter `trans_rec_dev`
+- `global_rec_devs` integer 1 means all regions share the same annual recruitment deviations. 0 means they have separate annual recruitment deviations. This will effect the dimensions of the parameter `trans_rec_dev`
 - `rec_devs_sum_to_zero` Should the recruit devs in each region sum to zero? yes = 1, no = 0. I yes then this the parameter `trans_rec_dev` has one less parameter
 
-- `n_init_rec_devs` number of initial n_age_deviations (`parameter$ln_init_rec_dev`) to multiply against the initial numbers at age to have non equilibrium initial age-structure. A value of zero will **not** apply these initial devs and expects `parameter$ln_init_rec_dev` to have length 1.
+- `n_init_rec_devs` number of initial n_age_deviations (`parameter$ln_init_rec_dev`) to multiply against the initial numbers at age to have non equilibrium initial age-structure. A value of zero will **not** apply these initial devs and expects `parameter$ln_init_rec_dev` to have length 1. These deviations are applied equally to both male and female.
 
 - `M` Natural mortality array with dimensions `n_ages` \(\times\) `n_projyears`
 - `maturity` proportion mature array with dimensions `n_ages` \(\times\) `n_projyears`
@@ -71,7 +71,7 @@ Users need to population a `data` and `parameters` named list object that is the
 - `srv_dom_ll_bio_indicator` an indicator array for survey longline abundance observation with dimensions `n_regions` \(\times\) `n_years`. A one indicates there is an abundance observation for the longline survey in this region and year. A zero indicates no observation.
 - `obs_srv_dom_ll_bio` domestic survey abundance observation `n_regions` \(\times\) `n_years`. This observation is in numbers (000's) which is equivalent to proportions times the effective sample size. Predicted proportions will sum = 1 over the age and sex dimension.
 - `obs_srv_dom_ll_se` Standard error for the domestic survey abundance observation
-- `srv_dom_ll_bio_comp_likelihood` integer, a value of 0 is the old lognormal call (SE is normal distribution converted to CV by the likelihood evaluation), a value of 1 uses the `dlnorm` call, standard error are specified in as the lognormal disribution (different to the other value)
+- `srv_dom_ll_bio_likelihood` integer, a value of 0 is the old lognormal call (SE is normal distribution converted to CV by the likelihood evaluation), a value of 1 uses the `dlnorm` call, standard error are specified in as the lognormal disribution (different to the other value)
 - `srv_dom_ll_obs_is_abundance` integer, a value of 0 indicates the observation is biomass or weight. A value of 1 indicates the observation is abundance or numbers
 - `srv_dom_ll_q_by_year_indicator` indicator vector, this indicates how many time-blocks for time-varying catchabilities are available. Each element links an element of the parameter `trans_srv_dom_ll_q` for a year.
 - `srv_dom_ll_q_transformation` integer, indicates what transformation is used for `trans_srv_dom_ll_q`. 0 indicates log, 1 indicates logistic where q is bound between 0 and 1.

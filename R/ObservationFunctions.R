@@ -400,7 +400,7 @@ get_index = function(MLE_report, region_key = NULL) {
   ## convert the SE of an estimator to a standard deviation that is the
   ## right scale for the lognormal distribution
   ## first calculate CV = sigma/mean then pass this to the log_sigma function
-  if(MLE_report$srv_dom_ll_bio_comp_likelihood == 0)
+  if(MLE_report$srv_dom_ll_bio_likelihood == 0)
     index_se$SE = log_sigma(index_se$SE / index_obs$Observed)
 
   CIs = lognormal_CI(index_obs$Observed, sigma = index_se$SE, CI = 0.95)
@@ -473,15 +473,17 @@ Francis_reweighting <- function(MLE_report, region_key = NULL) {
 #' @details Simulate observations conditional on MLE estimates
 #' @param obj A TMB object that has been build using `TMB::MakeADFun`
 #' @param n_sims an integer specifying how many simulated data sets you want
+#' @param sd_report if you have already run `TMB::sdreport` then you can pass this function it. Which can save a time
 #' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
 #' @return named list containing simualted observations for all key obsevations
 #' @export
 
-simulate_observations <- function(obj, n_sims = 200, region_key = NULL) {
+simulate_observations <- function(obj, n_sims = 200, sd_report = NULL, region_key = NULL) {
   fixed_effect_pars = get_tmb_fixed_effects(obj)
   all_pars = obj$env$last.par.best
-  sd_rep = sdreport(obj, getJointPrecision = T)
-  sim_pars =  MASS::mvrnorm(n = n_sims, mu = fixed_effect_pars, Sigma = sd_rep$cov.fixed)
+  if(is.null(sd_report))
+    sd_report = sdreport(obj, getJointPrecision = T)
+  sim_pars =  MASS::mvrnorm(n = n_sims, mu = fixed_effect_pars, Sigma = sd_report$cov.fixed)
   sim_srv_bio = sim_srv_AF = sim_fixed_AF = sim_fixed_LF = sim_trwl_LF = sim_tag_recovery = NULL
   for(sim_iter in 1:n_sims) {
     if(sim_iter %% 50 == 0)
@@ -550,6 +552,7 @@ calculate_simulated_residuals <- function(sim_ob, type = "abundance") {
       this_scaled_df = data.frame(scaled_resids = this_dharma$scaledResiduals, observed = this_dharma$observedResponse, mean_sim_vals = this_dharma$fittedPredictedResponse, Region = regions[r], Year =Years)
       full_simualted_resids = rbind(full_simualted_resids, this_scaled_df)
     }
+    full_simualted_resids$type = "Abundance"
   } else if (type == "LF") {
     regions = unique(sim_ob$Region)
     for(r in 1:length(regions)) {
@@ -570,6 +573,7 @@ calculate_simulated_residuals <- function(sim_ob, type = "abundance") {
     }
     full_simualted_resids$sex = substring(full_simualted_resids$S_Length, first = 1, last = 1)
     full_simualted_resids$length = as.numeric(substring(full_simualted_resids$S_Length, first = 3))
+    full_simualted_resids$type = "LF"
   } else if (type == "AF") {
     regions = unique(sim_ob$Region)
     for(r in 1:length(regions)) {
@@ -590,6 +594,8 @@ calculate_simulated_residuals <- function(sim_ob, type = "abundance") {
     }
     full_simualted_resids$sex = substring(full_simualted_resids$S_Age, first = 1, last = 1)
     full_simualted_resids$age = as.numeric(substring(full_simualted_resids$S_Age, first = 3))
+    full_simualted_resids$type = "AF"
+
   } else if(type == "tag-recovery") {
     rel_event = unique(sim_ob$release_event)
     sim_ob$recovery_event = paste0(sim_ob$recovery_year, "-", sim_ob$recovery_region)
@@ -608,6 +614,51 @@ calculate_simulated_residuals <- function(sim_ob, type = "abundance") {
     full_simualted_resids$recovery_year = Reduce(c, lapply(strsplit(full_simualted_resids$recovery_event, split = "-"), FUN = function(x){x[1]}))
     full_simualted_resids$release_region = Reduce(c, lapply(strsplit(full_simualted_resids$release_event, split = "-"), FUN = function(x){x[2]}))
     full_simualted_resids$release_year = Reduce(c, lapply(strsplit(full_simualted_resids$release_event, split = "-"), FUN = function(x){x[1]}))
+    full_simualted_resids$type = "Tag"
   }
   return(full_simualted_resids);
 }
+
+
+#' summarise_AF_resids
+#'
+#' @param AF_sim_resids an AF object created from `calculate_simulated_residuals`
+#' @param sex character specifying which sex to plot
+#' \itemize{
+#'   \item `M`: Male
+#'   \item `F`: Female
+#' }
+#' @param obs_label a character specifying the title possible observation label
+#' @export
+#' @return a joint plot
+summarise_AF_resids <- function(AF_sim_resids, sex = "M", obs_label = "") {
+  title_label = paste0(ifelse(sex == "M", "Male", "Female"), " ", obs_label)
+  AF_sim_resids$year_class  = AF_sim_resids$Year - AF_sim_resids$age
+  yr_plt = ggplot(AF_sim_resids %>% filter(sex == sex), aes(x = factor(Year), y = (scaled_resids))) +
+    geom_boxplot() +
+    labs(x = "Year", y = "Simualted residuals") +
+    ggtitle(title_label) +
+    facet_wrap(~Region, ncol = 1) +
+    scale_x_discrete(breaks = every_nth(n = 10)) +
+    theme_bw()
+  yr_class_plt = ggplot(AF_sim_resids %>% filter(sex == sex), aes(x = factor(year_class), y = (scaled_resids))) +
+    geom_boxplot() +
+    labs(x = "Year class", y = "") +
+    ggtitle("") +
+    facet_wrap(~Region, ncol = 1) +
+    scale_x_discrete(breaks = every_nth(n = 10)) +
+    theme_bw()
+  age_plt = ggplot(AF_sim_resids %>% filter(sex == sex), aes(x = factor(age), y = (scaled_resids))) +
+    geom_boxplot() +
+    labs(x = "Age", y = "") +
+    ggtitle("") +
+    facet_wrap(~Region, ncol = 1) +
+    #scale_x_discrete(breaks = every_nth(n = 10)) +
+    theme_bw()
+
+  joint_tag_plt = ggarrange(yr_plt, yr_class_plt, age_plt,
+                            ncol = 3)
+
+  return(joint_tag_plt)
+}
+

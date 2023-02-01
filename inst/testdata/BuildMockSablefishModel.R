@@ -170,7 +170,7 @@ data$srv_dom_ll_bio_indicator = matrix(0, nrow = n_regions, ncol = n_years)
 data$obs_srv_dom_ll_bio = array(1, dim = c(n_regions, n_years))
 data$obs_srv_dom_ll_se = array(0.2, dim = c(n_regions, n_years))
 
-data$srv_dom_ll_bio_comp_likelihood = 1
+data$srv_dom_ll_bio_likelihood = 1
 data$srv_dom_ll_obs_is_abundance = 1
 data$srv_dom_ll_q_by_year_indicator = rep(0, n_years)
 data$srv_dom_ll_q_transformation = 1 ## logistic

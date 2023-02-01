@@ -133,7 +133,7 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   DATA_ARRAY(obs_srv_dom_ll_bio);                             // Longline domestic survey biomass observations dim = n_regions x n_years.
   DATA_ARRAY(obs_srv_dom_ll_se);                              // Longline domestic survey biomass standard errors
   DATA_ARRAY_INDICATOR(keep_srv_dom_ll_bio_comp, obs_srv_dom_ll_bio); // Used for OSA residuals, when not using the multinomial likelihood
-  DATA_INTEGER(srv_dom_ll_bio_comp_likelihood);               // 0 is old lognormal, 1 = dlnorm call
+  DATA_INTEGER(srv_dom_ll_bio_likelihood);               // 0 is old lognormal, 1 = dlnorm call
   DATA_INTEGER(srv_dom_ll_obs_is_abundance);                     // 1 = Abundance (Numbers), 0 = Biomass (Weight)
 
   array<Type> pred_srv_dom_ll_bio(obs_srv_dom_ll_bio.dim);    // Sex disaggregated predicted catch at age
@@ -1067,6 +1067,7 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
         temp_observed_age_and_sex = obs_fixed_catchatage.col(year_ndx).col(region_ndx);
         // evaluate the likelihood
         if(fixed_catchatage_comp_likelihood == 0) {
+          //multinomial
           nll(0) -= dmultinom(temp_observed_age_and_sex, numbers_at_age_and_sex, true);
           SIMULATE {
             effective_sample_size = temp_observed_age_and_sex.sum();
@@ -1074,6 +1075,7 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
             obs_fixed_catchatage.col(year_ndx).col(region_ndx) = temp_observed_age_and_sex;
           }
         } else if (fixed_catchatage_comp_likelihood == 1) {
+          //Dirichlet multinomial
           N_eff = sum(temp_observed_age_and_sex);
           temp_observed_age_and_sex /= N_eff;
           s1 = 0.0;
@@ -1268,10 +1270,10 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
       for(year_ndx = 0; year_ndx < n_years; ++year_ndx) {
         if(srv_dom_ll_bio_indicator(region_ndx, year_ndx) == 1) {
           n_obs += 1.0;
-          if(srv_dom_ll_bio_comp_likelihood == 0) {
+          if(srv_dom_ll_bio_likelihood == 0) {
             S3 += log(obs_srv_dom_ll_bio(region_ndx, year_ndx) / pred_srv_dom_ll_bio(region_ndx, year_ndx))/square(obs_srv_dom_ll_se(region_ndx, year_ndx) / obs_srv_dom_ll_bio(region_ndx, year_ndx));
             S4 += 1.0 / square(obs_srv_dom_ll_se(region_ndx, year_ndx) / obs_srv_dom_ll_bio(region_ndx, year_ndx));
-          } else if(srv_dom_ll_bio_comp_likelihood == 1) {
+          } else if(srv_dom_ll_bio_likelihood == 1) {
             S3 += log(obs_srv_dom_ll_bio(region_ndx, year_ndx) / pred_srv_dom_ll_bio(region_ndx, year_ndx))/square(obs_srv_dom_ll_se(region_ndx, year_ndx));
             S4 += 1.0 / square(obs_srv_dom_ll_se(region_ndx, year_ndx));
           }
@@ -1288,13 +1290,13 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
         if(q_is_nuisance == 1)
           pred_srv_dom_ll_bio(region_ndx, year_ndx) *= srv_dom_ll_q(region_ndx, 0);
 
-        if(srv_dom_ll_bio_comp_likelihood == 0) {
+        if(srv_dom_ll_bio_likelihood == 0) {
           nll(4) += square((log(obs_srv_dom_ll_bio(region_ndx, year_ndx) + 0.0001) - log(pred_srv_dom_ll_bio(region_ndx, year_ndx) + 0.0001) ))/ (2.0 * square(obs_srv_dom_ll_se(region_ndx, year_ndx) / obs_srv_dom_ll_bio(region_ndx, year_ndx)));
           // not sure how best to simulate from this likelihood. I think this is right but worth having another look
           SIMULATE {
             obs_srv_dom_ll_bio(region_ndx, year_ndx) = exp(rnorm(log(pred_srv_dom_ll_bio(region_ndx, year_ndx) + 0.0001), obs_srv_dom_ll_se(region_ndx, year_ndx) / obs_srv_dom_ll_bio(region_ndx, year_ndx)));
           }
-        } else if(srv_dom_ll_bio_comp_likelihood == 1) {
+        } else if(srv_dom_ll_bio_likelihood == 1) {
           nll(4) -= dlnorm(obs_srv_dom_ll_bio(region_ndx, year_ndx), log(pred_srv_dom_ll_bio(region_ndx, year_ndx)) - 0.5 * obs_srv_dom_ll_se(region_ndx, year_ndx) * obs_srv_dom_ll_se(region_ndx, year_ndx), obs_srv_dom_ll_se(region_ndx, year_ndx), true);
           SIMULATE {
             obs_srv_dom_ll_bio(region_ndx, year_ndx) = exp(rnorm(log(pred_srv_dom_ll_bio(region_ndx, year_ndx)) - 0.5 * obs_srv_dom_ll_se(region_ndx, year_ndx) * obs_srv_dom_ll_se(region_ndx, year_ndx), obs_srv_dom_ll_se(region_ndx, year_ndx)));
@@ -1660,7 +1662,7 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   REPORT( trwl_catchatlgth_comp_likelihood );
   REPORT( fixed_catchatlgth_comp_likelihood );
   REPORT( srv_dom_ll_catchatage_comp_likelihood );
-  REPORT( srv_dom_ll_bio_comp_likelihood );
+  REPORT( srv_dom_ll_bio_likelihood );
   REPORT( srv_dom_ll_q_transformation );
   REPORT( apply_fixed_movement );
 
