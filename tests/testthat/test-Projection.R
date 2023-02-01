@@ -5,11 +5,12 @@
 #'
 test_that("test-Projection-Recruitment", {
   ## Read in mock data
-  load(system.file("testdata", "MockProjectionData.RData",package="SpatialSablefishAssessment"))
-  data$model = "TagIntegratedValidate"
+  load(system.file("testdata", "MockProjectionData.RData", package="SpatialSablefishAssessment"))
   ## no Z or movement
   data$apply_fixed_movement = 1 ## no movement initial age-structure should be only a function of ageing and M
-
+  data$model = "TagIntegrated" # so we can run the validate function
+  expect_true(validate_input_data_and_parameters(data, parameters))
+  data$model = "TagIntegratedValidate"
   ## make sure it doesn't crash
   expect_no_condition(test_model <- TMB::MakeADFun(data = data,
                                parameters = parameters,
@@ -23,6 +24,10 @@ test_that("test-Projection-Recruitment", {
   data$future_recruitment_type = 1
   parameters$trans_rec_dev = matrix(rnorm(length(data$years), 0, 1.2), nrow = 1)
   ## make sure it doesn't crash
+  data$model = "TagIntegrated" # so we can run the validate function
+  expect_true(validate_input_data_and_parameters(data, parameters))
+  data$model = "TagIntegratedValidate"
+
   expect_no_condition(test_model <- TMB::MakeADFun(data = data,
                                                    parameters = parameters,
                                                    DLL = "SpatialSablefishAssessment_TMBExports", silent  = T))
@@ -35,6 +40,9 @@ test_that("test-Projection-Recruitment", {
   ## resample from the first three years
   data$year_ndx_for_empirical_resampling = c(0,2)
 
+  data$model = "TagIntegrated" # so we can run the validate function
+  expect_true(validate_input_data_and_parameters(data, parameters))
+  data$model = "TagIntegratedValidate"
 
   expect_no_condition(test_model <- TMB::MakeADFun(data = data,
                                                    parameters = parameters,
@@ -49,6 +57,9 @@ test_that("test-Projection-Recruitment", {
   ## resample from the last three years
   data$year_ndx_for_empirical_resampling = c(8,10)
 
+  data$model = "TagIntegrated" # so we can run the validate function
+  expect_true(validate_input_data_and_parameters(data, parameters))
+  data$model = "TagIntegratedValidate"
 
   expect_no_condition(test_model <- TMB::MakeADFun(data = data,
                                                    parameters = parameters,
