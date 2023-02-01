@@ -5,14 +5,24 @@
 \title{find_regional_fref
 deterministically search for a vector of Fs that achieves some regional percent b0 in all regions}
 \usage{
-find_regional_fref(proj_obj, proj_pars, percent_Bzero = 40)
+find_regional_fref(
+  proj_obj,
+  proj_pars,
+  n_years_for_fleet_ratio = 2,
+  percent_Bzero = 40,
+  trace = F
+)
 }
 \arguments{
 \item{proj_obj}{an obj that has been created by \code{TMB::MakeADFun}. It is assumed this obj object is setup for projection e.g., \code{do_projection = 1} etc}
 
 \item{proj_pars}{vector of input parameters that are passed to proj_obj$report()}
 
+\item{n_years_for_fleet_ratio}{an integer specifying how many terminal years to use to calculate F proportion by gear within each region}
+
 \item{percent_Bzero}{This is the target biomass that will trigger the Fref value reported.}
+
+\item{trace}{boolean print information as you are trialling Fs to help debug algorithm}
 }
 \value{
 list with estimated Fs that have been solved to achieve some percent_Bzero in all regions
@@ -22,6 +32,6 @@ find_regional_fref
 deterministically search for a vector of Fs that achieves some regional percent b0 in all regions
 }
 \details{
-This algorithm will search over a vector of  F values to find values that result in percent B0 specified by percent_Bzero in the terminal projection year.
-Consider using \code{setup_proj_data} when taking an estimation model and setting up a \code{proj_obj}
+This algorithm will search over a vector of  F values for each region to find values that result in percent B0 specified by percent_Bzero in the terminal projection year.
+Consider using \code{setup_proj_data} when taking an estimation model and setting up a \code{proj_obj}. The ratio of F among fishing fleets within a region is specified by the input parameter \code{n_years_for_fleet_ratio}
 }

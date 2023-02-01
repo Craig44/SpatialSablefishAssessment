@@ -5,16 +5,27 @@
 \title{run_multi_F
 This function is run by the \code{find_multi_fref} method}
 \usage{
-run_multi_F(trial_Fs, input_pars, target_percent_Bzero, proj_obj)
+run_multi_F(
+  trial_Fs,
+  fixed_F_proportion,
+  input_pars,
+  target_percent_Bzero,
+  proj_obj,
+  trace = F
+)
 }
 \arguments{
-\item{trial_Fs}{a vector of F values to be trialed should have length n_regions * 2. The first n_regions are for the fixed gear fishery and the second set are for the trawl}
+\item{trial_Fs}{a vector of F values to be trialed should have length n_regions.}
+
+\item{fixed_F_proportion}{for each region (trawl is is 1 - fixed_F_proportion)}
 
 \item{input_pars}{vector of input parameters that are passed to proj_obj$report()}
 
 \item{target_percent_Bzero}{regional percent B0 that we are trying to solve for in all regions}
 
 \item{proj_obj}{an obj that has been created by \code{TMB::MakeADFun}}
+
+\item{trace}{boolean print information as you are trialling Fs to help debug algorithm}
 }
 \value{
 sum of squares difference between the Bzero resulting from the trial F's and the value we are trying to solve for target_percent_Bzero

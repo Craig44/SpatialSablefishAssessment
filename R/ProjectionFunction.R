@@ -128,37 +128,43 @@ find_apportioned_fref <- function(proj_obj, proj_pars, percent_Bzero = 40) {
 
 #' run_multi_F
 #' This function is run by the `find_multi_fref` method
-#' @param trial_Fs a vector of F values to be trialed should have length n_regions * 2. The first n_regions are for the fixed gear fishery and the second set are for the trawl
+#' @param trial_Fs a vector of F values to be trialed should have length n_regions.
+#' @param fixed_F_proportion for each region (trawl is is 1 - fixed_F_proportion)
 #' @param input_pars vector of input parameters that are passed to proj_obj$report()
 #' @param target_percent_Bzero regional percent B0 that we are trying to solve for in all regions
 #' @param proj_obj an obj that has been created by `TMB::MakeADFun`
+#' @param trace boolean print information as you are trialling Fs to help debug algorithm
 #' @return sum of squares difference between the Bzero resulting from the trial F's and the value we are trying to solve for target_percent_Bzero
 #' @export
-run_multi_F = function(trial_Fs, input_pars, target_percent_Bzero, proj_obj) {
+run_multi_F = function(trial_Fs, fixed_F_proportion, input_pars, target_percent_Bzero, proj_obj, trace = F) {
+  if(trace)
+    cat("trialling Fs ", trial_Fs, "\n")
   ## set future F's
   n_regions =  proj_obj$env$data$n_regions
-  proj_obj$env$data$future_fishing_inputs_fixed = matrix(trial_Fs[1:n_regions], nrow = n_regions, ncol = proj_obj$env$data$n_projections_years, byrow = F)
-  proj_obj$env$data$future_fishing_inputs_trwl = matrix(trial_Fs[(n_regions + 1):(2*n_regions)], nrow = n_regions, ncol = proj_obj$env$data$n_projections_years, byrow = F)
+  proj_obj$env$data$future_fishing_inputs_fixed = matrix(trial_Fs * fixed_F_proportion, nrow = n_regions, ncol = proj_obj$env$data$n_projections_years, byrow = F)
+  proj_obj$env$data$future_fishing_inputs_trwl = matrix(trial_Fs * (1 - fixed_F_proportion), nrow = n_regions, ncol = proj_obj$env$data$n_projections_years, byrow = F)
   ## run model
   proj_rep = proj_obj$report(input_pars)
   ## get SSBS
   this_ssb = proj_rep$SSB_yr
   ## get global depletion
-  this_depletion = this_ssb[nrow(this_ssb)] /proj_rep$Bzero
+  this_depletion = this_ssb[nrow(this_ssb),] / proj_rep$Bzero * 100
   ## return sum of squares
-  return(sum((rep(target_percent_Bzero, n_regions) - this_depletion * 100)^2))
+  return(sum((rep(target_percent_Bzero, n_regions) - this_depletion)^2))
 }
 #' find_regional_fref
 #' deterministically search for a vector of Fs that achieves some regional percent b0 in all regions
 #' @param proj_obj an obj that has been created by `TMB::MakeADFun`. It is assumed this obj object is setup for projection e.g., `do_projection = 1` etc
 #' @param proj_pars vector of input parameters that are passed to proj_obj$report()
+#' @param n_years_for_fleet_ratio an integer specifying how many terminal years to use to calculate F proportion by gear within each region
 #' @param percent_Bzero This is the target biomass that will trigger the Fref value reported.
-#' @details This algorithm will search over a vector of  F values to find values that result in percent B0 specified by percent_Bzero in the terminal projection year.
-#' Consider using `setup_proj_data` when taking an estimation model and setting up a `proj_obj`
+#' @param trace boolean print information as you are trialling Fs to help debug algorithm
+#' @details This algorithm will search over a vector of  F values for each region to find values that result in percent B0 specified by percent_Bzero in the terminal projection year.
+#' Consider using `setup_proj_data` when taking an estimation model and setting up a `proj_obj`. The ratio of F among fishing fleets within a region is specified by the input parameter `n_years_for_fleet_ratio`
 #' @return list with estimated Fs that have been solved to achieve some percent_Bzero in all regions
 #' @export
 
-find_regional_fref <- function(proj_obj, proj_pars, percent_Bzero = 40) {
+find_regional_fref <- function(proj_obj, proj_pars, n_years_for_fleet_ratio = 2, percent_Bzero = 40, trace = F) {
   if(percent_Bzero < 0 | percent_Bzero > 100)
     stop("percent_Bzero is a percentage and needs to between 0 and 100")
   tmp_data = proj_obj$env$data
@@ -170,19 +176,34 @@ find_regional_fref <- function(proj_obj, proj_pars, percent_Bzero = 40) {
   }
   if(tmp_data$n_projections_years <= 0)
     stop("proj_obj: is not set up for projections. Found data$n_projections_years <= 0")
+  mean_fixed_F_by_region = mean_trwl_F_by_region = NULL
+  if(n_regions == 1) {
+    mean_fixed_F_by_region = mean(proj_rep$annual_F_fixed[,(length(tmp_data$years) - n_years_for_fleet_ratio + 1):length(tmp_data$years)])
+    mean_trwl_F_by_region = mean(proj_rep$annual_F_trwl[,(length(tmp_data$years) - n_years_for_fleet_ratio + 1):length(tmp_data$years)])
+  } else {
+    if(n_years_for_fleet_ratio == 1) {
+      mean_fixed_F_by_region = proj_rep$annual_F_fixed[,(length(tmp_data$years) - n_years_for_fleet_ratio + 1):length(tmp_data$years)]
+      mean_trwl_F_by_region = proj_rep$annual_F_trwl[,(length(tmp_data$years) - n_years_for_fleet_ratio + 1):length(tmp_data$years)]
 
+    } else {
+      mean_fixed_F_by_region = apply(proj_rep$annual_F_fixed[,(length(tmp_data$years) - n_years_for_fleet_ratio + 1):length(tmp_data$years)], 1, mean)
+      mean_trwl_F_by_region = apply(proj_rep$annual_F_trwl[,(length(tmp_data$years) - n_years_for_fleet_ratio + 1):length(tmp_data$years)], 1, mean)
+    }
+  }
+
+  fixed_F_proportion = mean_fixed_F_by_region / (mean_fixed_F_by_region + mean_trwl_F_by_region)
   ## set future fishing to F mode
   proj_obj$env$data$future_fishing_type = 0
   ## set future recruitment to mean recruitment no stochasticity
   proj_obj$env$data$future_recruitment_type = 2
 
-  start_Fs = c(proj_rep$annual_F_fixed[,length(tmp_data$years)], proj_rep$annual_F_trwl[,length(tmp_data$years)])
   # Optimize for F that reaches percent Bzero
-  optim_F = nlminb(start = start_Fs, objective = run_multi_F,input_pars = proj_pars, target_percent_Bzero = percent_Bzero, proj_obj = proj_obj, lower = rep(0.0000001, length(start_Fs)))
+  optim_F = nlminb(start = rep(mean(c(proj_rep$annual_F_fixed[,length(tmp_data$years)])), n_regions), objective = run_multi_F, input_pars = proj_pars, fixed_F_proportion = fixed_F_proportion,target_percent_Bzero = percent_Bzero, proj_obj = proj_obj, trace= trace, lower = rep(0.001, n_regions), control = list(x.tol = 1e-4))
   # Run with reference F
+  test = run_multi_F(trial_Fs = optim_F$par, input_pars = proj_pars, fixed_F_proportion = fixed_F_proportion,target_percent_Bzero = percent_Bzero, proj_obj = proj_obj)
   ## set future F's
-  proj_obj$env$data$future_fishing_inputs_fixed = matrix(optim_F$par[1:n_regions], nrow = n_regions, ncol = proj_obj$env$data$n_projections_years, byrow = F)
-  proj_obj$env$data$future_fishing_inputs_trwl = matrix(optim_F$par[(n_regions + 1):length(optim_F$par)], nrow = n_regions, ncol = proj_obj$env$data$n_projections_years, byrow = F)
+  proj_obj$env$data$future_fishing_inputs_fixed = matrix(optim_F$par * fixed_F_proportion, nrow = n_regions, ncol = proj_obj$env$data$n_projections_years, byrow = F)
+  proj_obj$env$data$future_fishing_inputs_trwl = matrix(optim_F$par * (1 - fixed_F_proportion), nrow = n_regions, ncol = proj_obj$env$data$n_projections_years, byrow = F)
   ## run model
   proj_rep = proj_obj$report(proj_pars)
   return(list(proj_data = proj_obj$env$data, F_ref = optim_F$par, proj_rep = proj_rep))
