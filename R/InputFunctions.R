@@ -93,10 +93,9 @@ plot_input_observations = function(data, region_key = NULL) {
 #'
 #' plot_input_timeblocks
 #' @param data list that is passed to the MakeADfun for the TMB model
-#' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
 #' @return ggplot2 object visualising the time-blocks for selectivities and catchabilities
 #' @export
-plot_input_timeblocks = function(data, region_key = NULL) {
+plot_input_timeblocks = function(data) {
   projyears = min(data$years):(max(data$years) + data$n_projections_years)
   full_df = data.frame(Year = projyears, fixed_sel = data$fixed_sel_by_year_indicator +1, trwl_sel = data$trwl_sel_by_year_indicator +1, srv_dom_ll_sel = data$srv_dom_ll_sel_by_year_indicator +1, srv_dom_ll_q = data$srv_dom_ll_q_by_year_indicator +1)
 
