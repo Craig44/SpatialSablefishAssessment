@@ -4,12 +4,10 @@
 \alias{plot_input_timeblocks}
 \title{plot_input_timeblocks}
 \usage{
-plot_input_timeblocks(data, region_key = NULL)
+plot_input_timeblocks(data)
 }
 \arguments{
 \item{data}{list that is passed to the MakeADfun for the TMB model}
-
-\item{region_key}{data.frame with colnames area and TMB_ndx for providing real region names to objects}
 }
 \value{
 ggplot2 object visualising the time-blocks for selectivities and catchabilities

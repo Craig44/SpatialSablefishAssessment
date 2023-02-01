@@ -28,6 +28,8 @@ region_key
 - `get_tag_release_AF` get age-frequency of tag-releases
 - `get_negloglike` get negative loglikelihoods for each contribution
 - `simulate_observations` this function will take a TMB object and simulate a number of observations, used to create simulated residuals.
+- `calculate_simulated_residuals` this function will take an element from an object created from `simulate_observations`. This will use `DHARMa`'s `createDHARMa` function to calculated simulated residuals
+
 
 ### Plotting functions {-}
 
@@ -40,6 +42,7 @@ region_key
 - `plot_init_nage` plot initial numbers at age
 - `plot_input_catches` plot input catches
 - `plot_input_observations` plot input observations
+- `plot_input_timeblocks` plot selectivity and catchability time-blocks in a model
 - `plot_LF` plot length frequency observation
 - `plot_mean_age` plot mean age observations
 - `plot_mean_length` plot mean length observations

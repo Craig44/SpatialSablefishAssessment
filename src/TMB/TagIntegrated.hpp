@@ -1349,6 +1349,10 @@ Type TagIntegrated(objective_function<Type>* obj) {
         if(global_rec_devs == 1) {
           empirical_recruitment_ndx = round(runif(year_ndx_for_empirical_resampling(0) - 0.499, year_ndx_for_empirical_resampling(1) + 0.499));
           //std::cerr << "empirical ndx = " << empirical_recruitment_ndx << "\n";
+          if(empirical_recruitment_ndx < year_ndx_for_empirical_resampling(0))
+            empirical_recruitment_ndx = year_ndx_for_empirical_resampling(0);
+          if(empirical_recruitment_ndx > year_ndx_for_empirical_resampling(1))
+            empirical_recruitment_ndx = year_ndx_for_empirical_resampling(1);
         }
       }
 
@@ -1370,6 +1374,11 @@ Type TagIntegrated(objective_function<Type>* obj) {
           } else {
             // resample each year
             empirical_recruitment_ndx = round(runif(year_ndx_for_empirical_resampling(0) - 0.499, year_ndx_for_empirical_resampling(1) + 0.499));
+            // check for bounds
+            if(empirical_recruitment_ndx < year_ndx_for_empirical_resampling(0))
+              empirical_recruitment_ndx = year_ndx_for_empirical_resampling(0);
+            if(empirical_recruitment_ndx > year_ndx_for_empirical_resampling(1))
+              empirical_recruitment_ndx = year_ndx_for_empirical_resampling(1);
             //std::cerr << "empirical ndx = " << empirical_recruitment_ndx << "\n";
             recruitment_devs(region_ndx, proj_year_ndx) = recruitment_devs(region_ndx, empirical_recruitment_ndx);
             recruitment_multipliers(region_ndx, proj_year_ndx) = recruitment_multipliers(region_ndx, empirical_recruitment_ndx);

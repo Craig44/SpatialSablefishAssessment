@@ -22,7 +22,8 @@ Imports:
     purrr,
     ggplot2,
     dplyr,
-    abind
+    abind,
+    DHARMa
 LinkingTo: 
     TMB
 RdMacros: 

@@ -516,3 +516,98 @@ simulate_observations <- function(obj, n_sims = 200, region_key = NULL) {
   }
   return(list(sim_tag_recovery = sim_tag_recovery, sim_trwl_LF = sim_trwl_LF, sim_fixed_LF = sim_fixed_LF, sim_fixed_AF = sim_fixed_AF, sim_srv_AF = sim_srv_AF, sim_srv_bio = sim_srv_bio))
 }
+
+
+#' calculate_simulated_residuals
+#' @details take simulated observations created from `simulate_observations` and creating simulated scaled residuals using the DHARMa package \insertCite{dharma}{SpatialSablefishAssessment}
+#' @param type string defining type
+#' @param sim_ob a data frame which should be one of the elements that are created from `simulate_observations`
+#' @param type string defining type
+#' \itemize{
+#'   \item `abundance`: abundance
+#'   \item `AF`: Age frequency
+#'   \item `LF`: Length frequency
+#'   \item `tag-recovery`: tag recovery observations
+#' }
+#' @export
+#' @return data.frame of scaled simulated residuals for each release and recovery event
+#' @references
+#' \insertAllCited{}
+calculate_simulated_residuals <- function(sim_ob, type = "abundance") {
+  if(!type %in% c("abundance", "AF", "LF", "tag-recovery"))
+    stop('type needs to be one of the following c("abundance", "AF", "LF", "tag-recovery")')
+  full_simualted_resids = NULL
+  if(type == "abundance") {
+    regions = unique(sim_ob$Region)
+    for(r in 1:length(regions)) {
+      this_sim_vals = sim_ob %>% filter(Region == regions[r]) %>%
+        pivot_wider(id_cols = Year, names_from = sim, values_from = Predicted) %>%
+        dplyr::select(!Year)
+      this_sim_obs = sim_ob %>% filter(Region == regions[r], sim == 1) %>% dplyr::select(Observed)
+      Years = sim_ob %>% filter(Region == regions[r], sim == 1) %>% dplyr::select(Year)
+
+      this_dharma = suppressMessages(createDHARMa(simulatedResponse = as.matrix(this_sim_vals), observedResponse = this_sim_obs$Observed))
+      this_scaled_df = data.frame(scaled_resids = this_dharma$scaledResiduals, observed = this_dharma$observedResponse, mean_sim_vals = this_dharma$fittedPredictedResponse, Region = regions[r], Year =Years)
+      full_simualted_resids = rbind(full_simualted_resids, this_scaled_df)
+    }
+  } else if (type == "LF") {
+    regions = unique(sim_ob$Region)
+    for(r in 1:length(regions)) {
+      this_df = sim_ob %>% filter(Region == regions[r])
+      years_this_region = unique(this_df$Year)
+      for(y in 1:length(years_this_region)) {
+        this_sim_vals =  this_df %>% filter(Year == years_this_region[y]) %>%
+          pivot_wider(id_cols = S_Length, names_from = sim, values_from = Predicted) %>%
+          ungroup() %>%
+          dplyr::select(!S_Length)
+        this_sim_obs = this_df %>% filter(Year == years_this_region[y], sim == 1) %>% ungroup() %>% dplyr::select(Observed)
+        S_Lengths = this_df %>% ungroup() %>% filter(Year == years_this_region[y], sim == 1) %>% dplyr::select(S_Length)
+
+        this_dharma = suppressMessages(createDHARMa(simulatedResponse = as.matrix(this_sim_vals), observedResponse = this_sim_obs$Observed, integerResponse = T))
+        this_scaled_df = data.frame(scaled_resids = this_dharma$scaledResiduals, observed = this_dharma$observedResponse, mean_sim_vals = this_dharma$fittedPredictedResponse, Region = regions[r], Year = years_this_region[y], S_Lengths = S_Lengths)
+        full_simualted_resids = rbind(full_simualted_resids, this_scaled_df)
+      }
+    }
+    full_simualted_resids$sex = substring(full_simualted_resids$S_Length, first = 1, last = 1)
+    full_simualted_resids$length = as.numeric(substring(full_simualted_resids$S_Length, first = 3))
+  } else if (type == "AF") {
+    regions = unique(sim_ob$Region)
+    for(r in 1:length(regions)) {
+      this_df = sim_ob %>% filter(Region == regions[r])
+      years_this_region = unique(this_df$Year)
+      for(y in 1:length(years_this_region)) {
+        this_sim_vals =  this_df %>% filter(Year == years_this_region[y]) %>%
+          pivot_wider(id_cols = S_Age, names_from = sim, values_from = Predicted) %>%
+          ungroup() %>%
+          dplyr::select(!S_Age)
+        this_sim_obs = this_df %>% filter(Year == years_this_region[y], sim == 1) %>% ungroup() %>% dplyr::select(Observed)
+        S_Ages = this_df %>% ungroup() %>% filter(Year == years_this_region[y], sim == 1) %>% dplyr::select(S_Age)
+
+        this_dharma = suppressMessages(createDHARMa(simulatedResponse = as.matrix(this_sim_vals), observedResponse = this_sim_obs$Observed, integerResponse = T))
+        this_scaled_df = data.frame(scaled_resids = this_dharma$scaledResiduals, observed = this_dharma$observedResponse, mean_sim_vals = this_dharma$fittedPredictedResponse, Region = regions[r], Year = years_this_region[y], S_Ages = S_Ages)
+        full_simualted_resids = rbind(full_simualted_resids, this_scaled_df)
+      }
+    }
+    full_simualted_resids$sex = substring(full_simualted_resids$S_Age, first = 1, last = 1)
+    full_simualted_resids$age = as.numeric(substring(full_simualted_resids$S_Age, first = 3))
+  } else if(type == "tag-recovery") {
+    rel_event = unique(sim_ob$release_event)
+    sim_ob$recovery_event = paste0(sim_ob$recovery_year, "-", sim_ob$recovery_region)
+    for(r in 1:length(rel_event)) {
+      this_sim_vals =  sim_ob %>% filter(release_event == rel_event[r]) %>%
+        pivot_wider(id_cols = recovery_event, names_from = sim, values_from = predicted) %>%
+        dplyr::select(!recovery_event)
+      this_sim_obs = sim_ob %>% filter(release_event == rel_event[r], sim == 1) %>% ungroup() %>% dplyr::select(observed)
+      rec_event = sim_ob %>% ungroup() %>% filter(release_event == rel_event[r], sim == 1) %>% dplyr::select(recovery_event)
+
+      this_dharma = suppressMessages(createDHARMa(simulatedResponse = as.matrix(this_sim_vals), observedResponse = this_sim_obs$observed, integerResponse = T))
+      this_scaled_df = data.frame(scaled_resids = this_dharma$scaledResiduals, observed = this_dharma$observedResponse, mean_sim_vals = this_dharma$fittedPredictedResponse, recovery_event = rec_event, release_event = rel_event[r])
+      full_simualted_resids = rbind(full_simualted_resids, this_scaled_df)
+    }
+    full_simualted_resids$recovery_region = Reduce(c, lapply(strsplit(full_simualted_resids$recovery_event, split = "-"), FUN = function(x){x[2]}))
+    full_simualted_resids$recovery_year = Reduce(c, lapply(strsplit(full_simualted_resids$recovery_event, split = "-"), FUN = function(x){x[1]}))
+    full_simualted_resids$release_region = Reduce(c, lapply(strsplit(full_simualted_resids$release_event, split = "-"), FUN = function(x){x[2]}))
+    full_simualted_resids$release_year = Reduce(c, lapply(strsplit(full_simualted_resids$release_event, split = "-"), FUN = function(x){x[1]}))
+  }
+  return(full_simualted_resids);
+}
