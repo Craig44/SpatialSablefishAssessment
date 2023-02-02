@@ -463,6 +463,11 @@ Francis_reweighting <- function(MLE_report, region_key = NULL) {
   ## get the multiplier over all years for each observation
   length_multipliers = mean_len_df %>% group_by(Region, label) %>% summarise(multiplier = 1/var(resid_mean_length * sqrt(Nassumed)/stand_mean_length, na.rm = T))
   age_multipliers = mean_age_df %>% group_by(Region, label) %>% summarise(multiplier = 1/var(resid_mean_age * sqrt(Nassumed)/stand_mean_age, na.rm = T))
+  ## some regions may only have a one sample which will cause NA's
+  ## impute a weight with the mean weight
+  length_multipliers$multiplier[is.na(length_multipliers$multiplier)] = mean(length_multipliers$multiplier, na.rm = T)
+  age_multipliers$multiplier[is.na(age_multipliers$multiplier)] = mean(age_multipliers$multiplier, na.rm = T)
+
   return(list(length_multipliers = length_multipliers, age_multipliers = age_multipliers, mean_age_df = mean_age_df, mean_len_df = mean_len_df))
 }
 

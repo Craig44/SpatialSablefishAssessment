@@ -1,6 +1,6 @@
 # `TagIntegrated` `data` and `parameter` descriptions {-}
 
-Users need to population a `data` and `parameters` named list object that is then passed to TMB's `MakeADFun`. These sections outline the elements and corresponding dimensions of both `data` and `parameters`.
+Users need to population a named list containing `data` inputs and a named list specifying starting values for estimable `parameters` which are both passed to TMB's `MakeADFun` function. These sections outline the elements and corresponding dimensions of both `data` and `parameters`.
 
 
 ## `data` {-}
