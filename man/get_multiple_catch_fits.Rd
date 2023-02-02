@@ -4,12 +4,14 @@
 \alias{get_multiple_catch_fits}
 \title{get_multiple_catch_fits}
 \usage{
-get_multiple_catch_fits(mle_ls, run_labels = NULL)
+get_multiple_catch_fits(mle_ls, run_labels = NULL, region_key = NULL)
 }
 \arguments{
 \item{mle_ls}{list with multiple obj$report() calls}
 
 \item{run_labels}{vector of strings that are labels for each element in mle_ls}
+
+\item{region_key}{data.frame with colnames area and TMB_ndx for providing real region names to objects}
 }
 \value{
 data frame with multiple catch fits

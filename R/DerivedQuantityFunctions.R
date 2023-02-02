@@ -114,13 +114,12 @@ plot_movement = function(MLE_report, region_key = NULL) {
     labs(x = "To", y = "From")
   return(gplt)
 }
-
 #'
-#' plot_selectivities
+#' get_selectivities
 #' @param MLE_report obj$report()
-#' @return ggplot2
+#' @return data frame
 #' @export
-plot_selectivities = function(MLE_report) {
+get_selectivities = function(MLE_report) {
   sel_df = data.frame(fixed_male = MLE_report$sel_fixed_m, fixed_female = MLE_report$sel_fixed_f,
                       trawl_male = MLE_report$sel_trwl_m, trawl_female = MLE_report$sel_trwl_f,
                       surveyll_male = MLE_report$sel_srv_dom_ll_m, surveyll_female = MLE_report$sel_srv_dom_ll_f,
@@ -129,6 +128,17 @@ plot_selectivities = function(MLE_report) {
   sel_lng_df = sel_df %>% tidyr::pivot_longer(!age)
   sel_lng_df$gear = Reduce(c, lapply(sel_lng_df$name %>% str_split(pattern = "_"), function(x){x[1]}))
   sel_lng_df$sex = Reduce(c, lapply(sel_lng_df$name %>% str_split(pattern = "_"), function(x){x[2]}))
+  return(sel_lng_df)
+}
+
+#'
+#' plot_selectivities
+#' @param MLE_report obj$report()
+#' @return ggplot2
+#' @export
+plot_selectivities = function(MLE_report) {
+  sel_lng_df = get_selectivities(MLE_report)
+
   gplt = ggplot(sel_lng_df, aes(x = age, y = value, col = sex, linetype = sex)) +
     geom_line(linewidth = 1.1) +
     facet_wrap(~gear) +
@@ -137,13 +147,13 @@ plot_selectivities = function(MLE_report) {
 }
 
 
-#' plot_recruitment
+#' get_recruitment
 #' @param MLE_report created from obj$report()
 #' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
 #' @return ggplot2
 #' @export
 #'
-plot_recruitment = function(MLE_report, region_key = NULL) {
+get_recruitment = function(MLE_report, region_key = NULL) {
   regions = paste0("Region ", 1:MLE_report$n_regions)
   if(!is.null(region_key))
     regions = region_key$area[region_key$TMB_ndx + 1]
@@ -156,6 +166,17 @@ plot_recruitment = function(MLE_report, region_key = NULL) {
   colnames(recruit_df) = c("Year","Region", "Recruitment")
   colnames(mean_recruit_df) = c("Region", "row_ndx","Mean_recruitment")
   recruit_df = recruit_df %>% dplyr::inner_join(mean_recruit_df)
+
+  return(recruit_df)
+}
+#' plot_recruitment
+#' @param MLE_report created from obj$report()
+#' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
+#' @return ggplot2
+#' @export
+#'
+plot_recruitment = function(MLE_report, region_key = NULL) {
+  recruit_df = get_recruitment(MLE_report, region_key)
   gplt = ggplot(recruit_df) +
     geom_line(aes(x = Year, y = Recruitment), linewidth = 1.1) +
     geom_hline(aes(yintercept = Mean_recruitment), linetype = "dashed", linewidth = 1.1, col = "gray60") +

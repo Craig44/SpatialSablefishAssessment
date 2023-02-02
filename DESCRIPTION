@@ -23,7 +23,9 @@ Imports:
     ggplot2,
     dplyr,
     abind,
-    DHARMa
+    DHARMa,
+    ggpubr,
+    bookdown
 LinkingTo: 
     TMB
 RdMacros: 

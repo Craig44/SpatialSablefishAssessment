@@ -4,12 +4,14 @@
 \alias{get_multiple_nlls}
 \title{get_multiple_nlls accessors to get multiple negative log-likelihoods}
 \usage{
-get_multiple_nlls(mle_ls, run_labels = NULL)
+get_multiple_nlls(mle_ls, run_labels = NULL, region_key = NULL)
 }
 \arguments{
 \item{mle_ls}{list with multiple obj$report() calls}
 
 \item{run_labels}{vector of strings that are labels for each element in mle_ls}
+
+\item{region_key}{data.frame with colnames area and TMB_ndx for providing real region names to objects}
 }
 \value{
 data frame with multiple negative log-likelihoods

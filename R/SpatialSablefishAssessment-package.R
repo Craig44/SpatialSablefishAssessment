@@ -14,6 +14,7 @@
 #' @importFrom abind abind
 #' @importFrom DHARMa createDHARMa
 #' @importFrom ggpubr ggarrange
+#' @importFrom bookdown render_book
 # The following block is used by usethis to automatically manage
 # roxygen namespace tags. Modify with care!
 ## usethis namespace: start
