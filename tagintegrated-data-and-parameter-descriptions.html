@@ -23,7 +23,7 @@
 <meta name="author" content="C.Marsh" />
 
 
-<meta name="date" content="2023-02-01" />
+<meta name="date" content="2023-02-02" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -252,7 +252,7 @@ div.csl-indent {
             <section class="normal" id="section-">
 <div id="tagintegrated-data-and-parameter-descriptions" class="section level1 unnumbered hasAnchor">
 <h1><code>TagIntegrated</code> <code>data</code> and <code>parameter</code> descriptions<a href="tagintegrated-data-and-parameter-descriptions.html#tagintegrated-data-and-parameter-descriptions" class="anchor-section" aria-label="Anchor link to header"></a></h1>
-<p>Users need to population a <code>data</code> and <code>parameters</code> named list object that is then passed to TMB’s <code>MakeADFun</code>. These sections outline the elements and corresponding dimensions of both <code>data</code> and <code>parameters</code>.</p>
+<p>Users need to population a named list containing <code>data</code> inputs and a named list specifying starting values for estimable <code>parameters</code> which are both passed to TMB’s <code>MakeADFun</code> function. These sections outline the elements and corresponding dimensions of both <code>data</code> and <code>parameters</code>.</p>
 <div id="data" class="section level2 unnumbered hasAnchor">
 <h2><code>data</code><a href="tagintegrated-data-and-parameter-descriptions.html#data" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <ul>
@@ -260,11 +260,11 @@ div.csl-indent {
 <li><p><code>years</code> vector of years from start year to current year. length <code>n_years</code></p></li>
 <li><p><code>length_bins</code> vector of length bin midpoints. length. <code>n_length_bins</code></p></li>
 <li><p><code>n_projections_years</code> integer of future years to project the model <code>n_projyears = n_years + n_projections_years</code></p></li>
-<li><p><code>do_projection</code> integer 0 means don’t do projection 1 does a stochastic projection (<strong>Not Implemented</strong>)</p></li>
+<li><p><code>do_projection</code> integer 0 means don’t do projection 1 does a stochastic projection (<strong>should be turned off during estimation</strong>)</p></li>
 <li><p><code>n_regions</code> integer needs to be greater than or equal to 1</p></li>
-<li><p><code>global_rec_devs</code> integer 1 means all regions share the same recruitment deviations. 0 means they have separate global recruitment deviations. This will effect the dimensions of the parameter <code>trans_rec_dev</code></p></li>
+<li><p><code>global_rec_devs</code> integer 1 means all regions share the same annual recruitment deviations. 0 means they have separate annual recruitment deviations. This will effect the dimensions of the parameter <code>trans_rec_dev</code></p></li>
 <li><p><code>rec_devs_sum_to_zero</code> Should the recruit devs in each region sum to zero? yes = 1, no = 0. I yes then this the parameter <code>trans_rec_dev</code> has one less parameter</p></li>
-<li><p><code>n_init_rec_devs</code> number of initial n_age_deviations (<code>parameter$ln_init_rec_dev</code>) to multiply against the initial numbers at age to have non equilibrium initial age-structure. A value of zero will <strong>not</strong> apply these initial devs and expects <code>parameter$ln_init_rec_dev</code> to have length 1.</p></li>
+<li><p><code>n_init_rec_devs</code> number of initial n_age_deviations (<code>parameter$ln_init_rec_dev</code>) to multiply against the initial numbers at age to have non equilibrium initial age-structure. A value of zero will <strong>not</strong> apply these initial devs and expects <code>parameter$ln_init_rec_dev</code> to have length 1. These deviations are applied equally to both male and female.</p></li>
 <li><p><code>M</code> Natural mortality array with dimensions <code>n_ages</code> <span class="math inline">\(\times\)</span> <code>n_projyears</code></p></li>
 <li><p><code>maturity</code> proportion mature array with dimensions <code>n_ages</code> <span class="math inline">\(\times\)</span> <code>n_projyears</code></p></li>
 <li><p><code>male_mean_weight_by_age</code> male mean weight at age array with dimensions <code>n_ages</code> <span class="math inline">\(\times\)</span> <code>n_projyears</code>. Units are in kgs, this is because we track millions of fish in the partition, so any weight calculation is in kilo tonnes</p></li>
@@ -313,7 +313,7 @@ div.csl-indent {
 <li><p><code>srv_dom_ll_bio_indicator</code> an indicator array for survey longline abundance observation with dimensions <code>n_regions</code> <span class="math inline">\(\times\)</span> <code>n_years</code>. A one indicates there is an abundance observation for the longline survey in this region and year. A zero indicates no observation.</p></li>
 <li><p><code>obs_srv_dom_ll_bio</code> domestic survey abundance observation <code>n_regions</code> <span class="math inline">\(\times\)</span> <code>n_years</code>. This observation is in numbers (000’s) which is equivalent to proportions times the effective sample size. Predicted proportions will sum = 1 over the age and sex dimension.</p></li>
 <li><p><code>obs_srv_dom_ll_se</code> Standard error for the domestic survey abundance observation</p></li>
-<li><p><code>srv_dom_ll_bio_comp_likelihood</code> integer, a value of 0 is the old lognormal call (SE is normal distribution converted to CV by the likelihood evaluation), a value of 1 uses the <code>dlnorm</code> call, standard error are specified in as the lognormal disribution (different to the other value)</p></li>
+<li><p><code>srv_dom_ll_bio_likelihood</code> integer, a value of 0 is the old lognormal call (SE is normal distribution converted to CV by the likelihood evaluation), a value of 1 uses the <code>dlnorm</code> call, standard error are specified in as the lognormal disribution (different to the other value)</p></li>
 <li><p><code>srv_dom_ll_obs_is_abundance</code> integer, a value of 0 indicates the observation is biomass or weight. A value of 1 indicates the observation is abundance or numbers</p></li>
 <li><p><code>srv_dom_ll_q_by_year_indicator</code> indicator vector, this indicates how many time-blocks for time-varying catchabilities are available. Each element links an element of the parameter <code>trans_srv_dom_ll_q</code> for a year.</p></li>
 <li><p><code>srv_dom_ll_q_transformation</code> integer, indicates what transformation is used for <code>trans_srv_dom_ll_q</code>. 0 indicates log, 1 indicates logistic where q is bound between 0 and 1.</p></li>
