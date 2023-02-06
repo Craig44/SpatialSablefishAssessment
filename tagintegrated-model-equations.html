@@ -23,7 +23,7 @@
 <meta name="author" content="C.Marsh" />
 
 
-<meta name="date" content="2023-02-02" />
+<meta name="date" content="2023-02-06" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -267,7 +267,7 @@ div.csl-indent {
 <span class="math display">\[\begin{align*}
 N_{a,r,y,s} =
 \begin{cases}
-R_{r,y} p^R_{s,y}, &amp; a = a_1\\
+R_{r,y} p^R_{s,y}, &amp; a = a_1, \ \text{**}\\
 N_{a - 1,r,y - 1,s} \exp\bigg( -Z_{a - 1,r, y - 1,s} \bigg), &amp; a_1 &lt; a &lt; a_+\\
 N_{a - 1,r,y - 1,s} \exp\bigg( -Z_{a - 1,r, y - 1,s} \bigg) + N_{a,r,y - 1,s} \exp\bigg( -Z_{a,r, y - 1,s} \bigg), &amp;  a = a_+
 \end{cases}
@@ -277,6 +277,7 @@ N_{a - 1,r,y - 1,s} \exp\bigg( -Z_{a - 1,r, y - 1,s} \bigg) + N_{a,r,y - 1,s} \e
 \boldsymbol{N}&#39;_{a,y,s} = \boldsymbol{N}_{a,y,s} \boldsymbol{M} \ \ \forall \ a
 \end{equation*}\]</span></p>
 <p>where, <span class="math inline">\(\boldsymbol{N}&#39;_{a,y,s} = (N&#39;_{a,1,y,s}, \dots, N&#39;_{a,n_r,y,s})\)</span> denotes the numbers for age <span class="math inline">\(a\)</span> across all regions after movement and <span class="math inline">\(\boldsymbol{M}\)</span> is an <span class="math inline">\(n_r \times n_r\)</span> movement matrix, which will move age cohort <span class="math inline">\(a\)</span> among the regions based on the movement matrix.</p>
+<p>** An important input is whether movement occurs to new recruits, specified by the input <code>do_recruits_move</code>. If <code>do_recruits_move == 0</code> i.e., they don’t get movement applied then recruitment is applied to the partition after the movement process. In which case movement is applied with zeros for the recruited age in the partition. Recruitment in year <span class="math inline">\(y\)</span> wont contribute to any model quantities in between <span class="math inline">\(y\)</span> and <span class="math inline">\(y+1\)</span>. All model quantities are derived based on the partition at the start of the year <span class="math inline">\(y\)</span>, where as recruitment is added during the year and so does not enter model quantities until recruited age + 1 in the following year.</p>
 </div>
 <div id="initialisation" class="section level3 unnumbered hasAnchor">
 <h3>Initialisation<a href="tagintegrated-model-equations.html#initialisation" class="anchor-section" aria-label="Anchor link to header"></a></h3>
@@ -317,9 +318,9 @@ where, <span class="math inline">\(\widehat{F}^{init}\)</span> is the estimable 
 <h3>Spawning biomass<a href="tagintegrated-model-equations.html#spawning-biomass" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>Spawning biomass is based on mature female weight. SSB in a given year and region is calculated as,</p>
 <p><span class="math display">\[
-SSB_{y,r} \sum\limits_a N_{a,s = 2, r, y} S^{mat}_{a,y} \bar{w}_{a,s = 2, y}
+SSB_{y,r} \sum\limits_a N_{a,s = 2, r, y} exp(-Z_{a,s = 2, r, y})^{prop_Z} S^{mat}_{a,y} \bar{w}_{a,s = 2, y}
 \]</span></p>
-<p>where, <span class="math inline">\(s = 2\)</span> denotes the female sex, <span class="math inline">\(S^{mat}_{a,y}\)</span> is the maturity at age and <span class="math inline">\(\bar{w}_{a,s = 2, y}\)</span> is female mean weight at age</p>
+<p>where, <span class="math inline">\(s = 2\)</span> denotes the female sex, <span class="math inline">\(S^{mat}_{a,y}\)</span> is the maturity at age, <span class="math inline">\(\bar{w}_{a,s = 2, y}\)</span> is female mean weight at age and <span class="math inline">\(prop_Z\)</span> indicates the proportion of total mortality applied before SSB is calculated.</p>
 </div>
 <div id="fishing-mortality" class="section level3 unnumbered hasAnchor">
 <h3>Fishing mortality<a href="tagintegrated-model-equations.html#fishing-mortality" class="anchor-section" aria-label="Anchor link to header"></a></h3>
@@ -541,18 +542,33 @@ resulting recruitment multipliers, also termed year class strengths (<span class
 <div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="tagintegrated-model-equations.html#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="do">## once you have done MLE and evaluated fits to a model</span></span>
 <span id="cb15-2"><a href="tagintegrated-model-equations.html#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="do">## then you can running the following code to find</span></span>
 <span id="cb15-3"><a href="tagintegrated-model-equations.html#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="do">## deterministic reference points based on %B0</span></span>
-<span id="cb15-4"><a href="tagintegrated-model-equations.html#cb15-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-5"><a href="tagintegrated-model-equations.html#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="co"># setup projection data</span></span>
-<span id="cb15-6"><a href="tagintegrated-model-equations.html#cb15-6" aria-hidden="true" tabindex="-1"></a>proj_data <span class="ot">=</span> <span class="fu">setup_proj_data</span>(<span class="at">mle_obj =</span> mle_obj, <span class="at">n_proj_years  =</span> <span class="dv">100</span>)</span>
-<span id="cb15-7"><a href="tagintegrated-model-equations.html#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="co"># check projection data</span></span>
-<span id="cb15-8"><a href="tagintegrated-model-equations.html#cb15-8" aria-hidden="true" tabindex="-1"></a><span class="fu">validate_input_data_and_parameters</span>(<span class="at">data =</span> proj_data, <span class="at">parameters =</span> parameters)</span>
-<span id="cb15-9"><a href="tagintegrated-model-equations.html#cb15-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Get MLE parameters</span></span>
-<span id="cb15-10"><a href="tagintegrated-model-equations.html#cb15-10" aria-hidden="true" tabindex="-1"></a>proj_pars <span class="ot">=</span> mle_spatial<span class="sc">$</span>par</span>
-<span id="cb15-11"><a href="tagintegrated-model-equations.html#cb15-11" aria-hidden="true" tabindex="-1"></a><span class="co"># build proj object</span></span>
-<span id="cb15-12"><a href="tagintegrated-model-equations.html#cb15-12" aria-hidden="true" tabindex="-1"></a>proj_obj <span class="ot">&lt;-</span> <span class="fu">MakeADFun</span>(proj_data, parameters, <span class="at">map =</span> map_fixed_pars,</span>
-<span id="cb15-13"><a href="tagintegrated-model-equations.html#cb15-13" aria-hidden="true" tabindex="-1"></a>                      <span class="at">DLL=</span><span class="st">&quot;SpatialSablefishAssessment_TMBExports&quot;</span>, <span class="at">hessian =</span> T, <span class="at">silent =</span> T)</span>
-<span id="cb15-14"><a href="tagintegrated-model-equations.html#cb15-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Find F-reference based on deterministic recruitment to achieve 40% bzero in each region</span></span>
-<span id="cb15-15"><a href="tagintegrated-model-equations.html#cb15-15" aria-hidden="true" tabindex="-1"></a>region_F_ref <span class="ot">=</span> <span class="fu">find_regional_fref</span>(proj_obj, proj_pars, <span class="at">percent_Bzero =</span> <span class="dv">40</span>)</span></code></pre></div>
+<span id="cb15-4"><a href="tagintegrated-model-equations.html#cb15-4" aria-hidden="true" tabindex="-1"></a>n_proj_years <span class="ot">=</span> <span class="dv">100</span></span>
+<span id="cb15-5"><a href="tagintegrated-model-equations.html#cb15-5" aria-hidden="true" tabindex="-1"></a>regional_spr <span class="ot">=</span> <span class="fu">find_regional_Fspr</span>(<span class="at">data =</span> data, </span>
+<span id="cb15-6"><a href="tagintegrated-model-equations.html#cb15-6" aria-hidden="true" tabindex="-1"></a>                                  <span class="at">MLE_report =</span> mle_report, <span class="at">n_years_for_fleet_ratio =</span> <span class="dv">5</span>, </span>
+<span id="cb15-7"><a href="tagintegrated-model-equations.html#cb15-7" aria-hidden="true" tabindex="-1"></a>                                  <span class="at">percent_Bzero =</span> <span class="dv">40</span>, <span class="at">n_future_years =</span> n_proj_years, <span class="at">verbose =</span> T)</span>
+<span id="cb15-8"><a href="tagintegrated-model-equations.html#cb15-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-9"><a href="tagintegrated-model-equations.html#cb15-9" aria-hidden="true" tabindex="-1"></a><span class="co"># setup projection data</span></span>
+<span id="cb15-10"><a href="tagintegrated-model-equations.html#cb15-10" aria-hidden="true" tabindex="-1"></a>proj_data <span class="ot">=</span> <span class="fu">setup_proj_data</span>(<span class="at">mle_obj =</span> mle_obj, <span class="at">n_proj_years  =</span> <span class="dv">100</span>)</span>
+<span id="cb15-11"><a href="tagintegrated-model-equations.html#cb15-11" aria-hidden="true" tabindex="-1"></a><span class="do">## use the Fs from Fspr function</span></span>
+<span id="cb15-12"><a href="tagintegrated-model-equations.html#cb15-12" aria-hidden="true" tabindex="-1"></a>proj_data<span class="sc">$</span>future_fishing_inputs_trwl <span class="ot">=</span> <span class="fu">matrix</span>(regional_spr<span class="sc">$</span>Fspr <span class="sc">*</span> (<span class="dv">1</span> <span class="sc">-</span> regional_spr<span class="sc">$</span>fixed_gear_F_proportion), </span>
+<span id="cb15-13"><a href="tagintegrated-model-equations.html#cb15-13" aria-hidden="true" tabindex="-1"></a>                                              <span class="at">byrow =</span> F, <span class="at">ncol =</span> n_proj_years, <span class="at">nrow =</span> n_regions)</span>
+<span id="cb15-14"><a href="tagintegrated-model-equations.html#cb15-14" aria-hidden="true" tabindex="-1"></a>proj_data<span class="sc">$</span>future_fishing_inputs_fixed <span class="ot">=</span> <span class="fu">matrix</span>(regional_spr<span class="sc">$</span>Fspr <span class="sc">*</span> regional_spr<span class="sc">$</span>fixed_gear_F_proportion, </span>
+<span id="cb15-15"><a href="tagintegrated-model-equations.html#cb15-15" aria-hidden="true" tabindex="-1"></a>                                               <span class="at">byrow =</span> F, <span class="at">ncol =</span> n_proj_years, <span class="at">nrow =</span> n_regions)</span>
+<span id="cb15-16"><a href="tagintegrated-model-equations.html#cb15-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-17"><a href="tagintegrated-model-equations.html#cb15-17" aria-hidden="true" tabindex="-1"></a><span class="co"># check projection data</span></span>
+<span id="cb15-18"><a href="tagintegrated-model-equations.html#cb15-18" aria-hidden="true" tabindex="-1"></a><span class="fu">validate_input_data_and_parameters</span>(<span class="at">data =</span> proj_data, <span class="at">parameters =</span> parameters)</span>
+<span id="cb15-19"><a href="tagintegrated-model-equations.html#cb15-19" aria-hidden="true" tabindex="-1"></a><span class="co"># build proj object</span></span>
+<span id="cb15-20"><a href="tagintegrated-model-equations.html#cb15-20" aria-hidden="true" tabindex="-1"></a>proj_obj <span class="ot">&lt;-</span> <span class="fu">MakeADFun</span>(proj_data, parameters, <span class="at">map =</span> map_fixed_pars,</span>
+<span id="cb15-21"><a href="tagintegrated-model-equations.html#cb15-21" aria-hidden="true" tabindex="-1"></a>                      <span class="at">DLL=</span><span class="st">&quot;SpatialSablefishAssessment_TMBExports&quot;</span>, <span class="at">hessian =</span> T, <span class="at">silent =</span> T)</span>
+<span id="cb15-22"><a href="tagintegrated-model-equations.html#cb15-22" aria-hidden="true" tabindex="-1"></a><span class="co"># run the projection model with future F&#39;s and MLE parameter values</span></span>
+<span id="cb15-23"><a href="tagintegrated-model-equations.html#cb15-23" aria-hidden="true" tabindex="-1"></a>proj_rep <span class="ot">=</span> proj_obj<span class="sc">$</span><span class="fu">report</span>(mle_spatial<span class="sc">$</span>par)</span>
+<span id="cb15-24"><a href="tagintegrated-model-equations.html#cb15-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Check the depletion levels are as expected</span></span>
+<span id="cb15-25"><a href="tagintegrated-model-equations.html#cb15-25" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_SSB</span>(<span class="at">MLE_report =</span> proj_rep, <span class="at">region_key =</span> region_key, <span class="at">depletion =</span> T) <span class="sc">+</span></span>
+<span id="cb15-26"><a href="tagintegrated-model-equations.html#cb15-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="dv">40</span>, <span class="at">col =</span> <span class="st">&quot;gray&quot;</span>, <span class="at">linetype =</span> <span class="st">&quot;dashed&quot;</span>, <span class="at">linewidth =</span> <span class="fl">1.1</span>) <span class="sc">+</span></span>
+<span id="cb15-27"><a href="tagintegrated-model-equations.html#cb15-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylim</span>(<span class="dv">0</span>, <span class="cn">NA</span>)</span>
+<span id="cb15-28"><a href="tagintegrated-model-equations.html#cb15-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-29"><a href="tagintegrated-model-equations.html#cb15-29" aria-hidden="true" tabindex="-1"></a><span class="do">## once this checks out, you should run projections with stochasticity in recruitment and parameters estimates</span></span>
+<span id="cb15-30"><a href="tagintegrated-model-equations.html#cb15-30" aria-hidden="true" tabindex="-1"></a><span class="do">## to get projected quantities with uncertainty.</span></span></code></pre></div>
 </div>
 </div>
 <div id="symbol-notation" class="section level2 unnumbered hasAnchor">

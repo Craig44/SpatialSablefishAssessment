@@ -23,7 +23,7 @@
 <meta name="author" content="C.Marsh" />
 
 
-<meta name="date" content="2023-02-02" />
+<meta name="date" content="2023-02-06" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -274,6 +274,7 @@ div.csl-indent {
 <li><p><code>SrType</code> Stock recruitment type 1 = Beverton holt, 2 = Ricker, 3 = average</p></li>
 <li><p><code>spawning_time_proportion</code> vector of proportions that indicate when during the year spawning occurs. Length = <code>n_projyears</code></p></li>
 <li><p><code>apply_fixed_movement</code> integer whether to apply the input <code>fixed_movement_matrix</code> or estimated movement matrix. This was added because the transformation on estimated movement parameters does not allow values to be zero or one so cannot truly apply no movement. That is when I have used this fixed movement</p></li>
+<li><p><code>do_recruits_move</code> integer specifying whether recruits are applied in the movement dynamic. 1 = yes, 0 = no.</p></li>
 <li><p><code>fixed_movement_matrix</code> movement matrix with dimensions <code>n_regions</code> <span class="math inline">\(\times\)</span><code>n_regions</code>. Rows sum equal to one.</p></li>
 <li><p><code>prop_F_hist</code> scalar proportion of longline average F that is applied during initialization.</p></li>
 <li><p><code>F_method</code> integer, if = 0 then we estimate mean and deviation F free parameters, otherwise if equal 1, use newton raphson iterations and solve F</p></li>

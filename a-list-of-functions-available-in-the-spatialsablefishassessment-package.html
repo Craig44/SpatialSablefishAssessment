@@ -23,7 +23,7 @@
 <meta name="author" content="C.Marsh" />
 
 
-<meta name="date" content="2023-02-02" />
+<meta name="date" content="2023-02-06" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -330,9 +330,8 @@ div.csl-indent {
 <div id="projectionreference-point-functions" class="section level3 unnumbered hasAnchor">
 <h3>Projection/Reference point functions<a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#projectionreference-point-functions" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <ul>
-<li><code>setup_proj_data</code> this function will take an estimation model and create a data list that when built with <code>TMB::MakeADFun</code> creates a model that will projections for a user defined number of projection years.</li>
-<li><code>find_apportioned_fref</code> this will find a single F assuming future deterministic recruitment that achieves some specified target global percent <span class="math inline">\(B_{0}\)</span>. Users must specify how much of that sinlge F is allocated to each fishery in each region.</li>
-<li><code>find_regional_fref</code> this will attempt to find an F for each region and fishery assuming future deterministic (mean) recruitment that achieves some specified target percent <span class="math inline">\(B_{0}\)</span> in each region. Worth checking the output for this function when there is movement among areas. This connectivity assumption can result in difficult optimisation.</li>
+<li><p><code>setup_proj_data</code> this function will take an estimation model and create a data list that when built with <code>TMB::MakeADFun</code> creates a model that will projections for a user defined number of projection years.</p></li>
+<li><p><code>find_regional_Fspr</code> this will attempt to find an F for each region and fishery assuming future deterministic (mean) recruitment that achieves some specified target percent <span class="math inline">\(B_{0}\)</span> in each region.</p></li>
 </ul>
 </div>
 <div id="model-comparison-functions" class="section level3 unnumbered hasAnchor">
