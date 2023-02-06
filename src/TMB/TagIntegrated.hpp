@@ -492,10 +492,11 @@ Type TagIntegrated(objective_function<Type>* obj) {
   Type N_eff = 0.0;
 
   vector<Type> Bzero(n_regions); // just M and R0
+  vector<Type> Bzero_w_recent_growth(n_regions); // just M and R0
   vector<Type> Binit(n_regions); // M + init_F and R0
   Bzero.setZero();
   Binit.setZero();
-
+  Bzero_w_recent_growth.setZero();
   // Initialise Derived quantities
   /*
    * Calculate some initial Derived quantities
@@ -669,15 +670,15 @@ Type TagIntegrated(objective_function<Type>* obj) {
     init_natage_f(n_ages - 1, region_ndx) = cache_natage_f(n_ages - 1, region_ndx) * 1 / (1 - plus_c);
     plus_c = init_natage_m(n_ages - 1, region_ndx) / cache_natage_m(n_ages - 1, region_ndx) - 1.0;
     init_natage_m(n_ages - 1, region_ndx) = cache_natage_m(n_ages - 1, region_ndx) * 1 / (1 - plus_c);
-    for(age_ndx = 0; age_ndx < n_ages; age_ndx++)
-      Binit(region_ndx) += init_natage_f(age_ndx, region_ndx) * pow(exp(- 1.0 * (M(age_ndx, 0) + init_F_hist * sel_fixed_f(age_ndx, 0))), spawning_time_proportion(0)) * weight_maturity_prod_f(age_ndx, 0);
     // Then for the equilibrium age-structure
     plus_c = equilibrium_natage_f(n_ages - 1, region_ndx) / cache_equilibrium_natage_f(n_ages - 1, region_ndx) - 1.0;
     equilibrium_natage_f(n_ages - 1, region_ndx) = cache_equilibrium_natage_f(n_ages - 1, region_ndx) * 1 / (1 - plus_c);
     plus_c = equilibrium_natage_m(n_ages - 1, region_ndx) / cache_equilibrium_natage_m(n_ages - 1, region_ndx) - 1.0;
     equilibrium_natage_m(n_ages - 1, region_ndx) = cache_equilibrium_natage_f(n_ages - 1, region_ndx) * 1 / (1 - plus_c);
-    for(age_ndx = 0; age_ndx < n_ages; age_ndx++)
+    for(age_ndx = 0; age_ndx < n_ages; age_ndx++) {
       Bzero(region_ndx) += equilibrium_natage_f(age_ndx, region_ndx) * pow(exp(-M(age_ndx, 0)), spawning_time_proportion(0)) * weight_maturity_prod_f(age_ndx, 0);
+      Bzero_w_recent_growth(region_ndx) += equilibrium_natage_f(age_ndx, region_ndx) * pow(exp(-M(age_ndx, 0)), spawning_time_proportion(0)) * weight_maturity_prod_f(age_ndx, n_years - 1);
+    }
   }
   // apply init rec devs
   if(n_init_rec_devs > 0) {
@@ -691,6 +692,13 @@ Type TagIntegrated(objective_function<Type>* obj) {
           init_natage_f(age_ndx, region_ndx) *= init_rec_dev(age_ndx - 1);
         }
       }
+      for(age_ndx = 0; age_ndx < n_ages; age_ndx++)
+        Binit(region_ndx) += init_natage_f(age_ndx, region_ndx) * pow(exp(- 1.0 * (M(age_ndx, 0) + init_F_hist * sel_fixed_f(age_ndx, 0))), spawning_time_proportion(0)) * weight_maturity_prod_f(age_ndx, 0);
+    }
+  } else {
+    for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
+      for(age_ndx = 0; age_ndx < n_ages; age_ndx++)
+        Binit(region_ndx) += init_natage_f(age_ndx, region_ndx) * pow(exp(- 1.0 * (M(age_ndx, 0) + init_F_hist * sel_fixed_f(age_ndx, 0))), spawning_time_proportion(0)) * weight_maturity_prod_f(age_ndx, 0);
     }
   }
 
@@ -1516,11 +1524,13 @@ Type TagIntegrated(objective_function<Type>* obj) {
           natage_f(age_ndx + 1, region_ndx, proj_year_ndx + 1) =  natage_f(age_ndx, region_ndx, proj_year_ndx) * S_f(age_ndx, region_ndx, proj_year_ndx);
           SSB_yr(proj_year_ndx, region_ndx) += natage_f(age_ndx, region_ndx, proj_year_ndx) * pow(S_f(age_ndx, region_ndx, proj_year_ndx), spawning_time_proportion(proj_year_ndx)) * weight_maturity_prod_f(age_ndx, proj_year_ndx);
         }
-        // SSB for the plus group
+        // SSB from the plus group
         SSB_yr(proj_year_ndx, region_ndx) += natage_f(n_ages - 1, region_ndx, proj_year_ndx) * pow(S_f(n_ages - 1, region_ndx, proj_year_ndx), spawning_time_proportion(proj_year_ndx)) * weight_maturity_prod_f(n_ages - 1, proj_year_ndx);
+
         // plus group accumulation
         natage_m(n_ages - 1, region_ndx, proj_year_ndx + 1) +=  m_plus_group * S_m(n_ages - 1, region_ndx, proj_year_ndx);
         natage_f(n_ages - 1, region_ndx, proj_year_ndx + 1) +=  f_plus_group * S_f(n_ages - 1, region_ndx, proj_year_ndx);
+
         // Calculate Catch at age
         for(age_ndx = 0; age_ndx < n_ages; age_ndx++) {
           catchatage_fixed_m(age_ndx, region_ndx, proj_year_ndx) = F_fixed_m(age_ndx, region_ndx, proj_year_ndx) / Z_m(age_ndx, region_ndx, proj_year_ndx) * natage_m(age_ndx, region_ndx, proj_year_ndx) * (1.0 - S_m(age_ndx, region_ndx, proj_year_ndx));
@@ -1534,7 +1544,7 @@ Type TagIntegrated(objective_function<Type>* obj) {
       } // for(region_ndx = 0; region_ndx < n_regions; ++region_ndx)
 
       // movement
-      if(apply_fixed_movement) {
+      if(apply_fixed_movement == 1) {
         natage_m.col(proj_year_ndx + 1) = (natage_m.col(proj_year_ndx + 1).matrix() * fixed_movement_matrix).array();
         natage_f.col(proj_year_ndx + 1) = (natage_f.col(proj_year_ndx + 1).matrix() * fixed_movement_matrix).array();
       } else {
@@ -1559,9 +1569,12 @@ Type TagIntegrated(objective_function<Type>* obj) {
   REPORT( recruitment_devs );
   REPORT(init_rec_dev);
   REPORT(Bzero);
+  REPORT(Bzero_w_recent_growth);
   REPORT(Binit);
   REPORT(init_natage_f);
   REPORT(init_natage_m);
+  REPORT( equilibrium_natage_m );
+  REPORT( equilibrium_natage_f );
   REPORT(SSB_yr);
   REPORT(natage_f);
   REPORT(natage_m);
