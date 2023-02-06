@@ -92,3 +92,40 @@ plot_partition = function(MLE_report, subset_years = NULL, region_key = NULL) {
 }
 
 
+#'
+#' calculate_initial_numbers_at_age
+#'
+#' @param n_regions integer number of regions
+#' @param n_ages integer number of ages
+#' @param R0 vector of R0 parameters for each region
+#' @param movement_matrix movement matrix containing annual movement rates
+#' @param natural_mortality vector of natural mortality rates for each age
+#' @return matrix of numbers at age with regions being rows and ages being the cols
+#' @export
+calculate_initial_numbers_at_age <-function(n_regions, n_ages, R0, movement_matrix, natural_mortality) {
+  N_age = matrix(0, nrow = n_regions, ncol = n_ages)
+  update_N_age = N_age
+  for(i in 1:(n_ages)) {
+    # recruitment
+    update_N_age[,1] = R0 #* exp(-natural_mortality[1])
+    # ageing and mortality
+    update_N_age[,2:n_ages] = N_age[,1:(n_ages - 1)] * exp(-natural_mortality[1:(n_ages - 1)])
+    # plus group
+    update_N_age[,n_ages] = update_N_age[,n_ages] + N_age[,n_ages] * exp(-natural_mortality[n_ages])
+    # movement
+    N_age = t(movement_matrix) %*% update_N_age
+  }
+  ## calculate one more annual cycle
+  update_N_age[,1] = R0
+  # ageing and mortality
+  update_N_age[,2:n_ages] = N_age[,1:(n_ages - 1)] * exp(-natural_mortality[1:(n_ages - 1)])
+  # plus group
+  update_N_age[,n_ages] = update_N_age[,n_ages] + N_age[,n_ages] * exp(-natural_mortality[n_ages])
+  # movement
+  update_N_age = t(movement_matrix) %*% update_N_age
+  ## approximate!
+  c = update_N_age[,n_ages] / N_age[,n_ages] - 1
+  update_N_age[,n_ages] = N_age[,n_ages] * 1 / (1 - c)
+
+  return(update_N_age);
+}

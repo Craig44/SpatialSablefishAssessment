@@ -71,6 +71,7 @@ Type TagIntegrated(objective_function<Type>* obj) {
   // you should use this input functionality.
   DATA_INTEGER(apply_fixed_movement);               // 0 means will use estimated movement matrix, 1 means will use input movement matrix.
   DATA_MATRIX(fixed_movement_matrix);               // n_regions x n_regions. only used if apply_fixed_movement = 1
+  DATA_INTEGER(do_recruits_move);                   // if = 1 then recruitment will be applied after movement, if = 0 then recruitment will be applied after recruitment so there won't be movement
 
   // Fishing stuff
   DATA_SCALAR(prop_F_hist);                         // Proportion of fixed_F_avg that is applied during initialization
@@ -730,11 +731,16 @@ Type TagIntegrated(objective_function<Type>* obj) {
     // in each region we want to calculate recruitment, Ageing and total mortality
     for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
       // Recruitment
-      //fill in recruitment in current year - a slight ineffieciency as we have already done this for year i.e., year_ndx = 0 above but meh!
-      natage_m(0, region_ndx, year_ndx) = (mean_rec(region_ndx) * recruitment_multipliers(region_ndx, year_ndx)) * prop_recruit_male(year_ndx);
-      natage_f(0, region_ndx, year_ndx) = (mean_rec(region_ndx) * recruitment_multipliers(region_ndx, year_ndx)) * prop_recruit_female(year_ndx);
-
-      recruitment_yr(year_ndx, region_ndx) = natage_m(0, region_ndx, year_ndx) + natage_f(0, region_ndx, year_ndx);
+      // fill in recruitment that occurred this year
+      // we put it into the year_ndx + 1 because that will represent the cohort at the end of the year
+      // you will also see when we age and apply Z that we push these all into the year_ndx + 1 index
+      // which movement operates on. This means recruitment won't contribute to SSB, catch at age in this current year
+      // Which shouldn't be a problem because not many are caught in
+      if(do_recruits_move == 1) {
+        natage_m(0, region_ndx, year_ndx + 1) = (mean_rec(region_ndx) * recruitment_multipliers(region_ndx, year_ndx)) * prop_recruit_male(year_ndx);
+        natage_f(0, region_ndx, year_ndx + 1) = (mean_rec(region_ndx) * recruitment_multipliers(region_ndx, year_ndx)) * prop_recruit_female(year_ndx);
+        recruitment_yr(year_ndx, region_ndx) = natage_m(0, region_ndx, year_ndx) + natage_f(0, region_ndx, year_ndx);
+      }
 
       // Calculate F and Z for this year and region using the hybrid method
       if(F_method == 1) {
@@ -1030,6 +1036,16 @@ Type TagIntegrated(objective_function<Type>* obj) {
       natage_m.col(year_ndx + 1) = (natage_m.col(year_ndx + 1).matrix() * movement_matrix.matrix()).array();
       natage_f.col(year_ndx + 1) = (natage_f.col(year_ndx + 1).matrix() * movement_matrix.matrix()).array();
     }
+    // If we aren't moving recruits during the movement process then we will just add them post movement
+    // note if these were not seeded before movement the first age container in both natage_m and natage_f should have zero values
+    if(do_recruits_move == 0) {
+      for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
+        natage_m(0, region_ndx, year_ndx + 1) = (mean_rec(region_ndx) * recruitment_multipliers(region_ndx, year_ndx)) * prop_recruit_male(year_ndx);
+        natage_f(0, region_ndx, year_ndx + 1) = (mean_rec(region_ndx) * recruitment_multipliers(region_ndx, year_ndx)) * prop_recruit_female(year_ndx);
+        recruitment_yr(year_ndx, region_ndx) = natage_m(0, region_ndx, year_ndx) + natage_f(0, region_ndx, year_ndx);
+      }
+    }
+
     // increment this for the tag-recovery observation
     if(tag_recovery_indicator_by_year(year_ndx) == 1)
       ++tag_recovery_counter;

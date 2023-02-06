@@ -41,6 +41,10 @@ get_multiple_recruits <- function(mle_ls, run_labels = NULL, region_key = NULL) 
   }
   full_recruit_df = NULL
   for(i in 1:length(mle_ls)) {
+    if(is.null(mle_ls[[i]])) {
+      cat("report at element ", i, " was null, so skipping\n")
+      next;
+    }
     this_recruit = get_recruitment(MLE_report = mle_ls[[i]], region_key = region_key)
     if(!is.null(run_labels)) {
       this_recruit$label = run_labels[i]
@@ -67,6 +71,10 @@ get_multiple_catch_fits <- function(mle_ls, run_labels = NULL, region_key = NULL
   }
   full_catch_df = NULL
   for(i in 1:length(mle_ls)) {
+    if(is.null(mle_ls[[i]])) {
+      cat("report at element ", i, " was null, so skipping\n")
+      next;
+    }
     this_catch = get_catches(MLE_report = mle_ls[[i]], region_key = region_key)
     if(!is.null(run_labels)) {
       this_catch$label = run_labels[i]
@@ -95,6 +103,10 @@ get_multiple_Fs <- function(mle_ls, run_labels = NULL, region_key = NULL) {
   }
   full_Fs_df = NULL
   for(i in 1:length(mle_ls)) {
+    if(is.null(mle_ls[[i]])) {
+      cat("report at element ", i, " was null, so skipping\n")
+      next;
+    }
     this_F = get_fishing_mortalities(MLE_report = mle_ls[[i]], region_key = region_key)
     if(!is.null(run_labels)) {
       this_F$label = run_labels[i]
@@ -121,6 +133,10 @@ get_multiple_selectivities <- function(mle_ls, run_labels = NULL) {
   }
   full_sel_df = NULL
   for(i in 1:length(mle_ls)) {
+    if(is.null(mle_ls[[i]])) {
+      cat("report at element ", i, " was null, so skipping\n")
+      next;
+    }
     this_sel = get_selectivities(MLE_report = mle_ls[[i]])
     if(!is.null(run_labels)) {
       this_sel$label = run_labels[i]
@@ -148,8 +164,10 @@ get_multiple_nlls <- function(mle_ls, run_labels = NULL, region_key = NULL) {
   }
   full_nll_df = NULL
   for(i in 1:length(mle_ls)) {
-    if(is.null(mle_ls[[i]]))
+    if(is.null(mle_ls[[i]])) {
+      cat("report at element ", i, " was null, so skipping\n")
       next;
+    }
     this_nll = get_negloglike(MLE_report = mle_ls[[i]])
     ## add totol
     this_nll = rbind(this_nll, data.frame(negloglike = round(sum(this_nll$negloglike),4), observations = "Total"))

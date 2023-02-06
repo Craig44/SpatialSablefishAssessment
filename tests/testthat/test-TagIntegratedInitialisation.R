@@ -55,6 +55,9 @@ test_that("test-TagIntegratedInitialisation-movement", {
   update_N_age = N_age
 
   for(i in 1:(plus_group_age)) {
+    ## interpolate SSB
+    current_ssb = rowSums(sweep(N_age/2 * exp(-M)^data$spawning_time_proportion[1], MARGIN = 2, test_report$weight_maturity_prod_f[,1], FUN = "*"))
+
     # recruitment
     update_N_age[,1] = test_report$mean_rec
     # ageing and mortality
@@ -78,8 +81,14 @@ test_that("test-TagIntegratedInitialisation-movement", {
   c = update_N_age[,plus_group_age] / N_age[,plus_group_age] - 1
   update_N_age[,plus_group_age] = N_age[,plus_group_age] * 1 / (1 - c)
 
-  ## run test
+  ## run test on partitiion
   expect_equal(t(update_N_age/2), test_report$init_natage_f, tolerance = 0.001)
+
+  ## test Bzero calculation
+  Bzero = rowSums(sweep(update_N_age/2 * exp(-M)^data$spawning_time_proportion[1], MARGIN = 2, test_report$weight_maturity_prod_f[,1], FUN = "*"))
+
+  expect_equal(test_report$Bzero, Bzero, tolerance = 0.001)
+
 })
 
 #' test-TagIntegratedInitialisation-no_movement-init_rec_devs

@@ -940,7 +940,11 @@ profile_param <- function(parameters, mle_obj, na_map, profile_param_label, elem
     profile_obj = TMB::MakeADFun(data = data, parameters = parameters, map = na_map, DLL="SpatialSablefishAssessment_TMBExports", silent = T)
     if(!no_estimation) {
       ## optimise
-      profile_mle = nlminb(start = profile_obj$par, objective = profile_obj$fn, gradient  = profile_obj$gr, control = list(iter.max = 10000, eval.max = 10000))
+      profile_mle = tryCatch(expr = nlminb(start = profile_obj$par, objective = profile_obj$fn, gradient  = profile_obj$gr, control = list(iter.max = 10000, eval.max = 10000)), error = function(e){e})
+      if(inherits(profile_mle, "error")) {
+        cat("non-convergence for profile iteration ", i , " value = ",profile_values[i], ". message: ", profile_mle$message,"\n")
+        next;
+      }
       try_improve = tryCatch(expr =
                                for(k in 1:2) {
                                  g = as.numeric(profile_obj$gr(profile_mle$par))
@@ -952,7 +956,7 @@ profile_param <- function(parameters, mle_obj, na_map, profile_param_label, elem
 
       try_improve
       if(inherits(try_improve, "error")) {
-        cat("non-convergence for profile iteration ", i , " value = ",profile_values[i],"\n")
+        cat("non-convergence for profile iteration ", i , " value = ",profile_values[i], ". message: ", profile_mle$message,"\n")
         next;
       }
       profile_mle_lst[[i]] = profile_obj$report(profile_mle$par)

@@ -72,8 +72,8 @@ region_key
 ### Projection/Reference point functions {-}
 
 - `setup_proj_data` this function will take an estimation model and create a data list that when built with `TMB::MakeADFun` creates a model that will projections for a user defined number of projection years.
-- `find_apportioned_fref` this will find a single F assuming future deterministic recruitment that achieves some specified target global percent \(B_{0}\). Users must specify how much of that sinlge F is allocated to each fishery in each region.
-- `find_regional_fref` this will attempt to find an F for each region and fishery assuming future deterministic (mean) recruitment that achieves some specified target percent \(B_{0}\) in each region. Worth checking the output for this function when there is movement among areas. This connectivity assumption can result in difficult optimisation.
+
+- `find_regional_Fspr` this will attempt to find an F for each region and fishery assuming future deterministic (mean) recruitment that achieves some specified target percent \(B_{0}\) in each region. 
 
 ### Model comparison functions {-}
 

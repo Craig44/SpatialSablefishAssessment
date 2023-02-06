@@ -86,7 +86,9 @@ data$movement_matrix = sweep(data$movement_matrix, 1, STATS = rowSums(data$movem
 data$spawning_time_proportion = rep(0, n_projyears)
 data$sigma_R = 1.2
 data$SrType = 3
-data$apply_fixed_movement = 1; ##
+data$apply_fixed_movement = 1
+data$do_recruits_move = 0
+
 #'
 #' Fishing inputs
 #'

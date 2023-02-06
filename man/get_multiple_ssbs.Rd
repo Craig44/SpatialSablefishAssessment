@@ -4,7 +4,7 @@
 \alias{get_multiple_ssbs}
 \title{get_multiple_ssbs}
 \usage{
-get_multiple_ssbs(mle_ls, run_labels = NULL, region_key = NULL)
+get_multiple_ssbs(mle_ls, run_labels = NULL, region_key = NULL, depletion = T)
 }
 \arguments{
 \item{mle_ls}{list with multiple obj$report() calls}
@@ -12,6 +12,8 @@ get_multiple_ssbs(mle_ls, run_labels = NULL, region_key = NULL)
 \item{run_labels}{vector of strings that are labels for each element in mle_ls}
 
 \item{region_key}{data.frame with colnames area and TMB_ndx for providing real region names to objects}
+
+\item{depletion}{boolean if true we will scale values by Bzero}
 }
 \value{
 data frame with SSBs catch fits

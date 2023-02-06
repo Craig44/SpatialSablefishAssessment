@@ -25,6 +25,8 @@ Users need to population a named list containing `data` inputs and a named list 
 - `SrType` Stock recruitment type 1 = Beverton holt, 2 = Ricker, 3 = average
 - `spawning_time_proportion` vector of proportions that indicate when during the year spawning occurs. Length = `n_projyears`
 - `apply_fixed_movement` integer whether to apply the input `fixed_movement_matrix` or estimated movement matrix. This was added because the transformation on estimated movement parameters does not allow values to be zero or one so cannot truly apply no movement. That is when I have used this fixed movement
+- `do_recruits_move` integer specifying whether recruits are applied in the movement dynamic. 1 = yes, 0 = no.
+
 - `fixed_movement_matrix` movement matrix with dimensions `n_regions` \(\times\)`n_regions`. Rows sum equal to one.
 - `prop_F_hist` scalar proportion of longline average F that is applied during initialization.
 - `F_method` integer, if = 0 then we estimate mean and deviation F free parameters, otherwise if equal 1, use newton raphson iterations and solve F

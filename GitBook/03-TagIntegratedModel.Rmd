@@ -15,7 +15,7 @@ Before movement, the partition is updated following
 \begin{align*}
 N_{a,r,y,s} = 
 \begin{cases}
-R_{r,y} p^R_{s,y}, & a = a_1\\
+R_{r,y} p^R_{s,y}, & a = a_1, \ \text{**}\\
 N_{a - 1,r,y - 1,s} \exp\bigg( -Z_{a - 1,r, y - 1,s} \bigg), & a_1 < a < a_+\\
 N_{a - 1,r,y - 1,s} \exp\bigg( -Z_{a - 1,r, y - 1,s} \bigg) + N_{a,r,y - 1,s} \exp\bigg( -Z_{a,r, y - 1,s} \bigg), &  a = a_+
 \end{cases}
@@ -29,6 +29,7 @@ N_{a - 1,r,y - 1,s} \exp\bigg( -Z_{a - 1,r, y - 1,s} \bigg) + N_{a,r,y - 1,s} \e
 
 where, \(\boldsymbol{N}'_{a,y,s} = (N'_{a,1,y,s}, \dots, N'_{a,n_r,y,s})\) denotes the numbers for age \(a\) across all regions after movement and \(\boldsymbol{M}\) is an \(n_r \times n_r\) movement matrix, which will move age cohort \(a\) among the regions based on the movement matrix.
 
+** An important input is whether movement occurs to new recruits, specified by the input `do_recruits_move`. If `do_recruits_move == 0`  i.e., they don't get movement applied then recruitment is applied to the partition after the movement process. In which case movement is applied with zeros for the recruited age in the partition. Recruitment in year \(y\) wont contribute to any model quantities in between \(y\) and \(y+1\). All model quantities are derived based on the partition at the start of the year \(y\), where as recruitment is added during the year and so does not enter model quantities until recruited age + 1 in the following year.
 
 ### Initialisation {-}
 An equilibrium age structure is derived by iterating the annual cycle is run \(n_a - 1\) times (i.e., to populate all age cohorts prior to the plus group). Then, iterate the annual cycle one more time and calculate the number of individuals that moved into each regions plus age cohort, denoted by \(c^r_{a+}\). This will be the result of ageing, mortality and movement. The equilibrium plus group for region \(r\) is then calculated as
@@ -78,10 +79,10 @@ Terminology regarding recruitment and spatial population structures can be ambig
 Spawning biomass is based on mature female weight. SSB in a given year and region is calculated as,
 
 \[
-SSB_{y,r} \sum\limits_a N_{a,s = 2, r, y} S^{mat}_{a,y} \bar{w}_{a,s = 2, y}
+SSB_{y,r} \sum\limits_a N_{a,s = 2, r, y} exp(-Z_{a,s = 2, r, y})^{prop_Z} S^{mat}_{a,y} \bar{w}_{a,s = 2, y}
 \]
 
-where, \(s = 2\) denotes the female sex, \(S^{mat}_{a,y}\) is the maturity at age and \(\bar{w}_{a,s = 2, y}\) is female mean weight at age
+where, \(s = 2\) denotes the female sex, \(S^{mat}_{a,y}\) is the maturity at age, \(\bar{w}_{a,s = 2, y}\) is female mean weight at age and \(prop_Z\) indicates the proportion of total mortality applied before SSB is calculated.
 
 ### Fishing mortality {-}
 When the hybrid \(F\) method is assumed, tagged fish were not included when internally solving the fishing mortality nuisance parameters. The ratio of tagged to untagged numbers of fish in the partition in any year was assumed to be small enough not to effect \(F\) estimates. However, tagged fish were included when the model calculates predicted catch-at-age/length and catch for a fleet. This decision was made to reduce the computational overhead this would require to implement. When \(F\) parameters are estimated as free parameters, then this is not a problem and \(F\) will be applied to both tagged and untagged fish.
@@ -348,18 +349,33 @@ Fishing selectivity that was assumed in the last year of the model is used durin
 ## once you have done MLE and evaluated fits to a model
 ## then you can running the following code to find
 ## deterministic reference points based on %B0
+n_proj_years = 100
+regional_spr = find_regional_Fspr(data = data, 
+                                  MLE_report = mle_report, n_years_for_fleet_ratio = 5, 
+                                  percent_Bzero = 40, n_future_years = n_proj_years, verbose = T)
 
 # setup projection data
 proj_data = setup_proj_data(mle_obj = mle_obj, n_proj_years  = 100)
+## use the Fs from Fspr function
+proj_data$future_fishing_inputs_trwl = matrix(regional_spr$Fspr * (1 - regional_spr$fixed_gear_F_proportion), 
+                                              byrow = F, ncol = n_proj_years, nrow = n_regions)
+proj_data$future_fishing_inputs_fixed = matrix(regional_spr$Fspr * regional_spr$fixed_gear_F_proportion, 
+                                               byrow = F, ncol = n_proj_years, nrow = n_regions)
+
 # check projection data
 validate_input_data_and_parameters(data = proj_data, parameters = parameters)
-# Get MLE parameters
-proj_pars = mle_spatial$par
 # build proj object
 proj_obj <- MakeADFun(proj_data, parameters, map = map_fixed_pars,
                       DLL="SpatialSablefishAssessment_TMBExports", hessian = T, silent = T)
-# Find F-reference based on deterministic recruitment to achieve 40% bzero in each region
-region_F_ref = find_regional_fref(proj_obj, proj_pars, percent_Bzero = 40)
+# run the projection model with future F's and MLE parameter values
+proj_rep = proj_obj$report(mle_spatial$par)
+# Check the depletion levels are as expected
+plot_SSB(MLE_report = proj_rep, region_key = region_key, depletion = T) +
+  geom_hline(yintercept = 40, col = "gray", linetype = "dashed", linewidth = 1.1) +
+  ylim(0, NA)
+
+## once this checks out, you should run projections with stochasticity in recruitment and parameters estimates
+## to get projected quantities with uncertainty.
 
 ```
 
