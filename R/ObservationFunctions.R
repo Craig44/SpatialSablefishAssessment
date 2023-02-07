@@ -410,6 +410,8 @@ get_index = function(MLE_report, region_key = NULL) {
   full_df$U_CI = CIs$upper
   full_df$L_CI = CIs$lower
 
+  full_df$Pearsons_residuals = (log(full_df$Observed/full_df$Predicted) + 0.5*full_df$SE^2)/full_df$SE
+
   if(is.null(region_key)) {
     full_df$Region = paste0("Region ", full_df$Region)
   } else {
@@ -479,45 +481,69 @@ Francis_reweighting <- function(MLE_report, region_key = NULL) {
 #' @param obj A TMB object that has been build using `TMB::MakeADFun`
 #' @param n_sims an integer specifying how many simulated data sets you want
 #' @param sd_report if you have already run `TMB::sdreport` then you can pass this function it. Which can save a time
+#' @param include_param_uncertainty boolean whether to simulate parameters from a multivariate normal distribution for each simulation
 #' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
 #' @return named list containing simualted observations for all key obsevations
 #' @export
 
-simulate_observations <- function(obj, n_sims = 200, sd_report = NULL, region_key = NULL) {
+simulate_observations <- function(obj, n_sims = 200, sd_report = NULL, include_param_uncertainty = F, region_key = NULL) {
   fixed_effect_pars = get_tmb_fixed_effects(obj)
   all_pars = obj$env$last.par.best
-  if(is.null(sd_report))
-    sd_report = sdreport(obj, getJointPrecision = T)
-  sim_pars =  MASS::mvrnorm(n = n_sims, mu = fixed_effect_pars, Sigma = sd_report$cov.fixed)
+  if(include_param_uncertainty) {
+    if(is.null(sd_report))
+      sd_report = sdreport(obj, getJointPrecision = T)
+    sim_pars =  MASS::mvrnorm(n = n_sims, mu = fixed_effect_pars, Sigma = sd_report$cov.fixed)
+  }
+  mle_rep = obj$report(all_pars)
+  ## get the real observed data and save them in the following datasets
+  obs_index_df = get_index(mle_rep, region_key = region_key)
+  obs_srv_AF_df = get_AF(mle_rep, label = "srv_dom_ll", region_key = region_key)
+  obs_fixed_AF_df = get_AF(mle_rep, label = "fixed", region_key = region_key)
+  obs_fixed_LF_df = get_LF(mle_rep, label = "fixed", region_key = region_key)
+  obs_trwl_LF_df = get_LF(mle_rep, label = "trwl", region_key = region_key)
+  obs_tag_data_df = get_tag_recovery_obs_fitted_values(MLE_report = mle_rep, region_key = region_key)
+
+
   sim_srv_bio = sim_srv_AF = sim_fixed_AF = sim_fixed_LF = sim_trwl_LF = sim_tag_recovery = NULL
   for(sim_iter in 1:n_sims) {
     if(sim_iter %% 50 == 0)
       cat("simulation iteration: ", sim_iter, "\n")
+    this_sim = NULL
     ## simualte
-    this_sim = obj$simulate(par = sim_pars[sim_iter,], complete = T)
+    if(include_param_uncertainty) {
+      this_sim = obj$simulate(par = sim_pars[sim_iter,], complete = T)
+    } else {
+      this_sim = obj$simulate(par = all_pars, complete = T)
+    }
     ## store sim obs
     # survey biomass
-    index_df = get_index(this_sim, region_key = region_key)
+    index_df = get_index(this_sim, region_key = region_key) %>% rename(Simulated = Observed)
+    index_df$Observed = obs_index_df$Observed
     index_df$sim = sim_iter
     sim_srv_bio = rbind(sim_srv_bio, index_df)
     # survey AF
-    srv_AF = get_AF(MLE_report = this_sim, label = "srv_dom_ll", region_key = region_key)
+    srv_AF = get_AF(MLE_report = this_sim, label = "srv_dom_ll", region_key = region_key) %>% rename(Simulated = Observed)
+    srv_AF$Observed = obs_srv_AF_df$Observed
     srv_AF$sim = sim_iter
     sim_srv_AF = rbind(sim_srv_AF, srv_AF)
     # Fixed AF
-    fixed_AF = get_AF(MLE_report = this_sim, label = "fixed", region_key = region_key)
+    fixed_AF = get_AF(MLE_report = this_sim, label = "fixed", region_key = region_key) %>% rename(Simulated = Observed)
+    fixed_AF$Observed = obs_fixed_AF_df$Observed
     fixed_AF$sim = sim_iter
     sim_fixed_AF = rbind(sim_fixed_AF, fixed_AF)
     # Fixed LF
-    fixed_LF = get_LF(MLE_report = this_sim, label = "fixed", region_key = region_key)
+    fixed_LF = get_LF(MLE_report = this_sim, label = "fixed", region_key = region_key) %>% rename(Simulated = Observed)
+    fixed_LF$Observed = obs_fixed_LF_df$Observed
     fixed_LF$sim = sim_iter
     sim_fixed_LF = rbind(sim_fixed_LF, fixed_LF)
     # Trawl LF
-    trwl_LF = get_LF(MLE_report = this_sim, label = "trwl", region_key = region_key)
+    trwl_LF = get_LF(MLE_report = this_sim, label = "trwl", region_key = region_key) %>% rename(Simulated = Observed)
+    trwl_LF$Observed = obs_trwl_LF_df$Observed
     trwl_LF$sim = sim_iter
     sim_trwl_LF = rbind(sim_trwl_LF, trwl_LF)
     # Tag data
-    tag_data = get_tag_recovery_obs_fitted_values(MLE_report = this_sim, region_key = region_key)
+    tag_data = get_tag_recovery_obs_fitted_values(MLE_report = this_sim, region_key = region_key) %>% rename(Simulated = observed, Predicted = predicted)
+    tag_data$Observed  = obs_tag_data_df$observed
     tag_data$sim = sim_iter
     sim_tag_recovery = rbind(sim_tag_recovery, tag_data)
   }
@@ -548,13 +574,14 @@ calculate_simulated_residuals <- function(sim_ob, type = "abundance") {
     regions = unique(sim_ob$Region)
     for(r in 1:length(regions)) {
       this_sim_vals = sim_ob %>% filter(Region == regions[r]) %>%
-        pivot_wider(id_cols = Year, names_from = sim, values_from = Predicted) %>%
+        pivot_wider(id_cols = Year, names_from = sim, values_from = Simulated) %>%
         dplyr::select(!Year)
       this_sim_obs = sim_ob %>% filter(Region == regions[r], sim == 1) %>% dplyr::select(Observed)
+      this_pred = sim_ob %>% filter(Region == regions[r], sim == 1) %>% dplyr::select(Predicted)
       Years = sim_ob %>% filter(Region == regions[r], sim == 1) %>% dplyr::select(Year)
 
-      this_dharma = suppressMessages(createDHARMa(simulatedResponse = as.matrix(this_sim_vals), observedResponse = this_sim_obs$Observed))
-      this_scaled_df = data.frame(scaled_resids = this_dharma$scaledResiduals, observed = this_dharma$observedResponse, mean_sim_vals = this_dharma$fittedPredictedResponse, Region = regions[r], Year =Years)
+      this_dharma = suppressMessages(createDHARMa(simulatedResponse = as.matrix(this_sim_vals), observedResponse = this_sim_obs$Observed, fittedPredictedResponse  = this_pred$Predicted))
+      this_scaled_df = data.frame(scaled_resids = this_dharma$scaledResiduals, qnorm_transformed_scaled_resids = qnorm(this_dharma$scaledResiduals), observed = this_dharma$observedResponse, mean_sim_vals = this_dharma$fittedPredictedResponse, Region = regions[r], Year =Years)
       full_simualted_resids = rbind(full_simualted_resids, this_scaled_df)
     }
     full_simualted_resids$type = "Abundance"
@@ -565,14 +592,14 @@ calculate_simulated_residuals <- function(sim_ob, type = "abundance") {
       years_this_region = unique(this_df$Year)
       for(y in 1:length(years_this_region)) {
         this_sim_vals =  this_df %>% filter(Year == years_this_region[y]) %>%
-          pivot_wider(id_cols = S_Length, names_from = sim, values_from = Predicted) %>%
+          pivot_wider(id_cols = S_Length, names_from = sim, values_from = Simulated) %>%
           ungroup() %>%
           dplyr::select(!S_Length)
         this_sim_obs = this_df %>% filter(Year == years_this_region[y], sim == 1) %>% ungroup() %>% dplyr::select(Observed)
         S_Lengths = this_df %>% ungroup() %>% filter(Year == years_this_region[y], sim == 1) %>% dplyr::select(S_Length)
 
         this_dharma = suppressMessages(createDHARMa(simulatedResponse = as.matrix(this_sim_vals), observedResponse = this_sim_obs$Observed, integerResponse = T))
-        this_scaled_df = data.frame(scaled_resids = this_dharma$scaledResiduals, observed = this_dharma$observedResponse, mean_sim_vals = this_dharma$fittedPredictedResponse, Region = regions[r], Year = years_this_region[y], S_Lengths = S_Lengths)
+        this_scaled_df = data.frame(scaled_resids = this_dharma$scaledResiduals, qnorm_transformed_scaled_resids = qnorm(this_dharma$scaledResiduals), observed = this_dharma$observedResponse, mean_sim_vals = this_dharma$fittedPredictedResponse, Region = regions[r], Year = years_this_region[y], S_Lengths = S_Lengths)
         full_simualted_resids = rbind(full_simualted_resids, this_scaled_df)
       }
     }
@@ -586,14 +613,14 @@ calculate_simulated_residuals <- function(sim_ob, type = "abundance") {
       years_this_region = unique(this_df$Year)
       for(y in 1:length(years_this_region)) {
         this_sim_vals =  this_df %>% filter(Year == years_this_region[y]) %>%
-          pivot_wider(id_cols = S_Age, names_from = sim, values_from = Predicted) %>%
+          pivot_wider(id_cols = S_Age, names_from = sim, values_from = Simulated) %>%
           ungroup() %>%
           dplyr::select(!S_Age)
         this_sim_obs = this_df %>% filter(Year == years_this_region[y], sim == 1) %>% ungroup() %>% dplyr::select(Observed)
         S_Ages = this_df %>% ungroup() %>% filter(Year == years_this_region[y], sim == 1) %>% dplyr::select(S_Age)
 
         this_dharma = suppressMessages(createDHARMa(simulatedResponse = as.matrix(this_sim_vals), observedResponse = this_sim_obs$Observed, integerResponse = T))
-        this_scaled_df = data.frame(scaled_resids = this_dharma$scaledResiduals, observed = this_dharma$observedResponse, mean_sim_vals = this_dharma$fittedPredictedResponse, Region = regions[r], Year = years_this_region[y], S_Ages = S_Ages)
+        this_scaled_df = data.frame(scaled_resids = this_dharma$scaledResiduals, qnorm_transformed_scaled_resids = qnorm(this_dharma$scaledResiduals), observed = this_dharma$observedResponse, mean_sim_vals = this_dharma$fittedPredictedResponse, Region = regions[r], Year = years_this_region[y], S_Ages = S_Ages)
         full_simualted_resids = rbind(full_simualted_resids, this_scaled_df)
       }
     }
@@ -606,13 +633,13 @@ calculate_simulated_residuals <- function(sim_ob, type = "abundance") {
     sim_ob$recovery_event = paste0(sim_ob$recovery_year, "-", sim_ob$recovery_region)
     for(r in 1:length(rel_event)) {
       this_sim_vals =  sim_ob %>% filter(release_event == rel_event[r]) %>%
-        pivot_wider(id_cols = recovery_event, names_from = sim, values_from = predicted) %>%
+        pivot_wider(id_cols = recovery_event, names_from = sim, values_from = Simulated) %>%
         dplyr::select(!recovery_event)
-      this_sim_obs = sim_ob %>% filter(release_event == rel_event[r], sim == 1) %>% ungroup() %>% dplyr::select(observed)
+      this_sim_obs = sim_ob %>% filter(release_event == rel_event[r], sim == 1) %>% ungroup() %>% dplyr::select(Observed)
       rec_event = sim_ob %>% ungroup() %>% filter(release_event == rel_event[r], sim == 1) %>% dplyr::select(recovery_event)
 
       this_dharma = suppressMessages(createDHARMa(simulatedResponse = as.matrix(this_sim_vals), observedResponse = this_sim_obs$observed, integerResponse = T))
-      this_scaled_df = data.frame(scaled_resids = this_dharma$scaledResiduals, observed = this_dharma$observedResponse, mean_sim_vals = this_dharma$fittedPredictedResponse, recovery_event = rec_event, release_event = rel_event[r])
+      this_scaled_df = data.frame(scaled_resids = this_dharma$scaledResiduals, qnorm_transformed_scaled_resids = qnorm(this_dharma$scaledResiduals), observed = this_dharma$observedResponse, mean_sim_vals = this_dharma$fittedPredictedResponse, recovery_event = rec_event, release_event = rel_event[r])
       full_simualted_resids = rbind(full_simualted_resids, this_scaled_df)
     }
     full_simualted_resids$recovery_region = Reduce(c, lapply(strsplit(full_simualted_resids$recovery_event, split = "-"), FUN = function(x){x[2]}))
@@ -639,25 +666,28 @@ calculate_simulated_residuals <- function(sim_ob, type = "abundance") {
 summarise_AF_resids <- function(AF_sim_resids, sex = "M", obs_label = "") {
   title_label = paste0(ifelse(sex == "M", "Male", "Female"), " ", obs_label)
   AF_sim_resids$year_class  = AF_sim_resids$Year - AF_sim_resids$age
-  yr_plt = ggplot(AF_sim_resids %>% filter(sex == sex), aes(x = factor(Year), y = (scaled_resids))) +
+  yr_plt = ggplot(AF_sim_resids %>% filter(sex == sex), aes(x = factor(Year), y = (qnorm_transformed_scaled_resids))) +
     geom_boxplot() +
     labs(x = "Year", y = "Simualted residuals") +
     ggtitle(title_label) +
+    geom_hline(yintercept = 0, col = "red", linetype = "dashed") +
     facet_wrap(~Region, ncol = 1) +
     scale_x_discrete(breaks = every_nth(n = 10)) +
     theme_bw()
-  yr_class_plt = ggplot(AF_sim_resids %>% filter(sex == sex), aes(x = factor(year_class), y = (scaled_resids))) +
+  yr_class_plt = ggplot(AF_sim_resids %>% filter(sex == sex), aes(x = factor(year_class), y = (qnorm_transformed_scaled_resids))) +
     geom_boxplot() +
     labs(x = "Year class", y = "") +
     ggtitle("") +
+    geom_hline(yintercept = 0, col = "red", linetype = "dashed") +
     facet_wrap(~Region, ncol = 1) +
     scale_x_discrete(breaks = every_nth(n = 10)) +
     theme_bw()
-  age_plt = ggplot(AF_sim_resids %>% filter(sex == sex), aes(x = factor(age), y = (scaled_resids))) +
+  age_plt = ggplot(AF_sim_resids %>% filter(sex == sex), aes(x = factor(age), y = (qnorm_transformed_scaled_resids))) +
     geom_boxplot() +
     labs(x = "Age", y = "") +
     ggtitle("") +
     facet_wrap(~Region, ncol = 1) +
+    geom_hline(yintercept = 0, col = "red", linetype = "dashed") +
     #scale_x_discrete(breaks = every_nth(n = 10)) +
     theme_bw()
 

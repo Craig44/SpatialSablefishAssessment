@@ -24,6 +24,7 @@ Imports:
     dplyr,
     abind,
     DHARMa,
+    bookdown,
     ggpubr,
     bookdown
 LinkingTo: 

@@ -4,7 +4,13 @@
 \alias{simulate_observations}
 \title{simulate_observations}
 \usage{
-simulate_observations(obj, n_sims = 200, sd_report = NULL, region_key = NULL)
+simulate_observations(
+  obj,
+  n_sims = 200,
+  sd_report = NULL,
+  include_param_uncertainty = F,
+  region_key = NULL
+)
 }
 \arguments{
 \item{obj}{A TMB object that has been build using \code{TMB::MakeADFun}}
@@ -12,6 +18,8 @@ simulate_observations(obj, n_sims = 200, sd_report = NULL, region_key = NULL)
 \item{n_sims}{an integer specifying how many simulated data sets you want}
 
 \item{sd_report}{if you have already run \code{TMB::sdreport} then you can pass this function it. Which can save a time}
+
+\item{include_param_uncertainty}{boolean whether to simulate parameters from a multivariate normal distribution for each simulation}
 
 \item{region_key}{data.frame with colnames area and TMB_ndx for providing real region names to objects}
 }

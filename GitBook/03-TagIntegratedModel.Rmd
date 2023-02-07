@@ -15,7 +15,7 @@ Before movement, the partition is updated following
 \begin{align*}
 N_{a,r,y,s} = 
 \begin{cases}
-R_{r,y} p^R_{s,y}, & a = a_1, \ \text{**}\\
+R_{r,y} p^R_{s,y}, & a = a_1\\
 N_{a - 1,r,y - 1,s} \exp\bigg( -Z_{a - 1,r, y - 1,s} \bigg), & a_1 < a < a_+\\
 N_{a - 1,r,y - 1,s} \exp\bigg( -Z_{a - 1,r, y - 1,s} \bigg) + N_{a,r,y - 1,s} \exp\bigg( -Z_{a,r, y - 1,s} \bigg), &  a = a_+
 \end{cases}
@@ -29,7 +29,7 @@ N_{a - 1,r,y - 1,s} \exp\bigg( -Z_{a - 1,r, y - 1,s} \bigg) + N_{a,r,y - 1,s} \e
 
 where, \(\boldsymbol{N}'_{a,y,s} = (N'_{a,1,y,s}, \dots, N'_{a,n_r,y,s})\) denotes the numbers for age \(a\) across all regions after movement and \(\boldsymbol{M}\) is an \(n_r \times n_r\) movement matrix, which will move age cohort \(a\) among the regions based on the movement matrix.
 
-** An important input is whether movement occurs to new recruits, specified by the input `do_recruits_move`. If `do_recruits_move == 0`  i.e., they don't get movement applied then recruitment is applied to the partition after the movement process. In which case movement is applied with zeros for the recruited age in the partition. Recruitment in year \(y\) wont contribute to any model quantities in between \(y\) and \(y+1\). All model quantities are derived based on the partition at the start of the year \(y\), where as recruitment is added during the year and so does not enter model quantities until recruited age + 1 in the following year.
+** An important input is whether movement occurs to new recruits, which is specified by the input `do_recruits_move`. If `do_recruits_move == 0`  i.e., they don't get movement applied. In the code this applied by applying movement and then resetting the numbers at age by the recruited values. 
 
 ### Initialisation {-}
 An equilibrium age structure is derived by iterating the annual cycle is run \(n_a - 1\) times (i.e., to populate all age cohorts prior to the plus group). Then, iterate the annual cycle one more time and calculate the number of individuals that moved into each regions plus age cohort, denoted by \(c^r_{a+}\). This will be the result of ageing, mortality and movement. The equilibrium plus group for region \(r\) is then calculated as
@@ -314,6 +314,13 @@ In the paper by @thorson2017model, the Dirichlet multinomial with observed propo
 
 
 When simulating from this distribution we first simulate the dirichlet variable, using independent gamma draws (normalised), with shape parameter set as the fitted proportion. Then draw from the multinomial with expected composition based on the dirichlet draw.
+
+### Lognormal {-}
+As mentioned in the abundance observation section there are two alternative lognormal forms in the model. Pearon residuals are calculated as
+
+\[
+r_i = \frac{log(O_i/E_i) + 0.5\sigma_i^2}{\sigma_i}
+\]
 
 
 
