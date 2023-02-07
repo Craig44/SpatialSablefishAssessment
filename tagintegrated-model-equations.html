@@ -23,7 +23,7 @@
 <meta name="author" content="C.Marsh" />
 
 
-<meta name="date" content="2023-02-06" />
+<meta name="date" content="2023-02-07" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -211,6 +211,7 @@ div.csl-indent {
 <ul>
 <li class="chapter" data-level="" data-path="tagintegrated-model-equations.html"><a href="tagintegrated-model-equations.html#multinomial"><i class="fa fa-check"></i>Multinomial</a></li>
 <li class="chapter" data-level="" data-path="tagintegrated-model-equations.html"><a href="tagintegrated-model-equations.html#dirichlet-multinomial"><i class="fa fa-check"></i>Dirichlet-Multinomial</a></li>
+<li class="chapter" data-level="" data-path="tagintegrated-model-equations.html"><a href="tagintegrated-model-equations.html#lognormal"><i class="fa fa-check"></i>Lognormal</a></li>
 </ul></li>
 <li class="chapter" data-level="" data-path="tagintegrated-model-equations.html"><a href="tagintegrated-model-equations.html#projecting"><i class="fa fa-check"></i>Projecting</a>
 <ul>
@@ -267,7 +268,7 @@ div.csl-indent {
 <span class="math display">\[\begin{align*}
 N_{a,r,y,s} =
 \begin{cases}
-R_{r,y} p^R_{s,y}, &amp; a = a_1, \ \text{**}\\
+R_{r,y} p^R_{s,y}, &amp; a = a_1\\
 N_{a - 1,r,y - 1,s} \exp\bigg( -Z_{a - 1,r, y - 1,s} \bigg), &amp; a_1 &lt; a &lt; a_+\\
 N_{a - 1,r,y - 1,s} \exp\bigg( -Z_{a - 1,r, y - 1,s} \bigg) + N_{a,r,y - 1,s} \exp\bigg( -Z_{a,r, y - 1,s} \bigg), &amp;  a = a_+
 \end{cases}
@@ -277,7 +278,7 @@ N_{a - 1,r,y - 1,s} \exp\bigg( -Z_{a - 1,r, y - 1,s} \bigg) + N_{a,r,y - 1,s} \e
 \boldsymbol{N}&#39;_{a,y,s} = \boldsymbol{N}_{a,y,s} \boldsymbol{M} \ \ \forall \ a
 \end{equation*}\]</span></p>
 <p>where, <span class="math inline">\(\boldsymbol{N}&#39;_{a,y,s} = (N&#39;_{a,1,y,s}, \dots, N&#39;_{a,n_r,y,s})\)</span> denotes the numbers for age <span class="math inline">\(a\)</span> across all regions after movement and <span class="math inline">\(\boldsymbol{M}\)</span> is an <span class="math inline">\(n_r \times n_r\)</span> movement matrix, which will move age cohort <span class="math inline">\(a\)</span> among the regions based on the movement matrix.</p>
-<p>** An important input is whether movement occurs to new recruits, specified by the input <code>do_recruits_move</code>. If <code>do_recruits_move == 0</code> i.e., they don’t get movement applied then recruitment is applied to the partition after the movement process. In which case movement is applied with zeros for the recruited age in the partition. Recruitment in year <span class="math inline">\(y\)</span> wont contribute to any model quantities in between <span class="math inline">\(y\)</span> and <span class="math inline">\(y+1\)</span>. All model quantities are derived based on the partition at the start of the year <span class="math inline">\(y\)</span>, where as recruitment is added during the year and so does not enter model quantities until recruited age + 1 in the following year.</p>
+<p>** An important input is whether movement occurs to new recruits, which is specified by the input <code>do_recruits_move</code>. If <code>do_recruits_move == 0</code> i.e., they don’t get movement applied. In the code this applied by applying movement and then resetting the numbers at age by the recruited values.</p>
 </div>
 <div id="initialisation" class="section level3 unnumbered hasAnchor">
 <h3>Initialisation<a href="tagintegrated-model-equations.html#initialisation" class="anchor-section" aria-label="Anchor link to header"></a></h3>
@@ -512,6 +513,13 @@ f(x) = \frac{\left(n!\right)\Gamma\left(\sum \alpha_k\right)}{\Gamma\left(n+\sum
 \end{equation}\]</span></p>
 <p>In the paper by <span class="citation">Thorson et al. (<a href="#ref-thorson2017model" role="doc-biblioref">2017</a>)</span>, the Dirichlet multinomial with observed proportions denoted by <span class="math inline">\(\tilde{\pi}\)</span> fitted proportions <span class="math inline">\(\pi\)</span> and over dispersion parameter <span class="math inline">\(\beta\)</span> and effective sample size <span class="math inline">\(n_{eff}\)</span>. This relates to the classic parametersiation above with <span class="math inline">\(x_k = \tilde{\pi}_k n_{eff}\)</span>, <span class="math inline">\(\alpha_k = \beta \pi_k\)</span> and <span class="math inline">\(n = n_{eff}\)</span>. When this likelihood is implemented it has an estimable parameter <span class="math inline">\(\theta = \beta/n_{eff}\)</span>.</p>
 <p>When simulating from this distribution we first simulate the dirichlet variable, using independent gamma draws (normalised), with shape parameter set as the fitted proportion. Then draw from the multinomial with expected composition based on the dirichlet draw.</p>
+</div>
+<div id="lognormal" class="section level3 unnumbered hasAnchor">
+<h3>Lognormal<a href="tagintegrated-model-equations.html#lognormal" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>As mentioned in the abundance observation section there are two alternative lognormal forms in the model. Pearon residuals are calculated as</p>
+<p><span class="math display">\[
+r_i = \frac{log(O_i/E_i) + 0.5\sigma_i^2}{\sigma_i}
+\]</span></p>
 </div>
 </div>
 <div id="projecting" class="section level2 unnumbered hasAnchor">
