@@ -23,7 +23,7 @@
 <meta name="author" content="C.Marsh" />
 
 
-<meta name="date" content="2023-02-07" />
+<meta name="date" content="2023-02-10" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -348,13 +348,31 @@ div.csl-indent {
 <li><code>get_multiple_ssbs</code> get multiple models SSBs</li>
 <li><code>get_multiple_catch_fits</code> Get multiple models catch fits</li>
 <li><code>get_multiple_nlls</code> get multiple models negative log-likelihood</li>
+<li><code>summarise_individual_models</code> this is a function that will build a Bookdown/Rmarkdown book displaying a full summary of each model individually. This functions expect users to save the following objects with these exact names for each model that you want to compare. Then pass the function all the directories with model labels and descriptions. Then it “should” automatically build you a Rmarkdown document.</li>
 </ul>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(data, <span class="fu">file.path</span>(fig_path, <span class="st">&quot;data.RDS&quot;</span>))</span>
+<span id="cb5-2"><a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(parameters, <span class="fu">file.path</span>(fig_path, <span class="st">&quot;parameters.RDS&quot;</span>))</span>
+<span id="cb5-3"><a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(mle_report, <span class="fu">file.path</span>(fig_path, <span class="st">&quot;mle_report.RDS&quot;</span>))</span>
+<span id="cb5-4"><a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(sd_report, <span class="fu">file.path</span>(fig_path, <span class="st">&quot;sd_report.RDS&quot;</span>))</span>
+<span id="cb5-5"><a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(mle_spatial, <span class="fu">file.path</span>(fig_path, <span class="st">&quot;mle_optim.RDS&quot;</span>))</span>
+<span id="cb5-6"><a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(map_fixed_pars, <span class="fu">file.path</span>(fig_path, <span class="st">&quot;map_fixed_pars.RDS&quot;</span>))</span>
+<span id="cb5-7"><a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(region_key, <span class="fu">file.path</span>(fig_path, <span class="st">&quot;region_key.RDS&quot;</span>))</span></code></pre></div>
+<ul>
+<li><code>summarise_multiple_models</code> this is a function that will build a Bookdown/Rmarkdown book compareing multiple models fits and quantities on the same plot. This functions expect users to save the following objects with these exact names for each model that you want to compare. Then pass the function all the directories with model labels and descriptions. Then it “should” automatically build you a Rmarkdown document.</li>
+</ul>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(data, <span class="fu">file.path</span>(fig_path, <span class="st">&quot;data.RDS&quot;</span>))</span>
+<span id="cb6-2"><a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(parameters, <span class="fu">file.path</span>(fig_path, <span class="st">&quot;parameters.RDS&quot;</span>))</span>
+<span id="cb6-3"><a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(mle_report, <span class="fu">file.path</span>(fig_path, <span class="st">&quot;mle_report.RDS&quot;</span>))</span>
+<span id="cb6-4"><a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(sd_report, <span class="fu">file.path</span>(fig_path, <span class="st">&quot;sd_report.RDS&quot;</span>))</span>
+<span id="cb6-5"><a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(mle_spatial, <span class="fu">file.path</span>(fig_path, <span class="st">&quot;mle_optim.RDS&quot;</span>))</span>
+<span id="cb6-6"><a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(map_fixed_pars, <span class="fu">file.path</span>(fig_path, <span class="st">&quot;map_fixed_pars.RDS&quot;</span>))</span>
+<span id="cb6-7"><a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(region_key, <span class="fu">file.path</span>(fig_path, <span class="st">&quot;region_key.RDS&quot;</span>))</span></code></pre></div>
 </div>
 <div id="distribution-functions" class="section level3 unnumbered hasAnchor">
 <h3>Distribution functions<a href="a-list-of-functions-available-in-the-spatialsablefishassessment-package.html#distribution-functions" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <ul>
 <li><code>ddirichmult</code> Dirichlet-multinomial pdf function</li>
-<li><code>dmultinom_upd</code> Multinomial pdf function, which is the same as TMB’s. Differs from Rs base <code>dmultinom</code> by allowing no-integers and not rounding the x values.</li>
+<li><code>dmultinom_upd</code> Multinomial pdf function, which is the same as TMB’s. Differs from Rs base <code>dmultinom</code> by allowing non-integer x values and not rounding the x values.</li>
 <li><code>lognormal_CI</code> calculate confidence intervals for the lognormal distribution</li>
 <li><code>log_cv</code> calculate cv for the lognormal distribution given standard deviation</li>
 <li><code>log_sigma</code> calculate standard deviation for the lognormal distribution given CV</li>
@@ -369,7 +387,7 @@ div.csl-indent {
 <li><code>logit</code> logistic transformation between 0, 1 similar to <code>qlogis</code></li>
 <li><code>invlogit_general</code> inverse logistic transformation between a specified lower and upper bound</li>
 <li><code>invlogit</code> inverse logistic transformation between 0, 1 similar to <code>plogis</code></li>
-<li><code>bound_unit</code> transform a parameter <span class="math inline">\(X\)</span> bound between -1 and 1 (i.e., correlation parameter) as
+<li><code>bound_unit</code> transform a parameter <span class="math inline">\(X\)</span> bound between -1 and 1 (i.e., correlation parameter) to value <span class="math inline">\(Y\)</span> which is unbounded as
 <span class="math display">\[
 Y =
 \begin{cases}
