@@ -6,14 +6,16 @@
 \usage{
 plot_mean_length(
   MLE_report,
-  label = "fixed",
+  observation = "fixed",
   subset_years = NULL,
   sex = "both",
   region_key = NULL
 )
 }
 \arguments{
-\item{label}{character labeling the observation you want to plot. See below for options
+\item{MLE_report}{a list that is output from obj$report() usually once an optimsation routine has been done.}
+
+\item{observation}{character labeling the observation you want to plot. See below for options
 \itemize{
 \item all
 \item trwl
@@ -25,8 +27,6 @@ plot_mean_length(
 \item{sex}{character that allows users to specify if the want sex specific plots}
 
 \item{region_key}{data.frame with colnames area and TMB_ndx for providing real region names to objects}
-
-\item{plot_mean_length}{a list that is output from obj$report() usually once an optimsation routine has been done.}
 }
 \value{
 ggplot2 object that will plot if an observation occurs in a year and region

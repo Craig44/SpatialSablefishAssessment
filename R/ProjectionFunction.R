@@ -236,7 +236,7 @@ trail_Fspr = function(log_trial_Fs, fixed_F_proportion, n_future_years = 60, ini
 
   this_ssb = get_terminal_ssbs(trial_Fs = exp(log_trial_Fs), fixed_F_proportion = fixed_F_proportion, n_future_years = n_future_years, init_numbers_at_age = init_numbers_at_age, R0 = R0, natural_mortality = natural_mortality, maturity_weight_at_age = maturity_weight_at_age, trwl_sel = trwl_sel, fixed_sel = fixed_sel, movement_matrix = movement_matrix, target_percent_Bzero = target_percent_Bzero, prop_Z_in_ssb = prop_Z_in_ssb, do_recruits_move = do_recruits_move)
 
-  SSE_terminal_Catch = sum((rep(target_percent_Bzero, n_regions) - this_ssb$terminal_ssb/this_ssb$B0s * 100)^2)
+  SSE_terminal_Catch = sum((rep(target_percent_Bzero, length(log_trial_Fs)) - this_ssb$terminal_ssb/this_ssb$B0s * 100)^2)
   if(verbose)
     cat("trialling Fs ", exp(log_trial_Fs)," SSE = ", SSE_terminal_Catch, "\n")
   ## return sum of squares
@@ -265,15 +265,15 @@ get_terminal_ssbs <- function(trial_Fs, fixed_F_proportion, n_future_years = 60,
   B0s = rowSums(sweep(init_numbers_at_age, MARGIN = 2, maturity_weight_at_age, FUN = "*"))
   n_ages = length(natural_mortality)
   n_regions = length(trial_Fs)
-  Z_age = matrix(natural_mortality, nrow = n_regions, ncol = n_ages, byrow = T)
-  fixed_F = matrix(fixed_sel, nrow = n_regions, ncol = n_ages, byrow = T)
-  trwl_F = matrix(trwl_sel, nrow = n_regions, ncol = n_ages, byrow = T)
+  Z_age = matrix(natural_mortality, nrow = length(trial_Fs), ncol = n_ages, byrow = T)
+  fixed_F = matrix(fixed_sel, nrow = length(trial_Fs), ncol = n_ages, byrow = T)
+  trwl_F = matrix(trwl_sel, nrow = length(trial_Fs), ncol = n_ages, byrow = T)
   fixed_F = sweep(fixed_F, MARGIN = 1, trial_Fs * fixed_F_proportion, FUN = "*")
   trwl_F = sweep(trwl_F, MARGIN = 1,trial_Fs * (1 - fixed_F_proportion), FUN = "*")
   Z_age = Z_age + trwl_F + fixed_F
   S_for_ssb = exp(-Z_age)^prop_Z_in_ssb
   update_N_age = N_age = init_numbers_at_age
-  percent_ssbs = matrix(0,nrow = n_regions, ncol = n_future_years)
+  percent_ssbs = matrix(0,nrow = length(trial_Fs), ncol = n_future_years)
   current_ssb = NULL
   for(i in 1:n_future_years) {
     # interpolate SSB from start year
@@ -317,7 +317,7 @@ find_regional_Fspr <- function(data, MLE_report, n_years_for_fleet_ratio = 5, pe
   if(percent_Bzero < 0 | percent_Bzero > 100)
     stop("percent_Bzero is a percentage and needs to between 0 and 100")
   n_years = length(MLE_report$years)
-  n_regions = MLE_report$n_regions
+  n_regions = data$n_regions
   n_ages = length(data$ages)
   ## get terminal maturity/weight at age for females
   weight_maturity_age = MLE_report$weight_maturity_prod_f[,n_years] ## note this will effect our B0 calculation/interpretation using the terminal growth
@@ -333,7 +333,7 @@ find_regional_Fspr <- function(data, MLE_report, n_years_for_fleet_ratio = 5, pe
   natural_M = data$M[,n_years]
   ## calcualte F ratio by gear type for each region
   mean_fixed_F_by_region = mean_trwl_F_by_region = NULL
-  if(n_regions == 1) {
+  if(data$n_regions == 1) {
     mean_fixed_F_by_region = mean(MLE_report$annual_F_fixed[,(n_years - n_years_for_fleet_ratio + 1):n_years])
     mean_trwl_F_by_region = mean(MLE_report$annual_F_trwl[,(n_years - n_years_for_fleet_ratio + 1):n_years])
   } else {
@@ -349,7 +349,7 @@ find_regional_Fspr <- function(data, MLE_report, n_years_for_fleet_ratio = 5, pe
   fixed_F_proportion = mean_fixed_F_by_region / (mean_fixed_F_by_region + mean_trwl_F_by_region)
 
   ## calculate initial numbers at age
-  init_numbers_at_age = calculate_initial_numbers_at_age(n_regions, n_ages, R0 = 0.5 * MLE_report$mean_rec, movement_matrix = move_matrix,
+  init_numbers_at_age = calculate_initial_numbers_at_age(data$n_regions, n_ages, R0 = 0.5 * MLE_report$mean_rec, movement_matrix = move_matrix,
                                                          natural_mortality = natural_M)
 
   #MLE_report$equilibrium_natage_f[1,]

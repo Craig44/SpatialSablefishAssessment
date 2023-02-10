@@ -92,12 +92,31 @@ ssb_df = get_multiple_ssbs(mle_ls = multi_runs, run_labels = run_labels)
 - `get_multiple_ssbs` get multiple models SSBs
 - `get_multiple_catch_fits` Get multiple models catch fits
 - `get_multiple_nlls` get multiple models negative log-likelihood 
-
+- `summarise_individual_models` this is a function that will build a Bookdown/Rmarkdown book displaying a full summary of each model individually. This functions expect users to save the following objects with these exact names for each model that you want to compare. Then pass the function all the directories with model labels and descriptions. Then it "should" automatically build you a Rmarkdown document.
+```{r, echo=T, eval=FALSE}
+saveRDS(data, file.path(fig_path, "data.RDS"))
+saveRDS(parameters, file.path(fig_path, "parameters.RDS"))
+saveRDS(mle_report, file.path(fig_path, "mle_report.RDS"))
+saveRDS(sd_report, file.path(fig_path, "sd_report.RDS"))
+saveRDS(mle_spatial, file.path(fig_path, "mle_optim.RDS"))
+saveRDS(map_fixed_pars, file.path(fig_path, "map_fixed_pars.RDS"))
+saveRDS(region_key, file.path(fig_path, "region_key.RDS"))
+```
+- `summarise_multiple_models` this is a function that will build a Bookdown/Rmarkdown book compareing multiple models fits and quantities on the same plot. This functions expect users to save the following objects with these exact names for each model that you want to compare. Then pass the function all the directories with model labels and descriptions. Then it "should" automatically build you a Rmarkdown document.
+```{r, echo=T, eval=FALSE}
+saveRDS(data, file.path(fig_path, "data.RDS"))
+saveRDS(parameters, file.path(fig_path, "parameters.RDS"))
+saveRDS(mle_report, file.path(fig_path, "mle_report.RDS"))
+saveRDS(sd_report, file.path(fig_path, "sd_report.RDS"))
+saveRDS(mle_spatial, file.path(fig_path, "mle_optim.RDS"))
+saveRDS(map_fixed_pars, file.path(fig_path, "map_fixed_pars.RDS"))
+saveRDS(region_key, file.path(fig_path, "region_key.RDS"))
+```
 
 ### Distribution functions {-}
 
 - `ddirichmult` Dirichlet-multinomial pdf function
-- `dmultinom_upd` Multinomial pdf function, which is the same as TMB's. Differs from Rs base  `dmultinom` by allowing no-integers and not rounding the x values.
+- `dmultinom_upd` Multinomial pdf function, which is the same as TMB's. Differs from Rs base  `dmultinom` by allowing non-integer x values and not rounding the x values.
 - `lognormal_CI` calculate confidence intervals for the lognormal distribution
 - `log_cv` calculate cv for the lognormal distribution given standard deviation
 - `log_sigma` calculate standard deviation for the lognormal distribution given CV
@@ -112,7 +131,7 @@ ssb_df = get_multiple_ssbs(mle_ls = multi_runs, run_labels = run_labels)
 - `logit` logistic transformation between 0, 1 similar to `qlogis`
 - `invlogit_general` inverse logistic transformation between a specified lower and upper bound
 - `invlogit` inverse logistic transformation between 0, 1 similar to `plogis`
-- `bound_unit` transform a parameter \(X\) bound between -1 and 1 (i.e., correlation parameter) as
+- `bound_unit` transform a parameter \(X\) bound between -1 and 1 (i.e., correlation parameter) to value \(Y\) which is unbounded as
 \[
 Y = 
 \begin{cases}

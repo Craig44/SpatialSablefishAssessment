@@ -389,10 +389,10 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   matrix<Type> fixed_catchatage_covar(n_ages - 1, n_ages - 1);
 
   // Parameters for dirichlet-multinomial composition
-  Type theta_fixed_catchatage;
-  Type theta_fixed_catchatlgth;
-  Type theta_trwl_catchatlgth;
-  Type theta_srv_dom_ll_catchatage;
+  Type theta_fixed_catchatage = 1;
+  Type theta_fixed_catchatlgth = 1;
+  Type theta_trwl_catchatlgth = 1;
+  Type theta_srv_dom_ll_catchatage = 1;
 
   if(fixed_catchatage_comp_likelihood == 1)
     theta_fixed_catchatage = exp(trans_fixed_catchatage_error(0));

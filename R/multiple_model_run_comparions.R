@@ -88,6 +88,96 @@ get_multiple_catch_fits <- function(mle_ls, run_labels = NULL, region_key = NULL
 }
 
 
+#' get_multiple_index_fits
+#'
+#' @param mle_ls list with multiple obj$report() calls
+#' @param run_labels vector of strings that are labels for each element in mle_ls
+#' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
+#' @return data frame with multiple catch fits
+#' @export
+get_multiple_index_fits <- function(mle_ls, run_labels = NULL, region_key = NULL) {
+  if(!is.null(run_labels)) {
+    if(length(run_labels) != length(mle_ls))
+      stop(paste0("Number of models provided ", length(mle_ls), ", number of run labels ", length(run_labels), " these need to be the same"))
+  }
+  full_index_df = NULL
+  for(i in 1:length(mle_ls)) {
+    if(is.null(mle_ls[[i]])) {
+      cat("report at element ", i, " was null, so skipping\n")
+      next;
+    }
+    this_catch = get_index(MLE_report = mle_ls[[i]], region_key = region_key)
+    if(!is.null(run_labels)) {
+      this_catch$label = run_labels[i]
+    } else {
+      this_catch$label = i
+    }
+    full_index_df = rbind(full_index_df, this_catch)
+  }
+  full_index_df$label = factor(full_index_df$label)
+  return(full_index_df)
+}
+
+
+#' get_multiple_mean_age_fits
+#'
+#' @param mle_ls list with multiple obj$report() calls
+#' @param run_labels vector of strings that are labels for each element in mle_ls
+#' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
+#' @return data frame with multiple catch fits
+#' @export
+get_multiple_mean_age_fits <- function(mle_ls, run_labels = NULL, region_key = NULL) {
+  if(!is.null(run_labels)) {
+    if(length(run_labels) != length(mle_ls))
+      stop(paste0("Number of models provided ", length(mle_ls), ", number of run labels ", length(run_labels), " these need to be the same"))
+  }
+  full_mean_age_df = NULL
+  for(i in 1:length(mle_ls)) {
+    if(is.null(mle_ls[[i]])) {
+      cat("report at element ", i, " was null, so skipping\n")
+      next;
+    }
+    this_mean_age = get_mean_age(MLE_report = mle_ls[[i]], observation = "all", sex = "both", subset_years = NULL, region_key = region_key)
+    if(!is.null(run_labels)) {
+      this_mean_age$label = run_labels[i]
+    } else {
+      this_mean_age$label = i
+    }
+    full_mean_age_df = rbind(full_mean_age_df, this_mean_age)
+  }
+  full_mean_age_df$label = factor(full_mean_age_df$label)
+  return(full_mean_age_df)
+}
+
+#' get_multiple_mean_length_fits
+#'
+#' @param mle_ls list with multiple obj$report() calls
+#' @param run_labels vector of strings that are labels for each element in mle_ls
+#' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
+#' @return data frame with multiple catch fits
+#' @export
+get_multiple_mean_length_fits <- function(mle_ls, run_labels = NULL, region_key = NULL) {
+  if(!is.null(run_labels)) {
+    if(length(run_labels) != length(mle_ls))
+      stop(paste0("Number of models provided ", length(mle_ls), ", number of run labels ", length(run_labels), " these need to be the same"))
+  }
+  full_mean_len_df = NULL
+  for(i in 1:length(mle_ls)) {
+    if(is.null(mle_ls[[i]])) {
+      cat("report at element ", i, " was null, so skipping\n")
+      next;
+    }
+    this_mean_len = get_mean_length(MLE_report = mle_ls[[i]], observation = "all", sex = "both", subset_years = NULL, region_key = region_key)
+    if(!is.null(run_labels)) {
+      this_mean_len$label = run_labels[i]
+    } else {
+      this_mean_len$label = i
+    }
+    full_mean_len_df = rbind(full_mean_len_df, this_mean_len)
+  }
+  full_mean_len_df$label = factor(full_mean_len_df$label)
+  return(full_mean_len_df)
+}
 #' get_multiple_Fs
 #'
 #' @param mle_ls list with multiple obj$report() calls
@@ -118,6 +208,39 @@ get_multiple_Fs <- function(mle_ls, run_labels = NULL, region_key = NULL) {
   full_Fs_df$label = factor(full_Fs_df$label)
   return(full_Fs_df)
 }
+
+
+#' get_multiple_movements
+#'
+#' @param mle_ls list with multiple obj$report() calls
+#' @param run_labels vector of strings that are labels for each element in mle_ls
+#' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
+#' @return data frame with SSBs catch fits
+#' @export
+
+get_multiple_movements <- function(mle_ls, run_labels = NULL, region_key = NULL) {
+  if(!is.null(run_labels)) {
+    if(length(run_labels) != length(mle_ls))
+      stop(paste0("Number of models provided ", length(mle_ls), ", number of run labels ", length(run_labels), " these need to be the same"))
+  }
+  full_move_df = NULL
+  for(i in 1:length(mle_ls)) {
+    if(is.null(mle_ls[[i]])) {
+      cat("report at element ", i, " was null, so skipping\n")
+      next;
+    }
+    this_move = get_movement(MLE_report = mle_ls[[i]], region_key = region_key)
+    if(!is.null(run_labels)) {
+      this_move$label = run_labels[i]
+    } else {
+      this_move$label = i
+    }
+    full_move_df = rbind(full_move_df, this_move)
+  }
+  full_move_df$label = factor(full_move_df$label)
+  return(full_move_df)
+}
+
 #' get_multiple_selectivities
 #'
 #' @param mle_ls list with multiple obj$report() calls

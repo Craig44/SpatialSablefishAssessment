@@ -19,7 +19,7 @@ summarise_multiple_models(
 
 \item{bookdown_labels}{a vector of model labels}
 
-\item{model_description}{A string that describes all the models that are pointed at by model_dir}
+\item{model_description}{A string must be single quotes '' that describes all the models preferably in bullet points that are pointed at by model_dir}
 }
 \value{
 Creates a suite of Rmarkdown files in bookdown_dir and compiles an R markdown file
@@ -27,4 +27,19 @@ Creates a suite of Rmarkdown files in bookdown_dir and compiles an R markdown fi
 \description{
 summarise_multiple_models
 A bookdown function that will summaries a suite of models in individual Sections of a single Rmarkdown file
+}
+\examples{
+\dontrun{
+model_description = "
+- Init  The initial model with no tagging data
+- Init (ALK) Same as the initial model but uses the direct ageing estimators for AFs
+- D-M The same Init (ALK) but assumes compositional data has Dirichlet Multinomial likelihood
+"
+}
+
+Start comparing model fits
+
+
+Start comparing model quantities
+
 }

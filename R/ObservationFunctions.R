@@ -3,13 +3,24 @@
 #' @return data frame with age-frequency info
 #' @export
 get_negloglike <- function(MLE_report) {
-  nll_df = data.frame(negloglike = round(MLE_report$nll,4), observations = c("Fixed AF", "Trawl LF", "Fixed LF","Survey AF","Survey abund","Fixed catch","Trawl catch","Tag recovery", "Recruitment", "Initialisation devs", "posfun penalty"))
+  AF_fixed_like = ifelse(MLE_report$fixed_catchatage_comp_likelihood == 0, "Multinomial", "Dirichlet-Multinomial")
+  LF_fixed_like = ifelse(MLE_report$fixed_catchatlgth_comp_likelihood == 0, "Multinomial", "Dirichlet-Multinomial")
+  AF_srv_like = ifelse(MLE_report$srv_dom_ll_catchatage_comp_likelihood == 0, "Multinomial", "Dirichlet-Multinomial")
+  LF_trwl_like = ifelse(MLE_report$trwl_catchatlgth_comp_likelihood == 0, "Multinomial", "Dirichlet-Multinomial")
+  tag_likelihood = switch(MLE_report$tag_likelihood + 1,
+                          "Poissson",
+                          "Negative Binomial",
+                          "Multinomial")
+
+  nll_df = data.frame(negloglike = round(MLE_report$nll,4),
+                      observations = c("Fixed AF", "Trawl LF", "Fixed LF","Survey AF","Survey abund","Fixed catch","Trawl catch","Tag recovery", "Recruitment", "Initialisation devs", "posfun penalty"),
+                      distribution = c(AF_fixed_like, LF_trwl_like, LF_fixed_like, AF_srv_like, "lognormal", "lognormal", "lognormal", tag_likelihood, "lognormal", "lognormal", ""))
   return(nll_df)
 }
 
 #' get_AF accessor function to get age-frequency data
 #' @param MLE_report a list that is output from obj$report() usually once an optimsation routine has been done.
-#' @param label character labeling the observation you want to plot. See below for options
+#' @param observation character labeling the observation you want to plot. See below for options
 #' \itemize{
 #'   \item `fixed`
 #'   \item `srv_dom_ll`
@@ -25,19 +36,19 @@ get_negloglike <- function(MLE_report) {
 #' @return data frame with age-frequency info
 #' @export
 
-get_AF <- function(MLE_report, label = "fixed", subset_years = NULL, sex = "both", region_key = NULL) {
-  if(!label %in% c("fixed","srv_dom_ll"))
-    stop("label not one of the expected values.")
+get_AF <- function(MLE_report, observation = "fixed", subset_years = NULL, sex = "both", region_key = NULL) {
+  if(!observation %in% c("fixed","srv_dom_ll"))
+    stop("observation not one of the expected values.")
   if(!sex %in% c("both", "male", "female"))
-    stop('label not one of the expected values. Expected one of the following "both", "male", "female"')
+    stop('sex not one of the expected values. Expected one of the following "both", "male", "female"')
 
   years = MLE_report$years
   regions = 1:MLE_report$n_regions
   ages = MLE_report$ages
   ## get objects
-  obs_indicator = get(paste0(label,"_catchatage_indicator"), MLE_report)
-  obs_df = get(paste0("obs_",label,"_catchatage"), MLE_report)
-  pred_df = get(paste0("pred_",label,"_catchatage"), MLE_report)
+  obs_indicator = get(paste0(observation,"_catchatage_indicator"), MLE_report)
+  obs_df = get(paste0("obs_",observation,"_catchatage"), MLE_report)
+  pred_df = get(paste0("pred_",observation,"_catchatage"), MLE_report)
   dimnames(obs_df) = dimnames(pred_df) = list(c(paste0("M_",ages), paste0("F_",ages)), regions, years)
   dimnames(obs_indicator) = list(regions, years)
   NA_ndx = which(obs_indicator == 0, arr.ind = T)
@@ -70,7 +81,7 @@ get_AF <- function(MLE_report, label = "fixed", subset_years = NULL, sex = "both
     full_df = full_df %>% dplyr::filter(Sex == "Male")
   if(sex == "female")
     full_df = full_df %>% dplyr::filter(Sex == "Female")
-  full_df$label = label
+  full_df$observation = observation
 
   ## remove rows that have observed NA
   full_df = full_df %>% dplyr::filter(!is.na(Observed))
@@ -83,7 +94,7 @@ get_AF <- function(MLE_report, label = "fixed", subset_years = NULL, sex = "both
 #'
 #' plot_AF
 #' @param MLE_report a list that is output from obj$report() usually once an optimsation routine has been done.
-#' @param label character labeling the observation you want to plot. See below for options
+#' @param observation character labeling the observation you want to plot. See below for options
 #' \itemize{
 #'   \item trwl
 #'   \item fixed
@@ -94,8 +105,8 @@ get_AF <- function(MLE_report, label = "fixed", subset_years = NULL, sex = "both
 #' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
 #' @return ggplot2 object that will plot if an observation occurs in a year and region
 #' @export
-plot_AF = function(MLE_report, label = "fixed", subset_years = NULL, sex = "both", region_key = NULL) {
-  full_df = get_AF(MLE_report = MLE_report, label = label, subset_years = subset_years, sex = sex, region_key = region_key)
+plot_AF = function(MLE_report, observation = "fixed", subset_years = NULL, sex = "both", region_key = NULL) {
+  full_df = get_AF(MLE_report = MLE_report, observation = observation, subset_years = subset_years, sex = sex, region_key = region_key)
   ## plot
   gplt = ggplot(full_df, aes(x = Age)) +
     geom_point(aes(y = Observed, col = "Observed", shape = Sex, group = Sex)) +
@@ -107,9 +118,9 @@ plot_AF = function(MLE_report, label = "fixed", subset_years = NULL, sex = "both
   return(gplt)
 }
 #'
-#' plot_mean_age
-#' @param plot_mean_age a list that is output from obj$report() usually once an optimsation routine has been done.
-#' @param label character labeling the observation you want to plot. See below for options
+#' get_mean_age
+#' @param MLE_report a list that is output from obj$report() usually once an optimsation routine has been done.
+#' @param observation character labeling the observation you want to plot. See below for options
 #' \itemize{
 #'   \item all
 #'   \item trwl
@@ -119,34 +130,34 @@ plot_AF = function(MLE_report, label = "fixed", subset_years = NULL, sex = "both
 #' @param subset_years vector of years to plot it for
 #' @param sex character that allows users to specify if the want sex specific plots
 #' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
-#' @return ggplot2 object that will plot if an observation occurs in a year and region
+#' @return a data frame of mean ages
 #' @export
-plot_mean_age = function(MLE_report, label = "fixed", subset_years = NULL, sex = "both", region_key = NULL) {
-  if(!label %in% c("all","fixed","srv_dom_ll"))
-    stop("label not one of the expected values.")
+get_mean_age = function(MLE_report, observation = "fixed", subset_years = NULL, sex = "both", region_key = NULL) {
+  if(!observation %in% c("all","fixed","srv_dom_ll"))
+    stop("observation not one of the expected values.")
   if(!sex %in% c("both", "male", "female"))
-    stop('label not one of the expected values. Expected one of the following "both", "male", "female"')
+    stop('sex not one of the expected values. Expected one of the following "both", "male", "female"')
 
   years = MLE_report$years
   regions = 1:MLE_report$n_regions
   ages = MLE_report$ages
   ## get objects
-  if(label != "all") {
-    full_df = get_AF(MLE_report = MLE_report, label = label, subset_years = subset_years, sex = sex, region_key = region_key)
+  if(observation != "all") {
+    full_df = get_AF(MLE_report = MLE_report, observation = observation, subset_years = subset_years, sex = sex, region_key = region_key)
   } else {
     full_df = NULL;
     obs_labs = c("srv_dom_ll","fixed")
     for(i in 1:length(obs_labs)) {
-      tmp_df = get_AF(MLE_report = MLE_report, label = obs_labs[i], subset_years = subset_years, sex = sex, region_key = region_key)
+      tmp_df = get_AF(MLE_report = MLE_report, observation = obs_labs[i], subset_years = subset_years, sex = sex, region_key = region_key)
       full_df = rbind(full_df, tmp_df)
     }
   }
   ## drop NA's
   full_df = full_df %>% filter(!is.na(Observed))
   ## multiple predicted proportions by effective sample size
-  full_df= full_df %>% group_by(Year, Region, label) %>% mutate(N_eff = sum(Observed), Observed_prop = Observed / N_eff, Predicted_prop = Predicted / sum(Predicted))
+  full_df= full_df %>% group_by(Year, Region, observation) %>% mutate(N_eff = sum(Observed), Observed_prop = Observed / N_eff, Predicted_prop = Predicted / sum(Predicted))
 
-  full_df= full_df %>% group_by(Year, Region, label, Sex) %>% summarise(Ey = sum(Age * Predicted_prop), Oy = sum(Age * Observed_prop), E_squared_y = sum(Age^2 * Predicted_prop), N_eff = mean(N_eff))
+  full_df= full_df %>% group_by(Year, Region, observation, Sex) %>% summarise(Ey = sum(Age * Predicted_prop), Oy = sum(Age * Observed_prop), E_squared_y = sum(Age^2 * Predicted_prop), N_eff = mean(N_eff))
   full_df$Ry = full_df$Oy - full_df$Ey
   full_df$SEy = sqrt((full_df$E_squared_y - full_df$Ey^2) / full_df$N_eff)
   full_df$'Std.res' <- (full_df$Oy - full_df$Ey)/full_df$SEy
@@ -163,6 +174,31 @@ plot_mean_age = function(MLE_report, label = "fixed", subset_years = NULL, sex =
     full_df = full_df %>% dplyr::filter(Sex == "Male")
   if(sex == "female")
     full_df = full_df %>% dplyr::filter(Sex == "Female")
+  return(full_df)
+}
+
+#'
+#' plot_mean_age
+#' @param MLE_report a list that is output from obj$report() usually once an optimsation routine has been done.
+#' @param observation character labeling the observation you want to plot. See below for options
+#' \itemize{
+#'   \item all
+#'   \item trwl
+#'   \item fixed
+#'   \item srv_dom_ll
+#' }
+#' @param subset_years vector of years to plot it for
+#' @param sex character that allows users to specify if the want sex specific plots
+#' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
+#' @return ggplot2 object that will plot if an observation occurs in a year and region
+#' @export
+plot_mean_age = function(MLE_report, observation = "fixed", subset_years = NULL, sex = "both", region_key = NULL) {
+  if(!observation %in% c("all","fixed","srv_dom_ll"))
+    stop("observation not one of the expected values.")
+  if(!sex %in% c("both", "male", "female"))
+    stop('sex not one of the expected values. Expected one of the following "both", "male", "female"')
+
+  full_df = get_mean_age(MLE_report = MLE_report, observation = observation, subset_years = subset_years, sex = sex, region_key = region_key)
 
   ## plot
   gplt = ggplot(full_df, aes(x = Year)) +
@@ -172,14 +208,14 @@ plot_mean_age = function(MLE_report, label = "fixed", subset_years = NULL, sex =
     geom_errorbar(aes(ymin=ObsloAdj, ymax=ObshiAdj, col = "Observed"), width=.2, position=position_dodge(.9)) +
     guides( linewidth = "none") +
     labs(y = "Mean age", col = "", linetype = "") +
-    facet_grid(label ~ Region) +
+    facet_grid(observation ~ Region) +
     theme_bw()
   return(gplt)
 }
 #'
 #' get_LF
 #' @param MLE_report a list that is output from obj$report() usually once an optimsation routine has been done.
-#' @param label character labeling the observation you want to plot. See below for options
+#' @param observation character labeling the observation you want to plot. See below for options
 #' \itemize{
 #'   \item trwl
 #'   \item fixed
@@ -189,19 +225,19 @@ plot_mean_age = function(MLE_report, label = "fixed", subset_years = NULL, sex =
 #' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
 #' @return long data frame with LF infor
 #' @export
-get_LF = function(MLE_report, label = "fixed", subset_years = NULL, sex = "both", region_key = NULL) {
-  if(!label %in% c("fixed","trwl"))
-    stop("label not one of the expected values.")
+get_LF = function(MLE_report, observation = "fixed", subset_years = NULL, sex = "both", region_key = NULL) {
+  if(!observation %in% c("fixed","trwl"))
+    stop("observation not one of the expected values.")
   if(!sex %in% c("both", "male", "female"))
-    stop('label not one of the expected values. Expected one of the following "both", "male", "female"')
+    stop('sex not one of the expected values. Expected one of the following "both", "male", "female"')
 
   years = MLE_report$years
   regions = 1:MLE_report$n_regions
   length_bins = MLE_report$length_bins
   ## get objects
-  obs_indicator = get(paste0(label,"_catchatlgth_indicator"), MLE_report)
-  obs_df = get(paste0("obs_",label,"_catchatlgth"), MLE_report)
-  pred_df = get(paste0("pred_",label,"_catchatlgth"), MLE_report)
+  obs_indicator = get(paste0(observation,"_catchatlgth_indicator"), MLE_report)
+  obs_df = get(paste0("obs_",observation,"_catchatlgth"), MLE_report)
+  pred_df = get(paste0("pred_",observation,"_catchatlgth"), MLE_report)
   dimnames(obs_df) = dimnames(pred_df) = list(c(paste0("M_",length_bins), paste0("F_",length_bins)), regions, years)
   dimnames(obs_indicator) = list(regions, years)
   NA_ndx = which(obs_indicator == 0, arr.ind = T)
@@ -234,7 +270,7 @@ get_LF = function(MLE_report, label = "fixed", subset_years = NULL, sex = "both"
     full_df = full_df %>% dplyr::filter(Sex == "Male")
   if(sex == "female")
     full_df = full_df %>% dplyr::filter(Sex == "Female")
-  full_df$label = label
+  full_df$observation = observation
   ## remove rows that have observed NA
   full_df = full_df %>% dplyr::filter(!is.na(Observed))
 
@@ -245,7 +281,7 @@ get_LF = function(MLE_report, label = "fixed", subset_years = NULL, sex = "both"
 
 #' plot_LF
 #' @param MLE_report a list that is output from obj$report() usually once an optimsation routine has been done.
-#' @param label character labeling the observation you want to plot. See below for options
+#' @param observation character labeling the observation you want to plot. See below for options
 #' \itemize{
 #'   \item trwl
 #'   \item fixed
@@ -255,8 +291,8 @@ get_LF = function(MLE_report, label = "fixed", subset_years = NULL, sex = "both"
 #' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
 #' @return ggplot2 object that will plot if an observation occurs in a year and region
 #' @export
-plot_LF = function(MLE_report, label = "fixed", subset_years = NULL, sex = "both", region_key = NULL) {
-  full_df = get_LF(MLE_report = MLE_report, label = label, subset_years = subset_years, sex = sex, region_key = region_key)
+plot_LF = function(MLE_report, observation = "fixed", subset_years = NULL, sex = "both", region_key = NULL) {
+  full_df = get_LF(MLE_report = MLE_report, observation = observation, subset_years = subset_years, sex = sex, region_key = region_key)
 
   ## plot
   gplt = ggplot(full_df, aes(x = Length)) +
@@ -269,9 +305,9 @@ plot_LF = function(MLE_report, label = "fixed", subset_years = NULL, sex = "both
   return(gplt)
 }
 #'
-#' plot_mean_length
-#' @param plot_mean_length a list that is output from obj$report() usually once an optimsation routine has been done.
-#' @param label character labeling the observation you want to plot. See below for options
+#' get_mean_length
+#' @param MLE_report a list that is output from obj$report() usually once an optimsation routine has been done.
+#' @param observation character labeling the observation you want to plot. See below for options
 #' \itemize{
 #'   \item all
 #'   \item trwl
@@ -280,33 +316,33 @@ plot_LF = function(MLE_report, label = "fixed", subset_years = NULL, sex = "both
 #' @param subset_years vector of years to plot it for
 #' @param sex character that allows users to specify if the want sex specific plots
 #' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
-#' @return ggplot2 object that will plot if an observation occurs in a year and region
+#' @return data frame of mean lengths
 #' @export
-plot_mean_length = function(MLE_report, label = "fixed", subset_years = NULL, sex = "both", region_key = NULL) {
-  if(!label %in% c("all","fixed","trwl"))
-    stop("label not one of the expected values.")
+get_mean_length = function(MLE_report, observation = "fixed", subset_years = NULL, sex = "both", region_key = NULL) {
+  if(!observation %in% c("all","fixed","trwl"))
+    stop("observation not one of the expected values.")
   if(!sex %in% c("both", "male", "female"))
-    stop('label not one of the expected values. Expected one of the following "both", "male", "female"')
+    stop('sex not one of the expected values. Expected one of the following "both", "male", "female"')
 
   years = MLE_report$years
   regions = 1:MLE_report$n_regions
   length_bins = MLE_report$length_bins
   ## get objects
-  if(label != "all") {
-    full_df = get_LF(MLE_report = MLE_report, label = label, subset_years = subset_years, sex = sex, region_key = region_key)
+  if(observation != "all") {
+    full_df = get_LF(MLE_report = MLE_report, observation = observation, subset_years = subset_years, sex = sex, region_key = region_key)
   } else {
     full_df = NULL;
     obs_labs = c("trwl","fixed")
     for(i in 1:length(obs_labs)) {
-      tmp_df = get_LF(MLE_report = MLE_report, label = obs_labs[i], subset_years = subset_years, sex = sex, region_key = region_key)
+      tmp_df = get_LF(MLE_report = MLE_report, observation = obs_labs[i], subset_years = subset_years, sex = sex, region_key = region_key)
       full_df = rbind(full_df, tmp_df)
     }
   }
 
   ## multiple predicted proportions by effective sample size
-  full_df= full_df %>% group_by(Year, Region, label) %>% mutate(N_eff = sum(Observed), Observed_prop = Observed / N_eff, Predicted_prop = Predicted / sum(Predicted))
+  full_df= full_df %>% group_by(Year, Region, observation) %>% mutate(N_eff = sum(Observed), Observed_prop = Observed / N_eff, Predicted_prop = Predicted / sum(Predicted))
 
-  full_df= full_df %>% group_by(Year, Region, label, Sex) %>% summarise(Ey = sum(Length * Predicted_prop), Oy = sum(Length * Observed_prop), E_squared_y = sum(Length^2 * Predicted_prop), N_eff = mean(N_eff))
+  full_df= full_df %>% group_by(Year, Region, observation, Sex) %>% summarise(Ey = sum(Length * Predicted_prop), Oy = sum(Length * Observed_prop), E_squared_y = sum(Length^2 * Predicted_prop), N_eff = mean(N_eff))
   full_df$Ry = full_df$Oy - full_df$Ey
   full_df$SEy = sqrt((full_df$E_squared_y - full_df$Ey^2) / full_df$N_eff)
   full_df$'Std.res' <- (full_df$Oy - full_df$Ey)/full_df$SEy
@@ -323,6 +359,29 @@ plot_mean_length = function(MLE_report, label = "fixed", subset_years = NULL, se
     full_df = full_df %>% dplyr::filter(Sex == "Male")
   if(sex == "female")
     full_df = full_df %>% dplyr::filter(Sex == "Female")
+  return(full_df)
+}
+
+#'
+#' plot_mean_length
+#' @param MLE_report a list that is output from obj$report() usually once an optimsation routine has been done.
+#' @param observation character labeling the observation you want to plot. See below for options
+#' \itemize{
+#'   \item all
+#'   \item trwl
+#'   \item fixed
+#' }
+#' @param subset_years vector of years to plot it for
+#' @param sex character that allows users to specify if the want sex specific plots
+#' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
+#' @return ggplot2 object that will plot if an observation occurs in a year and region
+#' @export
+plot_mean_length = function(MLE_report, observation = "fixed", subset_years = NULL, sex = "both", region_key = NULL) {
+  if(!observation %in% c("all","fixed","trwl"))
+    stop("observation not one of the expected values.")
+  if(!sex %in% c("both", "male", "female"))
+    stop('sex not one of the expected values. Expected one of the following "both", "male", "female"')
+  full_df = get_mean_length(MLE_report, observation, subset_years, sex, region_key)
 
   ## plot
   gplt = ggplot(full_df, aes(x = Year)) +
@@ -332,7 +391,7 @@ plot_mean_length = function(MLE_report, label = "fixed", subset_years = NULL, se
     geom_errorbar(aes(ymin=ObsloAdj, ymax=ObshiAdj, col = "Observed"), width=.2, position=position_dodge(.9)) +
     guides( linewidth = "none") +
     labs(y = "Mean length", col = "", linetype = "") +
-    facet_grid(label ~ Region) +
+    facet_grid(observation ~ Region) +
     theme_bw()
   return(gplt)
 }
@@ -347,12 +406,18 @@ plot_mean_length = function(MLE_report, label = "fixed", subset_years = NULL, se
 plot_catch_fit = function(MLE_report, region_key = NULL) {
   full_df = get_catches(MLE_report, region_key)
   gplt = ggplot() +
-    geom_point(data = full_df %>% dplyr::filter(type == "Observed"), aes(x = Year, y = Catch, col = type)) +
-    geom_line(data = full_df %>% dplyr::filter(type == "Predicted"), aes(x = Year, y = Catch, col = type), linewidth= 1.1, linetype = "dashed") +
+    geom_point(data = full_df %>% dplyr::filter(type == "Observed"), aes(x = Year, y = Catch, col = "Observed"), size = 2.1) +
+    geom_line(data = full_df %>% dplyr::filter(type == "Predicted"), aes(x = Year, y = Catch, col = "Predicted"), linewidth= 1.1, linetype = "dashed") +
     guides( linewidth = "none", linetype = "none") +
     labs(y = "Catch", col = "", linetype = "") +
-    facet_wrap(label~Region) +
-    theme_bw()
+    facet_grid(Region~Fishery) +
+    theme_bw() +
+    theme(legend.position = "bottom",
+          axis.text = element_text(size = 14),
+          axis.title = element_text(size = 14),
+          strip.text = element_text(size=14),
+          plot.title = element_text(size = 20, face = "bold"),
+          legend.text = element_text(size=14))
   return(gplt)
 }
 #'
@@ -446,25 +511,25 @@ Francis_reweighting <- function(MLE_report, region_key = NULL) {
   len_obs_label = c("fixed","trwl")
   age_comp_df = len_comp_df = NULL
   for(age_ndx in 1:length(age_obs_label))
-    age_comp_df = rbind(age_comp_df, get_AF(MLE_report = MLE_report, region_key = region_key, label = age_obs_label[age_ndx], sex = "both"))
+    age_comp_df = rbind(age_comp_df, get_AF(MLE_report = MLE_report, region_key = region_key, observation = age_obs_label[age_ndx], sex = "both"))
   for(len_ndx in 1:length(len_obs_label))
-    len_comp_df = rbind(len_comp_df, get_LF(MLE_report = MLE_report, region_key = region_key, label = len_obs_label[len_ndx], sex = "both"))
+    len_comp_df = rbind(len_comp_df, get_LF(MLE_report = MLE_report, region_key = region_key, observation = len_obs_label[len_ndx], sex = "both"))
   ## drop NA observed
   len_comp_df = len_comp_df %>% filter(!is.na(Observed))
   age_comp_df = age_comp_df %>% filter(!is.na(Observed))
   ## get effective sample size
-  len_comp_df = len_comp_df %>% group_by(Year, Region, label) %>% mutate(Nassumed = sum(Observed), O_prop = Observed / Nassumed, P_prop = Predicted / Nassumed,
+  len_comp_df = len_comp_df %>% group_by(Year, Region, observation) %>% mutate(Nassumed = sum(Observed), O_prop = Observed / Nassumed, P_prop = Predicted / Nassumed,
                                                                          O_length = O_prop * Length, P_length = P_prop * Length,  P_length_sq = P_prop * Length^2)
-  age_comp_df = age_comp_df %>% group_by(Year, Region, label) %>% mutate(Nassumed = sum(Observed), O_prop = Observed / Nassumed, P_prop = Predicted / Nassumed,
+  age_comp_df = age_comp_df %>% group_by(Year, Region, observation) %>% mutate(Nassumed = sum(Observed), O_prop = Observed / Nassumed, P_prop = Predicted / Nassumed,
                                                                          O_age = O_prop * Age, P_age = P_prop * Age,  P_age_sq = P_prop * Age^2)
   ## summarise for each obs and year
-  mean_len_df = len_comp_df %>% group_by(Year, Region, label) %>% summarise(O_mean_length = sum(O_length),P_mean_length = sum(P_length), P_mean_length_sq = sum(P_length_sq), Nassumed = mean(Nassumed)) %>%
+  mean_len_df = len_comp_df %>% group_by(Year, Region, observation) %>% summarise(O_mean_length = sum(O_length),P_mean_length = sum(P_length), P_mean_length_sq = sum(P_length_sq), Nassumed = mean(Nassumed)) %>%
     mutate(stand_mean_length = sqrt(P_mean_length_sq - P_mean_length^2), resid_mean_length = O_mean_length - P_mean_length)
-  mean_age_df = age_comp_df %>% group_by(Year, Region, label) %>% summarise(O_mean_age = sum(O_age),P_mean_age = sum(P_age), P_mean_age_sq = sum(P_age_sq), Nassumed = mean(Nassumed)) %>%
+  mean_age_df = age_comp_df %>% group_by(Year, Region, observation) %>% summarise(O_mean_age = sum(O_age),P_mean_age = sum(P_age), P_mean_age_sq = sum(P_age_sq), Nassumed = mean(Nassumed)) %>%
     mutate(stand_mean_age = sqrt(P_mean_age_sq - P_mean_age^2),resid_mean_age = O_mean_age - P_mean_age)
   ## get the multiplier over all years for each observation
-  length_multipliers = mean_len_df %>% group_by(Region, label) %>% summarise(multiplier = 1/var(resid_mean_length * sqrt(Nassumed)/stand_mean_length, na.rm = T))
-  age_multipliers = mean_age_df %>% group_by(Region, label) %>% summarise(multiplier = 1/var(resid_mean_age * sqrt(Nassumed)/stand_mean_age, na.rm = T))
+  length_multipliers = mean_len_df %>% group_by(Region, observation) %>% summarise(multiplier = 1/var(resid_mean_length * sqrt(Nassumed)/stand_mean_length, na.rm = T))
+  age_multipliers = mean_age_df %>% group_by(Region, observation) %>% summarise(multiplier = 1/var(resid_mean_age * sqrt(Nassumed)/stand_mean_age, na.rm = T))
   ## some regions may only have a one sample which will cause NA's
   ## impute a weight with the mean weight
   length_multipliers$multiplier[is.na(length_multipliers$multiplier)] = mean(length_multipliers$multiplier, na.rm = T)
@@ -497,10 +562,10 @@ simulate_observations <- function(obj, n_sims = 200, sd_report = NULL, include_p
   mle_rep = obj$report(all_pars)
   ## get the real observed data and save them in the following datasets
   obs_index_df = get_index(mle_rep, region_key = region_key)
-  obs_srv_AF_df = get_AF(mle_rep, label = "srv_dom_ll", region_key = region_key)
-  obs_fixed_AF_df = get_AF(mle_rep, label = "fixed", region_key = region_key)
-  obs_fixed_LF_df = get_LF(mle_rep, label = "fixed", region_key = region_key)
-  obs_trwl_LF_df = get_LF(mle_rep, label = "trwl", region_key = region_key)
+  obs_srv_AF_df = get_AF(mle_rep, observation = "srv_dom_ll", region_key = region_key)
+  obs_fixed_AF_df = get_AF(mle_rep, observation = "fixed", region_key = region_key)
+  obs_fixed_LF_df = get_LF(mle_rep, observation = "fixed", region_key = region_key)
+  obs_trwl_LF_df = get_LF(mle_rep, observation = "trwl", region_key = region_key)
   obs_tag_data_df = get_tag_recovery_obs_fitted_values(MLE_report = mle_rep, region_key = region_key)
 
 
@@ -522,22 +587,22 @@ simulate_observations <- function(obj, n_sims = 200, sd_report = NULL, include_p
     index_df$sim = sim_iter
     sim_srv_bio = rbind(sim_srv_bio, index_df)
     # survey AF
-    srv_AF = get_AF(MLE_report = this_sim, label = "srv_dom_ll", region_key = region_key) %>% rename(Simulated = Observed)
+    srv_AF = get_AF(MLE_report = this_sim, observation = "srv_dom_ll", region_key = region_key) %>% rename(Simulated = Observed)
     srv_AF$Observed = obs_srv_AF_df$Observed
     srv_AF$sim = sim_iter
     sim_srv_AF = rbind(sim_srv_AF, srv_AF)
     # Fixed AF
-    fixed_AF = get_AF(MLE_report = this_sim, label = "fixed", region_key = region_key) %>% rename(Simulated = Observed)
+    fixed_AF = get_AF(MLE_report = this_sim, observation = "fixed", region_key = region_key) %>% rename(Simulated = Observed)
     fixed_AF$Observed = obs_fixed_AF_df$Observed
     fixed_AF$sim = sim_iter
     sim_fixed_AF = rbind(sim_fixed_AF, fixed_AF)
     # Fixed LF
-    fixed_LF = get_LF(MLE_report = this_sim, label = "fixed", region_key = region_key) %>% rename(Simulated = Observed)
+    fixed_LF = get_LF(MLE_report = this_sim, observation = "fixed", region_key = region_key) %>% rename(Simulated = Observed)
     fixed_LF$Observed = obs_fixed_LF_df$Observed
     fixed_LF$sim = sim_iter
     sim_fixed_LF = rbind(sim_fixed_LF, fixed_LF)
     # Trawl LF
-    trwl_LF = get_LF(MLE_report = this_sim, label = "trwl", region_key = region_key) %>% rename(Simulated = Observed)
+    trwl_LF = get_LF(MLE_report = this_sim, observation = "trwl", region_key = region_key) %>% rename(Simulated = Observed)
     trwl_LF$Observed = obs_trwl_LF_df$Observed
     trwl_LF$sim = sim_iter
     sim_trwl_LF = rbind(sim_trwl_LF, trwl_LF)
@@ -638,7 +703,7 @@ calculate_simulated_residuals <- function(sim_ob, type = "abundance") {
       this_sim_obs = sim_ob %>% filter(release_event == rel_event[r], sim == 1) %>% ungroup() %>% dplyr::select(Observed)
       rec_event = sim_ob %>% ungroup() %>% filter(release_event == rel_event[r], sim == 1) %>% dplyr::select(recovery_event)
 
-      this_dharma = suppressMessages(createDHARMa(simulatedResponse = as.matrix(this_sim_vals), observedResponse = this_sim_obs$observed, integerResponse = T))
+      this_dharma = suppressMessages(createDHARMa(simulatedResponse = as.matrix(this_sim_vals), observedResponse = this_sim_obs$Observed, integerResponse = T))
       this_scaled_df = data.frame(scaled_resids = this_dharma$scaledResiduals, qnorm_transformed_scaled_resids = qnorm(this_dharma$scaledResiduals), observed = this_dharma$observedResponse, mean_sim_vals = this_dharma$fittedPredictedResponse, recovery_event = rec_event, release_event = rel_event[r])
       full_simualted_resids = rbind(full_simualted_resids, this_scaled_df)
     }
@@ -652,7 +717,7 @@ calculate_simulated_residuals <- function(sim_ob, type = "abundance") {
 }
 
 
-#' summarise_AF_resids
+#' summarise_AF_quant_resids
 #'
 #' @param AF_sim_resids an AF object created from `calculate_simulated_residuals`
 #' @param sex character specifying which sex to plot
@@ -663,12 +728,12 @@ calculate_simulated_residuals <- function(sim_ob, type = "abundance") {
 #' @param obs_label a character specifying the title possible observation label
 #' @export
 #' @return a joint plot
-summarise_AF_resids <- function(AF_sim_resids, sex = "M", obs_label = "") {
+summarise_AF_quant_resids <- function(AF_sim_resids, sex = "M", obs_label = "") {
   title_label = paste0(ifelse(sex == "M", "Male", "Female"), " ", obs_label)
   AF_sim_resids$year_class  = AF_sim_resids$Year - AF_sim_resids$age
   yr_plt = ggplot(AF_sim_resids %>% filter(sex == sex), aes(x = factor(Year), y = (qnorm_transformed_scaled_resids))) +
     geom_boxplot() +
-    labs(x = "Year", y = "Simualted residuals") +
+    labs(x = "Year", y = "Simualted quantile residuals") +
     ggtitle(title_label) +
     geom_hline(yintercept = 0, col = "red", linetype = "dashed") +
     facet_wrap(~Region, ncol = 1) +
@@ -697,3 +762,88 @@ summarise_AF_resids <- function(AF_sim_resids, sex = "M", obs_label = "") {
   return(joint_tag_plt)
 }
 
+
+#' summarise_LF_quant_resids
+#'
+#' @param LF_sim_resids an LF object created from `calculate_simulated_residuals`
+#' @param sex character specifying which sex to plot
+#' \itemize{
+#'   \item `M`: Male
+#'   \item `F`: Female
+#' }
+#' @param obs_label a character specifying the title possible observation label
+#' @export
+#' @return a joint plot
+summarise_LF_quant_resids <- function(LF_sim_resids, sex = "M", obs_label = "") {
+  title_label = paste0(ifelse(sex == "M", "Male", "Female"), " ", obs_label)
+  yr_plt = ggplot(LF_sim_resids %>% filter(sex == sex), aes(x = factor(Year), y = (qnorm_transformed_scaled_resids))) +
+    geom_boxplot() +
+    labs(x = "Year", y = "Simualted quantile residuals") +
+    ggtitle(title_label) +
+    geom_hline(yintercept = 0, col = "red", linetype = "dashed") +
+    facet_wrap(~Region, ncol = 1) +
+    scale_x_discrete(breaks = every_nth(n = 10)) +
+    theme_bw()
+  len_plt = ggplot(LF_sim_resids %>% filter(sex == sex), aes(x = factor(length), y = (qnorm_transformed_scaled_resids))) +
+    geom_boxplot() +
+    labs(x = "Length bin", y = "") +
+    ggtitle("") +
+    facet_wrap(~Region, ncol = 1) +
+    geom_hline(yintercept = 0, col = "red", linetype = "dashed") +
+    #scale_x_discrete(breaks = every_nth(n = 10)) +
+    theme_bw()
+
+  joint_tag_plt = ggarrange(yr_plt, len_plt,
+                            ncol = 3)
+
+  return(joint_tag_plt)
+}
+
+#' summarise_tag_quant_resids
+#'
+#' @param tag_sim_resids an LF object created from `calculate_simulated_residuals`
+#' @param recovery_year boolean whether to plot by recovery year = T or release year = F
+#' @export
+#' @return a joint plot
+summarise_tag_quant_resids <- function(tag_sim_resids, recovery_year = T) {
+  if(recovery_year) {
+
+    rel_reg_rec_yr_plt = ggplot(tag_sim_resids, aes(x = factor(recovery_year), y = (qnorm_transformed_scaled_resids))) +
+      geom_boxplot() +
+      labs(x = "Recovery Year", y = "") +
+      ggtitle("Release Region") +
+      geom_hline(yintercept = 0, col = "red", linetype = "dashed") +
+      facet_wrap(~release_region, ncol = 1) +
+      scale_x_discrete(breaks = every_nth(n = 10)) +
+      theme_bw()
+    rec_reg_rec_yr_plt = ggplot(tag_sim_resids, aes(x = factor(recovery_year), y = (qnorm_transformed_scaled_resids))) +
+      geom_boxplot() +
+      labs(x = "Recovery Year", y = "") +
+      ggtitle("Recovery Region") +
+      facet_wrap(~recovery_region, ncol = 1) +
+      geom_hline(yintercept = 0, col = "red", linetype = "dashed") +
+      scale_x_discrete(breaks = every_nth(n = 10)) +
+      theme_bw()
+    joint_tag_plt = ggarrange(rel_reg_rec_yr_plt, rec_reg_rec_yr_plt,
+                              ncol = 2)
+  } else {
+    rel_reg_rel_yr_plt = ggplot(tag_sim_resids, aes(x = factor(release_year), y = (qnorm_transformed_scaled_resids))) +
+      geom_boxplot() +
+      labs(x = "Release Year", y = "Simualted quantile residuals") +
+      ggtitle("Release Region") +
+      geom_hline(yintercept = 0, col = "red", linetype = "dashed") +
+      facet_wrap(~release_region, ncol = 1) +
+      scale_x_discrete(breaks = every_nth(n = 10)) +
+      theme_bw()
+    rec_reg_rel_yr_plt = ggplot(tag_sim_resids, aes(x = factor(release_year), y = (qnorm_transformed_scaled_resids))) +
+      geom_boxplot() +
+      labs(x = "Release Year", y = "") +
+      ggtitle("Recovery Region") +
+      facet_wrap(~recovery_region, ncol = 1) +
+      geom_hline(yintercept = 0, col = "red", linetype = "dashed") +
+      scale_x_discrete(breaks = every_nth(n = 10)) +
+      theme_bw()
+    joint_tag_plt = ggarrange(rel_reg_rel_yr_plt, rec_reg_rel_yr_plt,ncol = 2)
+  }
+  return(joint_tag_plt)
+}

@@ -6,7 +6,7 @@
 \usage{
 get_AF(
   MLE_report,
-  label = "fixed",
+  observation = "fixed",
   subset_years = NULL,
   sex = "both",
   region_key = NULL
@@ -15,7 +15,7 @@ get_AF(
 \arguments{
 \item{MLE_report}{a list that is output from obj$report() usually once an optimsation routine has been done.}
 
-\item{label}{character labeling the observation you want to plot. See below for options
+\item{observation}{character labeling the observation you want to plot. See below for options
 \itemize{
 \item \code{fixed}
 \item \code{srv_dom_ll}

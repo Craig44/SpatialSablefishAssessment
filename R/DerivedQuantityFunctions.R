@@ -8,7 +8,7 @@
 #' @export
 
 plot_fishing_mortalities = function(MLE_report, region_key = NULL) {
-  F_df = get_fishing_mortalities(MLE_report = mle_report, region_key = region_key)
+  F_df = get_fishing_mortalities(MLE_report = MLE_report, region_key = region_key)
   gplt = ggplot(F_df, aes(x = Year, y= F, col = Fishery, linetype = Fishery)) +
     geom_line(linewidth = 1.1) +
     theme_bw() +
@@ -55,8 +55,8 @@ get_catches = function(MLE_report, region_key = NULL) {
   fixed_catch = reshape2::melt(MLE_report$fixed_fishery_catch)
   trwl_catch = reshape2::melt(MLE_report$trwl_fishery_catch)
   colnames(fixed_catch) = colnames(trwl_catch) = c("Region", "Year", "Catch")
-  fixed_catch$label = "Fixed gear"
-  trwl_catch$label = "Trawl"
+  fixed_catch$Fishery = "Fixed gear"
+  trwl_catch$Fishery = "Trawl"
   obs_full_df = rbind(fixed_catch, trwl_catch)
   if(is.null(region_key)) {
     obs_full_df$Region = paste0("Region ", obs_full_df$Region)
@@ -69,8 +69,8 @@ get_catches = function(MLE_report, region_key = NULL) {
   fixed_catch = reshape2::melt(MLE_report$annual_fixed_catch_pred)
   trwl_catch = reshape2::melt(MLE_report$annual_trwl_catch_pred)
   colnames(fixed_catch) = colnames(trwl_catch) = c("Region", "Year", "Catch")
-  fixed_catch$label = "Fixed gear"
-  trwl_catch$label = "Trawl"
+  fixed_catch$Fishery = "Fixed gear"
+  trwl_catch$Fishery = "Trawl"
   pred_full_df = rbind(fixed_catch, trwl_catch)
   if(is.null(region_key)) {
     pred_full_df$Region = paste0("Region ", pred_full_df$Region)
@@ -84,12 +84,12 @@ get_catches = function(MLE_report, region_key = NULL) {
   return(full_df)
 }
 #'
-#' plot_movement
+#' get_movement
 #' @param MLE_report obj$report()
 #' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
-#' @return ggplot2
+#' @return data frame
 #' @export
-plot_movement = function(MLE_report, region_key = NULL) {
+get_movement = function(MLE_report, region_key = NULL) {
   regions = paste0("Region ", 1:MLE_report$n_regions)
   if(!is.null(region_key))
     regions = region_key$area[region_key$TMB_ndx + 1]
@@ -106,6 +106,17 @@ plot_movement = function(MLE_report, region_key = NULL) {
   colnames(move_est_df) = c("From","To", "Proportion")
   move_est_df$From = factor(move_est_df$From, levels = rev(regions), ordered = T)
   move_est_df$To = factor(move_est_df$To, levels = rev(regions), ordered = T)
+  return(move_est_df)
+}
+
+#'
+#' plot_movement
+#' @param MLE_report obj$report()
+#' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
+#' @return ggplot2
+#' @export
+plot_movement = function(MLE_report, region_key = NULL) {
+  move_est_df = get_movement(MLE_report, region_key)
 
   gplt = ggplot(move_est_df, aes(x = To, y = From, fill = Proportion)) +
     geom_tile() +
@@ -247,3 +258,45 @@ plot_SSB = function(MLE_report, region_key = NULL, depletion = F) {
   return(gplt)
 }
 
+
+#'
+#' get_other_derived_quantities
+#' @param MLE_report a list that is output from obj$report() usually once an optimsation routine has been done.
+#' @param data list that is passed to the MakeADfun for the TMB model
+#' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
+#' @return A list of
+#' @export
+
+get_other_derived_quantities <- function(MLE_report, data, region_key = NULL) {
+  Region_lab = paste0("Region ", 1:MLE_report$n_regions)
+  if(!is.null(region_key))
+    Region_lab =  region_key$area
+
+  catchability = MLE_report$srv_dom_ll_q
+  dimnames(catchability) = list(Region_lab, paste0("Block-", 1:ncol(catchability)))
+  molten_catchabilties = reshape2::melt(catchability)
+  colnames(molten_catchabilties) = c("Region", "time-block", "q")
+
+  ## Scalar model quantities
+  scalar_quants = data.frame(F_init = MLE_report$init_F_hist * data$prop_F_hist,
+                             tag_phi = MLE_report$tag_phi,
+                             theta_fixed_catchatlgth = MLE_report$theta_fixed_catchatlgth,
+                             theta_fixed_catchatage = MLE_report$theta_fixed_catchatage,
+                             theta_trwl_catchatlgth = MLE_report$theta_trwl_catchatlgth,
+                             theta_srv_catchatage = MLE_report$theta_srv_dom_ll_catchatage,
+                             sigma_R = MLE_report$sigma_R,
+                             catch_sd = MLE_report$catch_sd,
+                             apply_fixed_movement = MLE_report$apply_fixed_movement,
+                             do_recruits_move = data$do_recruits_move,
+                             evaluate_tag_likelihood = data$evaluate_tag_likelihood
+                             )
+
+  ## spatial_scalars
+  spatial_params = data.frame(Region = Region_lab, Bzero = MLE_report$Bzero, Binit = MLE_report$Binit, Bzero_recent_growth = MLE_report$Bzero_w_recent_growth)
+
+  ## tag stuff
+  tag_reporting_rate = unique(as.numeric(MLE_report$tag_reporting_rate))
+
+  return(list(catchabilities = molten_catchabilties, scalar_quants = scalar_quants, spatial_params = spatial_params, tag_reporting_rate = tag_reporting_rate))
+
+}
