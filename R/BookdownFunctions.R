@@ -9,6 +9,7 @@
 #' @param bookdown_labels a vector of model labels
 #' @param model_description A string that describes all the models that are pointed at by model_dir
 #' @return Creates a suite of Rmarkdown files in bookdown_dir and compiles an R markdown file
+#' @details this function expects the following RDS objects to be in each `model_dir` for each model, data.RDS region_key.RDS, parameters.RDS, mle_report.RDS, sd_report.RDS, mle_optim.RDS, map_fixed_pars.RDS
 #' @export
 
 summarise_individual_models <- function(model_dir, bookdown_dir, bookdown_labels, model_description = "") {
@@ -514,14 +515,7 @@ knitr::opts_chunk$set(warning = FALSE, message = FALSE)
 #' @param model_description A string must be single quotes '' that describes all the models preferably in bullet points that are pointed at by model_dir
 #' @return Creates a suite of Rmarkdown files in bookdown_dir and compiles an R markdown file
 #' @export
-#' @examples
-#'\dontrun{
-#' model_description = "
-#' - Init  The initial model with no tagging data
-#' - Init (ALK) Same as the initial model but uses the direct ageing estimators for AFs
-#' - D-M The same Init (ALK) but assumes compositional data has Dirichlet Multinomial likelihood
-#' "
-#' }
+#' @details this function expects the following RDS objects to be in each `model_dir` for each model, data.RDS region_key.RDS, parameters.RDS, mle_report.RDS, sd_report.RDS, mle_optim.RDS, map_fixed_pars.RDS
 
 summarise_multiple_models <- function(model_dir, bookdown_dir, bookdown_labels, model_description = "") {
   ## set up Bookdown directory

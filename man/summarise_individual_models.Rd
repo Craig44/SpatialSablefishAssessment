@@ -28,3 +28,6 @@ Creates a suite of Rmarkdown files in bookdown_dir and compiles an R markdown fi
 summarise_individual_models
 A bookdown function that will summarise a suite of models in individual Sections of a single Rmarkdown file
 }
+\details{
+this function expects the following RDS objects to be in each \code{model_dir} for each model, data.RDS region_key.RDS, parameters.RDS, mle_report.RDS, sd_report.RDS, mle_optim.RDS, map_fixed_pars.RDS
+}
