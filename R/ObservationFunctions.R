@@ -731,7 +731,7 @@ calculate_simulated_residuals <- function(sim_ob, type = "abundance") {
 summarise_AF_quant_resids <- function(AF_sim_resids, sex = "M", obs_label = "") {
   title_label = paste0(ifelse(sex == "M", "Male", "Female"), " ", obs_label)
   AF_sim_resids$year_class  = AF_sim_resids$Year - AF_sim_resids$age
-  yr_plt = ggplot(AF_sim_resids %>% filter(sex == sex), aes(x = factor(Year), y = (qnorm_transformed_scaled_resids))) +
+  yr_plt = ggplot(AF_sim_resids %>% filter(sex == sex), aes(x = Year, group = Year, y = (qnorm_transformed_scaled_resids))) +
     geom_boxplot() +
     labs(x = "Year", y = "Simualted quantile residuals") +
     ggtitle(title_label) +
@@ -739,7 +739,7 @@ summarise_AF_quant_resids <- function(AF_sim_resids, sex = "M", obs_label = "") 
     facet_wrap(~Region, ncol = 1) +
     scale_x_discrete(breaks = every_nth(n = 10)) +
     theme_bw()
-  yr_class_plt = ggplot(AF_sim_resids %>% filter(sex == sex), aes(x = factor(year_class), y = (qnorm_transformed_scaled_resids))) +
+  yr_class_plt = ggplot(AF_sim_resids %>% filter(sex == sex), aes(x = year_class, group = year_class, y = (qnorm_transformed_scaled_resids))) +
     geom_boxplot() +
     labs(x = "Year class", y = "") +
     ggtitle("") +
@@ -747,7 +747,7 @@ summarise_AF_quant_resids <- function(AF_sim_resids, sex = "M", obs_label = "") 
     facet_wrap(~Region, ncol = 1) +
     scale_x_discrete(breaks = every_nth(n = 10)) +
     theme_bw()
-  age_plt = ggplot(AF_sim_resids %>% filter(sex == sex), aes(x = factor(age), y = (qnorm_transformed_scaled_resids))) +
+  age_plt = ggplot(AF_sim_resids %>% filter(sex == sex), aes(x = age, group = age, y = (qnorm_transformed_scaled_resids))) +
     geom_boxplot() +
     labs(x = "Age", y = "") +
     ggtitle("") +
@@ -776,7 +776,7 @@ summarise_AF_quant_resids <- function(AF_sim_resids, sex = "M", obs_label = "") 
 #' @return a joint plot
 summarise_LF_quant_resids <- function(LF_sim_resids, sex = "M", obs_label = "") {
   title_label = paste0(ifelse(sex == "M", "Male", "Female"), " ", obs_label)
-  yr_plt = ggplot(LF_sim_resids %>% filter(sex == sex), aes(x = factor(Year), y = (qnorm_transformed_scaled_resids))) +
+  yr_plt = ggplot(LF_sim_resids %>% filter(sex == sex), aes(x = Year, group = Year, y = (qnorm_transformed_scaled_resids))) +
     geom_boxplot() +
     labs(x = "Year", y = "Simualted quantile residuals") +
     ggtitle(title_label) +
@@ -784,13 +784,13 @@ summarise_LF_quant_resids <- function(LF_sim_resids, sex = "M", obs_label = "") 
     facet_wrap(~Region, ncol = 1) +
     scale_x_discrete(breaks = every_nth(n = 10)) +
     theme_bw()
-  len_plt = ggplot(LF_sim_resids %>% filter(sex == sex), aes(x = factor(length), y = (qnorm_transformed_scaled_resids))) +
+  len_plt = ggplot(LF_sim_resids %>% filter(sex == sex), aes(x = length, group = length, y = (qnorm_transformed_scaled_resids))) +
     geom_boxplot() +
     labs(x = "Length bin", y = "") +
     ggtitle("") +
     facet_wrap(~Region, ncol = 1) +
     geom_hline(yintercept = 0, col = "red", linetype = "dashed") +
-    #scale_x_discrete(breaks = every_nth(n = 10)) +
+    scale_x_discrete(breaks = every_nth(n = 10)) +
     theme_bw()
 
   joint_tag_plt = ggarrange(yr_plt, len_plt,
@@ -808,7 +808,7 @@ summarise_LF_quant_resids <- function(LF_sim_resids, sex = "M", obs_label = "") 
 summarise_tag_quant_resids <- function(tag_sim_resids, recovery_year = T) {
   if(recovery_year) {
 
-    rel_reg_rec_yr_plt = ggplot(tag_sim_resids, aes(x = factor(recovery_year), y = (qnorm_transformed_scaled_resids))) +
+    rel_reg_rec_yr_plt = ggplot(tag_sim_resids, aes(x = recovery_year, group = recovery_year, y = (qnorm_transformed_scaled_resids))) +
       geom_boxplot() +
       labs(x = "Recovery Year", y = "") +
       ggtitle("Release Region") +
@@ -816,7 +816,7 @@ summarise_tag_quant_resids <- function(tag_sim_resids, recovery_year = T) {
       facet_wrap(~release_region, ncol = 1) +
       scale_x_discrete(breaks = every_nth(n = 10)) +
       theme_bw()
-    rec_reg_rec_yr_plt = ggplot(tag_sim_resids, aes(x = factor(recovery_year), y = (qnorm_transformed_scaled_resids))) +
+    rec_reg_rec_yr_plt = ggplot(tag_sim_resids, aes(x = recovery_year, group = recovery_year, y = (qnorm_transformed_scaled_resids))) +
       geom_boxplot() +
       labs(x = "Recovery Year", y = "") +
       ggtitle("Recovery Region") +
@@ -827,7 +827,7 @@ summarise_tag_quant_resids <- function(tag_sim_resids, recovery_year = T) {
     joint_tag_plt = ggarrange(rel_reg_rec_yr_plt, rec_reg_rec_yr_plt,
                               ncol = 2)
   } else {
-    rel_reg_rel_yr_plt = ggplot(tag_sim_resids, aes(x = factor(release_year), y = (qnorm_transformed_scaled_resids))) +
+    rel_reg_rel_yr_plt = ggplot(tag_sim_resids, aes(x = release_year, group = release_year, y = (qnorm_transformed_scaled_resids))) +
       geom_boxplot() +
       labs(x = "Release Year", y = "Simualted quantile residuals") +
       ggtitle("Release Region") +
@@ -835,7 +835,7 @@ summarise_tag_quant_resids <- function(tag_sim_resids, recovery_year = T) {
       facet_wrap(~release_region, ncol = 1) +
       scale_x_discrete(breaks = every_nth(n = 10)) +
       theme_bw()
-    rec_reg_rel_yr_plt = ggplot(tag_sim_resids, aes(x = factor(release_year), y = (qnorm_transformed_scaled_resids))) +
+    rec_reg_rel_yr_plt = ggplot(tag_sim_resids, aes(x = release_year, group = release_year, y = (qnorm_transformed_scaled_resids))) +
       geom_boxplot() +
       labs(x = "Release Year", y = "") +
       ggtitle("Recovery Region") +

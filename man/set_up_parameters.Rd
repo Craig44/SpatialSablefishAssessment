@@ -57,7 +57,7 @@ set_up_parameters(
 \item \code{off}: not estimated
 \item \code{ignore}: ignore this parameter
 \item \code{constant}: single value for all years and regions
-\item \code{time}: estimates a tag-reporting rate coefficient for all recovery years which is common across all regions
+\item  numeric values indicate the start of a time-block: estimates a tag-reporting rate coefficient for all recovery years which is common across all regions
 \item \code{space}: TODO - not implemented estimates an regional tag-reporting rate which is common across all recovery years
 \item \code{spatio-temporal}: TODO - not implemented - estimates annual and regional tag-reporting rates
 }}

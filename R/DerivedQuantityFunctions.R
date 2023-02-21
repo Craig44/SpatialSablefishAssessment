@@ -270,7 +270,7 @@ plot_SSB = function(MLE_report, region_key = NULL, depletion = F) {
 get_other_derived_quantities <- function(MLE_report, data, region_key = NULL) {
   Region_lab = paste0("Region ", 1:MLE_report$n_regions)
   if(!is.null(region_key))
-    Region_lab =  region_key$area
+    Region_lab =  region_key$area[region_key$TMB_ndx + 1]
 
   catchability = MLE_report$srv_dom_ll_q
   dimnames(catchability) = list(Region_lab, paste0("Block-", 1:ncol(catchability)))
@@ -278,7 +278,7 @@ get_other_derived_quantities <- function(MLE_report, data, region_key = NULL) {
   colnames(molten_catchabilties) = c("Region", "time-block", "q")
 
   ## Scalar model quantities
-  scalar_quants = data.frame(F_init = MLE_report$init_F_hist * data$prop_F_hist,
+  scalar_quants = data.frame(F_init = MLE_report$init_F_hist,
                              tag_phi = MLE_report$tag_phi,
                              theta_fixed_catchatlgth = MLE_report$theta_fixed_catchatlgth,
                              theta_fixed_catchatage = MLE_report$theta_fixed_catchatage,

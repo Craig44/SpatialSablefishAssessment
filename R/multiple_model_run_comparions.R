@@ -14,6 +14,10 @@ get_multiple_ssbs <- function(mle_ls, run_labels = NULL, region_key = NULL, depl
   }
   full_ssb_df = NULL
   for(i in 1:length(mle_ls)) {
+    if(is.null(mle_ls[[i]])) {
+      cat("report at element ", i, " was null, so skipping\n")
+      next;
+    }
     this_ssb = get_SSB(MLE_report = mle_ls[[i]], region_key = region_key, depletion = depletion)
     if(!is.null(run_labels)) {
       this_ssb$label = run_labels[i]
@@ -24,6 +28,36 @@ get_multiple_ssbs <- function(mle_ls, run_labels = NULL, region_key = NULL, depl
   }
   full_ssb_df$label = factor(full_ssb_df$label)
   return(full_ssb_df)
+}
+#' get_multiple_tag_reporting_rates
+#'
+#' @param mle_ls list with multiple obj$report() calls
+#' @param run_labels vector of strings that are labels for each element in mle_ls
+#' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
+#' @return data frame with tag-reporting rates
+#' @export
+
+get_multiple_tag_reporting_rates <- function(mle_ls, run_labels = NULL, region_key = NULL) {
+  if(!is.null(run_labels)) {
+    if(length(run_labels) != length(mle_ls))
+      stop(paste0("Number of models provided ", length(mle_ls), ", number of run labels ", length(run_labels), " these need to be the same"))
+  }
+  full_report_rate_df = NULL
+  for(i in 1:length(mle_ls)) {
+    if(is.null(mle_ls[[i]])) {
+      cat("report at element ", i, " was null, so skipping\n")
+      next;
+    }
+    this_report_rate = get_tag_reporting_rate(MLE_report = mle_ls[[i]], region_key = region_key)
+    if(!is.null(run_labels)) {
+      this_report_rate$label = run_labels[i]
+    } else {
+      this_report_rate$label = i
+    }
+    full_report_rate_df = rbind(full_report_rate_df, this_report_rate)
+  }
+  full_report_rate_df$label = factor(full_report_rate_df$label)
+  return(full_report_rate_df)
 }
 
 #' get_multiple_recruits
@@ -118,6 +152,108 @@ get_multiple_index_fits <- function(mle_ls, run_labels = NULL, region_key = NULL
   return(full_index_df)
 }
 
+#' get_multiple_Bzeros
+#'
+#' @param mle_ls list with multiple obj$report() calls
+#' @param run_labels vector of strings that are labels for each element in mle_ls
+#' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
+#' @return data frame with multiple Bzero
+#' @export
+get_multiple_Bzeros <- function(mle_ls, run_labels = NULL, region_key = NULL) {
+  if(!is.null(run_labels)) {
+    if(length(run_labels) != length(mle_ls))
+      stop(paste0("Number of models provided ", length(mle_ls), ", number of run labels ", length(run_labels), " these need to be the same"))
+  }
+  regions = paste0("Region ", 1:MLE_report$n_regions)
+  if(!is.null(region_key))
+    regions = region_key$area[region_key$TMB_ndx + 1]
+
+  full_Bzero_df = NULL
+  for(i in 1:length(mle_ls)) {
+    if(is.null(mle_ls[[i]])) {
+      cat("report at element ", i, " was null, so skipping\n")
+      next;
+    }
+    this_Bzero = data.frame(Bzero = mle_ls[[i]]$Bzero, Binit = mle_ls[[i]]$Binit, Bzero_with_recent_growth = mle_ls[[i]]$Bzero_w_recent_growth, Region = regions)
+    if(!is.null(run_labels)) {
+      this_Bzero$label = run_labels[i]
+    } else {
+      this_Bzero$label = i
+    }
+    full_Bzero_df = rbind(full_Bzero_df, this_Bzero)
+  }
+  full_Bzero_df$label = factor(full_Bzero_df$label)
+  return(full_Bzero_df)
+}
+
+
+#' get_multiple_catchabilities
+#'
+#' @param mle_ls list with multiple obj$report() calls
+#' @param run_labels vector of strings that are labels for each element in mle_ls
+#' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
+#' @return data frame with multiple Bzero
+#' @export
+get_multiple_catchabilities <- function(mle_ls, run_labels = NULL, region_key = NULL) {
+  if(!is.null(run_labels)) {
+    if(length(run_labels) != length(mle_ls))
+      stop(paste0("Number of models provided ", length(mle_ls), ", number of run labels ", length(run_labels), " these need to be the same"))
+  }
+  Region_lab = paste0("Region ", 1:MLE_report$n_regions)
+  if(!is.null(region_key))
+    Region_lab =  region_key$area[region_key$TMB_ndx + 1]
+
+
+  full_q_df = NULL
+  for(i in 1:length(mle_ls)) {
+    if(is.null(mle_ls[[i]])) {
+      cat("report at element ", i, " was null, so skipping\n")
+      next;
+    }
+    catchability = mle_ls[[i]]$srv_dom_ll_q
+    dimnames(catchability) = list(Region_lab, paste0("Block-", 1:ncol(catchability)))
+    this_q = reshape2::melt(catchability)
+    colnames(this_q) = c("Region", "time-block", "q")
+
+    if(!is.null(run_labels)) {
+      this_q$label = run_labels[i]
+    } else {
+      this_q$label = i
+    }
+    full_q_df = rbind(full_q_df, this_q)
+  }
+  full_q_df$label = factor(full_q_df$label)
+  return(full_q_df)
+}
+
+#' get_multiple_Finits
+#'
+#' @param mle_ls list with multiple obj$report() calls
+#' @param run_labels vector of strings that are labels for each element in mle_ls
+#' @return data frame with multiple F initial parameters
+#' @export
+get_multiple_Finits <- function(mle_ls, run_labels = NULL) {
+  if(!is.null(run_labels)) {
+    if(length(run_labels) != length(mle_ls))
+      stop(paste0("Number of models provided ", length(mle_ls), ", number of run labels ", length(run_labels), " these need to be the same"))
+  }
+  full_Finit_df = NULL
+  for(i in 1:length(mle_ls)) {
+    if(is.null(mle_ls[[i]])) {
+      cat("report at element ", i, " was null, so skipping\n")
+      next;
+    }
+    this_Finit = data.frame(Finit = mle_ls[[i]]$init_F_hist)
+    if(!is.null(run_labels)) {
+      this_Finit$label = run_labels[i]
+    } else {
+      this_Finit$label = i
+    }
+    full_Finit_df = rbind(full_Finit_df, this_Finit)
+  }
+  full_Finit_df$label = factor(full_Finit_df$label)
+  return(full_Finit_df)
+}
 
 #' get_multiple_mean_age_fits
 #'

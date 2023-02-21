@@ -180,7 +180,7 @@ fix_pars <- function(par_list, pars_to_exclude, vec_elements_to_exclude = NULL, 
 #'   \item `off`: not estimated
 #'   \item `ignore`: ignore this parameter
 #'   \item `constant`: single value for all years and regions
-#'   \item `time`: estimates a tag-reporting rate coefficient for all recovery years which is common across all regions
+#'   \item  numeric values indicate the start of a time-block: estimates a tag-reporting rate coefficient for all recovery years which is common across all regions
 #'   \item `space`: TODO - not implemented estimates an regional tag-reporting rate which is common across all recovery years
 #'   \item `spatio-temporal`: TODO - not implemented - estimates annual and regional tag-reporting rates
 #' }
@@ -225,8 +225,13 @@ set_up_parameters <- function(data, parameters,
 
 ) {
 
-  if(!tag_reporting_rate %in% c("ignore","constant", "time", "off", "space"))#, "spatio-temporal"))
-    stop('tag_reporting_rate: needs to be one of the following "ignore", "constant", "time", "off", "space"')
+
+  if(is.numeric(tag_reporting_rate)) {
+    print("tag reporting rate estimated in time-blocks")
+  } else {
+    if(!tag_reporting_rate %in% c("ignore","constant", "time", "off", "space"))#, "spatio-temporal"))
+      stop('tag_reporting_rate: needs to be one of the following "ignore", "constant", "time", "off", "space"')
+  }
 
   #
   map_to_fix = na_map
@@ -263,7 +268,7 @@ set_up_parameters <- function(data, parameters,
 
   if(is.character(est_prop_male_recruit)) {
     if(!est_prop_male_recruit %in% c("constant", "off"))#, "spatio-temporal"))
-      stop('tag_reporting_rate: needs to be one of the following "constant", "off"')
+      stop('est_prop_male_recruit: needs to be one of the following "constant", "off"')
     if(est_prop_male_recruit == "off") {
       parameters_completely_fixed = c(parameters_completely_fixed, c("logistic_prop_recruit_male"))
     } else if(est_prop_male_recruit == "constant") {
@@ -352,7 +357,64 @@ set_up_parameters <- function(data, parameters,
   if(sum(data$tag_recovery_indicator) == 0) {
     parameters_completely_fixed = c(parameters_completely_fixed, c("logistic_tag_reporting_rate", "ln_tag_phi"))
   } else {
-    if(tag_reporting_rate == "off") {
+    if(is.numeric(tag_reporting_rate)) {
+      tag_recovery_years = data$years[which(data$tag_recovery_indicator_by_year == 1)]
+      yr_time_blocks_ndx = which(tag_recovery_years %in% tag_reporting_rate)
+      if(length(tag_recovery_years) != ncol(parameters$logistic_tag_reporting_rate))
+        stop(paste0("tag reporting rate had ", ncol(parameters$logistic_tag_reporting_rate), " years of recoveries, but found ", length(tag_recovery_years) , " years of tag recoveries"))
+
+      if(tag_reporting_rate[1] != tag_recovery_years[1])
+        stop(paste0("When supplying tag reporting as time-blocks. The first year must be the same as the first year of tag-recovery observations, which equals ",tag_recovery_years[1]))
+
+      # rep per ndx
+      fixed_tag_ndx = NULL
+      counter = 1
+      for(i in 1:length(yr_time_blocks_ndx)) {
+        if((i < length(yr_time_blocks_ndx)) & (i != length(yr_time_blocks_ndx))) {
+          rep_ndx = yr_time_blocks_ndx[i + 1] - yr_time_blocks_ndx[i] - 1
+          fixed_tag_ndx = rbind(fixed_tag_ndx, expand.grid(1:data$n_regions, yr_time_blocks_ndx[i]:(yr_time_blocks_ndx[i] + rep_ndx))[-1,])
+          n_elements_in_block = nrow(expand.grid(1:data$n_regions, counter:(counter + rep_ndx)))
+          base_tag_report_vals = append(base_tag_report_vals, rep(evalit(paste0("list(",paste(paste0("logistic_tag_reporting_rate = ", counter), collapse = ", "),")")), n_elements_in_block - 1))
+          copy_ndx = (counter + 1):(counter + n_elements_in_block - 1)
+          copy_tag_report_vals = append(copy_tag_report_vals, evalit(paste0("list(",paste(paste0("logistic_tag_reporting_rate = ", copy_ndx), collapse = ", "),")")))
+        } else if(i == length(yr_time_blocks_ndx)) {
+          if(tag_reporting_rate[i] != tag_recovery_years[length(tag_recovery_years)]) {
+            rep_ndx = length(tag_recovery_years) -  yr_time_blocks_ndx[i]
+            fixed_tag_ndx = rbind(fixed_tag_ndx, expand.grid(1:data$n_regions, yr_time_blocks_ndx[i]:(yr_time_blocks_ndx[i] + rep_ndx))[-1,])
+            n_elements_in_block = nrow(expand.grid(1:data$n_regions, counter:(counter + rep_ndx)))
+            base_tag_report_vals = append(base_tag_report_vals, rep(evalit(paste0("list(",paste(paste0("logistic_tag_reporting_rate = ", counter), collapse = ", "),")")), n_elements_in_block - 1))
+            copy_ndx = (counter + 1):(counter + n_elements_in_block - 1)
+            copy_tag_report_vals = append(copy_tag_report_vals, evalit(paste0("list(",paste(paste0("logistic_tag_reporting_rate = ", copy_ndx), collapse = ", "),")")))
+          } else {
+            ## the last time-block is the last year
+            rep_ndx = 1
+            fixed_tag_ndx = rbind(fixed_tag_ndx, expand.grid(1:data$n_regions, yr_time_blocks_ndx[i])[-1,])
+            n_elements_in_block = nrow(expand.grid(1:data$n_regions, counter))
+            base_tag_report_vals = append(base_tag_report_vals, rep(evalit(paste0("list(",paste(paste0("logistic_tag_reporting_rate = ", counter), collapse = ", "),")")), n_elements_in_block - 1))
+            copy_ndx = (counter + 1):(counter + n_elements_in_block - 1)
+            copy_tag_report_vals = append(copy_tag_report_vals, evalit(paste0("list(",paste(paste0("logistic_tag_reporting_rate = ", copy_ndx), collapse = ", "),")")))
+          }
+        }
+        counter = counter + n_elements_in_block
+      }
+      # Reduce(c, lapply(base_tag_report_vals, function(x){x[1]}))
+      # Reduce(c, lapply(copy_tag_report_vals, function(x){x[1]}))
+      potential_params = 1:(nrow(parameters$logistic_tag_reporting_rate) * ncol(parameters$logistic_tag_reporting_rate))
+      expected_length = length(potential_params) - length(tag_reporting_rate)
+      if(length(Reduce(c, lapply(base_tag_report_vals, function(x){x[1]}))) != expected_length)
+        stop(paste0("Calculation error for base_tag_report_vals, expected lengths = ", expected_length, " but value derived has ", length(Reduce(c, lapply(base_tag_report_vals, function(x){x[1]})))))
+      if(length(Reduce(c, lapply(copy_tag_report_vals, function(x){x[1]}))) != expected_length)
+        stop(paste0("Calculation error for copy_tag_report_vals, expected lengths = ", expected_length, " but value derived has ", length(Reduce(c, lapply(base_tag_report_vals, function(x){x[1]})))))
+
+      #potential_years = rep(tag_recovery_years, each = data$n_regions)
+      # years set to others
+      #potential_years[unique(Reduce(c, lapply(base_tag_report_vals, function(x){x[1]})))]
+      #tag_reporting_rate
+      # Years forced to be the same
+      #unique(potential_years[(Reduce(c, lapply(copy_tag_report_vals, function(x){x[1]})))])
+
+      arrays_with_elements_fixed[["logistic_tag_reporting_rate"]] = fixed_tag_ndx
+    } else if(tag_reporting_rate == "off") {
       parameters_completely_fixed = c(parameters_completely_fixed, c("logistic_tag_reporting_rate"))
     } else if(tag_reporting_rate == "ignore") {
       # don't do anything
@@ -595,7 +657,7 @@ set_pars_to_be_the_same <- function(par_list, map, base_parameters, copy_paramet
     if(is.na(map[[names(base_parameters)[i]]][base_parameters[[i]]]))
       stop(paste0("In base_parameters for parameter ", names(base_parameters)[i], " at ndx ", base_parameters[[i]], ". We found an NA. This cannot be, please check"))
     if(!is.na(map[[names(copy_parameters)[i]]][copy_parameters[[i]]]))
-      stop(paste0("In copy_parameters for parameter ", names(base_parameters)[i], " at ndx ", base_parameters[[i]], ". Was not an NA. This must be an NA value in 'map', please check"))
+      stop(paste0("In copy_parameters for parameter ", names(copy_parameters)[i], " at ndx ", copy_parameters[[i]], ". Was not an NA. This must be an NA value in 'map', please check"))
 
     temp_copy_parm = map[[names(copy_parameters)[i]]]
     temp_copy_parm = as.numeric(as.character(temp_copy_parm))

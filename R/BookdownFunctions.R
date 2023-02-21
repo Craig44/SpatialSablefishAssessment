@@ -317,7 +317,7 @@ knitr::opts_chunk$set(warning = FALSE, message = FALSE)
     write("```\n\n", file = model_input_file, append = T)
 
 
-    write("## Tag Fits", file = model_input_file, append = T)
+    write("## Aggregated tag fits", file = model_input_file, append = T)
     write(paste0("```{r ", j,"_tag_agg, eval = T, echo = F, results = T, warning = F, out.width =  '100%', fig.height = 8}"), file = model_input_file, append = T)
 
     tag_fit = '
@@ -972,6 +972,32 @@ ggplot(data = mean_length_df %>% dplyr::filter(observation == "trwl")) +
     '
   write(select, file = model_input_file, append = T)
   write("```\n\n", file = model_input_file, append = T)
+
+  write("## Tag reporting rates", file = model_input_file, append = T)
+  write("```{r tagreportrates, eval = T, echo = F, results = T, out.width =  '100%', fig.height = 8}", file = model_input_file, append = T)
+  report_rate =
+    '
+    report_df = get_multiple_tag_reporting_rates(mle_ls = mle_ls, run_labels = names(mle_ls), region_key = region_key)
+    ggplot() +
+      geom_line(data = report_df, aes(x = Year, y = ReportingRate, col = label, linetype = label), linewidth = 1) +
+      labs(x = "Tag recovery year", y = "", col = "", linetype= "") +
+      facet_wrap(~Region) +
+      ggtitle("T") +
+      theme_bw() +
+      theme(legend.position = "bottom",
+            axis.text = element_text(size = 14),
+            axis.title = element_text(size = 14),
+            strip.text = element_text(size=14),
+            plot.title = element_text(size = 20, face = "bold"),
+            legend.text = element_text(size=14)) +
+      scale_color_manual(values = obs_pallete[-1]) +
+      guides(linetype = "none")
+
+    '
+  write(report_rate, file = model_input_file, append = T)
+  write("```\n\n", file = model_input_file, append = T)
+
+
 
   bookdown::render_book(input = output_dir)
 

@@ -360,3 +360,41 @@ plot_tag_recovery_fits <- function(MLE_report, region_key = NULL, plt_type = "ag
 
   return(gplt)
 }
+
+#'
+#' get_tag_reporting_rate get a data frame of reporting rate parameters
+#' @param MLE_report a list that is output from obj$report() usually once an optimsation routine has been done.
+#' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
+#' @export
+#' @return data.frame of tag-reporting rates by tag-recovery year recovery region
+get_tag_reporting_rate <- function(MLE_report, region_key = NULL) {
+  region_label = paste0("Region", 1:MLE_report$n_regions)
+  if(!is.null(region_key))
+    region_label = region_key$area[region_key$TMB_ndx + 1]
+  recovery_years = MLE_report$years[which(MLE_report$tag_recovery_indicator_by_year == 1)]
+  dimnames(MLE_report$tag_reporting_rate) = list(region_label, recovery_years)
+  molten_report_rates = reshape2::melt(MLE_report$tag_reporting_rate)
+  colnames(molten_report_rates) = c("Region", "Year", "ReportingRate")
+  return(molten_report_rates)
+}
+
+#' plot_tag_reporting_rate create a ggplot of reporring rate by recovery year and region
+#' @param MLE_report a list that is output from obj$report() usually once an optimsation routine has been done.
+#' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
+#' @export
+#' @return ggplot of reporting rates
+plot_tag_reporting_rate <- function(MLE_report, region_key = NULL) {
+  report_rate_df = get_tag_reporting_rate(MLE_report, region_key)
+
+  gplt = ggplot(data = report_rate_df, aes(x = Year, y = ReportingRate, col = Region, linetype = Region)) +
+    geom_line(linewidth = 1.1) +
+    labs(x = "Tag recovery year", y = "Tag reporting rate", col = "Region", linetype = "Region") +
+    ylim(0, NA) +
+    theme_classic() +
+    theme(
+          axis.text = element_text(size = 14),
+          axis.title = element_text(size = 14),
+          strip.text = element_text(size=14),
+          legend.text = element_text(size=14))
+  return(gplt)
+}
