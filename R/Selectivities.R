@@ -90,7 +90,25 @@ d_norm_sel<- function(bins, mu, sig_l,sig_r) {
   return(store)
 }
 
+#' d_norm_alt_sel Double normal selectivity
+#' @export
+#' @param bins could be age or length
+#' @param mu mean value selectivity at one
+#' @param sig_l sigma for the left hand curve
+#' @param sig_r sigma for the right hand curve
+#' @return selectivity for each age
+d_norm_alt_sel<- function(bins, mu, sig_l,sig_r) {
+  store<- vector()
+  log_0.5 = log(0.5)
+  delta = 5
+  for( i in 1:length(bins)) {
+    stmp = 1.0 / (1.0 + exp(-delta * (bins[i] - mu)));
+    store[i] = stmp * exp(log_0.5 * ((bins[i] - mu) / sig_r)^2) + (1.0 - stmp) *
+      exp(log_0.5 * ((bins[i] - mu) / sig_l)^2);
 
+  }
+  return(store)
+}
 #' d_exp_sel Double Exponential selectivity
 #' @export
 #' @param bins could be age or length

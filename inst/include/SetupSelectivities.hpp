@@ -44,7 +44,13 @@ vector<Type> double_normal_ogive(vector<Type>& ages, Type& sel_50, Type& delta) 
 /*
  *  BuildSelectivity is the function that will build a selectivity array that can have different time-blocks and a different ogive per block given parameters and control variables
  *  @param sel_params dim: parameters (untransformed) where n_time_blocks is the number of time-blocks n_time_blocks x n_params
- *  @param sel_type vector of length = n_time_blocks. Specifies whether it is a logistic (= 0) or double normal (= 1). THis will define how many columns are in sel_params
+ *  @param sel_type vector of length = n_time_blocks. THis will define how many columns are in sel_params
+ *  0 = Specifies whether it is a logistic (= 0)
+ *  1 = Specifies the gamma formuation which mimics the double normal with two parameters
+ *  2 = power function not scaled to have a max = 1 like in the assessment
+ *  3 = Alternative logistic parameterisation
+ *  4 = exponential decay selectivity
+ *  5 = double normal with 3 parameters
  *  @param ages vector of ages.
  *  @param sel_array is a prepopulated array that will be fulled with the correct . Specifies which time-block selectivity to which year.
  */
@@ -64,8 +70,29 @@ void BuildSelectivity(array<Type> sel_params, vector<int>& sel_type, vector<Type
       // Power function used for the GOA trawl selectivity
       for(int age_ndx = 0; age_ndx < n_ages; ++age_ndx)
         sel_array(age_ndx, i) = (1.0 / pow(ages[age_ndx],sel_params(i, 0)));
+      // scale by max TODO: DELETE THIS after validated it shouldn't be here
+      // A max call can cause AD issues. Or cause a split in the AD graph which I don't like at all.... consider using the expoential decay i.e., sel_type == 4 instead
+      Type max_sel = max(vector<Type>(sel_array.col(i)));
+      for(int age_ndx = 0; age_ndx < n_ages; ++age_ndx)
+        sel_array(age_ndx, i) /= max_sel;
     }  else if (sel_type(i) == 3) {
+      // Alternative logistic parameterisation
       sel_array.col(i) = logistic_ogive(ages, sel_params(i, 0), sel_params(i, 1));
+    } else if (sel_type(i) == 4) {
+      // Exponential decay function
+      for(int age_ndx = 0; age_ndx < n_ages; ++age_ndx)
+        sel_array(age_ndx, i) = exp(-1.0 * ages[age_ndx] * sel_params(i, 0));
+    } else if (sel_type(i) == 5) {
+      // Double normal with 3 parameters
+      // param order mu, sigma_r, sigma_l
+      Type delta = 5.0;
+      Type tmp = log(0.5);
+      Type stmp = 0.0;
+      for(int age_ndx = 0; age_ndx < n_ages; ++age_ndx) {
+      stmp = 1.0 / (1.0 + exp(-delta * (ages[age_ndx] - sel_params(i, 0))));
+      sel_array(age_ndx, i) = stmp * exp(tmp * square((ages[age_ndx] - sel_params(i, 0)) / sel_params(i, 1))) + (1.0 - stmp) *
+        exp(tmp * square((ages[age_ndx] - sel_params(i, 0)) / sel_params(i, 2)));
+      }
     }
     // scale by max TODO: DELETE THIS after validated it shouldn't be here
     // A max call can cause AD issues.

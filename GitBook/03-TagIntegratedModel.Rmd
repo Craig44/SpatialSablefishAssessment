@@ -124,8 +124,18 @@ S(a | \theta_1) = \frac{1}{a ^{\theta_1}}
 \[
 S(a | \theta_1, \theta_2) = \frac{1}{1 + 19^{(\theta_1 - a) / \theta_2}}
 \]
-
-
+- `4` Exponential decay
+\[
+S(a | \theta_1) =  exp(-a * \theta_1);
+\]
+- `5` Double normal 3 parameterisation, where \(\boldsymbol{\theta} = (\theta_1, \theta_2, \theta_3) = (\mu, \sigma_r, \sigma_l)\), where \(\mu\) is the age that the selectivity = 1, \(\sigma_r\) is the standard deviation for the right hand side of the selectivity curve  and  \(\sigma_l\) is the standard deviation for the left hand side of the selectivity curve 
+\[
+S(a | \mu, \sigma_r, \sigma_l) = j_a \exp\left(\log(0.5) \left(\frac{a - \mu}{\sigma_r^2}\right)^2\right) + \left( 1 - j_a \right)\exp\left(\log(0.5) \left(\frac{a - \mu}{\sigma_l^2}\right)^2\right)
+\]
+where,
+\[
+j_a = 1 / \left(1 + \exp\{-5(a - \mu)\}\right)
+\]
 
 ## Observation equations {-}
 

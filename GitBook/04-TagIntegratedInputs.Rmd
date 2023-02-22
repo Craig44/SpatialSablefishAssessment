@@ -35,11 +35,11 @@ Users need to population a named list containing `data` inputs and a named list 
 
 - `fixed_fishery_catch` vector of annual catch for the fixed gear fishery. Units are kilo tonnes
 - `trwl_fishery_catch` vector of annual catch for the Trawl gear fishery. Units are kilo tonnes
-- `fixed_sel_type` vector of integers specifying the selectivity type in each time-block `length(unique(fixed_sel_by_year_indicator))`. Values 0 = logistic, 1  = Double normal, 2 = power function, 3 = alternative logistic formulation
+- `fixed_sel_type` vector of integers specifying the selectivity type in each time-block `length(unique(fixed_sel_by_year_indicator))`. Values 0 = logistic, 1  = Double normal, 2 = power function, 3 = alternative logistic formulation, 4 = exponential decay, 5 = double normal with three parameters
 - `fixed_sel_by_year_indicator` vector of integers specifying which selectivity time-block to apply in each year (C++ indexing so start at zero). Expected length is `n_projyears`
-- `trwl_sel_type` vector of integers specifying the selectivity type in each time-block `length(unique(trwl_sel_by_year_indicator))`. Values 0 = logistic, 1  = Double normal, 2 = power function, 3 = alternative logistic formulation
+- `trwl_sel_type` vector of integers specifying the selectivity type in each time-block `length(unique(trwl_sel_by_year_indicator))`. Values 0 = logistic, 1  = Double normal, 2 = power function, 3 = alternative logistic formulation, 4 = exponential decay, 5 = double normal with three parameters
 - `trwl_sel_by_year_indicator` vector of integers specifying which selectivity time-block to apply in each year (C++ indexing so start at zero). Expected length is `n_projyears`
-- `srv_dom_ll_sel_type` vector of integers specifying the selectivity type in each time-block, `length(unique(srv_dom_ll_sel_by_year_indicator))`. Values 0 = logistic, 1  = Double normal, 2 = power function, 3 = alternative logistic formulation
+- `srv_dom_ll_sel_type` vector of integers specifying the selectivity type in each time-block, `length(unique(srv_dom_ll_sel_by_year_indicator))`. Values 0 = logistic, 1  = Double normal, 2 = power function, 3 = alternative logistic formulation, 4 = exponential decay, 5 = double normal with three parameters
 - `srv_dom_ll_sel_by_year_indicator` vector of integers specifying which selectivity time-block to apply in each year (C++ indexing so start at zero). Expected length is `n_projyears`
 - `tag_release_event_this_year` vector of integers specifying whether tags are released in each year. Length `n_years`. `n_years_with_tag_releases = sum(tag_release_event_this_year)`
 - `male_tagged_cohorts_by_age` Numbers of male tagged fish. Dimension `n_ages` \(\times\)  `n_region` \(\times\) `n_years_with_tag_releases`. These are in actual numbers **not** millions of fish, like the recruitment parameters and other model abundance quantities
