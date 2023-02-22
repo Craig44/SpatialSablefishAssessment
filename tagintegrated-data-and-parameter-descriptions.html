@@ -23,7 +23,7 @@
 <meta name="author" content="C.Marsh" />
 
 
-<meta name="date" content="2023-02-21" />
+<meta name="date" content="2023-02-22" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -229,7 +229,10 @@ div.csl-indent {
 </ul></li>
 <li class="chapter" data-level="" data-path="tagintegrated-data-and-parameter-descriptions.html"><a href="tagintegrated-data-and-parameter-descriptions.html#parameters"><i class="fa fa-check"></i><code>parameters</code></a></li>
 </ul></li>
-<li class="chapter" data-level="" data-path="contributing-to-spatialsablefishassessment.html"><a href="contributing-to-spatialsablefishassessment.html"><i class="fa fa-check"></i>Contributing to <code>SpatialSablefishAssessment</code></a></li>
+<li class="chapter" data-level="" data-path="contributing-to-spatialsablefishassessment.html"><a href="contributing-to-spatialsablefishassessment.html"><i class="fa fa-check"></i>Contributing to <code>SpatialSablefishAssessment</code></a>
+<ul>
+<li class="chapter" data-level="" data-path="contributing-to-spatialsablefishassessment.html"><a href="contributing-to-spatialsablefishassessment.html#tips"><i class="fa fa-check"></i>Tips</a></li>
+</ul></li>
 <li class="chapter" data-level="" data-path="references.html"><a href="references.html"><i class="fa fa-check"></i>References</a></li>
 <li class="divider"></li>
 <li><a href="https://github.com/Craig44/SpatialSablefishAssessment" target="blank">Github Repo here</a></li>
@@ -283,11 +286,11 @@ div.csl-indent {
 <li><p><code>F_iterations</code> integer how many newton raphson iterations are done to solve F when <code>F_method = 1</code></p></li>
 <li><p><code>fixed_fishery_catch</code> vector of annual catch for the fixed gear fishery. Units are kilo tonnes</p></li>
 <li><p><code>trwl_fishery_catch</code> vector of annual catch for the Trawl gear fishery. Units are kilo tonnes</p></li>
-<li><p><code>fixed_sel_type</code> vector of integers specifying the selectivity type in each time-block <code>length(unique(fixed_sel_by_year_indicator))</code>. Values 0 = logistic, 1 = Double normal, 2 = power function, 3 = alternative logistic formulation</p></li>
+<li><p><code>fixed_sel_type</code> vector of integers specifying the selectivity type in each time-block <code>length(unique(fixed_sel_by_year_indicator))</code>. Values 0 = logistic, 1 = Double normal, 2 = power function, 3 = alternative logistic formulation, 4 = exponential decay, 5 = double normal with three parameters</p></li>
 <li><p><code>fixed_sel_by_year_indicator</code> vector of integers specifying which selectivity time-block to apply in each year (C++ indexing so start at zero). Expected length is <code>n_projyears</code></p></li>
-<li><p><code>trwl_sel_type</code> vector of integers specifying the selectivity type in each time-block <code>length(unique(trwl_sel_by_year_indicator))</code>. Values 0 = logistic, 1 = Double normal, 2 = power function, 3 = alternative logistic formulation</p></li>
+<li><p><code>trwl_sel_type</code> vector of integers specifying the selectivity type in each time-block <code>length(unique(trwl_sel_by_year_indicator))</code>. Values 0 = logistic, 1 = Double normal, 2 = power function, 3 = alternative logistic formulation, 4 = exponential decay, 5 = double normal with three parameters</p></li>
 <li><p><code>trwl_sel_by_year_indicator</code> vector of integers specifying which selectivity time-block to apply in each year (C++ indexing so start at zero). Expected length is <code>n_projyears</code></p></li>
-<li><p><code>srv_dom_ll_sel_type</code> vector of integers specifying the selectivity type in each time-block, <code>length(unique(srv_dom_ll_sel_by_year_indicator))</code>. Values 0 = logistic, 1 = Double normal, 2 = power function, 3 = alternative logistic formulation</p></li>
+<li><p><code>srv_dom_ll_sel_type</code> vector of integers specifying the selectivity type in each time-block, <code>length(unique(srv_dom_ll_sel_by_year_indicator))</code>. Values 0 = logistic, 1 = Double normal, 2 = power function, 3 = alternative logistic formulation, 4 = exponential decay, 5 = double normal with three parameters</p></li>
 <li><p><code>srv_dom_ll_sel_by_year_indicator</code> vector of integers specifying which selectivity time-block to apply in each year (C++ indexing so start at zero). Expected length is <code>n_projyears</code></p></li>
 <li><p><code>tag_release_event_this_year</code> vector of integers specifying whether tags are released in each year. Length <code>n_years</code>. <code>n_years_with_tag_releases = sum(tag_release_event_this_year)</code></p></li>
 <li><p><code>male_tagged_cohorts_by_age</code> Numbers of male tagged fish. Dimension <code>n_ages</code> <span class="math inline">\(\times\)</span> <code>n_region</code> <span class="math inline">\(\times\)</span> <code>n_years_with_tag_releases</code>. These are in actual numbers <strong>not</strong> millions of fish, like the recruitment parameters and other model abundance quantities</p></li>
