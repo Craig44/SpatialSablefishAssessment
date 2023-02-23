@@ -169,10 +169,13 @@ fix_pars <- function(par_list, pars_to_exclude, vec_elements_to_exclude = NULL, 
 #' @param na_map an existing map that has already had parameters turned off, not well tested
 #' @param srv_sel_first_param_shared_by_sex bool, whether the first survey selectivity parameter is shared among male and female for all time-blocks
 #' @param srv_sel_second_param_shared_by_sex bool, whether the second survey selectivity parameter is shared among male and female for all time-blocks
+#' @param srv_sel_third_param_shared_by_sex bool, whether the third survey selectivity parameter is shared among male and female for all time-blocks
 #' @param fixed_sel_first_shared_by_sex bool, whether the first fixed gear selectivity parameter is shared among male and female for all time-blocks
 #' @param fixed_sel_second_shared_by_sex bool, whether the second fixed gear selectivity parameter is shared among male and female for all time-blocks
+#' @param fixed_sel_third_shared_by_sex bool, whether the third fixed gear selectivity parameter is shared among male and female for all time-blocks
 #' @param trwl_sel_first_shared_by_sex bool, whether the first trawl gear selectivity parameter is shared among male and female for all time-blocks
 #' @param trwl_sel_second_shared_by_sex bool, whether the second trawl gear selectivity parameter is shared among male and female for all time-blocks
+#' @param trwl_sel_third_shared_by_sex bool, whether the third trawl gear selectivity parameter is shared among male and female for all time-blocks
 #' @param recruit_dev_years_not_to_estimate vector of years that are not estimated.
 #' @param srv_q_spatial whether regional Q's exist
 #' @param tag_reporting_rate how to deal with tag-reporting rate will be ignored if there are no tag-recovery observations.
@@ -205,10 +208,13 @@ set_up_parameters <- function(data, parameters,
                               na_map = NULL,
                               srv_sel_first_param_shared_by_sex = F,
                               srv_sel_second_param_shared_by_sex = F,
+                              srv_sel_third_param_shared_by_sex = F,
                               fixed_sel_first_shared_by_sex = F,
                               fixed_sel_second_shared_by_sex = F,
+                              fixed_sel_third_shared_by_sex = F,
                               trwl_sel_first_shared_by_sex = F,
                               trwl_sel_second_shared_by_sex = F,
+                              trwl_sel_third_shared_by_sex = F,
                               recruit_dev_years_not_to_estimate = NULL,
                               srv_q_spatial = F,
                               tag_reporting_rate = "constant",
@@ -491,7 +497,7 @@ set_up_parameters <- function(data, parameters,
     counter = 1
     n_time_blocks = dim(parameters$ln_srv_dom_ll_sel_pars)[1]
     for(t_ndx in 1:n_time_blocks) {
-      n_sel_pars_for_this_time_block = ifelse(data$srv_dom_ll_sel_type[t_ndx] != 2, 2, 1);
+      n_sel_pars_for_this_time_block = get_number_of_sel_pars(data$srv_dom_ll_sel_type[t_ndx]);
       this_bse_lst = list(ln_srv_dom_ll_sel_pars = counter)
       this_cpy_lst = list(ln_srv_dom_ll_sel_pars = counter + n_time_blocks * n_sel_pars_for_this_time_block)
       base_srv_sel_param_vals = append(base_srv_sel_param_vals, this_bse_lst)
@@ -508,8 +514,33 @@ set_up_parameters <- function(data, parameters,
     n_time_blocks = dim(parameters$ln_srv_dom_ll_sel_pars)[1]
     counter = n_time_blocks + 1
 
-    for(t_ndx in 1:dim(parameters$ln_srv_dom_ll_sel_pars)[1]) {
-      n_sel_pars_for_this_time_block = ifelse(data$srv_dom_ll_sel_type[t_ndx] != 2, 2, 1);
+    for(t_ndx in 1:n_time_blocks) {
+      n_sel_pars_for_this_time_block = get_number_of_sel_pars(data$srv_dom_ll_sel_type[t_ndx]);
+      this_bse_lst = list(ln_srv_dom_ll_sel_pars = counter)
+      this_cpy_lst = list(ln_srv_dom_ll_sel_pars = counter + n_time_blocks * n_sel_pars_for_this_time_block)
+      base_srv_sel_param_vals = append(base_srv_sel_param_vals, this_bse_lst)
+      copy_srv_sel_param_vals = append(copy_srv_sel_param_vals, this_cpy_lst)
+      counter = counter + 1
+    }
+    if(is.null(arrays_with_elements_fixed[["ln_srv_dom_ll_sel_pars"]])) {
+      arrays_with_elements_fixed[["ln_srv_dom_ll_sel_pars"]] = srv_sel_param_elements_to_fix
+    } else {
+      arrays_with_elements_fixed[["ln_srv_dom_ll_sel_pars"]] = rbind(arrays_with_elements_fixed[["ln_srv_dom_ll_sel_pars"]], srv_sel_param_elements_to_fix)
+    }
+  }
+  if(srv_sel_third_param_shared_by_sex) {
+    ## skip if not 3 parameter double normal
+    if(!any(data$srv_dom_ll_sel_type == 5))
+      next;
+    ## turn off females delta param will be set the same as male
+    srv_sel_param_elements_to_fix = cbind(1:dim(parameters$ln_srv_dom_ll_sel_pars)[1], 3,2)
+
+    ## fix male and female for all time-blocks
+    n_time_blocks = dim(parameters$ln_srv_dom_ll_sel_pars)[1]
+    counter = n_time_blocks + 2
+
+    for(t_ndx in 1:n_time_blocks) {
+      n_sel_pars_for_this_time_block = get_number_of_sel_pars(data$srv_dom_ll_sel_type[t_ndx]);
       this_bse_lst = list(ln_srv_dom_ll_sel_pars = counter)
       this_cpy_lst = list(ln_srv_dom_ll_sel_pars = counter + n_time_blocks * n_sel_pars_for_this_time_block)
       base_srv_sel_param_vals = append(base_srv_sel_param_vals, this_bse_lst)
@@ -533,8 +564,8 @@ set_up_parameters <- function(data, parameters,
     ## fix male and female for all time-blocks
     counter = 1
     n_time_blocks = dim(parameters$ln_fixed_sel_pars)[1]
-    for(t_ndx in 1:dim(parameters$ln_fixed_sel_pars)[1]) {
-      n_sel_pars_for_this_time_block = ifelse(data$fixed_sel_type[t_ndx] != 2, 2, 1);
+    for(t_ndx in 1:n_time_blocks) {
+      n_sel_pars_for_this_time_block = get_number_of_sel_pars(data$fixed_sel_type[t_ndx]);
       this_bse_lst = list(ln_fixed_sel_pars = counter)
       this_cpy_lst = list(ln_fixed_sel_pars = counter + n_time_blocks * n_sel_pars_for_this_time_block)
       base_fixed_sel_param_vals = append(base_fixed_sel_param_vals, this_bse_lst)
@@ -550,8 +581,8 @@ set_up_parameters <- function(data, parameters,
     ## fix male and female for all time-blocks
     n_time_blocks = dim(parameters$ln_fixed_sel_pars)[1]
     counter = n_time_blocks + 1
-    for(t_ndx in 1:dim(parameters$ln_fixed_sel_pars)[1]) {
-      n_sel_pars_for_this_time_block = ifelse(data$fixed_sel_type[t_ndx] != 2, 2, 1);
+    for(t_ndx in 1:n_time_blocks) {
+      n_sel_pars_for_this_time_block = get_number_of_sel_pars(data$fixed_sel_type[t_ndx]);
       this_bse_lst = list(ln_fixed_sel_pars = counter)
       this_cpy_lst = list(ln_fixed_sel_pars = counter + n_time_blocks * n_sel_pars_for_this_time_block)
       base_fixed_sel_param_vals = append(base_fixed_sel_param_vals, this_bse_lst)
@@ -564,6 +595,32 @@ set_up_parameters <- function(data, parameters,
       arrays_with_elements_fixed[["ln_fixed_sel_pars"]] = rbind(arrays_with_elements_fixed[["ln_fixed_sel_pars"]], fixed_sel_param_elements_to_fix)
     }
   }
+  if(fixed_sel_third_shared_by_sex) {
+    ## skip if not 3 parameter double normal
+    if(!any(data$fixed_sel_type == 5))
+      next;
+    ## turn off females delta param will be set the same as male
+    fixed_sel_param_elements_to_fix = cbind(1:dim(parameters$ln_fixed_sel_pars)[1],3,2)
+
+    ## fix male and female for all time-blocks
+    n_time_blocks = dim(parameters$ln_fixed_sel_pars)[1]
+    counter = n_time_blocks + 2
+    for(t_ndx in 1:n_time_blocks) {
+      n_sel_pars_for_this_time_block = get_number_of_sel_pars(data$fixed_sel_type[t_ndx]);
+      this_bse_lst = list(ln_fixed_sel_pars = counter)
+      this_cpy_lst = list(ln_fixed_sel_pars = counter + n_time_blocks * n_sel_pars_for_this_time_block)
+      base_fixed_sel_param_vals = append(base_fixed_sel_param_vals, this_bse_lst)
+      copy_fixed_sel_param_vals = append(copy_fixed_sel_param_vals, this_cpy_lst)
+      counter = counter + 1
+    }
+    if(is.null(arrays_with_elements_fixed[["ln_fixed_sel_pars"]])) {
+      arrays_with_elements_fixed[["ln_fixed_sel_pars"]] = fixed_sel_param_elements_to_fix
+    } else {
+      arrays_with_elements_fixed[["ln_fixed_sel_pars"]] = rbind(arrays_with_elements_fixed[["ln_fixed_sel_pars"]], fixed_sel_param_elements_to_fix)
+    }
+  }
+
+
   ## trwl gear fishery
   ## are we sharing selectivity parameters
   base_trwl_sel_param_vals = list()
@@ -575,8 +632,8 @@ set_up_parameters <- function(data, parameters,
     ## fix male and female for all time-blocks
     counter = 1
     n_time_blocks = dim(parameters$ln_trwl_sel_pars)[1]
-    for(t_ndx in 1:dim(parameters$ln_trwl_sel_pars)[1]) {
-      n_sel_pars_for_this_time_block = ifelse(data$trwl_sel_type[t_ndx] != 2, 2, 1);
+    for(t_ndx in 1:n_time_blocks) {
+      n_sel_pars_for_this_time_block = get_number_of_sel_pars(data$trwl_sel_type[t_ndx]);
       this_bse_lst = list(ln_trwl_sel_pars = counter)
       this_cpy_lst = list(ln_trwl_sel_pars = counter + n_time_blocks * n_sel_pars_for_this_time_block)
       base_trwl_sel_param_vals = append(base_trwl_sel_param_vals, this_bse_lst)
@@ -592,8 +649,8 @@ set_up_parameters <- function(data, parameters,
     ## fix male and female for all time-blocks
     n_time_blocks = dim(parameters$ln_trwl_sel_pars)[1]
     counter = n_time_blocks + 1
-    for(t_ndx in 1:dim(parameters$ln_trwl_sel_pars)[1]) {
-      n_sel_pars_for_this_time_block = ifelse(data$trwl_sel_type[t_ndx] != 2, 2, 1);
+    for(t_ndx in 1:n_time_blocks) {
+      n_sel_pars_for_this_time_block = get_number_of_sel_pars(data$trwl_sel_type[t_ndx]);
       this_bse_lst = list(ln_trwl_sel_pars = counter)
       this_cpy_lst = list(ln_trwl_sel_pars = counter + n_time_blocks * n_sel_pars_for_this_time_block)
       base_trwl_sel_param_vals = append(base_trwl_sel_param_vals, this_bse_lst)
@@ -606,6 +663,31 @@ set_up_parameters <- function(data, parameters,
       arrays_with_elements_fixed[["ln_trwl_sel_pars"]] = rbind(arrays_with_elements_fixed[["ln_trwl_sel_pars"]], trwl_sel_param_elements_to_fix)
     }
   }
+  if(trwl_sel_third_shared_by_sex) {
+    ## skip if not 3 parameter double normal
+    if(!any(data$trwl_sel_type == 5))
+      next;
+    ## turn off females param will be set the same as male
+    trwl_sel_param_elements_to_fix = cbind(1:dim(parameters$ln_trwl_sel_pars)[1], 3,2)
+
+    ## fix male and female for all time-blocks
+    n_time_blocks = dim(parameters$ln_trwl_sel_pars)[1]
+    counter = n_time_blocks + 2
+    for(t_ndx in 1:n_time_blocks) {
+      n_sel_pars_for_this_time_block = get_number_of_sel_pars(data$trwl_sel_type[t_ndx]); ##
+      this_bse_lst = list(ln_trwl_sel_pars = counter)
+      this_cpy_lst = list(ln_trwl_sel_pars = counter + n_time_blocks * n_sel_pars_for_this_time_block)
+      base_trwl_sel_param_vals = append(base_trwl_sel_param_vals, this_bse_lst)
+      copy_trwl_sel_param_vals = append(copy_trwl_sel_param_vals, this_cpy_lst)
+      counter = counter + 1
+    }
+    if(is.null(arrays_with_elements_fixed[["ln_trwl_sel_pars"]])) {
+      arrays_with_elements_fixed[["ln_trwl_sel_pars"]] = trwl_sel_param_elements_to_fix
+    } else {
+      arrays_with_elements_fixed[["ln_trwl_sel_pars"]] = rbind(arrays_with_elements_fixed[["ln_trwl_sel_pars"]], trwl_sel_param_elements_to_fix)
+    }
+  }
+
   ## initial fix pars
   map_to_fix = fix_pars(par_list = parameters, pars_to_exclude = c(parameters_completely_fixed, names(arrays_with_elements_fixed), names(vectors_with_elements_fixed)), vec_elements_to_exclude = vectors_with_elements_fixed, array_elements_to_exclude = arrays_with_elements_fixed, existing_map = na_map)
   ## append all base and copy lists elements

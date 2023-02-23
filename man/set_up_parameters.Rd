@@ -10,10 +10,13 @@ set_up_parameters(
   na_map = NULL,
   srv_sel_first_param_shared_by_sex = F,
   srv_sel_second_param_shared_by_sex = F,
+  srv_sel_third_param_shared_by_sex = F,
   fixed_sel_first_shared_by_sex = F,
   fixed_sel_second_shared_by_sex = F,
+  fixed_sel_third_shared_by_sex = F,
   trwl_sel_first_shared_by_sex = F,
   trwl_sel_second_shared_by_sex = F,
+  trwl_sel_third_shared_by_sex = F,
   recruit_dev_years_not_to_estimate = NULL,
   srv_q_spatial = F,
   tag_reporting_rate = "constant",
@@ -40,13 +43,19 @@ set_up_parameters(
 
 \item{srv_sel_second_param_shared_by_sex}{bool, whether the second survey selectivity parameter is shared among male and female for all time-blocks}
 
+\item{srv_sel_third_param_shared_by_sex}{bool, whether the third survey selectivity parameter is shared among male and female for all time-blocks}
+
 \item{fixed_sel_first_shared_by_sex}{bool, whether the first fixed gear selectivity parameter is shared among male and female for all time-blocks}
 
 \item{fixed_sel_second_shared_by_sex}{bool, whether the second fixed gear selectivity parameter is shared among male and female for all time-blocks}
 
+\item{fixed_sel_third_shared_by_sex}{bool, whether the third fixed gear selectivity parameter is shared among male and female for all time-blocks}
+
 \item{trwl_sel_first_shared_by_sex}{bool, whether the first trawl gear selectivity parameter is shared among male and female for all time-blocks}
 
 \item{trwl_sel_second_shared_by_sex}{bool, whether the second trawl gear selectivity parameter is shared among male and female for all time-blocks}
+
+\item{trwl_sel_third_shared_by_sex}{bool, whether the third trawl gear selectivity parameter is shared among male and female for all time-blocks}
 
 \item{recruit_dev_years_not_to_estimate}{vector of years that are not estimated.}
 

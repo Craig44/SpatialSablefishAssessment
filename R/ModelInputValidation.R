@@ -14,12 +14,47 @@ get_max_sel_pars = function(sel_type_for_blocks) {
   # 0 = logistic expected 2 parameters
   # 1 = Double normal expected 2 parameters
   # 2 = power functions 1 parameters
-  if(any(sel_type_for_blocks %in% c(0,1))) {
+  # 3 = alternative logistic
+  # 4 = exponentail
+  # 5 = Three parameter double normal
+  if(any(sel_type_for_blocks %in% c(0,1, 3))) {
     return(2)
+  } else if (any(sel_type_for_blocks %in% c(5))) {
+    ## three parameter double normal
+    return(3)
   }
   return(1)
 }
 
+#'
+#' get_number_of_sel_pars
+#' @param sel_type integer of selecvitiy types
+#' @return integer specifying the number of parameters for this selectivity parameter
+#' @export
+
+get_number_of_sel_pars = function(sel_type) {
+  # sel-types see C++ function inst/include/SetupSelectivities.hpp for types
+  # 0 = logistic expected 2 parameters
+  # 1 = Double normal expected 2 parameters
+  # 2 = power functions 1 parameters
+  # 3 = alternative logistic
+  # 4 = exponentail
+  # 5 = Three parameter double normal
+  if(sel_type == 0) {
+    return(2)
+  } else if(sel_type == 1) {
+    return(2)
+  } else if (sel_type == 2) {
+    return(1)
+  } else if (sel_type == 3) {
+    return(2)
+  } else if (sel_type == 4) {
+    return(1)
+  } else if (sel_type == 5) {
+    return(3)
+  }
+  return(NA)
+}
 
 #' check_dim checks the dimension of an array are consistent with expected values
 #' @param array a matrix or array that we are checking
