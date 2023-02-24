@@ -129,3 +129,51 @@ calculate_initial_numbers_at_age <-function(n_regions, n_ages, R0, movement_matr
 
   return(update_N_age);
 }
+
+
+#'
+#' calculate_initial_numbers_at_age_age_based_movement
+#'
+#' @param n_regions integer number of regions
+#' @param n_ages integer number of ages
+#' @param R0 vector of R0 parameters for each region
+#' @param old_movement_matrix movement matrix for older fish
+#' @param young_movement_matrix movement matrix for young fish
+#' @param age_based_movement_ogive age_based movement for young fish
+#' @param natural_mortality vector of natural mortality rates for each age
+#' @return matrix of numbers at age with regions being rows and ages being the cols
+#' @export
+calculate_initial_numbers_at_age_age_based_movement <-function(n_regions, n_ages, R0, old_movement_matrix, young_movement_matrix, age_based_movement_ogive, natural_mortality) {
+  N_age = matrix(0, nrow = n_regions, ncol = n_ages)
+  update_N_age = N_age
+  young_N_age = old_N_age = N_age
+  for(i in 1:(n_ages)) {
+    # recruitment
+    update_N_age[,1] = R0 #* exp(-natural_mortality[1])
+    # ageing and mortality
+    update_N_age[,2:n_ages] = N_age[,1:(n_ages - 1)] * exp(-natural_mortality[1:(n_ages - 1)])
+    # plus group
+    update_N_age[,n_ages] = update_N_age[,n_ages] + N_age[,n_ages] * exp(-natural_mortality[n_ages])
+    ##
+    young_N_age = sweep(update_N_age, 2, age_based_movement_ogive, "*")
+    old_N_age = sweep(update_N_age, 2, 1 - age_based_movement_ogive, "*")
+    # movement
+    N_age = t(young_movement_matrix) %*% young_N_age + t(old_movement_matrix) %*% old_N_age
+  }
+  ## calculate one more annual cycle
+  update_N_age[,1] = R0
+  # ageing and mortality
+  update_N_age[,2:n_ages] = N_age[,1:(n_ages - 1)] * exp(-natural_mortality[1:(n_ages - 1)])
+  # plus group
+  update_N_age[,n_ages] = update_N_age[,n_ages] + N_age[,n_ages] * exp(-natural_mortality[n_ages])
+  # movement
+  young_N_age = sweep(update_N_age, 2, age_based_movement_ogive, "*")
+  old_N_age = sweep(update_N_age, 2, 1 - age_based_movement_ogive, "*")
+  # movement
+  N_age = t(young_movement_matrix) %*% young_N_age + t(old_movement_matrix) %*% old_N_age
+  ## approximate!
+  c = update_N_age[,n_ages] / N_age[,n_ages] - 1
+  update_N_age[,n_ages] = N_age[,n_ages] * 1 / (1 - c)
+
+  return(update_N_age);
+}
