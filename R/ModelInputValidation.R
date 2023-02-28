@@ -94,8 +94,8 @@ check_length = function(vector_to_check, n_elements) {
 #' @export
 validate_input_data_and_parameters = function(data, parameters) {
   # TODO: DG- add an if statement for current assessment model
-  if(!data$model %in% c("TagIntegrated", "TagIntegratedValidate"))
-    return("This validate function is currently only written for models: TagIntegrated and TagIntegratedValidate")
+  if(!data$model %in% c("TagIntegrated", "TagIntegratedValidate","TagIntegratedAgeBasedMovement"))
+    return("This validate function is currently only written for models: TagIntegrated, TagIntegratedValidate, TagIntegratedAgeBasedMovement")
 
   n_ages = length(data$ages)
   n_length_bins = length(data$length_bins)
@@ -163,10 +163,23 @@ validate_input_data_and_parameters = function(data, parameters) {
   check = check_length(data$spawning_time_proportion, n_projyears)
   if(!check$result)
     return(paste0("spawning_time_proportion: ", check$message))
-  ## fixed_movement_matrix
-  check = check_dim(data$fixed_movement_matrix, c(n_regions, n_regions))
-  if(!check$result)
-    return(paste0("fixed_movement_matrix: ", check$message))
+  if(data$model == "TagIntegratedAgeBasedMovement") {
+    ## fixed_movement_matrix_old
+    check = check_dim(data$fixed_movement_matrix_old, c(n_regions, n_regions))
+    if(!check$result)
+      return(paste0("fixed_movement_matrix_old: ", check$message))
+    ## fixed_movement_matrix_young
+    check = check_dim(data$fixed_movement_matrix_young, c(n_regions, n_regions))
+    if(!check$result)
+      return(paste0("fixed_movement_matrix_young: ", check$message))
+
+  } else {
+    ## fixed_movement_matrix
+    check = check_dim(data$fixed_movement_matrix, c(n_regions, n_regions))
+    if(!check$result)
+      return(paste0("fixed_movement_matrix: ", check$message))
+  }
+
   ## fixed_fishery_catch
   check = check_dim(data$fixed_fishery_catch, c(n_regions, n_years))
   if(!check$result)
@@ -269,24 +282,37 @@ validate_input_data_and_parameters = function(data, parameters) {
 
   n_tag_recoveries = sum(data$tag_recovery_indicator_by_year)
   if(n_tag_recoveries > 0) {
-    if(data$tag_likelihood %in% c(0,1)) {
-      ## tag_recovery_indicator
-      check = check_dim(data$tag_recovery_indicator, c(n_regions * (data$n_years_to_retain_tagged_cohorts_for + 1), n_regions, n_tag_recoveries))
-      if(!check$result)
-        return(paste0("tag_recovery_indicator: ", check$message))
+    if(data$model == "TagIntegratedAgeBasedMovement") {
+      if(data$age_based_movement == 1) {
+        if (data$tag_likelihood != 2) {
+          return("error in 'tag_likelihood'. When age_based_movement == 1, you should only use the multinomial likelihood. See https://craig44.github.io/SableFishResearch/agebasedmovement.html for a simulation on why")
+        }
+      }
       ## obs_tag_recovery
-      check = check_dim(data$obs_tag_recovery, c(n_regions * (data$n_years_to_retain_tagged_cohorts_for + 1), n_regions, n_tag_recoveries))
+      check = check_dim(data$obs_tag_recovery, c(n_ages, n_regions * data$n_years_to_retain_tagged_cohorts_for + 1, n_regions, n_years))
       if(!check$result)
         return(paste0("obs_tag_recovery: ", check$message))
-    } else if(data$tag_likelihood %in% c(2)) {
-      ## tag_recovery_indicator
-      check = check_dim(data$tag_recovery_indicator, c(n_years, n_regions))
-      if(!check$result)
-        return(paste0("tag_recovery_indicator: ", check$message))
-      ## obs_tag_recovery
-      check = check_dim(data$obs_tag_recovery, c(n_regions * data$n_years_to_retain_tagged_cohorts_for + 1, n_regions, n_years))
-      if(!check$result)
-        return(paste0("obs_tag_recovery: ", check$message))
+
+    } else {
+      if(data$tag_likelihood %in% c(0,1)) {
+        ## tag_recovery_indicator
+        check = check_dim(data$tag_recovery_indicator, c(n_regions * (data$n_years_to_retain_tagged_cohorts_for + 1), n_regions, n_tag_recoveries))
+        if(!check$result)
+          return(paste0("tag_recovery_indicator: ", check$message))
+        ## obs_tag_recovery
+        check = check_dim(data$obs_tag_recovery, c(n_regions * (data$n_years_to_retain_tagged_cohorts_for + 1), n_regions, n_tag_recoveries))
+        if(!check$result)
+          return(paste0("obs_tag_recovery: ", check$message))
+      } else if(data$tag_likelihood %in% c(2)) {
+        ## tag_recovery_indicator
+        check = check_dim(data$tag_recovery_indicator, c(n_years, n_regions))
+        if(!check$result)
+          return(paste0("tag_recovery_indicator: ", check$message))
+        ## obs_tag_recovery
+        check = check_dim(data$obs_tag_recovery, c(n_regions * data$n_years_to_retain_tagged_cohorts_for + 1, n_regions, n_years))
+        if(!check$result)
+          return(paste0("obs_tag_recovery: ", check$message))
+      }
     }
   }
   ## check projection inputs. TODO: should only really check these if do_projection == 1
