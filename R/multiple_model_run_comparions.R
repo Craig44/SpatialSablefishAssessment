@@ -429,7 +429,39 @@ get_multiple_nlls <- function(mle_ls, run_labels = NULL, region_key = NULL) {
     }
     this_nll = get_negloglike(MLE_report = mle_ls[[i]])
     ## add totol
-    this_nll = rbind(this_nll, data.frame(negloglike = round(sum(this_nll$negloglike),4), observations = "Total"))
+    this_nll = rbind(this_nll, data.frame(negloglike = round(sum(this_nll$negloglike),4), observations = "Total", distribution = ""))
+    ## addd label
+    if(!is.null(run_labels)) {
+      this_nll$label = run_labels[i]
+    } else {
+      this_nll$label = i
+    }
+    full_nll_df = rbind(full_nll_df, this_nll)
+  }
+  full_nll_df$label = factor(full_nll_df$label)
+  return(full_nll_df)
+}
+
+#' get_multiple_input_datasets accessors to get multiple input_datasets
+#'
+#' @param data_ls list with multiple data lists
+#' @param run_labels vector of strings that are labels for each element in mle_ls
+#' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
+#' @return data frame with multiple negative log-likelihoods
+#' @export
+get_multiple_input_datasets <- function(data_ls, run_labels = NULL, region_key = NULL) {
+  if(!is.null(run_labels)) {
+    if(length(run_labels) != length(data_ls))
+      stop(paste0("Number of models provided ", length(data_ls), ", number of run labels ", length(run_labels), " these need to be the same"))
+  }
+  full_nll_df = NULL
+  for(i in 1:length(data_ls)) {
+    if(is.null(data_ls[[i]])) {
+      cat("report at element ", i, " was null, so skipping\n")
+      next;
+    }
+    this_nll = get_input_observations(data = data_ls[[i]], region_key)
+    ## add totol
     ## addd label
     if(!is.null(run_labels)) {
       this_nll$label = run_labels[i]

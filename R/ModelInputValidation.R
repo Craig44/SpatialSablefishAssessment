@@ -289,7 +289,7 @@ validate_input_data_and_parameters = function(data, parameters) {
         }
       }
       ## obs_tag_recovery
-      check = check_dim(data$obs_tag_recovery, c(n_ages, n_regions * data$n_years_to_retain_tagged_cohorts_for + 1, n_regions, n_years))
+      check = check_dim(data$obs_tag_recovery, c(n_ages, n_regions * (data$n_years_to_retain_tagged_cohorts_for + 1), n_regions, n_tag_recoveries))
       if(!check$result)
         return(paste0("obs_tag_recovery: ", check$message))
 
@@ -403,16 +403,35 @@ validate_input_data_and_parameters = function(data, parameters) {
     return(paste0("trans_srv_dom_ll_q: ", check$message))
 
   # movement parameters transformed_movement_pars
-  if(n_regions > 1) {
-    check = check_dim(parameters$transformed_movement_pars, c(n_regions - 1, n_regions))
-    if(!check$result)
-      return(paste0("transformed_movement_pars: ", check$message))
+  if(data$model == "TagIntegratedAgeBasedMovement") {
+    if(n_regions > 1) {
+      check = check_dim(parameters$transformed_movement_pars_old, c(n_regions - 1, n_regions))
+      if(!check$result)
+        return(paste0("transformed_movement_pars_old: ", check$message))
+      check = check_dim(parameters$transformed_movement_pars_young, c(n_regions - 1, n_regions))
+      if(!check$result)
+        return(paste0("transformed_movement_pars_young: ", check$message))
+    } else {
+      check = check_dim(parameters$transformed_movement_pars_old, c(1, 1))
+      if(!check$result)
+        return(paste0("transformed_movement_pars_old: ", check$message))
+      check = check_dim(parameters$transformed_movement_pars_young, c(1, 1))
+      if(!check$result)
+        return(paste0("transformed_movement_pars_young: ", check$message))
+    }
   } else {
-    check = check_dim(parameters$transformed_movement_pars, c(1, 1))
-    if(!check$result)
-      return(paste0("transformed_movement_pars: ", check$message))
+    if(n_regions > 1) {
+      check = check_dim(parameters$transformed_movement_pars, c(n_regions - 1, n_regions))
+      if(!check$result)
+        return(paste0("transformed_movement_pars: ", check$message))
+    } else {
+      if(n_regions > 1) {
+        check = check_dim(parameters$transformed_movement_pars, c(1, 1))
+        if(!check$result)
+          return(paste0("transformed_movement_pars: ", check$message))
+      }
+    }
   }
-
   # ln_fixed_F_devs
   check = check_dim(parameters$ln_fixed_F_devs, c(n_regions, n_years))
   if(!check$result)

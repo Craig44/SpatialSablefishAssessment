@@ -613,19 +613,23 @@ knitr::write_bib(c(
     library(reshape2)
     library(viridis)
     mle_ls = list()
+    n_pars = vector();
   '
   write(header, file = model_input_file, append = T)
   write("\n\n", file = model_input_file, append = T)
-
   for(i in 1:length(bookdown_labels)) {
     write(paste0('this_model_dir = "', normalizePath(model_dir[i], winslash = "/"),'"'), file = model_input_file, append = T)
     write('mle_report = readRDS(file.path(this_model_dir, "mle_report.RDS"))', file = model_input_file, append = T)
     write(paste0('mle_ls[["',bookdown_labels[i],'"]] = mle_report'), file = model_input_file, append = T)
 
+    write('mle_optim = readRDS(file.path(this_model_dir, "mle_optim.RDS"))', file = model_input_file, append = T)
+    write(paste0('n_pars["',bookdown_labels[i],'"] = length(mle_optim$par)'), file = model_input_file, append = T)
+
   }
   write('region_key = readRDS(file.path(this_model_dir, "region_key.RDS"))', file = model_input_file, append = T)
 
   pallette_rmd = '
+  n_pars_df = data.frame(label = names(n_pars), n_pars = n_pars)
   obs_pallete <- c("black", viridis(length(mle_ls)))
   names(obs_pallete) = c("Observed",names(mle_ls))
   '
@@ -805,6 +809,9 @@ ggplot(data = mean_length_df %>% dplyr::filter(observation == "trwl")) +
     library(reshape2)
     library(viridis)
     mle_ls = list()
+    n_pars = vector();
+    data_ls = list();
+
   '
   write(header, file = model_input_file, append = T)
   write("\n\n", file = model_input_file, append = T)
@@ -814,10 +821,19 @@ ggplot(data = mean_length_df %>% dplyr::filter(observation == "trwl")) +
     write('mle_report = readRDS(file.path(this_model_dir, "mle_report.RDS"))', file = model_input_file, append = T)
     write(paste0('mle_ls[["',bookdown_labels[i],'"]] = mle_report'), file = model_input_file, append = T)
 
+    write('data_df = readRDS(file.path(this_model_dir, "data.RDS"))', file = model_input_file, append = T)
+    write(paste0('data_ls[["',bookdown_labels[i],'"]] = data_df'), file = model_input_file, append = T)
+
+
+    write('mle_optim = readRDS(file.path(this_model_dir, "mle_optim.RDS"))', file = model_input_file, append = T)
+    write(paste0('n_pars["',bookdown_labels[i],'"] = length(mle_optim$par)'), file = model_input_file, append = T)
+
   }
   write('region_key = readRDS(file.path(this_model_dir, "region_key.RDS"))', file = model_input_file, append = T)
 
   pallette_rmd = '
+    n_pars_df = data.frame(label = names(n_pars), n_pars = n_pars)
+
   obs_pallete <- c("black", viridis(length(mle_ls)))
   names(obs_pallete) = c("Observed",names(mle_ls))
   '
@@ -973,6 +989,7 @@ ggplot(data = mean_length_df %>% dplyr::filter(observation == "trwl")) +
   write(select, file = model_input_file, append = T)
   write("```\n\n", file = model_input_file, append = T)
 
+
   write("## Tag reporting rates", file = model_input_file, append = T)
   write("```{r tagreportrates, eval = T, echo = F, results = T, out.width =  '100%', fig.height = 8}", file = model_input_file, append = T)
   report_rate =
@@ -997,6 +1014,20 @@ ggplot(data = mean_length_df %>% dplyr::filter(observation == "trwl")) +
   write(report_rate, file = model_input_file, append = T)
   write("```\n\n", file = model_input_file, append = T)
 
+
+  write("# Likelihoods", file = model_input_file, append = T)
+  write("```{r likelihoods, eval = T, echo = F, results = T, out.width =  '100%', fig.height = 8, message = F}", file = model_input_file, append = T)
+  nll_rmd =
+    '
+    n_datasets = get_multiple_input_datasets(data_ls, run_labels = names(data_ls), region_key) %>% group_by(label) %>% summarise(n_obs = sum(indicator, na.rm =T))
+    nll_df = get_multiple_nlls(mle_ls = mle_ls, run_labels = names(mle_ls), region_key = n_datasets)
+    nll_df = nll_df %>% dplyr::inner_join(n_pars_df )  %>% dplyr::inner_join(n_datasets )
+    summarised_nll_df = nll_df %>% filter(observations == "Total") %>% group_by(label) %>% mutate(negloglike  = negloglike, AIC = 2*n_pars + 2*negloglike + 2*n_pars*(n_pars+1)/(n_obs-n_pars-1))
+    knitr::kable((summarised_nll_df %>% select(!c("observations", "distribution")))[order(summarised_nll_df$AIC),], digits = 2, caption = "Model summary comparison among models")
+    knitr::kable(nll_df %>% pivot_wider(, id_cols = label, values_from = negloglike, names_from = observations), digits = 2, caption = "Negative loglikelihoods by observation and model.")
+  '
+  write(nll_rmd, file = model_input_file, append = T)
+  write("```\n\n", file = model_input_file, append = T)
 
 
   bookdown::render_book(input = output_dir)

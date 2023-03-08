@@ -7,8 +7,8 @@
  * UPDATED (and commented)  by D. Goethel: daniel.goethel@noaa.gov   (10/15/20)
  * Tips
  * - TMB indicies start at 0 (i.e., like C++) where as ADMB starts at 1 (i.e., like R)
- * - parameter labels should start with the transformation that is assumed for example natural log of F for longline should follow ln_F_fixed
- *   and for logistic proportion something like logis_prop. This is to aid readability and keep syntax consistent
+ * - parameter labels should start with the transformation that is assumed for example natural log of F for fixed should follow ln_F_fixed
+ *   and for logistic proportion something like logistic_prop. This is to aid readability and keep syntax consistent
  *
  * - Key when reading object names
  *      - dom = domestic
@@ -169,8 +169,8 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
   DATA_INTEGER(evaluate_tag_likelihood);                        // = 0 generate predicted values but don't evaluate likelihood, = 1 generate predicted values and evaluate likelihood
 
   // for tag_likelihood == 0 or 1
-  array<Type> pred_aggregated_tag_recovery(obs_tag_recovery.dim[1], obs_tag_recovery.dim[2], obs_tag_recovery.dim[3]);
-  array<Type> obs_aggregated_tag_recovery(obs_tag_recovery.dim[1], obs_tag_recovery.dim[2], obs_tag_recovery.dim[3]);
+  array<Type> pred_aggregated_tag_recovery(2, obs_tag_recovery.dim[1], obs_tag_recovery.dim[2], obs_tag_recovery.dim[3]);
+  array<Type> obs_aggregated_tag_recovery(2, obs_tag_recovery.dim[1], obs_tag_recovery.dim[2], obs_tag_recovery.dim[3]);
 
   // for tag_likelihood == 2
   array<Type> pred_tag_recovery(obs_tag_recovery.dim);
@@ -1009,8 +1009,8 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
                     aggregated_predicted_tags = posfun(aggregated_predicted_tags, eps_for_posfun, pen_posfun);
 
                     aggregated_observed_tags = obs_tag_recovery.col(tag_recovery_counter).col(region_ndx).col(tag_release_event_ndx).sum();
-                    obs_aggregated_tag_recovery(tag_release_event_ndx, region_ndx, tag_recovery_counter) = aggregated_observed_tags;
-                    pred_aggregated_tag_recovery(tag_release_event_ndx, region_ndx, tag_recovery_counter) = aggregated_predicted_tags;
+                    obs_aggregated_tag_recovery(0, tag_release_event_ndx, region_ndx, tag_recovery_counter) = aggregated_observed_tags;
+                    pred_aggregated_tag_recovery(0, tag_release_event_ndx, region_ndx, tag_recovery_counter) = aggregated_predicted_tags;
                     if(evaluate_tag_likelihood == 1)
                       nll(7) -= dpois(aggregated_observed_tags, aggregated_predicted_tags, true);
 
@@ -1020,6 +1020,44 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
                       obs_aggregated_tag_recovery(tag_release_event_ndx, region_ndx, tag_recovery_counter) = sim_tag_recoveries;
                       // convert this number predicted tag-recoveries to age-structure because that is the raw observed format
                       obs_tag_recovery.col(tag_recovery_counter).col(region_ndx).col(tag_release_event_ndx) = sim_tag_recoveries * (temp_numbers_at_age / temp_numbers_at_age.sum());
+                    }
+                  } else {
+                    // Age-based movement with Poisson
+                    // Young first
+                    aggregated_predicted_tags = (temp_numbers_at_age * young_age_based_movement_ogive).sum();
+                    // check not zero
+                    aggregated_predicted_tags = posfun(aggregated_predicted_tags, eps_for_posfun, pen_posfun);
+
+                    aggregated_observed_tags = (obs_tag_recovery.col(tag_recovery_counter).col(region_ndx).col(tag_release_event_ndx).vec() * young_age_based_movement_ogive).sum();
+                    obs_aggregated_tag_recovery(0, tag_release_event_ndx, region_ndx, tag_recovery_counter) = aggregated_observed_tags;
+                    pred_aggregated_tag_recovery(0, tag_release_event_ndx, region_ndx, tag_recovery_counter) = aggregated_predicted_tags;
+                    if(evaluate_tag_likelihood == 1)
+                      nll(7) -= dpois(aggregated_observed_tags, aggregated_predicted_tags, true);
+
+                    SIMULATE {
+                      // Simulate young tag-recoveries
+                      Type sim_tag_recoveries = rpois(aggregated_predicted_tags);
+                      obs_aggregated_tag_recovery(0, tag_release_event_ndx, region_ndx, tag_recovery_counter) = sim_tag_recoveries;
+                      // convert this number predicted tag-recoveries to age-structure because that is the raw observed format
+                      obs_tag_recovery.col(tag_recovery_counter).col(region_ndx).col(tag_release_event_ndx) = sim_tag_recoveries * (temp_numbers_at_age / temp_numbers_at_age.sum());
+                    }
+                    // Young first
+                    aggregated_predicted_tags = (temp_numbers_at_age * old_age_based_movement_ogive).sum();
+                    // check not zero
+                    aggregated_predicted_tags = posfun(aggregated_predicted_tags, eps_for_posfun, pen_posfun);
+
+                    aggregated_observed_tags = (obs_tag_recovery.col(tag_recovery_counter).col(region_ndx).col(tag_release_event_ndx).vec() * old_age_based_movement_ogive).sum();
+                    obs_aggregated_tag_recovery(1, tag_release_event_ndx, region_ndx, tag_recovery_counter) = aggregated_observed_tags;
+                    pred_aggregated_tag_recovery(1, tag_release_event_ndx, region_ndx, tag_recovery_counter) = aggregated_predicted_tags;
+                    if(evaluate_tag_likelihood == 1)
+                      nll(7) -= dpois(aggregated_observed_tags, aggregated_predicted_tags, true);
+
+                    SIMULATE {
+                      // Simulate young tag-recoveries
+                      Type sim_tag_recoveries = rpois(aggregated_predicted_tags);
+                      obs_aggregated_tag_recovery(1, tag_release_event_ndx, region_ndx, tag_recovery_counter) = sim_tag_recoveries;
+                      // convert this number predicted tag-recoveries to age-structure because that is the raw observed format
+                      obs_tag_recovery.col(tag_recovery_counter).col(region_ndx).col(tag_release_event_ndx) += sim_tag_recoveries * (temp_numbers_at_age / temp_numbers_at_age.sum());
                     }
                   }
                 } else if(tag_likelihood == 1) {
@@ -1032,8 +1070,8 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
                     aggregated_predicted_tags = posfun(aggregated_predicted_tags, eps_for_posfun, pen_posfun);
 
                     aggregated_observed_tags = obs_tag_recovery.col(tag_recovery_counter).col(region_ndx).col(tag_release_event_ndx).sum();
-                    obs_aggregated_tag_recovery(tag_release_event_ndx, region_ndx, tag_recovery_counter) = aggregated_observed_tags;
-                    pred_aggregated_tag_recovery(tag_release_event_ndx, region_ndx, tag_recovery_counter) = aggregated_predicted_tags;
+                    obs_aggregated_tag_recovery(0, tag_release_event_ndx, region_ndx, tag_recovery_counter) = aggregated_observed_tags;
+                    pred_aggregated_tag_recovery(0, tag_release_event_ndx, region_ndx, tag_recovery_counter) = aggregated_predicted_tags;
 
                     s1 = log(aggregated_predicted_tags);                          // log(mu)
                     s2 = 2. * s1 - ln_tag_phi;                         // log(var - mu)

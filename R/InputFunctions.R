@@ -29,13 +29,15 @@ plot_input_catches = function(data, region_key = NULL) {
   return(gplt)
 }
 
+
+
 #'
-#' plot_input_observations
+#' get_input_observations
 #' @param data list that is passed to the MakeADfun for the TMB model
 #' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
-#' @return ggplot2 object that will plot if an observation occurs in a year and region
+#' @return data.frame when observation occurs in a year and region
 #' @export
-plot_input_observations = function(data, region_key = NULL) {
+get_input_observations = function(data, region_key = NULL) {
   years = data$years
   regions = 1:data$n_regions
   dimnames(data$fixed_catchatage_indicator) = dimnames(data$fixed_catchatlgth_indicator) = dimnames(data$trwl_catchatlgth_indicator) = dimnames(data$srv_dom_ll_catchatage_indicator) = dimnames(data$srv_dom_ll_bio_indicator) = list(regions, years)
@@ -81,6 +83,20 @@ plot_input_observations = function(data, region_key = NULL) {
   }
 
   full_df$indicator = ifelse(full_df$indicator == 0, NA, 1)
+
+  return(full_df)
+}
+
+#'
+#' plot_input_observations
+#' @param data list that is passed to the MakeADfun for the TMB model
+#' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
+#' @return ggplot2 object that will plot if an observation occurs in a year and region
+#' @export
+plot_input_observations = function(data, region_key = NULL) {
+
+  full_df = get_input_observations(data, region_key)
+
   gplt = ggplot(full_df) +
     geom_point(aes(x = Year, y = label, col = label, size = indicator)) +
     guides(colour = "none", size = "none") +

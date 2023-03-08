@@ -17,7 +17,71 @@ get_negloglike <- function(MLE_report) {
                       distribution = c(AF_fixed_like, LF_trwl_like, LF_fixed_like, AF_srv_like, "lognormal", "lognormal", "lognormal", tag_likelihood, "lognormal", "lognormal", ""))
   return(nll_df)
 }
+#' get_n_datasets get a data frame of the number of data sets
+#' @param MLE_report a list that is output from obj$report() usually once an optimsation routine has been done.
+#' @return data frame with age-frequency info
+#' @export
+get_n_datasets <- function(MLE_report) {
+  years = data$years
+  regions = 1:data$n_regions
+  dimnames(data$fixed_catchatage_indicator) = dimnames(data$fixed_catchatlgth_indicator) = dimnames(data$trwl_catchatlgth_indicator) = dimnames(data$srv_dom_ll_catchatage_indicator) = dimnames(data$srv_dom_ll_bio_indicator) = list(regions, years)
+  dimnames(data$tag_recovery_indicator) = list(1:dim(data$tag_recovery_indicator)[1], regions, years[which(data$tag_recovery_indicator_by_year == 1)])
+  fixed_catchatage = reshape2::melt(data$fixed_catchatage_indicator)
+  fixed_catchatlgth  = reshape2::melt(data$fixed_catchatlgth_indicator)
+  trwl_catchatlgth = reshape2::melt(data$trwl_catchatlgth_indicator)
+  srv_dom_ll_catchatage = reshape2::melt(data$srv_dom_ll_catchatage_indicator)
+  srv_dom_ll_bio = reshape2::melt(data$srv_dom_ll_bio_indicator)
+  tag_recovery_detailed = NULL
+  if(sum(data$tag_recovery_indicator) != 0) {
+    tag_recovery_detailed = reshape2::melt(data$tag_recovery_indicator)
+    colnames(tag_recovery_detailed) = c("Tag release", "Region", "Year", "indicator")
+    tag_recovery_detailed$label = "Tag recovery"
+    ## collapse tag recoveries across release events
+    tag_recovery_detailed = tag_recovery_detailed %>% group_by(Region, Year, label) %>% summarise(indicator = ifelse(sum(indicator)>0, 1, 0))
 
+  }
+  colnames(fixed_catchatage) = colnames(fixed_catchatlgth) = colnames(trwl_catchatlgth) = colnames(srv_dom_ll_catchatage) = colnames(srv_dom_ll_bio) = c("Region", "Year", "indicator")
+  ## tag releases
+  tag_release_df = NULL
+  if((sum(data$male_tagged_cohorts_by_age) + sum(data$female_tagged_cohorts_by_age)) > 0) {
+    dimnames(data$male_tagged_cohorts_by_age) = dimnames(data$female_tagged_cohorts_by_age) = list(data$ages, regions,  data$years[which(data$tag_release_event_this_year == 1)])
+    tag_releases_m = reshape2::melt(data$male_tagged_cohorts_by_age)
+    tag_releases_f = reshape2::melt(data$female_tagged_cohorts_by_age)
+    tag_releases = rbind(tag_releases_m, tag_releases_f)
+    colnames(tag_releases) = c("Age", "Region", "Year", "releases")
+    tag_release_df = tag_releases %>% group_by(Region, Year) %>% summarise(indicator = ifelse(sum(releases) > 0, 1, 0))
+    tag_release_df$label = "Tag Releases"
+  }
+  fixed_catchatlgth$label = "Fishery Fixed LF"
+  fixed_catchatage$label = "Fishery Fixed AF"
+  trwl_catchatlgth$label = "Fishery Trawl LF"
+  srv_dom_ll_catchatage$label = "Survey LL AF"
+  srv_dom_ll_bio$label = "Survey LL Biomass"
+  ## combine
+  full_df = rbind(fixed_catchatage, trwl_catchatlgth, srv_dom_ll_catchatage, srv_dom_ll_bio, fixed_catchatlgth, tag_recovery_detailed, tag_release_df)
+
+  if(is.null(region_key)) {
+    full_df$Region = paste0("Region ", full_df$Region)
+  } else {
+    full_df$Region = region_key$area[match(full_df$Region, (region_key$TMB_ndx + 1))]
+  }
+
+  full_df$indicator = ifelse(full_df$indicator == 0, NA, 1)
+
+  AF_fixed_like = ifelse(MLE_report$fixed_catchatage_comp_likelihood == 0, "Multinomial", "Dirichlet-Multinomial")
+  LF_fixed_like = ifelse(MLE_report$fixed_catchatlgth_comp_likelihood == 0, "Multinomial", "Dirichlet-Multinomial")
+  AF_srv_like = ifelse(MLE_report$srv_dom_ll_catchatage_comp_likelihood == 0, "Multinomial", "Dirichlet-Multinomial")
+  LF_trwl_like = ifelse(MLE_report$trwl_catchatlgth_comp_likelihood == 0, "Multinomial", "Dirichlet-Multinomial")
+  tag_likelihood = switch(MLE_report$tag_likelihood + 1,
+                          "Poissson",
+                          "Negative Binomial",
+                          "Multinomial")
+
+  nll_df = data.frame(negloglike = round(MLE_report$nll,4),
+                      observations = c("Fixed AF", "Trawl LF", "Fixed LF","Survey AF","Survey abund","Fixed catch","Trawl catch","Tag recovery", "Recruitment", "Initialisation devs", "posfun penalty"),
+                      distribution = c(AF_fixed_like, LF_trwl_like, LF_fixed_like, AF_srv_like, "lognormal", "lognormal", "lognormal", tag_likelihood, "lognormal", "lognormal", ""))
+  return(nll_df)
+}
 #' get_AF accessor function to get age-frequency data
 #' @param MLE_report a list that is output from obj$report() usually once an optimsation routine has been done.
 #' @param observation character labeling the observation you want to plot. See below for options

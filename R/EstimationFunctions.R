@@ -260,8 +260,17 @@ set_up_parameters <- function(data, parameters,
     parameters_completely_fixed = c(parameters_completely_fixed, c("ln_sigma_init_devs"))
 
   # turn off movement estimation parameters
-  if(!est_movement)
-    parameters_completely_fixed = c(parameters_completely_fixed, c("transformed_movement_pars"))
+  if(!est_movement) {
+    if(data$model == "TagIntegratedAgeBasedMovement") {
+      parameters_completely_fixed = c(parameters_completely_fixed, c("transformed_movement_pars_old", "transformed_movement_pars_young", "ln_ato95_movement","ln_a50_movement"))
+    } else {
+      parameters_completely_fixed = c(parameters_completely_fixed, c("transformed_movement_pars"))
+    }
+  } else if (data$model == "TagIntegratedAgeBasedMovement") {
+    # estimating movement with age-based movement turned off
+    if(!data$age_based_movement)
+      parameters_completely_fixed = c(parameters_completely_fixed, c("transformed_movement_pars_old", "ln_ato95_movement","ln_a50_movement"))
+  }
   # turn off init_rec devs if not applying
   if(data$n_init_rec_devs == 0) {
     parameters_completely_fixed = c(parameters_completely_fixed, c("ln_init_rec_dev"))
@@ -764,8 +773,8 @@ pre_optim_sanity_checks <- function(obj) {
   passed_pre_sanity_checks = TRUE;
   ## get the data
   data = obj$env$data
-  if(data$model != "TagIntegrated")
-    stop("sanity checks are made for the 'TagIntegrated' model")
+  if(!data$model %in% c("TagIntegrated","TagIntegratedAgeBasedMovement"))
+    stop("sanity checks are made for the 'TagIntegrated' and 'TagIntegratedAgeBasedMovement' model")
   ## get derived quantities
   mle_report = obj$report(obj$env$last.par.best)
   ## check likelihoods are all finite and not NA
@@ -809,8 +818,9 @@ post_optim_sanity_checks <- function(mle_obj, mle_pars, max_abs_gradient = 0.000
 
   ## get the data
   data = mle_obj$env$data
-  if(data$model != "TagIntegrated")
-    stop("sanity checks are made for the 'TagIntegrated' model")
+  if(!data$model %in% c("TagIntegrated","TagIntegratedAgeBasedMovement"))
+    stop("sanity checks are made for the 'TagIntegrated' and 'TagIntegratedAgeBasedMovement' model")
+
   ## get derived quantities
   mle_report = mle_obj$report(mle_obj$env$last.par.best)
   ## check likelihoods are all finite and not NA
