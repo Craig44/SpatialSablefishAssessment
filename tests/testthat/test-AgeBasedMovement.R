@@ -73,7 +73,8 @@ test_that("AgeBasedMovementTagIntegratedModel-noagebasedMovement-no-move", {
 
   expect_equal(test_report$nll[8], test_report_int$nll[8], tolerance = 0.0001)
 
-  expect_equal(sum(test_report$pred_aggregated_tag_recovery[data$tag_recovery_indicator == 1]), sum(test_report_int$pred_tag_recovery[data$tag_recovery_indicator == 1]), tolerance = 0.0001)
+  temp = test_report$pred_aggregated_tag_recovery[1,,,]
+  expect_equal(sum(temp[data$tag_recovery_indicator == 1]), sum(test_report_int$pred_tag_recovery[data$tag_recovery_indicator == 1]), tolerance = 0.0001)
 
 
 })
@@ -116,6 +117,8 @@ test_that("AgeBasedMovementTagIntegratedModel-noagebasedMovement-move", {
 
   expect_equal(test_report$nll[8], test_report_int$nll[8], tolerance = 0.0001)
   expect_equal(sum(test_report$nll), sum(test_report_int$nll), tolerance = 0.0001)
-  expect_equal(sum(test_report$pred_aggregated_tag_recovery[data$tag_recovery_indicator == 1]), sum(test_report_int$pred_tag_recovery[data$tag_recovery_indicator == 1]), tolerance = 0.0001)
+  temp = test_report$pred_aggregated_tag_recovery[1,,,]
+
+  expect_equal(sum(temp[data$tag_recovery_indicator == 1]), sum(test_report_int$pred_tag_recovery[data$tag_recovery_indicator == 1]), tolerance = 0.0001)
 
 })
