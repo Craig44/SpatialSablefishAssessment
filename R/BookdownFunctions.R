@@ -13,6 +13,9 @@
 #' @export
 
 summarise_individual_models <- function(model_dir, bookdown_dir, bookdown_labels, model_description = "") {
+  if(length(model_dir) != length(bookdown_labels))
+    stop("number of model_dir provided was not the same as bookdown_labels. These need to be the same length")
+
   ## set up Bookdown directory
   verbose = T
   output_dir = normalizePath(file.path(bookdown_dir), winslash = "/")
@@ -518,6 +521,9 @@ knitr::opts_chunk$set(warning = FALSE, message = FALSE)
 #' @details this function expects the following RDS objects to be in each `model_dir` for each model, data.RDS region_key.RDS, parameters.RDS, mle_report.RDS, sd_report.RDS, mle_optim.RDS, map_fixed_pars.RDS
 
 summarise_multiple_models <- function(model_dir, bookdown_dir, bookdown_labels, model_description = "") {
+  if(length(model_dir) != length(bookdown_labels))
+    stop("number of model_dir provided was not the same as bookdown_labels. These need to be the same length")
+
   ## set up Bookdown directory
   verbose = T
   output_dir = normalizePath(file.path(bookdown_dir), winslash = "/")
@@ -613,7 +619,8 @@ knitr::write_bib(c(
     library(reshape2)
     library(viridis)
     mle_ls = list()
-    n_pars = vector();
+    n_pars = nll = vector();
+
   '
   write(header, file = model_input_file, append = T)
   write("\n\n", file = model_input_file, append = T)
@@ -624,6 +631,7 @@ knitr::write_bib(c(
 
     write('mle_optim = readRDS(file.path(this_model_dir, "mle_optim.RDS"))', file = model_input_file, append = T)
     write(paste0('n_pars["',bookdown_labels[i],'"] = length(mle_optim$par)'), file = model_input_file, append = T)
+    write(paste0('nll["',bookdown_labels[i],'"] = mle_optim$objective'), file = model_input_file, append = T)
 
   }
   write('region_key = readRDS(file.path(this_model_dir, "region_key.RDS"))', file = model_input_file, append = T)
@@ -809,7 +817,7 @@ ggplot(data = mean_length_df %>% dplyr::filter(observation == "trwl")) +
     library(reshape2)
     library(viridis)
     mle_ls = list()
-    n_pars = vector();
+    n_pars = nll = vector();
     data_ls = list();
 
   '
@@ -827,12 +835,14 @@ ggplot(data = mean_length_df %>% dplyr::filter(observation == "trwl")) +
 
     write('mle_optim = readRDS(file.path(this_model_dir, "mle_optim.RDS"))', file = model_input_file, append = T)
     write(paste0('n_pars["',bookdown_labels[i],'"] = length(mle_optim$par)'), file = model_input_file, append = T)
+    write(paste0('nll["',bookdown_labels[i],'"] = mle_optim$objective'), file = model_input_file, append = T)
 
   }
   write('region_key = readRDS(file.path(this_model_dir, "region_key.RDS"))', file = model_input_file, append = T)
 
   pallette_rmd = '
     n_pars_df = data.frame(label = names(n_pars), n_pars = n_pars)
+    nll_df = data.frame(label = names(n_pars), n_pars = n_pars)
 
   obs_pallete <- c("black", viridis(length(mle_ls)))
   names(obs_pallete) = c("Observed",names(mle_ls))
@@ -999,7 +1009,7 @@ ggplot(data = mean_length_df %>% dplyr::filter(observation == "trwl")) +
       geom_line(data = report_df, aes(x = Year, y = ReportingRate, col = label, linetype = label), linewidth = 1) +
       labs(x = "Tag recovery year", y = "", col = "", linetype= "") +
       facet_wrap(~Region) +
-      ggtitle("T") +
+      ggtitle("Tag reporting rates") +
       theme_bw() +
       theme(legend.position = "bottom",
             axis.text = element_text(size = 14),
@@ -1013,6 +1023,61 @@ ggplot(data = mean_length_df %>% dplyr::filter(observation == "trwl")) +
     '
   write(report_rate, file = model_input_file, append = T)
   write("```\n\n", file = model_input_file, append = T)
+
+  write("# Other Parameters", file = model_input_file, append = T)
+  write("```{r otherParams, eval = T, echo = F, results = T, out.width =  '100%', fig.height = 8, message = F}", file = model_input_file, append = T)
+  param_code =
+    '
+      q_df = scalar_df = spatial_quants_df = tag_reporting_df = NULL
+      for(i in 1:length(mle_ls)) {
+        other_params = get_other_derived_quantities(MLE_report = mle_ls[[i]], data = data_ls[[i]], region_key = region_key)
+        other_params$catchabilities$q = other_params$catchabilities$q / 1000
+        other_params$catchabilities$model = names(mle_ls)[i]
+        temp_scalar_df = data.frame(values = as.numeric(other_params$scalar_quants), parameter = colnames(other_params$scalar_quants), model = names(mle_ls)[i])
+        other_params$spatial_params$model= names(mle_ls)[i]
+        temp_tag_report_df = data.frame(time_block = paste0("block-", 1:length(other_params$tag_reporting_rate)), value = other_params$tag_reporting_rate, model = names(mle_ls)[i])
+
+        tag_reporting_df = rbind(tag_reporting_df, temp_tag_report_df)
+        spatial_quants_df = rbind(spatial_quants_df, other_params$spatial_params)
+        scalar_df = rbind(scalar_df, temp_scalar_df)
+        q_df = rbind(q_df, other_params$catchabilities)
+      }
+      knitr::kable(q_df %>% pivot_wider(id_cols = c("time-block","Region"), values_from = q, names_from = model), row.names = NA, digits = 2, caption = "Estimated survey catchability coefficients")
+      knitr::kable(scalar_df %>% pivot_wider(id_cols = c("parameter"), values_from = values, names_from= model), row.names = NA, digits = 2, caption = "Estimable scalar parameters")
+      knitr::kable(tag_reporting_df %>% pivot_wider(id_cols = time_block, values_from = value, names_from = model), colnames = NA,row.names = NA, digits = 2, caption = "Estimated tag-reporting rates")
+      knitr::kable(spatial_quants_df %>% select(Region, Binit, model) %>% pivot_wider(id_cols = Region, values_from = Binit, names_from = model), colnames = NA,row.names = NA, digits = 2, caption = "Binitial (after accounting for Finit and initial age deviations)")
+
+    '
+  write(param_code, file = model_input_file, append = T)
+  write("```\n\n", file = model_input_file, append = T)
+
+  write("# Reference Points", file = model_input_file, append = T)
+  write("```{r RefPoints, eval = T, echo = F, results = T, out.width =  '100%', fig.height = 8, message = F}", file = model_input_file, append = T)
+  ref_rmd =
+    '
+    n_proj_years = 90
+    full_ref_df = NULL
+    for(i in 1:length(mle_ls)) {
+      regional_spr = find_regional_Fspr(data = data_ls[[i]], MLE_report = mle_ls[[i]], n_years_for_fleet_ratio = 5,
+                     percent_Bzero = 40, n_future_years = n_proj_years, verbose = F)
+      F40 = round(regional_spr$Fspr,3)
+      terminal_ssb = mle_ls[[i]]$SSB_yr[length(mle_ls[[i]]$years),]
+      terminal_depletion = terminal_ssb / mle_ls[[i]]$Bzero * 100
+      B40 = regional_spr$terminal_ssb$terminal_ssb
+      Bzero = mle_ls[[i]]$Bzero
+      ref_df = data.frame(Region = region_key$area, F40 = F40, B40 = B40, terminal_ssb = terminal_ssb, Bzero = Bzero, terminal_depletion = terminal_depletion)
+      ref_df$model = names(mle_ls)[i]
+      full_ref_df = rbind(full_ref_df, ref_df)
+    }
+    knitr::kable(full_ref_df %>% select(Region, Bzero, model) %>% pivot_wider(id_cols = Region, names_from = model, values_from = Bzero), digits = 2, caption  = "Bzero estimates by region and model")
+    knitr::kable(full_ref_df %>% select(Region, B40, model) %>% pivot_wider(id_cols = Region, names_from = model, values_from = B40), digits = 2, caption  = "B40% estimates by region and model")
+    knitr::kable(full_ref_df %>% select(Region, F40, model) %>% pivot_wider(id_cols = Region, names_from = model, values_from = F40), digits = 2, caption  = "F40% estimates by region and model")
+    knitr::kable(full_ref_df %>% select(Region, terminal_depletion, model) %>% pivot_wider(id_cols = Region, names_from = model, values_from = terminal_depletion), digits = 2, caption  = "Depletion estimates by region and model for the terminal year")
+    knitr::kable(full_ref_df %>% select(Region, Bzero, model) %>% group_by(model) %>% summarise(global_Bzero = sum(Bzero)), digits = 2, caption  = "Global Bzero (summed over all regions) estimates by model")
+  '
+  write(ref_rmd, file = model_input_file, append = T)
+  write("```\n\n", file = model_input_file, append = T)
+
 
 
   write("# Likelihoods", file = model_input_file, append = T)
