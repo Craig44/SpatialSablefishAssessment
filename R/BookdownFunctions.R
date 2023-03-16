@@ -1087,7 +1087,7 @@ ggplot(data = mean_length_df %>% dplyr::filter(observation == "trwl")) +
     n_datasets = get_multiple_input_datasets(data_ls, run_labels = names(data_ls), region_key) %>% group_by(label) %>% summarise(n_obs = sum(indicator, na.rm =T))
     nll_df = get_multiple_nlls(mle_ls = mle_ls, run_labels = names(mle_ls), region_key = n_datasets)
     nll_df = nll_df %>% dplyr::inner_join(n_pars_df )  %>% dplyr::inner_join(n_datasets )
-    summarised_nll_df = nll_df %>% filter(observations == "Total") %>% group_by(label) %>% mutate(negloglike  = negloglike, AIC = 2*n_pars + 2*negloglike + 2*n_pars*(n_pars+1)/(n_obs-n_pars-1))
+    summarised_nll_df = nll_df %>% filter(observations == "Total") %>% group_by(label) %>% mutate(negloglike  = negloglike, AIC = 2*n_pars + 2*negloglike + 2*n_pars*(n_pars+1)/(n_obs-n_pars-1), BIC = 2 * negloglike + n_pars * log(n_obs))
     knitr::kable((summarised_nll_df %>% select(!c("observations", "distribution")))[order(summarised_nll_df$AIC),], digits = 2, caption = "Model summary comparison among models")
     knitr::kable(nll_df %>% pivot_wider(, id_cols = label, values_from = negloglike, names_from = observations), digits = 2, caption = "Negative loglikelihoods by observation and model.")
   '
