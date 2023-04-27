@@ -8,6 +8,8 @@
 
 #include <SetupSelectivities.hpp>
 
+#include <referencepointfunctions.hpp>
+
 #include "TagIntegratedValidate.hpp"
 
 #include "TagIntegrated.hpp"
