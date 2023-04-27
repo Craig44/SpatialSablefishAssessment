@@ -309,21 +309,21 @@ To avoid \(\widehat{P}_i = 0\), in which case the multinomial can be undefined i
 
 
 ### Dirichlet-Multinomial {-}
-The Dirichlet multinomial distribution used for composition data, when
+The Dirichlet-Multinomial distribution used for composition data, with input sample size denoted by \(n\), observed proportion for age \(a\) denoted by \(p_a\) and expected proportions denoted by \( \widehat{p}_a\). There is an estimable parameter denoted by \(\theta\). This follows the linear-parameterisation from @thorson2017model, with the following density function
 
-- \((p_1,\dots,p_k) \sim \mathrm{Dirichlet}(\alpha_1,\dots,\alpha_k)\) and 
-- \((x_1,\dots,x_k) \sim \mathrm{Multinomial}(n, p_1,\dots,p_k)\), then 
-- \((x_1,\dots,x_k) \sim \mathrm{DirichletMultinomial(n, \alpha_1,\dots,\alpha_k)}\).
-
-The probability density function follows
 \begin{equation}
-f(x) = \frac{\left(n!\right)\Gamma\left(\sum \alpha_k\right)}{\Gamma\left(n+\sum \alpha_k\right)}\prod_{k=1}^K\frac{\Gamma(x_{k}+\alpha_{k})} {\left(x_{k}!\right)\Gamma(\alpha_{k})}
+f(x) = \frac{\Gamma\left(n + 1\right)}{\sum_a n{p}_a + 1}\frac{\Gamma\left(\theta n\right) }{\Gamma\left(n + \theta n\right)}\prod_{a} \frac{\Gamma\left(n {p}_a + n \theta \widehat{p}_a\right)}{\Gamma\left(n \theta \widehat{p}_a\right)}
 \end{equation}
 
-In the paper by @thorson2017model, the Dirichlet multinomial with observed proportions denoted by \(\tilde{\pi}\) fitted proportions \(\pi\) and over dispersion parameter \(\beta\) and effective sample size \(n_{eff}\). This relates to the classic parametersiation above with \(x_k = \tilde{\pi}_k n_{eff}\), \(\alpha_k = \beta \pi_k\) and \(n = n_{eff}\). When this likelihood is implemented it has an estimable parameter \(\theta = \beta/n_{eff}\).
+The effectictive sample size is calcualted as,
+
+\[
+n_{eff} = \frac{1 + \theta n}{1 + \theta}
+\]
 
 
-When simulating from this distribution we first simulate the dirichlet variable, using independent gamma draws (normalised), with shape parameter set as the fitted proportion. Then draw from the multinomial with expected composition based on the dirichlet draw.
+
+Simulating from this distribution is done by first simulating a dirichlet variable, using independent gamma draws (normalised), with shape parameter set as the expected proportion. Then draw from the multinomial with expected proportions based on the dirichlet draw.
 
 ### Lognormal {-}
 As mentioned in the abundance observation section there are two alternative lognormal forms in the model. Pearon residuals are calculated as

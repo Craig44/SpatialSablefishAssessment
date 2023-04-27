@@ -412,13 +412,13 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   array<Type> recruitment_yr(n_projyears, n_regions);
   array<Type> init_natage_m(n_ages, n_regions);                     // Initial numbers at age Males
   array<Type> init_natage_f(n_ages, n_regions);                     // Initial numbers at age Females
-  array<Type> equilibrium_natage_m(n_ages, n_regions);                     // Initial numbers at age Males
-  array<Type> equilibrium_natage_f(n_ages, n_regions);                     // Initial numbers at age Females
+  array<Type> equilibrium_natage_m(n_ages, n_regions);              // starting equilibrium numbers at age Males
+  array<Type> equilibrium_natage_f(n_ages, n_regions);              // starting equilibrium numbers at age Females
 
-  array<Type> cache_natage_m(n_ages, n_regions);                     // Initial numbers at age Males
-  array<Type> cache_natage_f(n_ages, n_regions);                     // Initial numbers at age Females
-  array<Type> cache_equilibrium_natage_m(n_ages, n_regions);                     // Initial numbers at age Males
-  array<Type> cache_equilibrium_natage_f(n_ages, n_regions);                     // Initial numbers at age Females
+  array<Type> cache_natage_m(n_ages, n_regions);                     // Cached Initial numbers at age Males
+  array<Type> cache_natage_f(n_ages, n_regions);                     // Cached Initial numbers at age Females
+  array<Type> cache_equilibrium_natage_m(n_ages, n_regions);         // Cached starting equilibrium numbers at age Males
+  array<Type> cache_equilibrium_natage_f(n_ages, n_regions);         // Cached starting equilibrium numbers at age Females
 
   array<Type> weight_maturity_prod_f(n_ages, n_projyears);// Female weight and proportion mature, used to calcualte SSBs etc
   array<Type> natage_m(n_ages, n_regions, n_projyears + 1);          // Male numbers at age at the beginning of the year from start year to end of last projection year
@@ -494,7 +494,7 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
 
   Type alpha = 0.0;                                       // alpha for the stock recruit relationship
   Type beta = 0.0;                                        // beta for the stock recruit relationship
-  Type N_eff = 0.0;
+  Type N_input = 0.0;
   vector<Type> Bzero(n_regions); // just M and R0
   vector<Type> Bzero_w_recent_growth(n_regions); // just M and R0 with recent growth
   vector<Type> Binit(n_regions); // M + init_F and R0
@@ -1144,17 +1144,11 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
           }
         } else if (fixed_catchatage_comp_likelihood == 1) {
           //Dirichlet multinomial
-          N_eff = sum(temp_observed_age_and_sex);
-          temp_observed_age_and_sex /= N_eff;
-          s1 = 0.0;
-          s2 = 0.0;
-          for(int ndx = 0; ndx < temp_observed_age_and_sex.size(); ndx++){
-            s1 += lgamma(N_eff * temp_observed_age_and_sex(ndx) + 1);
-            s2 += lgamma(N_eff * temp_observed_age_and_sex(ndx) + theta_fixed_catchatage * N_eff * numbers_at_age_and_sex(ndx)) - lgamma(theta_fixed_catchatage * N_eff * numbers_at_age_and_sex(ndx));
-          }
-          nll(0) -= lgamma(N_eff + 1) - s1 + lgamma(theta_fixed_catchatage * N_eff) - lgamma(N_eff + theta_fixed_catchatage * N_eff) + s2;
+          N_input = sum(temp_observed_age_and_sex);
+          temp_observed_age_and_sex /= N_input;
+          nll(0) -= ddirichletmulti(temp_observed_age_and_sex, numbers_at_age_and_sex, N_input, theta_fixed_catchatage, 1);
           SIMULATE {
-            temp_observed_age_and_sex = rdirichletmulti(numbers_at_age_and_sex, N_eff, theta_fixed_catchatage);
+            temp_observed_age_and_sex = rdirichletmulti(numbers_at_age_and_sex, N_input, theta_fixed_catchatage);
             obs_fixed_catchatage.col(year_ndx).col(region_ndx) = temp_observed_age_and_sex;
           }
         }
@@ -1185,18 +1179,12 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
             obs_trwl_catchatlgth.col(year_ndx).col(region_ndx) = temp_observed_lgth_and_sex;
           }
         } else if (trwl_catchatlgth_comp_likelihood == 1) {
-          N_eff = sum(temp_observed_lgth_and_sex);
-          temp_observed_lgth_and_sex /= N_eff;
-          s1 = 0.0;
-          s2 = 0.0;
-          for(int ndx = 0; ndx < temp_observed_lgth_and_sex.size(); ndx++){
-            s1 += lgamma(N_eff * temp_observed_lgth_and_sex(ndx) + 1);
-            s2 += lgamma(N_eff * temp_observed_lgth_and_sex(ndx) + theta_trwl_catchatlgth * N_eff * temp_numbers_at_lgth_and_sex(ndx)) - lgamma(theta_trwl_catchatlgth * N_eff * temp_numbers_at_lgth_and_sex(ndx));
-          }
-          nll(1) -= lgamma(N_eff + 1) - s1 + lgamma(theta_trwl_catchatlgth * N_eff) - lgamma(N_eff + theta_trwl_catchatlgth * N_eff) + s2;
+          N_input = sum(temp_observed_lgth_and_sex);
+          temp_observed_lgth_and_sex /= N_input;
+          nll(1) -= ddirichletmulti(temp_observed_lgth_and_sex, temp_numbers_at_lgth_and_sex, N_input, theta_trwl_catchatlgth, 1);
           SIMULATE {
-            temp_observed_lgth_and_sex = rdirichletmulti(temp_numbers_at_lgth_and_sex, N_eff, theta_trwl_catchatlgth);
-            obs_trwl_catchatlgth.col(year_ndx).col(region_ndx) = temp_observed_lgth_and_sex * N_eff;
+            temp_observed_lgth_and_sex = rdirichletmulti(temp_numbers_at_lgth_and_sex, N_input, theta_trwl_catchatlgth);
+            obs_trwl_catchatlgth.col(year_ndx).col(region_ndx) = temp_observed_lgth_and_sex * N_input;
           }
         }
       }
@@ -1226,18 +1214,12 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
             obs_fixed_catchatlgth.col(year_ndx).col(region_ndx) = temp_observed_lgth_and_sex;
           }
         } else if (fixed_catchatlgth_comp_likelihood == 1) {
-          N_eff = sum(temp_observed_lgth_and_sex);
-          temp_observed_lgth_and_sex /= N_eff;
-          s1 = 0.0;
-          s2 = 0.0;
-          for(int ndx = 0; ndx < temp_observed_lgth_and_sex.size(); ndx++){
-            s1 += lgamma(N_eff * temp_observed_lgth_and_sex(ndx) + 1);
-            s2 += lgamma(N_eff * temp_observed_lgth_and_sex(ndx) + theta_fixed_catchatlgth * N_eff * temp_numbers_at_lgth_and_sex(ndx)) - lgamma(theta_fixed_catchatlgth * N_eff * temp_numbers_at_lgth_and_sex(ndx));
-          }
-          nll(2) -= lgamma(N_eff + 1) - s1 + lgamma(theta_fixed_catchatlgth * N_eff) - lgamma(N_eff + theta_fixed_catchatlgth * N_eff) + s2;
+          N_input = sum(temp_observed_lgth_and_sex);
+          temp_observed_lgth_and_sex /= N_input;
+          nll(2) -= ddirichletmulti(temp_observed_lgth_and_sex, temp_numbers_at_lgth_and_sex, N_input, theta_fixed_catchatlgth, 1);
           SIMULATE {
-            temp_observed_lgth_and_sex = rdirichletmulti(temp_numbers_at_lgth_and_sex, N_eff, theta_fixed_catchatlgth);
-            obs_fixed_catchatlgth.col(year_ndx).col(region_ndx) = temp_observed_lgth_and_sex * N_eff;
+            temp_observed_lgth_and_sex = rdirichletmulti(temp_numbers_at_lgth_and_sex, N_input, theta_fixed_catchatlgth);
+            obs_fixed_catchatlgth.col(year_ndx).col(region_ndx) = temp_observed_lgth_and_sex * N_input;
           }
         }
       }
@@ -1269,17 +1251,12 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
             obs_srv_dom_ll_catchatage.col(year_ndx).col(region_ndx) = temp_observed_age_and_sex;
           }
         } else if (srv_dom_ll_catchatage_comp_likelihood == 1) {
-          N_eff = sum(temp_observed_age_and_sex);
-          temp_observed_age_and_sex /= N_eff;
-          s1 = 0.0;
-          s2 = 0.0;
-          for(int ndx = 0; ndx < temp_observed_age_and_sex.size(); ndx++){
-            s1 += lgamma(N_eff * temp_observed_age_and_sex(ndx) + 1);
-            s2 += lgamma(N_eff * temp_observed_age_and_sex(ndx) + theta_srv_dom_ll_catchatage * N_eff * numbers_at_age_and_sex(ndx)) - lgamma(theta_srv_dom_ll_catchatage * N_eff * numbers_at_age_and_sex(ndx));
-          }
-          nll(3) -= lgamma(N_eff + 1) - s1 + lgamma(theta_srv_dom_ll_catchatage * N_eff) - lgamma(N_eff + theta_srv_dom_ll_catchatage * N_eff) + s2;
+          N_input = sum(temp_observed_age_and_sex);
+          temp_observed_age_and_sex /= N_input;
+          nll(3) -= ddirichletmulti(temp_observed_age_and_sex, numbers_at_age_and_sex, N_input, theta_srv_dom_ll_catchatage, 1);
+
           SIMULATE {
-            temp_observed_age_and_sex = rdirichletmulti(numbers_at_age_and_sex, N_eff, theta_srv_dom_ll_catchatage);
+            temp_observed_age_and_sex = rdirichletmulti(numbers_at_age_and_sex, N_input, theta_srv_dom_ll_catchatage);
             obs_srv_dom_ll_catchatage.col(year_ndx).col(region_ndx) = temp_observed_age_and_sex;
           }
         }

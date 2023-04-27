@@ -64,7 +64,28 @@ Type dmultinom_upd(vector<Type> x, vector<Type> p, int give_log=0)
   else
     return exp(logres);
 }
-
+/*
+ *  Evaluate the density or log-likelihood for the dirichlet-multinomial distribution using linear-parameterisation from Thorson et.al 2017
+ *  @param n input samples size
+ *  @param theta over-dispersion parameter
+ *  @param p_hat vector of fitted proportions
+ *  @param p vector of observed proportions
+ */
+template <class Type>
+Type ddirichletmulti(vector<Type> p_obs, vector<Type> p_hat, Type n, Type theta, int give_log=0) {
+  Type s1 = 0.0;
+  Type s2 = 0.0;
+  Type loglik = 0.0;
+  for(int ndx = 0; ndx < p_obs.size(); ndx++){
+    s1 += lgamma(n * p_obs(ndx) + 1);
+    s2 += lgamma(n * p_obs(ndx) + theta * n * p_hat(ndx)) - lgamma(theta * n * p_hat(ndx));
+  }
+  loglik = lgamma(n + 1) - s1 + lgamma(theta * n) - lgamma(n + theta * n) + s2;
+  if(give_log)
+    return loglik;
+  else
+    return exp(loglik);
+}
 /*
  *  an index folding method to help get the region and release year for tagged fish in the tagged partition
  *  @param region_ndx (starts at 0 goes to (n_regions - 1))
@@ -223,17 +244,24 @@ vector<Type> rmultinom(vector<Type> prob, Type N) {
 }
 
 /*
- *  Simulate a single draw from a multinomial-dirichlet distribution
+ *  Simulate a single draw from the dirichlet-multinomial distribution using linear-parameterisation from Thorson et.al 2017
+ *  @param n input samples size
+ *  @param theta over-dispersion parameter
+ *  @param fitted_props vector of fitted proportions
  */
 template <class Type>
-vector<Type> rdirichletmulti(vector<Type> fitted_props, Type& n_eff, Type& theta) {
+vector<Type> rdirichletmulti(vector<Type> fitted_props, Type& n, Type& theta) {
   vector<Type> dirichlet_draw(fitted_props.size());
+  //Type n_eff = (1 + theta * n) / (1 + theta); // calculate the effective sample size
   for(int ndx = 0; ndx < fitted_props.size(); ndx++)
-    dirichlet_draw(ndx) = rgamma(fitted_props(ndx) * theta * n_eff, (Type)1.0);// shape, rate = 1.0
+    dirichlet_draw(ndx) = rgamma(fitted_props(ndx) * theta * n, (Type)1.0);// shape, rate = 1.0
 
   Type dirich_total = dirichlet_draw.sum();
   dirichlet_draw /= dirich_total;
-  return(rmultinom(dirichlet_draw, n_eff));
+  return(rmultinom(dirichlet_draw, n));
+  // Should we simulate the final multinomial sample using n or n_eff?
+  // I did some simulations contained in my Thesis/Demonstration/Distribution code which
+  // shows based on Thorson 2017 paper from his Pearson residual calculations that we should simualte using n not n_eff
 }
 /*
  * inverse centred log transform
