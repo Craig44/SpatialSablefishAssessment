@@ -638,7 +638,7 @@ knitr::write_bib(c(
 
   pallette_rmd = '
   n_pars_df = data.frame(label = names(n_pars), n_pars = n_pars)
-  obs_pallete <- c("black", viridis(length(mle_ls)))
+  obs_pallete <- c("black", brewer.pal(length(mle_ls), "Set1"))
   names(obs_pallete) = c("Observed",names(mle_ls))
   '
   write(pallette_rmd, file = model_input_file, append = T)
@@ -844,7 +844,7 @@ ggplot(data = mean_length_df %>% dplyr::filter(observation == "trwl")) +
     n_pars_df = data.frame(label = names(n_pars), n_pars = n_pars)
     nll_df = data.frame(label = names(n_pars), n_pars = n_pars)
 
-  obs_pallete <- c("black", viridis(length(mle_ls)))
+  obs_pallete <- c("black", brewer.pal(length(mle_ls), "Set1"))
   names(obs_pallete) = c("Observed",names(mle_ls))
   '
   write(pallette_rmd, file = model_input_file, append = T)

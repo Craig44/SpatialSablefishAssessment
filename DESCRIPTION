@@ -7,11 +7,11 @@ Description: This package contains TMB models used in spatial sablefish research
 License: GPL (>= 2)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.1
+RoxygenNote: 7.2.3
 Depends:
     R (>= 3.5.0),
     Matrix (>= 1.5.3),
-    TMB (== 1.9.2)
+    TMB (>= 1.9.2)
 Imports:
     Rdpack,
     grid,

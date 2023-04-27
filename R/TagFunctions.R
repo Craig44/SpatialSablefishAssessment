@@ -87,6 +87,16 @@ plot_frequency_of_tag_release_and_recoveries = function(data, region_key = NULL,
     }
   }
   full_df$release_event = paste0(full_df$release_year, "-", full_df$release_region)
+  plot_title = ""
+  if(length(release_region_to_plt) == 1) {
+    ## assume single release region - so move to title instead of facet panel label
+    full_df$release_event_label = full_df$release_year
+    plot_title = release_region_to_plt
+  } else {
+    ## multiple release regions
+    full_df$release_event_label = full_df$release_event
+  }
+
   unique_release_events = unique(full_df$release_event )
   if(max(release_ndx_to_plot) > length(unique_release_events)) {
     warning(paste0("you are asking to plot up to ", max(release_ndx_to_plot), " release events, but there are only ",  length(unique_release_events), " release events. changing the max value of release_ndx_to_plot"))
@@ -98,7 +108,8 @@ plot_frequency_of_tag_release_and_recoveries = function(data, region_key = NULL,
     subset_df$release_region = factor(subset_df$release_region, levels = rev(region_key$area[region_key$TMB_ndx + 1]))
   }
   subset_df$recovery_year = factor(subset_df$recovery_year, levels = recovery_years)
-  subset_df$release_event_with_sample_size = paste0(subset_df$release_event, " releases: ", subset_df$n_releases)
+
+  subset_df$release_event_with_sample_size = paste0(subset_df$release_event_label, " n: ", subset_df$n_releases)
 
   if(!is.null(release_region_to_plt))
     subset_df = subset_df %>% dplyr::filter(release_region == release_region_to_plt)
@@ -108,7 +119,7 @@ plot_frequency_of_tag_release_and_recoveries = function(data, region_key = NULL,
     geom_point(aes(size = n_recoveries, col = recovery_color)) +
     facet_wrap(~release_event_with_sample_size) +
     guides(col = "none") +
-    labs(x = "Recovery year", y = "Recovery region", size = "Recoveries") +
+    labs(x = "Recovery year", y = "Recovery region", size = "Recoveries", title = plot_title) +
     theme_bw() +
     scale_size_area() +
     scale_x_discrete(breaks = every_nth(n = 5))

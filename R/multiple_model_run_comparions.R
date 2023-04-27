@@ -164,9 +164,7 @@ get_multiple_Bzeros <- function(mle_ls, run_labels = NULL, region_key = NULL) {
     if(length(run_labels) != length(mle_ls))
       stop(paste0("Number of models provided ", length(mle_ls), ", number of run labels ", length(run_labels), " these need to be the same"))
   }
-  regions = paste0("Region ", 1:MLE_report$n_regions)
-  if(!is.null(region_key))
-    regions = region_key$area[region_key$TMB_ndx + 1]
+
 
   full_Bzero_df = NULL
   for(i in 1:length(mle_ls)) {
@@ -174,6 +172,9 @@ get_multiple_Bzeros <- function(mle_ls, run_labels = NULL, region_key = NULL) {
       cat("report at element ", i, " was null, so skipping\n")
       next;
     }
+    regions = paste0("Region ", 1:mle_ls[[i]]$n_regions)
+    if(!is.null(region_key))
+      regions = region_key$area[region_key$TMB_ndx + 1]
     this_Bzero = data.frame(Bzero = mle_ls[[i]]$Bzero, Binit = mle_ls[[i]]$Binit, Bzero_with_recent_growth = mle_ls[[i]]$Bzero_w_recent_growth, Region = regions)
     if(!is.null(run_labels)) {
       this_Bzero$label = run_labels[i]
@@ -199,9 +200,7 @@ get_multiple_catchabilities <- function(mle_ls, run_labels = NULL, region_key = 
     if(length(run_labels) != length(mle_ls))
       stop(paste0("Number of models provided ", length(mle_ls), ", number of run labels ", length(run_labels), " these need to be the same"))
   }
-  Region_lab = paste0("Region ", 1:MLE_report$n_regions)
-  if(!is.null(region_key))
-    Region_lab =  region_key$area[region_key$TMB_ndx + 1]
+
 
 
   full_q_df = NULL
@@ -210,6 +209,9 @@ get_multiple_catchabilities <- function(mle_ls, run_labels = NULL, region_key = 
       cat("report at element ", i, " was null, so skipping\n")
       next;
     }
+    Region_lab = paste0("Region ", 1:mle_ls[[i]]$n_regions)
+    if(!is.null(region_key))
+      Region_lab =  region_key$area[region_key$TMB_ndx + 1]
     catchability = mle_ls[[i]]$srv_dom_ll_q
     dimnames(catchability) = list(Region_lab, paste0("Block-", 1:ncol(catchability)))
     this_q = reshape2::melt(catchability)

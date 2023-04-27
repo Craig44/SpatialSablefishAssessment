@@ -236,6 +236,8 @@ validate_input_data_and_parameters = function(data, parameters) {
   check = check_dim(data$obs_fixed_catchatage, c(2*n_ages, n_regions, n_years))
   if(!check$result)
     return(paste0("obs_fixed_catchatage: ", check$message))
+  if(any(is.na(data$obs_fixed_catchatage)))
+    return(paste0("NA's found in obs_fixed_catchatage"))
 
   ## trwl_catchatlgth_indicator
   check = check_dim(data$trwl_catchatlgth_indicator, c(n_regions, n_years))
@@ -245,6 +247,9 @@ validate_input_data_and_parameters = function(data, parameters) {
   check = check_dim(data$obs_trwl_catchatlgth, c(2*n_length_bins, n_regions, n_years))
   if(!check$result)
     return(paste0("obs_trwl_catchatlgth: ", check$message))
+  if(any(is.na(data$obs_trwl_catchatlgth)))
+    return(paste0("NA's found in obs_trwl_catchatlgth"))
+
   ## fixed_catchatlgth_indicator
   check = check_dim(data$fixed_catchatlgth_indicator, c(n_regions, n_years))
   if(!check$result)
@@ -253,6 +258,9 @@ validate_input_data_and_parameters = function(data, parameters) {
   check = check_dim(data$obs_fixed_catchatlgth, c(2*n_length_bins, n_regions, n_years))
   if(!check$result)
     return(paste0("obs_fixed_catchatlgth: ", check$message))
+  if(any(is.na(data$obs_fixed_catchatlgth)))
+    return(paste0("NA's found in obs_fixed_catchatlgth"))
+
   ## srv_dom_ll_catchatage_indicator
   check = check_dim(data$srv_dom_ll_catchatage_indicator, c(n_regions, n_years))
   if(!check$result)
@@ -261,6 +269,9 @@ validate_input_data_and_parameters = function(data, parameters) {
   check = check_dim(data$obs_srv_dom_ll_catchatage, c(2*n_ages, n_regions, n_years))
   if(!check$result)
     return(paste0("obs_srv_dom_ll_catchatage: ", check$message))
+  if(any(is.na(data$obs_srv_dom_ll_catchatage)))
+    return(paste0("NA's found in obs_srv_dom_ll_catchatage"))
+
   ## srv_dom_ll_bio_indicator
   check = check_dim(data$srv_dom_ll_bio_indicator, c(n_regions, n_years))
   if(!check$result)
@@ -269,11 +280,16 @@ validate_input_data_and_parameters = function(data, parameters) {
   check = check_dim(data$obs_srv_dom_ll_bio, c(n_regions, n_years))
   if(!check$result)
     return(paste0("obs_srv_dom_ll_bio: ", check$message))
+
+  if(any(is.na(data$obs_srv_dom_ll_bio)))
+    return(paste0("NA's found in obs_srv_dom_ll_bio"))
   ## obs_srv_dom_ll_se
   check = check_dim(data$obs_srv_dom_ll_se, c(n_regions, n_years))
   if(!check$result)
     return(paste0("obs_srv_dom_ll_se: ", check$message))
 
+  if(any(is.na(data$obs_srv_dom_ll_se)))
+    return(paste0("NA's found in obs_srv_dom_ll_se"))
   ## tag recovery observations
   ## tag_recovery_indicator
   check = check_length(data$tag_recovery_indicator_by_year, n_years)
@@ -314,6 +330,9 @@ validate_input_data_and_parameters = function(data, parameters) {
           return(paste0("obs_tag_recovery: ", check$message))
       }
     }
+    if(any(is.na(data$obs_tag_recovery)))
+      return("Found NA's in obs_tag_recovery")
+
   }
   ## check projection inputs. TODO: should only really check these if do_projection == 1
   if(!data$future_recruitment_type %in% c(0,1,2))
