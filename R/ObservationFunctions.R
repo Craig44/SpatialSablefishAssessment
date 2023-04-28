@@ -630,7 +630,8 @@ simulate_observations <- function(obj, n_sims = 200, sd_report = NULL, include_p
   obs_fixed_AF_df = get_AF(mle_rep, observation = "fixed", region_key = region_key)
   obs_fixed_LF_df = get_LF(mle_rep, observation = "fixed", region_key = region_key)
   obs_trwl_LF_df = get_LF(mle_rep, observation = "trwl", region_key = region_key)
-  obs_tag_data_df = get_tag_recovery_obs_fitted_values(MLE_report = mle_rep, region_key = region_key)
+  if(sum(mle_rep$tag_recovery_indicator_by_year) > 0)
+    obs_tag_data_df = get_tag_recovery_obs_fitted_values(MLE_report = mle_rep, region_key = region_key)
 
 
   sim_srv_bio = sim_srv_AF = sim_fixed_AF = sim_fixed_LF = sim_trwl_LF = sim_tag_recovery = NULL
@@ -671,10 +672,12 @@ simulate_observations <- function(obj, n_sims = 200, sd_report = NULL, include_p
     trwl_LF$sim = sim_iter
     sim_trwl_LF = rbind(sim_trwl_LF, trwl_LF)
     # Tag data
-    tag_data = get_tag_recovery_obs_fitted_values(MLE_report = this_sim, region_key = region_key) %>% rename(Simulated = observed, Predicted = predicted)
-    tag_data$Observed  = obs_tag_data_df$observed
-    tag_data$sim = sim_iter
-    sim_tag_recovery = rbind(sim_tag_recovery, tag_data)
+    if(sum(mle_rep$tag_recovery_indicator_by_year) > 0) {
+      tag_data = get_tag_recovery_obs_fitted_values(MLE_report = this_sim, region_key = region_key) %>% rename(Simulated = observed, Predicted = predicted)
+      tag_data$Observed  = obs_tag_data_df$observed
+      tag_data$sim = sim_iter
+      sim_tag_recovery = rbind(sim_tag_recovery, tag_data)
+    }
   }
   return(list(sim_tag_recovery = sim_tag_recovery, sim_trwl_LF = sim_trwl_LF, sim_fixed_LF = sim_fixed_LF, sim_fixed_AF = sim_fixed_AF, sim_srv_AF = sim_srv_AF, sim_srv_bio = sim_srv_bio))
 }
@@ -910,4 +913,99 @@ summarise_tag_quant_resids <- function(tag_sim_resids, recovery_year = T) {
     joint_tag_plt = ggarrange(rel_reg_rel_yr_plt, rec_reg_rel_yr_plt,ncol = 2)
   }
   return(joint_tag_plt)
+}
+
+#' get_comp_sample_size
+#' @details get compositional input sample sizes and effective sample sizes
+#' @param MLE_report a list that is output from obj$report() usually once an optimsation routine has been done.
+#' @param data list of input data
+#' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
+#' @return data.frame
+#' @export
+
+get_comp_sample_size <- function(MLE_report, data, region_key = NULL) {
+  years = MLE_report$years
+  regions = 1:MLE_report$n_regions
+  if(is.null(region_key)) {
+    regions = paste0("Region ", regions)
+  } else {
+    regions = region_key$area[match(regions, (region_key$TMB_ndx + 1))]
+  }
+  ages = MLE_report$ages
+  length_bins = MLE_report$length_bins
+
+  sample_sizes = NULL
+  ## check likelihoods
+  ## fixed catch at age
+  dimnames(data$obs_fixed_catchatage)= list(c(paste0("M_",ages), paste0("F_",ages)), regions, years)
+  molten_fixed_catchatage = reshape2::melt(data$obs_fixed_catchatage)
+  colnames(molten_fixed_catchatage) = c("s_age", "Region", "Year", "value")
+  this_sample_size = molten_fixed_catchatage %>% group_by(Region, Year) %>% summarise(N_input = sum(value), N_eff = N_input)
+  if(data$fixed_catchatage_comp_likelihood == 1)
+    this_sample_size$N_eff = (1 + this_sample_size$N_input * MLE_report$theta_fixed_catchatage ) / (1 + MLE_report$theta_fixed_catchatage)
+  this_sample_size$observation = "Fixed Catch-at-age"
+  sample_sizes = rbind(sample_sizes, this_sample_size)
+
+  ## fixed catch at length
+  dimnames(data$obs_fixed_catchatlgth)= list(c(paste0("M_",length_bins), paste0("F_",length_bins)), regions, years)
+  molten_fixed_catchatlgth = reshape2::melt(data$obs_fixed_catchatlgth)
+  colnames(molten_fixed_catchatlgth) = c("s_lgth", "Region", "Year", "value")
+  this_sample_size = molten_fixed_catchatlgth %>% group_by(Region, Year) %>% summarise(N_input = sum(value), N_eff = N_input)
+  if(data$fixed_catchatlgth_comp_likelihood == 1)
+    this_sample_size$N_eff = (1 + this_sample_size$N_input * MLE_report$theta_fixed_catchatlgth ) / (1 + MLE_report$theta_fixed_catchatlgth)
+  this_sample_size$observation = "Fixed Catch-at-length"
+  sample_sizes = rbind(sample_sizes, this_sample_size)
+
+  ## Trawl catch at length
+  dimnames(data$obs_trwl_catchatlgth)= list(c(paste0("M_",length_bins), paste0("F_",length_bins)), regions, years)
+  molten_trwl_catchatlgth = reshape2::melt(data$obs_trwl_catchatlgth)
+  colnames(molten_trwl_catchatlgth) = c("s_lgth", "Region", "Year", "value")
+  this_sample_size = molten_trwl_catchatlgth %>% group_by(Region, Year) %>% summarise(N_input = sum(value), N_eff = N_input)
+  if(data$trwl_catchatlgth_comp_likelihood == 1)
+    this_sample_size$N_eff = (1 + this_sample_size$N_input * MLE_report$theta_trwl_catchatlgth) / (1 + MLE_report$theta_trwl_catchatlgth)
+  this_sample_size$observation = "Trawl Catch-at-length"
+  sample_sizes = rbind(sample_sizes, this_sample_size)
+  ## Survey catch at age
+  dimnames(data$obs_srv_dom_ll_catchatage)= list(c(paste0("M_",ages), paste0("F_",ages)), regions, years)
+  molten_srv_catchatage = reshape2::melt(data$obs_srv_dom_ll_catchatage)
+  colnames(molten_srv_catchatage) = c("s_age", "Region", "Year", "value")
+  this_sample_size = molten_srv_catchatage %>% group_by(Region, Year) %>% summarise(N_input = sum(value), N_eff = N_input)
+  if(data$srv_dom_ll_catchatage_comp_likelihood == 1)
+    this_sample_size$N_eff = (1 + this_sample_size$N_input * MLE_report$theta_srv_dom_ll_catchatage ) / (1 + MLE_report$theta_srv_dom_ll_catchatage)
+  this_sample_size$observation = "Survey Catch-at-age"
+  sample_sizes = rbind(sample_sizes, this_sample_size)
+  return(sample_sizes)
+}
+
+#' plot_comp_sample_size
+#' @details plot compositional input sample sizes or effective sample sizes
+#' @param MLE_report a list that is output from obj$report() usually once an optimsation routine has been done.
+#' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
+#' @param data list of input data
+#' @param plot_n_eff boolean if T plot effective sample size else plot input sample size
+#' @return data.frame
+#' @export
+
+plot_comp_sample_size <- function(MLE_report, data, region_key = NULL, plot_n_eff = T) {
+  sample_size_df = get_comp_sample_size(MLE_report, data, region_key)
+  sample_size_df = sample_size_df %>% filter(N_input > 0)
+  #sample_size_df$N_input =  dplyr::na_if(sample_size_df$N_input, 0)
+  #sample_size_df$N_eff =  dplyr::na_if(sample_size_df$N_eff, 0)
+  gplt = NULL
+  if(plot_n_eff) {
+    gplt <- ggplot(sample_size_df, aes(x = Year, y = N_eff, col = observation)) +
+      geom_line(linewidth = 1.1) +
+      geom_point(size = 1.1) +
+      theme_bw() +
+      labs(x = "Year", y = "Effective sample size") +
+      facet_wrap(~Region)
+  } else {
+    gplt <- ggplot(sample_size_df, aes(x = Year, y = N_input, col = observation)) +
+      geom_line(linewidth = 1.1) +
+      geom_point(size = 1.1) +
+      theme_bw() +
+      labs(x = "Year", y = "Input sample size") +
+      facet_wrap(~Region)
+  }
+  return(gplt)
 }

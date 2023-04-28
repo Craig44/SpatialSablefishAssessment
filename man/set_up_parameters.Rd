@@ -29,7 +29,8 @@ set_up_parameters(
   est_fixed_LF_theta = F,
   est_trwl_LF_theta = F,
   est_srv_ll_AF_theta = F,
-  est_prop_male_recruit = "off"
+  est_prop_male_recruit = "off",
+  est_SR_pars = F
 )
 }
 \arguments{
@@ -94,6 +95,8 @@ set_up_parameters(
 \item \code{off}: not estimated
 \item \code{constant}: single value for all years
 }}
+
+\item{est_SR_pars}{if data$SrType == 2 you can estimate the steepness parameter or have it fixed}
 }
 \value{
 a named list that can be used by the \code{map} input for the \code{TMB::MakeADFun} function. NAs mean parameters are not estimated and elements with the same factor level mean they will be estimated with a common coefficient i.e., shared parameters

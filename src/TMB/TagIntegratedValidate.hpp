@@ -214,7 +214,11 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   PARAMETER(ln_tag_phi);                                    // log variance for tag data likelihood- currently only used if tag_likelihood = 1 (Negative binomial)
   PARAMETER(ln_sigma_R);                                    // standard deviation for recruitment;
   PARAMETER(ln_sigma_init_devs);                            // standard deviation for recruitment;
-
+  // trans_SR_pars
+  // SRtype == 1 vector of length = 2 its log(a) & log(b)
+  // SRtype == 2 vector of length = 1 its log(steepness)
+  // SRtype == 3 vector of length = 1 its SHOULD BE IGNORED
+  PARAMETER_VECTOR(trans_SR_pars);
   // composition observation parameters
   PARAMETER_VECTOR(trans_trwl_catchatlgth_error);           //
   PARAMETER_VECTOR(trans_fixed_catchatlgth_error);          //
@@ -235,7 +239,10 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   int tag_release_event_ndx = 0;
   int tag_recovery_event_ndx = 0;
   int release_year_ndx = 0;
-
+  int min_age = 0;
+  while(min_age < ages(0)){
+    min_age++;
+  }
   Type m_plus_group = 0.0;
   Type f_plus_group = 0.0;
   Type m_plus_group_equilibrium = 0.0;
@@ -253,6 +260,7 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   // Untransform parameters
   vector<Type> mean_rec = exp(ln_mean_rec);
   Type sigma_R = exp(ln_sigma_R);
+  vector<Type> SR_pars = exp(trans_SR_pars);
   Type sigma_init_devs = exp(ln_sigma_init_devs);
   Type sigma_init_devs_sq = sigma_init_devs * sigma_init_devs;
   Type sigma_R_sq = sigma_R * sigma_R;
@@ -741,8 +749,20 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
       // fill in recruitment that occurred this year
       // This will be repeated after movement if do_recruits_move == 0,
       // to mitigate any movement of this first year classs
-      natage_m(0, region_ndx, year_ndx) = (mean_rec(region_ndx) * recruitment_multipliers(region_ndx, year_ndx)) * prop_recruit_male(year_ndx);
-      natage_f(0, region_ndx, year_ndx) = (mean_rec(region_ndx) * recruitment_multipliers(region_ndx, year_ndx)) * prop_recruit_female(year_ndx);
+      if(SrType == 2) { // Regional Beverton-Holt SR with steepness
+        if(year_ndx < min_age) {
+          // SSB = Binit
+          natage_m(0, region_ndx, year_ndx) = (mean_rec(region_ndx) * BevertonHolt(Binit(region_ndx), Bzero(region_ndx),SR_pars(0)) * recruitment_multipliers(region_ndx, year_ndx)) * prop_recruit_male(year_ndx);
+          natage_f(0, region_ndx, year_ndx) = (mean_rec(region_ndx) * BevertonHolt(Binit(region_ndx), Bzero(region_ndx),SR_pars(0)) * recruitment_multipliers(region_ndx, year_ndx)) * prop_recruit_female(year_ndx);
+        } else {
+          // SSB has min-age lag
+          natage_m(0, region_ndx, year_ndx) = (mean_rec(region_ndx) * BevertonHolt(SSB_yr(year_ndx - min_age, region_ndx), Bzero(region_ndx),SR_pars(0)) * recruitment_multipliers(region_ndx, year_ndx)) * prop_recruit_male(year_ndx);
+          natage_f(0, region_ndx, year_ndx) = (mean_rec(region_ndx) * BevertonHolt(SSB_yr(year_ndx - min_age, region_ndx), Bzero(region_ndx),SR_pars(0)) * recruitment_multipliers(region_ndx, year_ndx)) * prop_recruit_female(year_ndx);
+        }
+      } else if (SrType == 3) { // average recruitment
+        natage_m(0, region_ndx, year_ndx) = (mean_rec(region_ndx) * recruitment_multipliers(region_ndx, year_ndx)) * prop_recruit_male(year_ndx);
+        natage_f(0, region_ndx, year_ndx) = (mean_rec(region_ndx) * recruitment_multipliers(region_ndx, year_ndx)) * prop_recruit_female(year_ndx);
+      }
       recruitment_yr(year_ndx, region_ndx) = natage_m(0, region_ndx, year_ndx) + natage_f(0, region_ndx, year_ndx);
 
 
@@ -1632,7 +1652,6 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   REPORT(catchatage_trwl_f);
   REPORT(annual_trwl_catch_pred);
   REPORT(annual_fixed_catch_pred);
-
   REPORT(movement_matrix);
   REPORT(fixed_movement_matrix);
 
@@ -1651,6 +1670,7 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   REPORT(srv_dom_ll_q);
   // estimated variances
   REPORT(sigma_R);
+  REPORT( SR_pars );
   REPORT(sigma_init_devs);
   REPORT( catch_sd );
   //
@@ -1692,6 +1712,7 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   // REPORT dimensions so accesor functions and plotting functions only need the $report() object
   REPORT(n_regions);
   REPORT(ages);
+  REPORT( min_age );
   REPORT(years);
   REPORT(length_bins);
   REPORT(n_projections_years);

@@ -68,7 +68,20 @@ plot_init_nage = function(MLE_report, region_key = NULL) {
   return(gplt)
 }
 
-
+#' BH
+#' @description Beverton holt stock recruit relationship parameterised with steepness
+#' @param SSB Spawning stock biomass
+#' @param B0 equilibrium SSB
+#' @param h steepness parameter as defined by Doonan and Mace 1981, represents
+#' @return Number of recruits acording to the Beverton holt relationship
+#' @export
+#'
+BH <- function(SSB,B0,h) {
+  ssb_ratio = SSB / B0
+  part_2 = (1 - ((5*h - 1) / (4*h)) * ( 1 - ssb_ratio))
+  val = ssb_ratio / part_2
+  return(val)
+}
 #'
 #' plot_partition plot numbers at age over time and space
 #' @param MLE_report a list that is output from obj$report() usually once an optimsation routine has been done.
@@ -176,4 +189,20 @@ calculate_initial_numbers_at_age_age_based_movement <-function(n_regions, n_ages
   update_N_age[,n_ages] = N_age[,n_ages] * 1 / (1 - c)
 
   return(update_N_age);
+}
+
+
+#' BH
+#' @description Beverton holt stock recruit relationship parameterised with steepness
+#' @param SSB Spawning stock biomass
+#' @param B0 equilibrium SSB
+#' @param h steepness parameter as defined by Doonan and Mace 1981, represents
+#' @return Number of recruits acording to the Beverton holt relationship
+#' @export
+#'
+BH <- function(SSB,B0,h) {
+  ssb_ratio = SSB / B0
+  part_2 = (1 - ((5*h - 1) / (4*h)) * ( 1 - ssb_ratio))
+  val = ssb_ratio / part_2
+  return(val)
 }

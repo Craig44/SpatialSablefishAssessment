@@ -201,7 +201,7 @@ fix_pars <- function(par_list, pars_to_exclude, vec_elements_to_exclude = NULL, 
 #'   \item `off`: not estimated
 #'   \item `constant`: single value for all years
 #' }
-
+#' @param est_SR_pars if data$SrType == 2 you can estimate the steepness parameter or have it fixed
 #' @return a named list that can be used by the `map` input for the `TMB::MakeADFun` function. NAs mean parameters are not estimated and elements with the same factor level mean they will be estimated with a common coefficient i.e., shared parameters
 #' @export
 set_up_parameters <- function(data, parameters,
@@ -227,7 +227,8 @@ set_up_parameters <- function(data, parameters,
                               est_fixed_LF_theta = F,
                               est_trwl_LF_theta = F,
                               est_srv_ll_AF_theta = F,
-                              est_prop_male_recruit = "off"
+                              est_prop_male_recruit = "off",
+                              est_SR_pars = F
 
 ) {
 
@@ -248,6 +249,14 @@ set_up_parameters <- function(data, parameters,
   # turn off F-avg and devs
   if(data$F_method == 1)
     parameters_completely_fixed = c(parameters_completely_fixed, c("ln_fixed_F_avg", "ln_fixed_F_devs","ln_trwl_F_avg", "ln_trwl_F_devs"))
+  # turn off SR parameters unless Beverton holt formulation used in data
+  if(data$SrType != 2) {
+    parameters_completely_fixed = c(parameters_completely_fixed, c("trans_SR_pars"))
+  } else {
+    ## it is Beverton holt but we don't want to estimate the SR parameters
+    if(est_SR_pars)
+      parameters_completely_fixed = c(parameters_completely_fixed, c("trans_SR_pars"))
+  }
   # trun off init F if not estimating it
   if(!est_init_F)
     parameters_completely_fixed = c(parameters_completely_fixed, c("ln_init_F_avg"))

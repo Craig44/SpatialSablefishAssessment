@@ -44,7 +44,10 @@ Type TagIntegrated(objective_function<Type>* obj) {
   int n_projyears = n_years + n_projections_years;
   int n_ages = ages.size();
   int n_length_bins = length_bins.size();
-
+  int min_age = 0;
+  while(min_age < ages(0)){
+    min_age++;
+  }
 
   // Biology parameters
   DATA_INTEGER(global_rec_devs);                    // Are there recruit devs parameters for each region (= 0), or do all regions have the same rec devs (=1)
@@ -63,7 +66,7 @@ Type TagIntegrated(objective_function<Type>* obj) {
   DATA_ARRAY(female_age_length_transition);         // Proportion at among length bins for each age for female: dim = n_ages x n_lengths x n_years
 
 
-  DATA_INTEGER(SrType);                             // Stock recruitment type 3=average, 2=Bholt, 1=Ricker
+  DATA_INTEGER(SrType);                             // Stock recruitment type 3=average, 2=Bholt
   DATA_VECTOR(spawning_time_proportion);            // proportion of time within a year that spawning occurs needed for each year length = n_projyears, bound between 0 and 1
 
   // the reason I added this fixed fixed movement switch is because we use the simplex to transform parameters for the estimated movement
@@ -215,6 +218,12 @@ Type TagIntegrated(objective_function<Type>* obj) {
   PARAMETER(ln_sigma_R);                                    // standard deviation for recruitment;
   PARAMETER(ln_sigma_init_devs);                            // standard deviation for recruitment;
 
+  // trans_SR_pars
+  // SRtype == 1 vector of length = 2 its log(a) & log(b)
+  // SRtype == 2 vector of length = 1 its log(steepness)
+  // SRtype == 3 vector of length = 1 its SHOULD BE IGNORED
+  PARAMETER_VECTOR(trans_SR_pars);
+
   // composition parameters
   PARAMETER_VECTOR(trans_trwl_catchatlgth_error);     //
   PARAMETER_VECTOR(trans_fixed_catchatlgth_error);     //
@@ -253,6 +262,7 @@ Type TagIntegrated(objective_function<Type>* obj) {
   // Untransform parameters
   vector<Type> mean_rec = exp(ln_mean_rec);
   Type sigma_R = exp(ln_sigma_R);
+  vector<Type> SR_pars = exp(trans_SR_pars);
   Type sigma_init_devs = exp(ln_sigma_init_devs);
   Type sigma_init_devs_sq = sigma_init_devs * sigma_init_devs;
   Type sigma_R_sq = sigma_R * sigma_R;
@@ -734,8 +744,21 @@ Type TagIntegrated(objective_function<Type>* obj) {
       // fill in recruitment that occurred this year
       // This will be repeated after movement if do_recruits_move == 0,
       // to mitigate any movement of this first year classs
-      natage_m(0, region_ndx, year_ndx) = (mean_rec(region_ndx) * recruitment_multipliers(region_ndx, year_ndx)) * prop_recruit_male(year_ndx);
-      natage_f(0, region_ndx, year_ndx) = (mean_rec(region_ndx) * recruitment_multipliers(region_ndx, year_ndx)) * prop_recruit_female(year_ndx);
+
+      if(SrType == 2) { // Regional Beverton-Holt SR with steepness
+        if(year_ndx < min_age) {
+          // SSB = Binit
+          natage_m(0, region_ndx, year_ndx) = (mean_rec(region_ndx) * BevertonHolt(Binit(region_ndx), Bzero(region_ndx),SR_pars(0)) * recruitment_multipliers(region_ndx, year_ndx)) * prop_recruit_male(year_ndx);
+          natage_f(0, region_ndx, year_ndx) = (mean_rec(region_ndx) * BevertonHolt(Binit(region_ndx), Bzero(region_ndx),SR_pars(0)) * recruitment_multipliers(region_ndx, year_ndx)) * prop_recruit_female(year_ndx);
+        } else {
+          // SSB has min-age lag
+          natage_m(0, region_ndx, year_ndx) = (mean_rec(region_ndx) * BevertonHolt(SSB_yr(year_ndx - min_age, region_ndx), Bzero(region_ndx),SR_pars(0)) * recruitment_multipliers(region_ndx, year_ndx)) * prop_recruit_male(year_ndx);
+          natage_f(0, region_ndx, year_ndx) = (mean_rec(region_ndx) * BevertonHolt(SSB_yr(year_ndx - min_age, region_ndx), Bzero(region_ndx),SR_pars(0)) * recruitment_multipliers(region_ndx, year_ndx)) * prop_recruit_female(year_ndx);
+        }
+      } else if (SrType == 3) { // average recruitment
+        natage_m(0, region_ndx, year_ndx) = (mean_rec(region_ndx) * recruitment_multipliers(region_ndx, year_ndx)) * prop_recruit_male(year_ndx);
+        natage_f(0, region_ndx, year_ndx) = (mean_rec(region_ndx) * recruitment_multipliers(region_ndx, year_ndx)) * prop_recruit_female(year_ndx);
+      }
       recruitment_yr(year_ndx, region_ndx) = natage_m(0, region_ndx, year_ndx) + natage_f(0, region_ndx, year_ndx);
 
 
@@ -1554,6 +1577,7 @@ Type TagIntegrated(objective_function<Type>* obj) {
   REPORT(nll);
   REPORT(mean_rec);
   REPORT(recruitment_multipliers);
+  REPORT( SR_pars );
   REPORT( recruitment_devs );
   REPORT(init_rec_dev);
   REPORT(Bzero);
@@ -1640,6 +1664,7 @@ Type TagIntegrated(objective_function<Type>* obj) {
   // REPORT dimensions so accesor functions and plotting functions only need the $report() object
   REPORT(n_regions);
   REPORT(ages);
+  REPORT( min_age );
   REPORT(years);
   REPORT(length_bins);
   REPORT(n_projections_years);

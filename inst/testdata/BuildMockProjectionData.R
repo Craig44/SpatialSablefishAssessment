@@ -290,6 +290,7 @@ parameters$ln_init_rec_dev = 0
 parameters$ln_catch_sd = log(0.02)
 parameters$ln_sigma_init_devs = log(0.2)
 parameters$ln_sigma_R = log(data$sigma_R)
+parameters$trans_SR_pars = log(0.8)
 parameters$trans_trwl_catchatlgth_error = log(1)
 parameters$trans_fixed_catchatlgth_error = log(1)
 parameters$trans_fixed_catchatage_error = log(1)
