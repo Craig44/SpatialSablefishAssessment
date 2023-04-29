@@ -23,7 +23,7 @@
 <meta name="author" content="C.Marsh" />
 
 
-<meta name="date" content="2023-04-28" />
+<meta name="date" content="2023-04-29" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -280,41 +280,42 @@ div.csl-indent {
 <div id="simple-sanity-checks" class="section level3 unnumbered hasAnchor">
 <h3>Simple sanity checks<a href="how-to-use-spatialsablefishassessment.html#simple-sanity-checks" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>It is possible to configure a model that has zero gradients for parameters, and you want to check this is not the case using the</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="how-to-use-spatialsablefishassessment.html#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">check_gradients</span>(my_model)</span></code></pre></div>
-<p>Check the likelihoods are all finite. It is easy to ask the model to calculate a predicted value in a region or year that has no fish which can cause undefined behaviour in some likelihood functions.</p>
-<pre><code>if(!all(is.finite(my_model$report()$nll)))
-  print(&quot;Found Inf in log-likelihood, you will need to resolve this before optimisation&quot;)
-if(!all(!is.na(my_model$report()$nll)))
-  print(&quot;Found NA in log-likelihood, you will need to resolve this before optimisation&quot;)</code></pre>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="how-to-use-spatialsablefishassessment.html#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="do">## check gradients and NA&#39;s in likelihoods</span></span>
+<span id="cb10-2"><a href="how-to-use-spatialsablefishassessment.html#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="fu">pre_optim_sanity_checks</span>(my_model)  </span></code></pre></div>
 </div>
 </div>
 <div id="optimisation" class="section level2 unnumbered hasAnchor">
 <h2>Optimisation<a href="how-to-use-spatialsablefishassessment.html#optimisation" class="anchor-section" aria-label="Anchor link to header"></a></h2>
-<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="how-to-use-spatialsablefishassessment.html#cb12-1" aria-hidden="true" tabindex="-1"></a>mle_optim <span class="ot">=</span> <span class="fu">nlminb</span>(<span class="at">start =</span> my_model<span class="sc">$</span>par, <span class="at">objective =</span> my_model<span class="sc">$</span>fn, <span class="at">gradient  =</span> my_model<span class="sc">$</span>gr, <span class="at">control =</span> <span class="fu">list</span>(<span class="at">iter.max =</span> <span class="dv">10000</span>, <span class="at">eval.max =</span> <span class="dv">10000</span>))</span>
-<span id="cb12-2"><a href="how-to-use-spatialsablefishassessment.html#cb12-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-3"><a href="how-to-use-spatialsablefishassessment.html#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Try and improve the optimsation running the model for two additional Newton Raphson iterations</span></span>
-<span id="cb12-4"><a href="how-to-use-spatialsablefishassessment.html#cb12-4" aria-hidden="true" tabindex="-1"></a>try_improve <span class="ot">=</span> <span class="fu">tryCatch</span>(<span class="at">expr =</span></span>
-<span id="cb12-5"><a href="how-to-use-spatialsablefishassessment.html#cb12-5" aria-hidden="true" tabindex="-1"></a>                         <span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>) {</span>
-<span id="cb12-6"><a href="how-to-use-spatialsablefishassessment.html#cb12-6" aria-hidden="true" tabindex="-1"></a>                           g <span class="ot">=</span> <span class="fu">as.numeric</span>(my_model<span class="sc">$</span><span class="fu">gr</span>(mle_optim<span class="sc">$</span>par))</span>
-<span id="cb12-7"><a href="how-to-use-spatialsablefishassessment.html#cb12-7" aria-hidden="true" tabindex="-1"></a>                           h <span class="ot">=</span> <span class="fu">optimHess</span>(mle_spatial<span class="sc">$</span>par, <span class="at">fn =</span> my_model<span class="sc">$</span>fn, <span class="at">gr =</span> my_model<span class="sc">$</span>gr)</span>
-<span id="cb12-8"><a href="how-to-use-spatialsablefishassessment.html#cb12-8" aria-hidden="true" tabindex="-1"></a>                           mle_optim<span class="sc">$</span>par <span class="ot">=</span> mle_spatial<span class="sc">$</span>par <span class="sc">-</span> <span class="fu">solve</span>(h,g)</span>
-<span id="cb12-9"><a href="how-to-use-spatialsablefishassessment.html#cb12-9" aria-hidden="true" tabindex="-1"></a>                           mle_optim<span class="sc">$</span>objective <span class="ot">=</span> my_model<span class="sc">$</span><span class="fu">fn</span>(mle_optim<span class="sc">$</span>par)</span>
-<span id="cb12-10"><a href="how-to-use-spatialsablefishassessment.html#cb12-10" aria-hidden="true" tabindex="-1"></a>                         }</span>
-<span id="cb12-11"><a href="how-to-use-spatialsablefishassessment.html#cb12-11" aria-hidden="true" tabindex="-1"></a>                       , <span class="at">error =</span> <span class="cf">function</span>(e){e})</span>
-<span id="cb12-12"><a href="how-to-use-spatialsablefishassessment.html#cb12-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-13"><a href="how-to-use-spatialsablefishassessment.html#cb12-13" aria-hidden="true" tabindex="-1"></a>try_improve</span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="how-to-use-spatialsablefishassessment.html#cb11-1" aria-hidden="true" tabindex="-1"></a>mle_optim <span class="ot">=</span> <span class="fu">nlminb</span>(<span class="at">start =</span> my_model<span class="sc">$</span>par, <span class="at">objective =</span> my_model<span class="sc">$</span>fn, <span class="at">gradient  =</span> my_model<span class="sc">$</span>gr, <span class="at">control =</span> <span class="fu">list</span>(<span class="at">iter.max =</span> <span class="dv">10000</span>, <span class="at">eval.max =</span> <span class="dv">10000</span>))</span>
+<span id="cb11-2"><a href="how-to-use-spatialsablefishassessment.html#cb11-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-3"><a href="how-to-use-spatialsablefishassessment.html#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Try and improve the optimsation running the model for two additional Newton Raphson iterations</span></span>
+<span id="cb11-4"><a href="how-to-use-spatialsablefishassessment.html#cb11-4" aria-hidden="true" tabindex="-1"></a>try_improve <span class="ot">=</span> <span class="fu">tryCatch</span>(<span class="at">expr =</span></span>
+<span id="cb11-5"><a href="how-to-use-spatialsablefishassessment.html#cb11-5" aria-hidden="true" tabindex="-1"></a>                         <span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>) {</span>
+<span id="cb11-6"><a href="how-to-use-spatialsablefishassessment.html#cb11-6" aria-hidden="true" tabindex="-1"></a>                           g <span class="ot">=</span> <span class="fu">as.numeric</span>(my_model<span class="sc">$</span><span class="fu">gr</span>(mle_optim<span class="sc">$</span>par))</span>
+<span id="cb11-7"><a href="how-to-use-spatialsablefishassessment.html#cb11-7" aria-hidden="true" tabindex="-1"></a>                           h <span class="ot">=</span> <span class="fu">optimHess</span>(mle_spatial<span class="sc">$</span>par, <span class="at">fn =</span> my_model<span class="sc">$</span>fn, <span class="at">gr =</span> my_model<span class="sc">$</span>gr)</span>
+<span id="cb11-8"><a href="how-to-use-spatialsablefishassessment.html#cb11-8" aria-hidden="true" tabindex="-1"></a>                           mle_optim<span class="sc">$</span>par <span class="ot">=</span> mle_spatial<span class="sc">$</span>par <span class="sc">-</span> <span class="fu">solve</span>(h,g)</span>
+<span id="cb11-9"><a href="how-to-use-spatialsablefishassessment.html#cb11-9" aria-hidden="true" tabindex="-1"></a>                           mle_optim<span class="sc">$</span>objective <span class="ot">=</span> my_model<span class="sc">$</span><span class="fu">fn</span>(mle_optim<span class="sc">$</span>par)</span>
+<span id="cb11-10"><a href="how-to-use-spatialsablefishassessment.html#cb11-10" aria-hidden="true" tabindex="-1"></a>                         }</span>
+<span id="cb11-11"><a href="how-to-use-spatialsablefishassessment.html#cb11-11" aria-hidden="true" tabindex="-1"></a>                       , <span class="at">error =</span> <span class="cf">function</span>(e){e})</span>
+<span id="cb11-12"><a href="how-to-use-spatialsablefishassessment.html#cb11-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-13"><a href="how-to-use-spatialsablefishassessment.html#cb11-13" aria-hidden="true" tabindex="-1"></a>try_improve <span class="do">## should be NULL i.e., no error or warning otherwise suggests non-PD hessian matrix</span></span></code></pre></div>
 <div id="check-convergence" class="section level3 unnumbered hasAnchor">
 <h3>Check convergence<a href="how-to-use-spatialsablefishassessment.html#check-convergence" class="anchor-section" aria-label="Anchor link to header"></a></h3>
-<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="how-to-use-spatialsablefishassessment.html#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="do">## largest gradient </span></span>
-<span id="cb13-2"><a href="how-to-use-spatialsablefishassessment.html#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(mle_optim<span class="sc">$</span>par)[<span class="fu">which.max</span>(<span class="fu">abs</span>(my_model<span class="sc">$</span><span class="fu">gr</span>(mle_optim<span class="sc">$</span>par)))]</span></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="how-to-use-spatialsablefishassessment.html#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="do">## check PD covariance</span></span>
+<span id="cb12-2"><a href="how-to-use-spatialsablefishassessment.html#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="do">## check parameters at bounds</span></span>
+<span id="cb12-3"><a href="how-to-use-spatialsablefishassessment.html#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="do">## check final gradients</span></span>
+<span id="cb12-4"><a href="how-to-use-spatialsablefishassessment.html#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="do">## check eigen value sizes</span></span>
+<span id="cb12-5"><a href="how-to-use-spatialsablefishassessment.html#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="fu">post_optim_sanity_checks</span>(my_model)  </span></code></pre></div>
 </div>
 <div id="fixing-estimable-parameters-at-input-values" class="section level3 unnumbered hasAnchor">
 <h3>Fixing estimable parameters at input values<a href="how-to-use-spatialsablefishassessment.html#fixing-estimable-parameters-at-input-values" class="anchor-section" aria-label="Anchor link to header"></a></h3>
-<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="how-to-use-spatialsablefishassessment.html#cb14-1" aria-hidden="true" tabindex="-1"></a>?<span class="fu">fix_pars</span>()</span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="how-to-use-spatialsablefishassessment.html#cb13-1" aria-hidden="true" tabindex="-1"></a>?<span class="fu">fix_pars</span>()</span></code></pre></div>
 </div>
 <div id="sharing-parameter-estimates-among-estimable-variables-i.e.-male-and-female-having-a-common-selectivity" class="section level3 unnumbered hasAnchor">
 <h3>Sharing parameter estimates among estimable variables i.e., male and female having a common selectivity<a href="how-to-use-spatialsablefishassessment.html#sharing-parameter-estimates-among-estimable-variables-i.e.-male-and-female-having-a-common-selectivity" class="anchor-section" aria-label="Anchor link to header"></a></h3>
-<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="how-to-use-spatialsablefishassessment.html#cb15-1" aria-hidden="true" tabindex="-1"></a>?<span class="fu">set_pars_to_be_the_same</span>()</span></code></pre></div>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="how-to-use-spatialsablefishassessment.html#cb14-1" aria-hidden="true" tabindex="-1"></a>?<span class="fu">set_pars_to_be_the_same</span>()</span></code></pre></div>
+<p>For the <code>TagIntegrated</code> there is a specific function <code>set_up_parameters</code> which will set up the <code>map</code> object used by TMB’s <code>MakeADFun</code> which will fix values at input values during optimization and set shared parameters.</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="how-to-use-spatialsablefishassessment.html#cb15-1" aria-hidden="true" tabindex="-1"></a>?<span class="fu">set_up_parameters</span>()</span></code></pre></div>
 </div>
 </div>
 <div id="model-summary" class="section level2 unnumbered hasAnchor">
