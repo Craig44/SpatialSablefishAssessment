@@ -41,15 +41,8 @@ my_model = TMB::MakeADFun(data = data,
 ### Simple sanity checks {-}
 It is possible to configure a model that has zero gradients for parameters, and you want to check this is not the case using the 
 ```r
-check_gradients(my_model)
-```
-
-Check the likelihoods are all finite. It is easy to ask the model to calculate a predicted value in a region or year that has no fish which can cause undefined behaviour in some likelihood functions.
-```
-if(!all(is.finite(my_model$report()$nll)))
-  print("Found Inf in log-likelihood, you will need to resolve this before optimisation")
-if(!all(!is.na(my_model$report()$nll)))
-  print("Found NA in log-likelihood, you will need to resolve this before optimisation")
+## check gradients and NA's in likelihoods
+pre_optim_sanity_checks(my_model)  
 ```
 
 ## Optimisation {-}
@@ -67,14 +60,17 @@ try_improve = tryCatch(expr =
                          }
                        , error = function(e){e})
 
-try_improve
+try_improve ## should be NULL i.e., no error or warning otherwise suggests non-PD hessian matrix
 ```
 
-
 ### Check convergence {-}
+
 ```r
-## largest gradient 
-names(mle_optim$par)[which.max(abs(my_model$gr(mle_optim$par)))]
+## check PD covariance
+## check parameters at bounds
+## check final gradients
+## check eigen value sizes
+post_optim_sanity_checks(my_model)  
 ```
 
 
@@ -86,6 +82,11 @@ names(mle_optim$par)[which.max(abs(my_model$gr(mle_optim$par)))]
 ### Sharing parameter estimates among estimable variables i.e., male and female having a common selectivity {-}
 ```r
 ?set_pars_to_be_the_same()
+```
+
+For the `TagIntegrated` there is a specific function `set_up_parameters` which will set up the `map` object used by TMB's `MakeADFun` which will fix values at input values during optimization and set shared parameters.
+```r
+?set_up_parameters()
 ```
 
 ## Model Summary {-}

@@ -32,15 +32,14 @@ get_partition = function(MLE_report, region_key = NULL) {
   }
   return(full_df);
 }
-
 #'
-#' plot_init_nage plot initial numbers at age
+#' get_init_nage get initial numbers at age
 #' @param MLE_report a list that is output from obj$report() usually once an optimsation routine has been done.
 #' @param data list that is passed to the MakeADfun for the TMB model
 #' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
-#' @return ggplot2 object that will plot if an observation occurs in a year and region
+#' @return data.frame in long format
 #' @export
-plot_init_nage = function(MLE_report, region_key = NULL) {
+get_init_nage = function(MLE_report, region_key = NULL) {
   years = MLE_report$years
   regions = 1:MLE_report$n_regions
   ages = MLE_report$ages
@@ -59,6 +58,19 @@ plot_init_nage = function(MLE_report, region_key = NULL) {
   } else {
     full_df$Region = region_key$area[match(full_df$Region, (region_key$TMB_ndx + 1))]
   }
+
+  return(full_df)
+}
+#'
+#' plot_init_nage plot initial numbers at age
+#' @param MLE_report a list that is output from obj$report() usually once an optimsation routine has been done.
+#' @param data list that is passed to the MakeADfun for the TMB model
+#' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
+#' @return ggplot2 object that will plot if an observation occurs in a year and region
+#' @export
+plot_init_nage = function(MLE_report, region_key = NULL) {
+  full_df = get_init_nage(MLE_report, region_key)
+
   gplt = ggplot(full_df) +
     geom_line(aes(x = Age, y = Numbers, col = sex, linetype = sex), linewidth= 1.1) +
     guides( linewidth = "none", linetype = "none") +

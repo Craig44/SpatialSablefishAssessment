@@ -394,7 +394,9 @@ knitr::opts_chunk$set(warning = FALSE, message = FALSE)
       full_sim_resid_fixed_AF = calculate_simulated_residuals(sim_ob = sim_obs$sim_fixed_AF, type = "AF")
       full_sim_resid_fixed_LF = calculate_simulated_residuals(sim_ob = sim_obs$sim_fixed_LF, type = "LF")
       full_sim_resid_trwl_LF = calculate_simulated_residuals(sim_ob = sim_obs$sim_trwl_LF, type = "LF")
-      full_sim_resid_tag_recovery = calculate_simulated_residuals(sim_ob = sim_obs$sim_tag_recovery, type = "tag-recovery")
+      if(sum(mle_report$tag_recovery_indicator_by_year) != 0 & sum(mle_report$tag_recovery_indicator) != 0) {
+        full_sim_resid_tag_recovery = calculate_simulated_residuals(sim_ob = sim_obs$sim_tag_recovery, type = "tag-recovery")
+      }
       '
       write(create_resids, file = model_input_file, append = T)
       ## plot them
@@ -407,8 +409,10 @@ knitr::opts_chunk$set(warning = FALSE, message = FALSE)
       summarise_LF_quant_resids(LF_sim_resids = full_sim_resid_trwl_LF, sex = "F", obs_label = "Trawl LF")
       summarise_LF_quant_resids(LF_sim_resids = full_sim_resid_fixed_LF, sex = "M", obs_label = "Fixed LF")
       summarise_LF_quant_resids(LF_sim_resids = full_sim_resid_fixed_LF, sex = "F", obs_label = "Fixed LF")
-      summarise_tag_quant_resids(tag_sim_resids = full_sim_resid_tag_recovery, T)
-      summarise_tag_quant_resids(tag_sim_resids = full_sim_resid_tag_recovery, F)
+      if(sum(mle_report$tag_recovery_indicator_by_year) != 0 & sum(mle_report$tag_recovery_indicator) != 0) {
+        summarise_tag_quant_resids(tag_sim_resids = full_sim_resid_tag_recovery, T)
+        summarise_tag_quant_resids(tag_sim_resids = full_sim_resid_tag_recovery, F)
+      }
 
       '
       write(plot_quant_resids, file = model_input_file, append = T)
@@ -929,7 +933,14 @@ ggplot(data = mean_length_df %>% dplyr::filter(observation == "trwl")) +
   write(recruit, file = model_input_file, append = T)
   write("```\n\n", file = model_input_file, append = T)
 
+  write("## Initial numbers at age", file = model_input_file, append = T)
+  write("```{r Initnage, eval = T, echo = F, results = T, out.width =  '100%', fig.height = 8}", file = model_input_file, append = T)
+  init_nage =
+    '
 
+  '
+  write(init_nage, file = model_input_file, append = T)
+  write("```\n\n", file = model_input_file, append = T)
 
   write("## Fishing Mortality", file = model_input_file, append = T)
 

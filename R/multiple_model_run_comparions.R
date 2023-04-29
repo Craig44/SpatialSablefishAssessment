@@ -187,7 +187,38 @@ get_multiple_Bzeros <- function(mle_ls, run_labels = NULL, region_key = NULL) {
   return(full_Bzero_df)
 }
 
+#' get_multiple_init_nage
+#'
+#' @param mle_ls list with multiple obj$report() calls
+#' @param run_labels vector of strings that are labels for each element in mle_ls
+#' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
+#' @return data frame with initial numbers at age
+#' @export
+get_multiple_init_nage <- function(mle_ls, run_labels = NULL, region_key = NULL) {
+  if(!is.null(run_labels)) {
+    if(length(run_labels) != length(mle_ls))
+      stop(paste0("Number of models provided ", length(mle_ls), ", number of run labels ", length(run_labels), " these need to be the same"))
+  }
 
+
+  full_init_nage_df = NULL
+  for(i in 1:length(mle_ls)) {
+    if(is.null(mle_ls[[i]])) {
+      cat("report at element ", i, " was null, so skipping\n")
+      next;
+    }
+
+    this_init_age = get_init_nage(mle_ls[[i]], region_key)
+    if(!is.null(run_labels)) {
+      this_init_age$label = run_labels[i]
+    } else {
+      this_init_age$label = i
+    }
+    full_init_nage_df = rbind(full_init_nage_df, this_init_age)
+  }
+  full_init_nage_df$label = factor(full_init_nage_df$label)
+  return(full_init_nage_df)
+}
 #' get_multiple_catchabilities
 #'
 #' @param mle_ls list with multiple obj$report() calls

@@ -285,6 +285,7 @@ get_other_derived_quantities <- function(MLE_report, data, region_key = NULL) {
                              theta_trwl_catchatlgth = MLE_report$theta_trwl_catchatlgth,
                              theta_srv_catchatage = MLE_report$theta_srv_dom_ll_catchatage,
                              sigma_R = MLE_report$sigma_R,
+                             sigma_init_age_devs = MLE_report$sigma_init_devs,
                              catch_sd = MLE_report$catch_sd,
                              apply_fixed_movement = MLE_report$apply_fixed_movement,
                              do_recruits_move = data$do_recruits_move,

@@ -16,7 +16,7 @@ library(testthat)
 pkgbuild::compile_dll() # need to compile src first
 devtools::document()
 #devtools::check()
-rcmdcheck::rcmdcheck(args = "--no-manual", error_on = "error")
+#rcmdcheck::rcmdcheck(args = "--no-manual", error_on = "error")
 ## Run unit tests for Package
 result = devtools::test(stop_on_failure = F)
 

@@ -770,9 +770,13 @@ calculate_simulated_residuals <- function(sim_ob, type = "abundance") {
       this_sim_obs = sim_ob %>% filter(release_event == rel_event[r], sim == 1) %>% ungroup() %>% dplyr::select(Observed)
       rec_event = sim_ob %>% ungroup() %>% filter(release_event == rel_event[r], sim == 1) %>% dplyr::select(recovery_event)
 
-      this_dharma = suppressMessages(createDHARMa(simulatedResponse = as.matrix(this_sim_vals), observedResponse = this_sim_obs$Observed, integerResponse = T))
-      this_scaled_df = data.frame(scaled_resids = this_dharma$scaledResiduals, qnorm_transformed_scaled_resids = qnorm(this_dharma$scaledResiduals), observed = this_dharma$observedResponse, mean_sim_vals = this_dharma$fittedPredictedResponse, recovery_event = rec_event, release_event = rel_event[r])
-      full_simualted_resids = rbind(full_simualted_resids, this_scaled_df)
+      if(length(this_sim_obs$Observed) < 3) {
+        cat("skipping simulated obs for release event ", rel_event[r], ". The DHarama package wont calculate residauls when number of observations < 3. Found ", length(this_sim_obs$Observed), "\n")
+      } else {
+        this_dharma = suppressMessages(createDHARMa(simulatedResponse = as.matrix(this_sim_vals), observedResponse = this_sim_obs$Observed, integerResponse = T))
+        this_scaled_df = data.frame(scaled_resids = this_dharma$scaledResiduals, qnorm_transformed_scaled_resids = qnorm(this_dharma$scaledResiduals), observed = this_dharma$observedResponse, mean_sim_vals = this_dharma$fittedPredictedResponse, recovery_event = rec_event, release_event = rel_event[r])
+        full_simualted_resids = rbind(full_simualted_resids, this_scaled_df)
+      }
     }
     full_simualted_resids$recovery_region = Reduce(c, lapply(strsplit(full_simualted_resids$recovery_event, split = "-"), FUN = function(x){x[2]}))
     full_simualted_resids$recovery_year = Reduce(c, lapply(strsplit(full_simualted_resids$recovery_event, split = "-"), FUN = function(x){x[1]}))

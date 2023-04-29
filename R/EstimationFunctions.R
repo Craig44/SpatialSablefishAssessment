@@ -258,8 +258,13 @@ set_up_parameters <- function(data, parameters,
       parameters_completely_fixed = c(parameters_completely_fixed, c("trans_SR_pars"))
   }
   # trun off init F if not estimating it
-  if(!est_init_F)
+  if(!est_init_F) {
     parameters_completely_fixed = c(parameters_completely_fixed, c("ln_init_F_avg"))
+    if( data$F_method == 1){
+      if(data$prop_F_hist != 0)
+        warning("Estimation of init F is off. If you don't want F-init to be applied then it is advised you set 'data$prop_F_hist = 0'. Otherwise there may be a small amount of F-init being applied.")
+    }
+  }
   # trun off sd catch if not estimating it
   if(!est_catch_sd)
     parameters_completely_fixed = c(parameters_completely_fixed, c("ln_catch_sd"))
