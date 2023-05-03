@@ -1578,6 +1578,7 @@ Type TagIntegrated(objective_function<Type>* obj) {
   REPORT(mean_rec);
   REPORT(recruitment_multipliers);
   REPORT( SR_pars );
+  REPORT( SrType );
   REPORT( recruitment_devs );
   REPORT(init_rec_dev);
   REPORT(Bzero);

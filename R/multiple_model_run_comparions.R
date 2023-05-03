@@ -49,6 +49,8 @@ get_multiple_tag_reporting_rates <- function(mle_ls, run_labels = NULL, region_k
       next;
     }
     this_report_rate = get_tag_reporting_rate(MLE_report = mle_ls[[i]], region_key = region_key)
+    if(is.null(this_report_rate))
+      next;
     if(!is.null(run_labels)) {
       this_report_rate$label = run_labels[i]
     } else {

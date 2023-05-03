@@ -386,6 +386,9 @@ get_tag_reporting_rate <- function(MLE_report, region_key = NULL) {
   dimnames(MLE_report$tag_reporting_rate) = list(region_label, recovery_years)
   molten_report_rates = reshape2::melt(MLE_report$tag_reporting_rate)
   colnames(molten_report_rates) = c("Region", "Year", "ReportingRate")
+  ## no recovery events so no reporting rates
+  if(length(recovery_years) == 0)
+    return(NULL)
   return(molten_report_rates)
 }
 

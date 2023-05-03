@@ -1628,6 +1628,7 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
    */
   REPORT(nll);
   REPORT(mean_rec);
+  REPORT( SrType );
   REPORT(recruitment_multipliers);
   REPORT( recruitment_devs );
   REPORT(init_rec_dev);

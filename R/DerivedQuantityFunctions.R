@@ -289,7 +289,8 @@ get_other_derived_quantities <- function(MLE_report, data, region_key = NULL) {
                              catch_sd = MLE_report$catch_sd,
                              apply_fixed_movement = MLE_report$apply_fixed_movement,
                              do_recruits_move = data$do_recruits_move,
-                             evaluate_tag_likelihood = data$evaluate_tag_likelihood
+                             evaluate_tag_likelihood = data$evaluate_tag_likelihood,
+                             SR = ifelse(data$SrType == 2, "BH", "NO SR")
                              )
 
   ## spatial_scalars

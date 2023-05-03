@@ -937,7 +937,22 @@ ggplot(data = mean_length_df %>% dplyr::filter(observation == "trwl")) +
   write("```{r Initnage, eval = T, echo = F, results = T, out.width =  '100%', fig.height = 8}", file = model_input_file, append = T)
   init_nage =
     '
-
+    init_nage = get_multiple_init_nage(mle_ls = mle_ls, run_labels = names(mle_ls), region_key = region_key);
+    ggplot() +
+      geom_line(data = init_nage, aes(x = Age, y = Numbers, col = label, linetype = label), linewidth = 1) +
+      labs(x = "Year", y = "Initial numbers at age", col = "", linetype= "") +
+      ylim(0,NA)+
+      facet_wrap(~Region) +
+      ggtitle("Initial numbers at age") +
+      theme_bw() +
+      theme(legend.position = "bottom",
+            axis.text = element_text(size = 14),
+            axis.title = element_text(size = 14),
+            strip.text = element_text(size=14),
+            plot.title = element_text(size = 20, face = "bold"),
+            legend.text = element_text(size=14)) +
+      scale_color_manual(values = obs_pallete[-1]) +
+      guides(linetype = "none")
   '
   write(init_nage, file = model_input_file, append = T)
   write("```\n\n", file = model_input_file, append = T)
@@ -1021,6 +1036,7 @@ ggplot(data = mean_length_df %>% dplyr::filter(observation == "trwl")) +
       labs(x = "Tag recovery year", y = "", col = "", linetype= "") +
       facet_wrap(~Region) +
       ggtitle("Tag reporting rates") +
+      ylim(0,NA)+
       theme_bw() +
       theme(legend.position = "bottom",
             axis.text = element_text(size = 14),
