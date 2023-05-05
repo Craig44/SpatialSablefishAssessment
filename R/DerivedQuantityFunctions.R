@@ -171,12 +171,25 @@ get_recruitment = function(MLE_report, region_key = NULL) {
   projyears = min(MLE_report$years):(max(MLE_report$years) + MLE_report$n_projections_years)
 
   dimnames(MLE_report$recruitment_yr) = list(projyears, regions)
+  dimnames(MLE_report$recruitment_devs) = list(regions, projyears)
+  dimnames(MLE_report$recruitment_multipliers) = list(regions, projyears)
+
   names(MLE_report$mean_rec) = regions
   recruit_df = reshape2::melt(MLE_report$recruitment_yr)
+  recruit_dev_df = reshape2::melt(MLE_report$recruitment_devs)
+  recruit_ycs_df = reshape2::melt(MLE_report$recruitment_multipliers)
+
+
   mean_recruit_df = reshape2::melt(as.matrix(MLE_report$mean_rec))
   colnames(recruit_df) = c("Year","Region", "Recruitment")
+  colnames(recruit_dev_df) = c("Region", "Year", "Recruitment_deviation")
+  colnames(recruit_ycs_df) = c("Region", "Year", "YCS")
+
+  recruit_df$Recruitment_devs = recruit_dev_df
   colnames(mean_recruit_df) = c("Region", "row_ndx","Mean_recruitment")
   recruit_df = recruit_df %>% dplyr::inner_join(mean_recruit_df)
+  recruit_df = recruit_df %>% dplyr::inner_join(recruit_dev_df)
+  recruit_df = recruit_df %>% dplyr::inner_join(recruit_ycs_df)
 
   return(recruit_df)
 }

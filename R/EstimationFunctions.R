@@ -176,7 +176,7 @@ fix_pars <- function(par_list, pars_to_exclude, vec_elements_to_exclude = NULL, 
 #' @param trwl_sel_first_shared_by_sex bool, whether the first trawl gear selectivity parameter is shared among male and female for all time-blocks
 #' @param trwl_sel_second_shared_by_sex bool, whether the second trawl gear selectivity parameter is shared among male and female for all time-blocks
 #' @param trwl_sel_third_shared_by_sex bool, whether the third trawl gear selectivity parameter is shared among male and female for all time-blocks
-#' @param recruit_dev_years_not_to_estimate vector of years that are not estimated.
+#' @param recruit_dev_years_not_to_estimate vector of years that are not estimated. if `data$rec_devs_sum_to_zero` don't include the last year as this assumes n-1 parameters
 #' @param srv_q_spatial whether regional Q's exist
 #' @param tag_reporting_rate how to deal with tag-reporting rate will be ignored if there are no tag-recovery observations.
 #' \itemize{
@@ -500,14 +500,27 @@ set_up_parameters <- function(data, parameters,
 
   ## deal with recruit devs
   if(!is.null(recruit_dev_years_not_to_estimate)) {
-    yr_ndx = which(data$years %in% recruit_dev_years_not_to_estimate)
+    if(data$rec_devs_sum_to_zero == 0) {
+      yr_ndx = which(data$years %in% recruit_dev_years_not_to_estimate)
 
-    if(data$global_rec_devs == 1) {
-      ln_rec_dev_elements_to_fix = matrix(c(rep(1, length(yr_ndx)), yr_ndx), byrow = F, ncol = 2)
+      if(data$global_rec_devs == 1) {
+        ln_rec_dev_elements_to_fix = matrix(c(rep(1, length(yr_ndx)), yr_ndx), byrow = F, ncol = 2)
+      } else {
+        ln_rec_dev_elements_to_fix = matrix(c(rep(1:data$n_regions, each = length(yr_ndx)), rep(yr_ndx, data$n_regions)), byrow = F, ncol = 2)
+      }
+      arrays_with_elements_fixed[["trans_rec_dev"]] = ln_rec_dev_elements_to_fix
     } else {
-      ln_rec_dev_elements_to_fix = matrix(c(rep(1:data$n_regions, each = length(yr_ndx)), rep(yr_ndx, data$n_regions)), byrow = F, ncol = 2)
+      if(!all(recruit_dev_years_not_to_estimate %in% data$years[-length(data$years)])) {
+        stop("Wrong years supplied for recruit_dev_years_not_to_estimate, you have specified rec_devs_sum_to_zero == 0, which means years needs to exclude the last one")
+      }
+      yr_ndx = which(data$years[-length(data$years)] %in% recruit_dev_years_not_to_estimate)
+      if(data$global_rec_devs == 1) {
+        ln_rec_dev_elements_to_fix = matrix(c(rep(1, length(yr_ndx)), yr_ndx), byrow = F, ncol = 2)
+      } else {
+        ln_rec_dev_elements_to_fix = matrix(c(rep(1:data$n_regions, each = length(yr_ndx)), rep(yr_ndx, data$n_regions)), byrow = F, ncol = 2)
+      }
+      arrays_with_elements_fixed[["trans_rec_dev"]] = ln_rec_dev_elements_to_fix
     }
-    arrays_with_elements_fixed[["trans_rec_dev"]] = ln_rec_dev_elements_to_fix
   }
   ## are we sharing selectivity parameters
   base_srv_sel_param_vals = list()

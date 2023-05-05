@@ -58,7 +58,7 @@ set_up_parameters(
 
 \item{trwl_sel_third_shared_by_sex}{bool, whether the third trawl gear selectivity parameter is shared among male and female for all time-blocks}
 
-\item{recruit_dev_years_not_to_estimate}{vector of years that are not estimated.}
+\item{recruit_dev_years_not_to_estimate}{vector of years that are not estimated. if \code{data$rec_devs_sum_to_zero} don't include the last year as this assumes n-1 parameters}
 
 \item{srv_q_spatial}{whether regional Q's exist}
 
