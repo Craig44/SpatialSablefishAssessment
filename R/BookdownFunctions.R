@@ -248,9 +248,9 @@ knitr::opts_chunk$set(warning = FALSE, message = FALSE)
     param_code =
       '
       other_params = get_other_derived_quantities(MLE_report = mle_report, data = data, region_key = region_key)
-      other_params$catchabilities$q = other_params$catchabilities$q / 1000
+      other_params$catchabilities$q = other_params$catchabilities$q
       knitr::kable(other_params$catchabilities, row.names = NA, digits = 2, caption = "Estimated survey catchability coeffecients")
-      knitr::kable(cbind(names(other_params$scalar_quants), as.numeric(round(other_params$scalar_quants, 3))), colnames = c("Parameter", "Value"),row.names = NA, digits = 2, caption = "Estimable scalar parameters")
+      knitr::kable(cbind(names(other_params$scalar_quants), Reduce(c, as.vector(other_params$scalar_quants))), colnames = c("Parameter", "Value"),row.names = NA, digits = 2, caption = "Estimable scalar parameters")
       knitr::kable(other_params$spatial_params, colnames = NA,row.names = NA, digits = 2, caption = "Estimable spatial parameters/derived quantities")
       knitr::kable(other_params$tag_reporting_rate, colnames = NA,row.names = NA, digits = 2, caption = "Tag reporting rate parameters")
     '
@@ -413,7 +413,6 @@ knitr::opts_chunk$set(warning = FALSE, message = FALSE)
         summarise_tag_quant_resids(tag_sim_resids = full_sim_resid_tag_recovery, T)
         summarise_tag_quant_resids(tag_sim_resids = full_sim_resid_tag_recovery, F)
       }
-
       '
       write(plot_quant_resids, file = model_input_file, append = T)
 
@@ -933,6 +932,33 @@ ggplot(data = mean_length_df %>% dplyr::filter(observation == "trwl")) +
   write(recruit, file = model_input_file, append = T)
   write("```\n\n", file = model_input_file, append = T)
 
+  write("## Recruitment YCS", file = model_input_file, append = T)
+
+  write("```{r recuitmentYCS, eval = T, echo = F, results = T, out.width =  '100%', fig.height = 8}", file = model_input_file, append = T)
+  recruit_ycs =
+    '
+    recruit_df = get_multiple_recruits(mle_ls = mle_ls, run_labels = names(mle_ls), region_key = region_key)
+    ggplot() +
+      geom_line(data = recruit_df, aes(x = Year, y = YCS, col = label, linetype = label), linewidth = 1) +
+      labs(x = "Year", y = "Year class strength multipliers (YCS)", col = "", linetype= "") +
+      facet_wrap(~Region) +
+      ylim(0,NA)+
+      geom_hline(yintercept = 1, linetype = "dashed", linewidth = 1.1) +
+      ggtitle("Year class strength multipliers (YCS)") +
+      theme_bw() +
+      theme(legend.position = "bottom",
+            axis.text = element_text(size = 14),
+            axis.title = element_text(size = 14),
+            strip.text = element_text(size=14),
+            plot.title = element_text(size = 20, face = "bold"),
+            legend.text = element_text(size=14)) +
+      scale_color_manual(values = obs_pallete[-1]) +
+      guides(linetype = "none")
+
+    '
+  write(recruit_ycs, file = model_input_file, append = T)
+  write("```\n\n", file = model_input_file, append = T)
+
   write("## Initial numbers at age", file = model_input_file, append = T)
   write("```{r Initnage, eval = T, echo = F, results = T, out.width =  '100%', fig.height = 8}", file = model_input_file, append = T)
   init_nage =
@@ -1026,30 +1052,33 @@ ggplot(data = mean_length_df %>% dplyr::filter(observation == "trwl")) +
   write("```\n\n", file = model_input_file, append = T)
 
 
-  write("## Tag reporting rates", file = model_input_file, append = T)
-  write("```{r tagreportrates, eval = T, echo = F, results = T, out.width =  '100%', fig.height = 8}", file = model_input_file, append = T)
-  report_rate =
-    '
-    report_df = get_multiple_tag_reporting_rates(mle_ls = mle_ls, run_labels = names(mle_ls), region_key = region_key)
-    ggplot() +
-      geom_line(data = report_df, aes(x = Year, y = ReportingRate, col = label, linetype = label), linewidth = 1) +
-      labs(x = "Tag recovery year", y = "", col = "", linetype= "") +
-      facet_wrap(~Region) +
-      ggtitle("Tag reporting rates") +
-      ylim(0,NA)+
-      theme_bw() +
-      theme(legend.position = "bottom",
-            axis.text = element_text(size = 14),
-            axis.title = element_text(size = 14),
-            strip.text = element_text(size=14),
-            plot.title = element_text(size = 20, face = "bold"),
-            legend.text = element_text(size=14)) +
-      scale_color_manual(values = obs_pallete[-1]) +
-      guides(linetype = "none")
+    write("## Tag reporting rates", file = model_input_file, append = T)
+    write("```{r tagreportrates, eval = T, echo = F, results = T, out.width =  '100%', fig.height = 8}", file = model_input_file, append = T)
+    report_rate =
+      '
+      report_df = get_multiple_tag_reporting_rates(mle_ls = mle_ls, run_labels = names(mle_ls), region_key = region_key)
+      if(!is.null(report_df)) {
+        ggplot() +
+          geom_line(data = report_df, aes(x = Year, y = ReportingRate, col = label, linetype = label), linewidth = 1) +
+          labs(x = "Tag recovery year", y = "", col = "", linetype= "") +
+          facet_wrap(~Region) +
+          ggtitle("Tag reporting rates") +
+          ylim(0,NA)+
+          theme_bw() +
+          theme(legend.position = "bottom",
+                axis.text = element_text(size = 14),
+                axis.title = element_text(size = 14),
+                strip.text = element_text(size=14),
+                plot.title = element_text(size = 20, face = "bold"),
+                legend.text = element_text(size=14)) +
+          scale_color_manual(values = obs_pallete[-1]) +
+          guides(linetype = "none")
+      }
 
-    '
-  write(report_rate, file = model_input_file, append = T)
-  write("```\n\n", file = model_input_file, append = T)
+      '
+    write(report_rate, file = model_input_file, append = T)
+    write("```\n\n", file = model_input_file, append = T)
+
 
   write("# Other Parameters", file = model_input_file, append = T)
   write("```{r otherParams, eval = T, echo = F, results = T, out.width =  '100%', fig.height = 8, message = F}", file = model_input_file, append = T)
@@ -1058,13 +1087,13 @@ ggplot(data = mean_length_df %>% dplyr::filter(observation == "trwl")) +
       q_df = scalar_df = spatial_quants_df = tag_reporting_df = NULL
       for(i in 1:length(mle_ls)) {
         other_params = get_other_derived_quantities(MLE_report = mle_ls[[i]], data = data_ls[[i]], region_key = region_key)
-        other_params$catchabilities$q = other_params$catchabilities$q / 1000
+        other_params$catchabilities$q = other_params$catchabilities$q
         other_params$catchabilities$model = names(mle_ls)[i]
-        temp_scalar_df = data.frame(values = as.numeric(other_params$scalar_quants), parameter = colnames(other_params$scalar_quants), model = names(mle_ls)[i])
-        other_params$spatial_params$model= names(mle_ls)[i]
+        temp_scalar_df = data.frame(values = Reduce(c, as.vector(other_params$scalar_quants[1,])), parameter = colnames(other_params$scalar_quants), model = names(mle_ls)[i])
         temp_tag_report_df = data.frame(time_block = paste0("block-", 1:length(other_params$tag_reporting_rate)), value = other_params$tag_reporting_rate, model = names(mle_ls)[i])
 
         tag_reporting_df = rbind(tag_reporting_df, temp_tag_report_df)
+        other_params$spatial_params$model = names(mle_ls)[i]
         spatial_quants_df = rbind(spatial_quants_df, other_params$spatial_params)
         scalar_df = rbind(scalar_df, temp_scalar_df)
         q_df = rbind(q_df, other_params$catchabilities)

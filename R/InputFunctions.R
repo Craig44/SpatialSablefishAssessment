@@ -36,6 +36,7 @@ plot_input_catches = function(data, region_key = NULL) {
 #' @param data list that is passed to the MakeADfun for the TMB model
 #' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
 #' @return data.frame when observation occurs in a year and region
+#' @importFrom dplyr bind_rows
 #' @export
 get_input_observations = function(data, region_key = NULL) {
   years = data$years
@@ -84,6 +85,20 @@ get_input_observations = function(data, region_key = NULL) {
 
   full_df$indicator = ifelse(full_df$indicator == 0, NA, 1)
 
+  fixed_catch = trawl_catch = expand.grid(years, unique(full_df$Region))
+  colnames(fixed_catch) = colnames(trawl_catch) = c("Year", "Region")
+  fixed_catch$indicator = 1
+  trawl_catch$indicator = 1
+  fixed_catch$indicator = 1
+  trawl_catch$indicator = 1
+  trawl_catch$label = "Trawl catch"
+  fixed_catch$label = "Fixed catch"
+  full_df = bind_rows(full_df, trawl_catch, fixed_catch)
+
+  possible_labels = c("Fixed catch", "Trawl catch", "Survey LL Biomass", "Fishery Fixed AF", "Survey LL AF", "Fishery Fixed LF", "Fishery Trawl LF", "Tag recovery", "Tag Releases")
+  actual_labels = unique(full_df$label)
+  full_df$label = factor(full_df$label, levels = rev(possible_labels[possible_labels %in% actual_labels]), ordered = T)
+
   return(full_df)
 }
 
@@ -102,7 +117,11 @@ plot_input_observations = function(data, region_key = NULL) {
     guides(colour = "none", size = "none") +
     labs(y = "") +
     facet_wrap(~Region, ncol = 1) +
-    theme_bw()
+    theme_bw() +
+    theme(
+      axis.text = element_text(size = 14),
+      axis.title = element_text(size = 14)
+    )
   return(gplt)
 }
 

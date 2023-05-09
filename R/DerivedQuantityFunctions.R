@@ -187,9 +187,9 @@ get_recruitment = function(MLE_report, region_key = NULL) {
 
   recruit_df$Recruitment_devs = recruit_dev_df
   colnames(mean_recruit_df) = c("Region", "row_ndx","Mean_recruitment")
-  recruit_df = recruit_df %>% dplyr::inner_join(mean_recruit_df)
-  recruit_df = recruit_df %>% dplyr::inner_join(recruit_dev_df)
-  recruit_df = recruit_df %>% dplyr::inner_join(recruit_ycs_df)
+  recruit_df = recruit_df %>% dplyr::inner_join(mean_recruit_df, by = "Region")
+  recruit_df = recruit_df %>% dplyr::inner_join(recruit_dev_df, by = c("Region", "Year"))
+  recruit_df = recruit_df %>% dplyr::inner_join(recruit_ycs_df, by = c("Region", "Year"))
 
   return(recruit_df)
 }
@@ -291,15 +291,15 @@ get_other_derived_quantities <- function(MLE_report, data, region_key = NULL) {
   colnames(molten_catchabilties) = c("Region", "time-block", "q")
 
   ## Scalar model quantities
-  scalar_quants = data.frame(F_init = MLE_report$init_F_hist,
+  scalar_quants = data.frame(F_init = round(MLE_report$init_F_hist, 3),
                              tag_phi = MLE_report$tag_phi,
                              theta_fixed_catchatlgth = MLE_report$theta_fixed_catchatlgth,
                              theta_fixed_catchatage = MLE_report$theta_fixed_catchatage,
                              theta_trwl_catchatlgth = MLE_report$theta_trwl_catchatlgth,
                              theta_srv_catchatage = MLE_report$theta_srv_dom_ll_catchatage,
-                             sigma_R = MLE_report$sigma_R,
-                             sigma_init_age_devs = MLE_report$sigma_init_devs,
-                             catch_sd = MLE_report$catch_sd,
+                             sigma_R = round(MLE_report$sigma_R,3),
+                             sigma_init_age_devs = round(MLE_report$sigma_init_devs,3),
+                             catch_sd = round(MLE_report$catch_sd, 3),
                              apply_fixed_movement = MLE_report$apply_fixed_movement,
                              do_recruits_move = data$do_recruits_move,
                              evaluate_tag_likelihood = data$evaluate_tag_likelihood,
@@ -307,7 +307,7 @@ get_other_derived_quantities <- function(MLE_report, data, region_key = NULL) {
                              )
 
   ## spatial_scalars
-  spatial_params = data.frame(Region = Region_lab, Bzero = MLE_report$Bzero, Binit = MLE_report$Binit, Bzero_recent_growth = MLE_report$Bzero_w_recent_growth)
+  spatial_params = data.frame(Region = Region_lab, Bzero = MLE_report$Bzero, Binit = MLE_report$Binit, Bzero_recent_growth = MLE_report$Bzero_w_recent_growth, R0 = MLE_report$mean_rec)
 
   ## tag stuff
   tag_reporting_rate = unique(as.numeric(MLE_report$tag_reporting_rate))

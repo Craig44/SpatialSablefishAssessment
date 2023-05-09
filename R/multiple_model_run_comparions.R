@@ -58,6 +58,8 @@ get_multiple_tag_reporting_rates <- function(mle_ls, run_labels = NULL, region_k
     }
     full_report_rate_df = rbind(full_report_rate_df, this_report_rate)
   }
+  if(is.null(full_report_rate_df))
+    return(full_report_rate_df)
   full_report_rate_df$label = factor(full_report_rate_df$label)
   return(full_report_rate_df)
 }

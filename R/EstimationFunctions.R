@@ -819,7 +819,7 @@ pre_optim_sanity_checks <- function(obj) {
   ## return a pass or fail message
   cat("\n\n");
   if(passed_pre_sanity_checks) {
-    cat("Successfully passed pre-sanity checks\n")
+    cat("Successfully passed pre-optim sanity checks\n")
     return(TRUE)
   }
 
@@ -877,7 +877,7 @@ post_optim_sanity_checks <- function(mle_obj, mle_pars, max_abs_gradient = 0.000
   } else {
     ## invert hessian
     if(!is_matrix_invertable(calculate_hessian)) {
-      cat("Hessian matrix not invertible: probably due to singularity. Check the eigen values to find possible problematic parameters\n")
+      cat("Hessian matrix not invertible (not positive definite): probably due to singularity. Check the eigen values to find possible problematic parameters\n")
       passed_post_sanity_checks = F
     }
     ## look at eigen values
