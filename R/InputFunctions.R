@@ -25,7 +25,9 @@ plot_input_catches = function(data, region_key = NULL) {
     guides( linewidth = "none") +
     labs(y = "Catch", col = "Fishery", linetype = "Fishery") +
     facet_wrap(~Region) +
-    theme_bw()
+    theme_bw() +
+    theme(axis.text = element_text(size = 13),
+          axis.title = element_text(size = 13))
   return(gplt)
 }
 
@@ -147,7 +149,9 @@ plot_input_timeblocks = function(data) {
     geom_point(aes(x = Year, y = label, col = time_block, fill = time_block), size = 3) +
     guides(size = "none", fill = "none") +
     labs(x = "Year", y = "", col = "Time block") +
-    theme_bw()
+    theme_bw() +
+    theme(axis.text = element_text(size = 13),
+          axis.title = element_text(size = 13))
   return(gplt)
 }
 

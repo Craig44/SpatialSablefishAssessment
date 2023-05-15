@@ -968,7 +968,7 @@ ggplot(data = mean_length_df %>% dplyr::filter(observation == "trwl")) +
       geom_line(data = init_nage, aes(x = Age, y = Numbers, col = label, linetype = label), linewidth = 1) +
       labs(x = "Year", y = "Initial numbers at age", col = "", linetype= "") +
       ylim(0,NA)+
-      facet_wrap(~Region) +
+      facet_grid(Region~sex) +
       ggtitle("Initial numbers at age") +
       theme_bw() +
       theme(legend.position = "bottom",
