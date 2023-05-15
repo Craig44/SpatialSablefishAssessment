@@ -1390,19 +1390,20 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   Type n_rec_devs = 0.0;
   for(region_ndx = 0; region_ndx < trans_rec_dev.dim(0); ++region_ndx) {
     for(year_ndx = 0; year_ndx < trans_rec_dev.dim(1); ++year_ndx) {
-      nll(8) += square(trans_rec_dev(region_ndx, year_ndx) - sigma_R_sq / 2.0)/(2.0* sigma_R_sq);
-      n_rec_devs += 1.0;
+      // Previous code
+      // nll(8) += square(trans_rec_dev(region_ndx, year_ndx) - sigma_R_sq / 2.0)/(2.0* sigma_R_sq);
+      // New Code cleaner
+      nll(8) -= dnorm(recruitment_devs(region_ndx, year_ndx), Type(0.0), sigma_R, 1);
+      // Note the 0.5sigma^2 has been adjustment for when transforming recruit devs -> recruit multipliers i.e. Year class strengths (YCS)
+
     }
   }
-  nll(8) += (n_rec_devs) * ln_sigma_R;
-  // Init-dev Penalty
+  // Init-dev Prior/Penalty
   if(n_init_rec_devs > 0) {
-    n_rec_devs = 0.0;
     for(int i = 0; i < ln_init_rec_dev.size(); ++i) {
-      nll(9) += square(ln_init_rec_dev(i) - sigma_init_devs_sq / 2.0)/(2.0* sigma_init_devs_sq);
-      n_rec_devs += 1.0;
+      //nll(9) += square(ln_init_rec_dev(i) - sigma_init_devs_sq / 2.0)/(2.0* sigma_init_devs_sq);
+      nll(9) -= dnorm(ln_init_rec_dev(i), Type(0.0), sigma_init_devs, 1);
     }
-    nll(9) += (n_rec_devs) * ln_sigma_init_devs;
   }
   // pos fun penalty for
   nll(10) = pen_posfun;

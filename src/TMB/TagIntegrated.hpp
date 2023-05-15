@@ -3,7 +3,7 @@
  * Alaska Fisheries Science Center, October 2022
  * Written by C Marsh craig.marsh10@gmail.com
  * This follows on from the current assessment that was originally written by
- * D. Hanselman:dana.hanselman@noaa.gov
+ * D. Hanselman:dana.hanselman@noaa.gov (Blame him for kicking off this legacy code)
  * UPDATED (and commented)  by D. Goethel: daniel.goethel@noaa.gov   (10/15/20)
  * Tips
  * - TMB indicies start at 0 (i.e., like C++) where as ADMB starts at 1 (i.e., like R)
@@ -1327,24 +1327,22 @@ Type TagIntegrated(objective_function<Type>* obj) {
     }
   }
 
-  // Recruitment Penalty
-  Type n_rec_devs = 0.0;
+  // Recruitment Prior/Penalty
   for(region_ndx = 0; region_ndx < trans_rec_dev.dim(0); ++region_ndx) {
     for(year_ndx = 0; year_ndx < trans_rec_dev.dim(1); ++year_ndx) {
-      nll(8) += square(trans_rec_dev(region_ndx, year_ndx) - sigma_R_sq / 2.0)/(2.0* sigma_R_sq);
-      n_rec_devs += 1.0;
+      // Previous code
+      // nll(8) += square(trans_rec_dev(region_ndx, year_ndx) - sigma_R_sq / 2.0)/(2.0* sigma_R_sq);
+      // New Code cleaner
+      nll(8) -= dnorm(recruitment_devs(region_ndx, year_ndx), Type(0.0), sigma_R, 1);
+      // Note the 0.5sigma^2 has been adjustment for when transforming recruit devs -> recruit multipliers i.e. Year class strengths (YCS)
     }
   }
-  nll(8) += (n_rec_devs) * ln_sigma_R;
-
   // Init-dev Penalty
   if(n_init_rec_devs > 0) {
-    n_rec_devs = 0.0;
     for(int i = 0; i < ln_init_rec_dev.size(); ++i) {
-      nll(9) += square(ln_init_rec_dev(i) - sigma_init_devs_sq / 2.0)/(2.0* sigma_init_devs_sq);
-      n_rec_devs += 1.0;
+      //nll(9) += square(ln_init_rec_dev(i) - sigma_init_devs_sq / 2.0)/(2.0* sigma_init_devs_sq);
+      nll(9) -= dnorm(ln_init_rec_dev(i), Type(0.0), sigma_init_devs, 1);
     }
-    nll(9) += (n_rec_devs) * ln_sigma_init_devs;
   }
   // pos fun penalty for
   nll(10) = pen_posfun;
