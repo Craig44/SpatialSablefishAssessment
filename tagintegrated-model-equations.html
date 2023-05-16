@@ -6,7 +6,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <title>TagIntegrated model equations | SpatialSablefishAssessment</title>
   <meta name="description" content="This Gitbook describes the spatial sablefish stock assessment R package and how to use it" />
-  <meta name="generator" content="bookdown 0.33 and GitBook 2.6.7" />
+  <meta name="generator" content="bookdown 0.34 and GitBook 2.6.7" />
 
   <meta property="og:title" content="TagIntegrated model equations | SpatialSablefishAssessment" />
   <meta property="og:type" content="book" />
@@ -23,7 +23,7 @@
 <meta name="author" content="C.Marsh" />
 
 
-<meta name="date" content="2023-05-15" />
+<meta name="date" content="2023-05-16" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -119,6 +119,10 @@ code span.vs { color: #4070a0; } /* VerbatimString */
 code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
 </style>
 
+<style type="text/css">
+  
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+</style>
 <style type="text/css">
 /* Used with Pandoc 2.11+ new --citeproc when CSL is used */
 div.csl-bib-body { }
@@ -291,11 +295,12 @@ N_{a+, r} = N_{a+ - 1, r} \frac{1}{1 - c^r_{a+}}  \  .
 \]</span></p>
 <p>After the equilibrium age-structure is calculated, there is an option to estimate global or region specific deviations to allow the model to start with a non-equilibrium age-structure</p>
 <p><span class="math display">\[
-N_{a, r} = N_{a, r} e^{\epsilon_a} \ \ \forall \ a \ r \ .
+N_{a, r} = N_{a, r} e^{\psi_a} \ \ \forall \ r \ \&amp; \forall a \in (a_{min} + 1, \dots, a_{max} - 1)
 \]</span>
-To help with estimation there is a penalty on <span class="math inline">\(\epsilon_a\)</span> that assumes a central tendancy of zero with an estimable variance parameter (<span class="math inline">\(\sigma_{\epsilon}^2\)</span>).
+These estimatble intiial age-deviations are not applied on the first or last age cohort. This is what is done in the current Sablefish assessment, I think it has something to do with helping estimation of <span class="math inline">\(R_0\)</span> and such. There is the ability to estimate less age-deviations than age using <code>data$n_init_rec_devs</code>. If there are 30 age-cohorts in the model you can set up initial age-deviations so only 15 are estimated with ages 16-29 getting applied the same last <span class="math inline">\(e^{\psi_a}\)</span> value.</p>
+<p>To help with estimation, there is a penalty on <span class="math inline">\(\psi_a\)</span> that assumes a central tendancy of zero with an estimable variance parameter (<span class="math inline">\(\sigma_{\psi}^2\)</span>).
 <span class="math display">\[
-\epsilon_a \sim \mathcal{N}(0, \sigma_{\epsilon})
+\psi_a \sim \mathcal{N}(0, \sigma_{\psi})
 \]</span></p>
 <p>In general these parameters can be highly uncertain. The variance on these deviation parameters is often fixed at a low value which requires a strong signal in the data to deviate away from the initial equilibrium age-structure.</p>
 <p>You can also apply/estimate additional fishing mortality during the initial equilibrium calculation denoted by <span class="math inline">\(F^{init}_{a,s}\)</span> for age <span class="math inline">\(a\)</span> and sex <span class="math inline">\(s\)</span>. If <code>F_method = 0</code> then
@@ -307,7 +312,7 @@ where, <span class="math inline">\(F^{fixed}\)</span> is the average annual fish
 F^{init} =  \widehat{F}^{init}S_{a,s}^{fixed} p_{hist}
 \]</span>
 where, <span class="math inline">\(\widehat{F}^{init}\)</span> is the estimable parameter <code>ln_init_F_avg</code>. It is advised to set <span class="math inline">\(p_{hist} = 1.0\)</span> so that the estimated parameter has a natural interpretation.</p>
-<p>There are two initial biomass quantities that are reported, these are <code>Bzero</code> and <code>Binit</code>. <code>Bzero</code> is the spawning biomass from a population that has been exposed to natural mortality, recruitment (R0), and movement only. <code>Binit</code> is the spawning biomass from a population that has been exposed to natural mortality and initial fishing mortality (<span class="math inline">\(F^{init}\)</span>), recruitment (R0), and movement.</p>
+<p>There are two initial biomass quantities that are reported, these are <code>Bzero</code> and <code>Binit</code>. <code>Bzero</code> is the spawning biomass from a population that has been exposed to natural mortality, recruitment (<span class="math inline">\(R_0\)</span>), and movement only. <code>Binit</code> is the spawning biomass from a population that has been exposed to natural mortality and initial fishing mortality (<span class="math inline">\(F^{init}\)</span>), recruitment (<span class="math inline">\(R_0\)</span>), and movement.</p>
 </div>
 <div id="growth" class="section level3 unnumbered hasAnchor">
 <h3>Growth<a href="tagintegrated-model-equations.html#growth" class="anchor-section" aria-label="Anchor link to header"></a></h3>
