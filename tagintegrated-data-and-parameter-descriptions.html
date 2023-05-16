@@ -6,7 +6,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <title>TagIntegrated data and parameter descriptions | SpatialSablefishAssessment</title>
   <meta name="description" content="This Gitbook describes the spatial sablefish stock assessment R package and how to use it" />
-  <meta name="generator" content="bookdown 0.34 and GitBook 2.6.7" />
+  <meta name="generator" content="bookdown 0.33 and GitBook 2.6.7" />
 
   <meta property="og:title" content="TagIntegrated data and parameter descriptions | SpatialSablefishAssessment" />
   <meta property="og:type" content="book" />
@@ -119,10 +119,6 @@ code span.vs { color: #4070a0; } /* VerbatimString */
 code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
 </style>
 
-<style type="text/css">
-  
-  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
-</style>
 <style type="text/css">
 /* Used with Pandoc 2.11+ new --citeproc when CSL is used */
 div.csl-bib-body { }
@@ -279,7 +275,7 @@ div.csl-indent {
 <li><p><code>female_mean_weight_by_age</code> female mean weight at age array with dimensions <code>n_ages</code> <span class="math inline">\(\times\)</span> <code>n_projyears</code>. Units are in kgs, this is because we track millions of fish in the partition, so any weight calculation is in kilo tonnes</p></li>
 <li><p><code>male_age_length_transition</code> male age-length transtion matrix for each year. An array with dimensions <code>n_ages</code> <span class="math inline">\(\times\)</span><code>n_length_bins</code> <span class="math inline">\(\times\)</span> <code>n_projyears</code></p></li>
 <li><p><code>female_age_length_transition</code> female age-length transtion matrix for each year. An array with dimensions <code>n_ages</code> <span class="math inline">\(\times\)</span><code>n_length_bins</code> <span class="math inline">\(\times\)</span> <code>n_projyears</code></p></li>
-<li><p><code>SrType</code> Stock recruitment type 1 = Beverton holt, 2 = Ricker, 3 = average</p></li>
+<li><p><code>SrType</code> Stock recruitment type 2 = Beverton holt, 3 = average (NO SR)</p></li>
 <li><p><code>spawning_time_proportion</code> vector of proportions that indicate when during the year spawning occurs. Length = <code>n_projyears</code></p></li>
 <li><p><code>apply_fixed_movement</code> integer whether to apply the input <code>fixed_movement_matrix</code> or estimated movement matrix. This was added because the transformation on estimated movement parameters does not allow values to be zero or one so cannot truly apply no movement. That is when I have used this fixed movement</p></li>
 <li><p><code>do_recruits_move</code> integer specifying whether recruits are applied in the movement dynamic. 1 = yes, 0 = no.</p></li>
@@ -373,6 +369,7 @@ div.csl-indent {
 <li><p><code>trans_fixed_catchatage_error</code> vector of observation error parameters for fixed catch at age observation. Depends on <code>data$fixed_catchatage_comp_likelihood</code>. If <code>data$fixed_catchatage_comp_likelihood == 0</code> then this assumes multinomial and this parameter should not be estimated. if <code>data$fixed_catchatage_comp_likelihood == 1</code> the this assumes the Dirichlet-multinomial distribution and this should have length 1 and is the log <span class="math inline">\(\theta\)</span> parameter.</p></li>
 <li><p><code>trans_srv_dom_ll_catchatage_error</code> vector of observation error parameters for survey catch at age observation. Depends on <code>data$srv_dom_ll_catchatage_comp_likelihood</code>. If <code>data$srv_dom_ll_catchatage_comp_likelihood == 0</code> then this assumes multinomial and this parameter should not be estimated. if <code>data$srv_dom_ll_catchatage_comp_likelihood == 1</code> the this assumes the Dirichlet-multinomial distribution and this should have length 1 and is the log <span class="math inline">\(\theta\)</span> parameter.</p></li>
 <li><p><code>logistic_prop_recruit_male</code> vector logistic proportions male for recruitment. Length: <code>n_years</code></p></li>
+<li><p><code>trans_SR_pars</code> vector of stock recruitment parameters. If <code>SrType == 2</code> then this a vector of length 1 containing the logistic transformed steepness parameter. This is to make sure steepness is bound between 0 and 1. The only other <code>SrType</code> allowed is average i.e. no SR and thus no SR parameters. In future this will be extended to include Ricker and other BH parameterisations.</p></li>
 </ul>
 
 </div>
