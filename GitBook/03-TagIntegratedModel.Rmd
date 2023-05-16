@@ -41,11 +41,14 @@ N_{a+, r} = N_{a+ - 1, r} \frac{1}{1 - c^r_{a+}}  \  .
 After the equilibrium age-structure is calculated, there is an option to estimate global or region specific deviations to allow the model to start with a non-equilibrium age-structure
 
 \[
-N_{a, r} = N_{a, r} e^{\epsilon_a} \ \ \forall \ a \ r \ .
+N_{a, r} = N_{a, r} e^{\psi_a} \ \ \forall \ r \ \& \forall a \in (a_{min} + 1, \dots, a_{max} - 1)
 \]
-To help with estimation there is a penalty on \(\epsilon_a\) that assumes a central tendancy of zero with an estimable variance parameter (\(\sigma_{\epsilon}^2\)). 
+These estimatble intiial age-deviations are not applied on the first or last age cohort. This is what is done in the current Sablefish assessment, I think it has something to do with helping estimation of \(R_0\) and such. There is the ability to estimate less age-deviations than age using `data$n_init_rec_devs`. If there are 30 age-cohorts in the model you can set up initial age-deviations so only 15 are estimated with ages 16-29 getting applied the same last \(e^{\psi_a}\) value.
+
+
+To help with estimation, there is a penalty on \(\psi_a\) that assumes a central tendancy of zero with an estimable variance parameter (\(\sigma_{\psi}^2\)). 
 \[
-\epsilon_a \sim \mathcal{N}(0, \sigma_{\epsilon})
+\psi_a \sim \mathcal{N}(0, \sigma_{\psi})
 \]
 
 In general these parameters can be highly uncertain. The variance on these deviation parameters is often fixed at a low value which requires a strong signal in the data to deviate away from the initial equilibrium age-structure.
@@ -61,7 +64,7 @@ F^{init} =  \widehat{F}^{init}S_{a,s}^{fixed} p_{hist}
 \]
 where, \(\widehat{F}^{init}\) is the estimable parameter `ln_init_F_avg`. It is advised to set \( p_{hist}  = 1.0\) so that the estimated parameter has a natural interpretation.
 
-There are two initial biomass quantities that are reported, these are `Bzero` and `Binit`. `Bzero` is the spawning biomass from a population that has been exposed to natural mortality, recruitment (R0), and movement only. `Binit` is the spawning biomass from a population that has been exposed to natural mortality and initial fishing mortality (\(F^{init}\)), recruitment (R0), and movement. 
+There are two initial biomass quantities that are reported, these are `Bzero` and `Binit`. `Bzero` is the spawning biomass from a population that has been exposed to natural mortality, recruitment (\(R_0\)), and movement only. `Binit` is the spawning biomass from a population that has been exposed to natural mortality and initial fishing mortality (\(F^{init}\)), recruitment (\(R_0\)), and movement. 
 
 ### Growth {-}
 
