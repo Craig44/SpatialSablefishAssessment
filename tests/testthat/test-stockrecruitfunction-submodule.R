@@ -27,7 +27,7 @@ test_that("stock-recruit-BH-with-steepness", {
   ## Read in mock data
   load(system.file("testdata", "MockSablefishModel.RData",package="SpatialSablefishAssessment"))
   data$SrType = 2
-  parameters$trans_SR_pars = rep(log(0.8)) ## steepness
+  parameters$trans_SR_pars = rep(qlogis(0.8)) ## steepness
   test_model <- TMB::MakeADFun(data = data,
                                parameters = parameters,
                                DLL = "SpatialSablefishAssessment_TMBExports", silent  = T)

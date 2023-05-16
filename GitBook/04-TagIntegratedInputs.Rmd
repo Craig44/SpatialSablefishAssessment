@@ -22,7 +22,7 @@ Users need to population a named list containing `data` inputs and a named list 
 - `female_mean_weight_by_age` female mean weight at age array with dimensions `n_ages` \(\times\) `n_projyears`. Units are in kgs, this is because we track millions of fish in the partition, so any weight calculation is in kilo tonnes
 - `male_age_length_transition` male age-length transtion matrix for each year. An array with dimensions `n_ages` \(\times\)`n_length_bins` \(\times\) `n_projyears`
 - `female_age_length_transition` female age-length transtion matrix for each year. An array with dimensions `n_ages` \(\times\)`n_length_bins` \(\times\) `n_projyears`
-- `SrType` Stock recruitment type 1 = Beverton holt, 2 = Ricker, 3 = average
+- `SrType` Stock recruitment type 2 = Beverton holt, 3 = average (NO SR)
 - `spawning_time_proportion` vector of proportions that indicate when during the year spawning occurs. Length = `n_projyears`
 - `apply_fixed_movement` integer whether to apply the input `fixed_movement_matrix` or estimated movement matrix. This was added because the transformation on estimated movement parameters does not allow values to be zero or one so cannot truly apply no movement. That is when I have used this fixed movement
 - `do_recruits_move` integer specifying whether recruits are applied in the movement dynamic. 1 = yes, 0 = no.
@@ -129,4 +129,5 @@ Users need to population a named list containing `data` inputs and a named list 
 - `trans_fixed_catchatage_error`  vector of observation error parameters for fixed catch at age observation. Depends on `data$fixed_catchatage_comp_likelihood`. If `data$fixed_catchatage_comp_likelihood == 0` then this assumes multinomial and this parameter should not be estimated. if `data$fixed_catchatage_comp_likelihood == 1` the this assumes the Dirichlet-multinomial distribution and this should have length 1 and is the log \(\theta\) parameter.
 - `trans_srv_dom_ll_catchatage_error`  vector of observation error parameters for survey catch at age observation. Depends on `data$srv_dom_ll_catchatage_comp_likelihood`. If `data$srv_dom_ll_catchatage_comp_likelihood == 0` then this assumes multinomial and this parameter should not be estimated. if `data$srv_dom_ll_catchatage_comp_likelihood == 1` the this assumes the Dirichlet-multinomial distribution and this should have length 1 and is the log \(\theta\) parameter.
 - `logistic_prop_recruit_male`  vector logistic proportions male for recruitment. Length: `n_years`
+- `trans_SR_pars`  vector of stock recruitment parameters. If `SrType == 2` then this a vector of length 1 containing the logistic transformed steepness parameter. This is to make sure steepness is bound between 0 and 1. The only other `SrType` allowed is average i.e. no SR and thus no SR parameters. In future this will be extended to include Ricker and other BH parameterisations.
 

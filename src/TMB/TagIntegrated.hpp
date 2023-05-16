@@ -219,9 +219,9 @@ Type TagIntegrated(objective_function<Type>* obj) {
   PARAMETER(ln_sigma_init_devs);                            // standard deviation for recruitment;
 
   // trans_SR_pars
-  // SRtype == 1 vector of length = 2 its log(a) & log(b)
-  // SRtype == 2 vector of length = 1 its log(steepness)
-  // SRtype == 3 vector of length = 1 its SHOULD BE IGNORED
+  // SrType == 1 vector of length = 2 its log(a) & log(b)
+  // SrType == 2 vector of length = 1 its logistic(steepness) bound between [0,1]
+  // SrType == 3 vector of length = 1 its SHOULD BE IGNORED
   PARAMETER_VECTOR(trans_SR_pars);
 
   // composition parameters
@@ -263,6 +263,10 @@ Type TagIntegrated(objective_function<Type>* obj) {
   vector<Type> mean_rec = exp(ln_mean_rec);
   Type sigma_R = exp(ln_sigma_R);
   vector<Type> SR_pars = exp(trans_SR_pars);
+  // If Beverton-holt formulation we actually assume a logistic transformation on steepness
+  if(SrType == 2) {
+    SR_pars(0) = invlogit(trans_SR_pars(0));
+  }
   Type sigma_init_devs = exp(ln_sigma_init_devs);
   Type sigma_init_devs_sq = sigma_init_devs * sigma_init_devs;
   Type sigma_R_sq = sigma_R * sigma_R;

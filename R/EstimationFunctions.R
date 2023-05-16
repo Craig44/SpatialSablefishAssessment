@@ -254,7 +254,7 @@ set_up_parameters <- function(data, parameters,
     parameters_completely_fixed = c(parameters_completely_fixed, c("trans_SR_pars"))
   } else {
     ## it is Beverton holt but we don't want to estimate the SR parameters
-    if(est_SR_pars)
+    if(!est_SR_pars)
       parameters_completely_fixed = c(parameters_completely_fixed, c("trans_SR_pars"))
   }
   # trun off init F if not estimating it
