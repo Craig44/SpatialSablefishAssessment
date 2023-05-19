@@ -26,7 +26,8 @@ Imports:
     DHARMa,
     bookdown,
     ggpubr,
-    bookdown
+    bookdown,
+    stringr
 LinkingTo: 
     TMB
 RdMacros: 

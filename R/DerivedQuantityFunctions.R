@@ -137,8 +137,8 @@ get_selectivities = function(MLE_report) {
                       age = MLE_report$ages
   )
   sel_lng_df = sel_df %>% tidyr::pivot_longer(!age)
-  sel_lng_df$gear = Reduce(c, lapply(sel_lng_df$name %>% str_split(pattern = "_"), function(x){x[1]}))
-  sel_lng_df$sex = Reduce(c, lapply(sel_lng_df$name %>% str_split(pattern = "_"), function(x){x[2]}))
+  sel_lng_df$gear = Reduce(c, lapply(sel_lng_df$name %>% stringr::str_split(pattern = "_"), function(x){x[1]}))
+  sel_lng_df$sex = Reduce(c, lapply(sel_lng_df$name %>% stringr::str_split(pattern = "_"), function(x){x[2]}))
   return(sel_lng_df)
 }
 
