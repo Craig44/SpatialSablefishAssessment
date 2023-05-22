@@ -115,6 +115,9 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   DATA_IVECTOR(ll_cpue_q_by_year_indicator);       // Catchability time-block to apply when deriving model predictions each year
 
   // Observational stuff
+
+
+
   DATA_MATRIX(ageing_error_matrix);                 // Ageing error/missclassification matrix n_ages x n_ages
   DATA_VECTOR(log_likelihood_weights);              // YUCK!!! as soon as you can delete this and 'weight' likelihoods using the respective dispersion parameters
   // 0 = ll_age, 1 = trwl lgth male, 2 = trwl lgth female, 3 = srv_dom_ll_bio
