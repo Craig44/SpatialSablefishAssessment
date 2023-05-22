@@ -423,13 +423,10 @@ knitr::opts_chunk$set(warning = FALSE, message = FALSE)
     write(paste0("```{r ", j,"_age_comp, eval = T, echo = F, results = T, warning = F, out.width =  '100%', fig.height = 10}"), file = model_input_file, append = T)
 
     age_comp = '
+    ## Survey
     first_year_set = c(1981, seq(from = 1985, to = 1993, by = 2), 1996:1999)
     plot_AF(MLE_report = mle_report, region_key = region_key, observation = "srv_dom_ll", subset_years = first_year_set, sex = "male") +
       ggtitle("Male survey AF") +
-      guides(shape = "none", linetype = "none")
-
-    plot_AF(MLE_report = mle_report, region_key = region_key, observation = "srv_dom_ll", subset_years = first_year_set, sex = "female") +
-      ggtitle("Female survey AF") +
       guides(shape = "none", linetype = "none")
 
     second_year_set = 2000:2010
@@ -437,35 +434,44 @@ knitr::opts_chunk$set(warning = FALSE, message = FALSE)
       ggtitle("Male survey AF") +
       guides(shape = "none", linetype = "none")
 
-    plot_AF(MLE_report = mle_report, region_key = region_key, observation = "srv_dom_ll", subset_years = second_year_set, sex = "female") +
-      ggtitle("Female survey AF") +
-      guides(shape = "none", linetype = "none")
-
     third_year_set = 2011:2021
     plot_AF(MLE_report = mle_report, region_key = region_key, observation = "srv_dom_ll", subset_years = third_year_set, sex = "male") +
       ggtitle("Male survey AF") +
       guides(shape = "none", linetype = "none")
 
+    first_year_set = c(1981, seq(from = 1985, to = 1993, by = 2), 1996:1999)
+    plot_AF(MLE_report = mle_report, region_key = region_key, observation = "srv_dom_ll", subset_years = first_year_set, sex = "female") +
+      ggtitle("Female survey AF") +
+      guides(shape = "none", linetype = "none")
+
+    second_year_set = 1999:2010
+    plot_AF(MLE_report = mle_report, region_key = region_key, observation = "srv_dom_ll", subset_years = second_year_set, sex = "female") +
+      ggtitle("Female survey AF") +
+      guides(shape = "none", linetype = "none")
+
+    third_year_set = 2011:2021
     plot_AF(MLE_report = mle_report, region_key = region_key, observation = "srv_dom_ll", subset_years = third_year_set, sex = "female") +
       ggtitle("Female survey AF") +
       guides(shape = "none", linetype = "none")
 
-
-    second_year_set = 1999:2010
-    plot_AF(MLE_report = mle_report, region_key = region_key, observation = "fixed", subset_years = second_year_set, sex = "male") +
+      ## Fixed AF
+      first_year_set = 1999:2010
+      plot_AF(MLE_report = mle_report, region_key = region_key, observation = "fixed", subset_years = first_year_set, sex = "male") +
       ggtitle("Male fixed AF") +
       guides(shape = "none", linetype = "none")
 
-    plot_AF(MLE_report = mle_report, region_key = region_key, observation = "fixed", subset_years = second_year_set, sex = "female") +
+      second_year_set = 2011:2021
+      plot_AF(MLE_report = mle_report, region_key = region_key, observation = "fixed", subset_years = second_year_set, sex = "male") +
+      ggtitle("Male fixed AF") +
+      guides(shape = "none", linetype = "none")
+
+      first_year_set = 1999:2010
+      plot_AF(MLE_report = mle_report, region_key = region_key, observation = "fixed", subset_years = first_year_set, sex = "female") +
       ggtitle("Female fixed AF") +
       guides(shape = "none", linetype = "none")
 
-    third_year_set = 2011:2021
-    plot_AF(MLE_report = mle_report, region_key = region_key, observation = "fixed", subset_years = third_year_set, sex = "male") +
-      ggtitle("Male fixed AF") +
-      guides(shape = "none", linetype = "none")
-
-    plot_AF(MLE_report = mle_report, region_key = region_key, observation = "fixed", subset_years = third_year_set, sex = "female") +
+      second_year_set = 2011:2021
+      plot_AF(MLE_report = mle_report, region_key = region_key, observation = "fixed", subset_years = second_year_set, sex = "female") +
       ggtitle("Female fixed AF") +
       guides(shape = "none", linetype = "none")
       '
@@ -492,12 +498,12 @@ knitr::opts_chunk$set(warning = FALSE, message = FALSE)
       ggtitle("Male trawl LF") +
       guides(shape = "none", linetype = "none")
 
-    plot_LF(MLE_report = mle_report, region_key = region_key, observation = "trwl", subset_years = trwl_LF_years[1:12], sex = "female") +
-      ggtitle("Female trawl LF") +
-      guides(shape = "none", linetype = "none")
-
     plot_LF(MLE_report = mle_report, region_key = region_key, observation = "trwl", subset_years = trwl_LF_years[13:length(trwl_LF_years)], sex = "male") +
       ggtitle("Male trawl LF") +
+      guides(shape = "none", linetype = "none")
+
+    plot_LF(MLE_report = mle_report, region_key = region_key, observation = "trwl", subset_years = trwl_LF_years[1:12], sex = "female") +
+      ggtitle("Female trawl LF") +
       guides(shape = "none", linetype = "none")
 
     plot_LF(MLE_report = mle_report, region_key = region_key, observation = "trwl", subset_years = trwl_LF_years[13:length(trwl_LF_years)], sex = "female") +

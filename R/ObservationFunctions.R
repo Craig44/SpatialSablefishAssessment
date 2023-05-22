@@ -788,6 +788,16 @@ calculate_simulated_residuals <- function(sim_ob, type = "abundance") {
 }
 
 
+#' calculate_pearson_residuals
+#' @details Take a model fit and calculate Pearson resiudals for all observations.
+#' @param MLE_report a list that is output from obj$report() usually once an optimsation routine has been done.
+#' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
+#' @export
+#' @return data.frame of pearson residuals for each observation
+calculate_pearson_residuals <- function(MLE_report, region_key = NULL) {
+  return(NULL)
+}
+
 #' summarise_AF_quant_resids
 #'
 #' @param AF_sim_resids an AF object created from `calculate_simulated_residuals`

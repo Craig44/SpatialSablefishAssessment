@@ -244,6 +244,7 @@ Type TagIntegrated(objective_function<Type>* obj) {
   int tag_release_event_ndx = 0;
   int tag_recovery_event_ndx = 0;
   int release_year_ndx = 0;
+  int model_type = 1; //"TagIntegrated";
 
   Type m_plus_group = 0.0;
   Type f_plus_group = 0.0;
@@ -520,7 +521,6 @@ Type TagIntegrated(objective_function<Type>* obj) {
   /*
    * Build selectivity objects
    */
-  // TODO: Change BuildFisherySelectivity() to be like BuildSelectivity(). This will collapse
   // the number of years needed for the sel_ll_f container.
   BuildSelectivity(fixed_sel_pars.col(0), fixed_sel_type, ages, sel_fixed_m);
   BuildSelectivity(fixed_sel_pars.col(1), fixed_sel_type, ages, sel_fixed_f);
@@ -1726,6 +1726,7 @@ Type TagIntegrated(objective_function<Type>* obj) {
   ADREPORT(sigma_R);
   ADREPORT(sigma_init_devs);
   ADREPORT( catch_sd );
+  REPORT(model_type);
 
   // REMOVE objects after this comment.
   // I created them for reporting interim calculations debugging etc

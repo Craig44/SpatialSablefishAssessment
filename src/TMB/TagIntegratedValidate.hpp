@@ -240,6 +240,8 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   int tag_recovery_event_ndx = 0;
   int release_year_ndx = 0;
   int min_age = 0;
+  int model_type = 1; //"TagIntegrated";
+
   while(min_age < ages(0)){
     min_age++;
   }
@@ -1752,6 +1754,8 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   REPORT( fixed_fishery_catch );
   REPORT( trwl_fishery_catch );
   REPORT( obs_tag_recovery );
+
+  REPORT(model_type);
 
   // REMOVE objects after this comment.
   // I created them for reporting interim calculations debugging etc

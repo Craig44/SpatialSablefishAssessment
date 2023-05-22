@@ -244,6 +244,7 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
   int tag_release_event_ndx = 0;
   int tag_recovery_event_ndx = 0;
   int release_year_ndx = 0;
+  int model_type = 2; //"TagIntegratedAgeBased";
 
   Type m_plus_group = 0.0;
   Type f_plus_group = 0.0;
@@ -1897,6 +1898,8 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
   REPORT( srv_dom_ll_q_transformation );
   REPORT( apply_fixed_movement );
   REPORT( age_based_movement );
+
+  REPORT(model_type);
 
   // likelihood types
   REPORT( tag_likelihood );

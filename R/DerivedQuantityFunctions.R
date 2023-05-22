@@ -1,6 +1,4 @@
 #
-#
-#
 #' plot_fishing_mortalities
 #' @param MLE_report a list that is output from obj$report() usually once an optimsation routine has been done.
 #' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
@@ -9,10 +7,21 @@
 
 plot_fishing_mortalities = function(MLE_report, region_key = NULL) {
   F_df = get_fishing_mortalities(MLE_report = MLE_report, region_key = region_key)
-  gplt = ggplot(F_df, aes(x = Year, y= F, col = Fishery, linetype = Fishery)) +
-    geom_line(linewidth = 1.1) +
-    theme_bw() +
-    facet_wrap(~Region)
+  gplt = NULL
+  if(MLE_report$model_type == 0) {
+    ## Assessment
+    ## Spatial model
+    gplt = ggplot(F_df, aes(x = Year, y= F, col = Fishery, linetype = Fishery)) +
+      geom_line(linewidth = 1.1) +
+      theme_bw() +
+      facet_wrap(~Region)
+  } else {
+    ## Spatial model
+    gplt = ggplot(F_df, aes(x = Year, y= F, col = Fishery, linetype = Fishery)) +
+      geom_line(linewidth = 1.1) +
+      theme_bw() +
+      facet_wrap(~Region)
+  }
   return(gplt)
 }
 #' get_fishing_mortalities
@@ -23,23 +32,29 @@ plot_fishing_mortalities = function(MLE_report, region_key = NULL) {
 get_fishing_mortalities = function(MLE_report, region_key = NULL) {
   years = MLE_report$years
   projyears = min(MLE_report$years):(max(MLE_report$years) + MLE_report$n_projections_years)
-  regions = 1:MLE_report$n_regions
   fixed_F = MLE_report$annual_F_fixed
   trwl_F = MLE_report$annual_F_trwl
+  full_f_df = NULL;
+  if(MLE_report$model_type == 0) {
 
-  dimnames(fixed_F) = dimnames(trwl_F) = list(regions, projyears)
-  molten_fixed_F = reshape2::melt(fixed_F)
-  molten_trwl_F = reshape2::melt(trwl_F)
 
-  colnames(molten_fixed_F) = colnames(molten_trwl_F) = c("Region","Year",  "F")
-  molten_fixed_F$Fishery = "Fixed gear"
-  molten_trwl_F$Fishery = "Trawl"
-  full_f_df = rbind(molten_fixed_F, molten_trwl_F)
-  if(is.null(region_key)) {
-    full_f_df$Region = paste0("Region ", full_f_df$Region)
   } else {
-    full_f_df$Region = region_key$area[match(full_f_df$Region, (region_key$TMB_ndx + 1))]
+    regions = 1:MLE_report$n_regions
+    dimnames(fixed_F) = dimnames(trwl_F) = list(regions, projyears)
+    molten_fixed_F = reshape2::melt(fixed_F)
+    molten_trwl_F = reshape2::melt(trwl_F)
+
+    colnames(molten_fixed_F) = colnames(molten_trwl_F) = c("Region","Year",  "F")
+    molten_fixed_F$Fishery = "Fixed gear"
+    molten_trwl_F$Fishery = "Trawl"
+    full_f_df = rbind(molten_fixed_F, molten_trwl_F)
+    if(is.null(region_key)) {
+      full_f_df$Region = paste0("Region ", full_f_df$Region)
+    } else {
+      full_f_df$Region = region_key$area[match(full_f_df$Region, (region_key$TMB_ndx + 1))]
+    }
   }
+
   return(full_f_df);
 }
 #'
