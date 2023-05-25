@@ -663,7 +663,7 @@ Type CurrentAssessment(objective_function<Type>* obj) {
       // Simulate lognormal observations
       // you may want include a bias correction for the mean of -0.5 sigma^2 so the distribution has expectation = predicted value.
       SIMULATE {
-        obs_dom_ll_bio(srv_dom_ll_bio_ndx) = exp(rnorm(log(pred_dom_ll_bio(srv_dom_ll_bio_ndx) + 0.0001), square(se_dom_ll_bio(srv_dom_ll_bio_ndx) / obs_dom_ll_bio(srv_dom_ll_bio_ndx))));
+        obs_dom_ll_bio(srv_dom_ll_bio_ndx) = exp(rnorm(log(pred_dom_ll_bio(srv_dom_ll_bio_ndx) + 0.0001), (se_dom_ll_bio(srv_dom_ll_bio_ndx) / obs_dom_ll_bio(srv_dom_ll_bio_ndx))));
       }
       ++srv_dom_ll_bio_ndx;
     }
@@ -678,7 +678,7 @@ Type CurrentAssessment(objective_function<Type>* obj) {
       // Simulate lognormal observations
       // you may want include a bias correction for the mean of -0.5 sigma^2 so the distribution has expectation = predicted value.
       SIMULATE {
-        obs_jap_ll_bio(srv_jap_ll_bio_ndx) = exp(rnorm(log(pred_jap_ll_bio(srv_jap_ll_bio_ndx) + 0.0001), square(se_jap_ll_bio(srv_jap_ll_bio_ndx) / obs_jap_ll_bio(srv_jap_ll_bio_ndx))));
+        obs_jap_ll_bio(srv_jap_ll_bio_ndx) = exp(rnorm(log(pred_jap_ll_bio(srv_jap_ll_bio_ndx) + 0.0001), (se_jap_ll_bio(srv_jap_ll_bio_ndx) / obs_jap_ll_bio(srv_jap_ll_bio_ndx))));
       }
       ++srv_jap_ll_bio_ndx;
     }
@@ -693,7 +693,7 @@ Type CurrentAssessment(objective_function<Type>* obj) {
       // Simulate lognormal observations
       // you may want include a bias correction for the mean of -0.5 sigma^2 so the distribution has expectation = predicted value.
       SIMULATE {
-        obs_ll_cpue(ll_cpue_ndx) = exp(rnorm(log(pred_ll_cpue(ll_cpue_ndx) + 0.0001), square(se_ll_cpue(ll_cpue_ndx) / obs_ll_cpue(ll_cpue_ndx))));
+        obs_ll_cpue(ll_cpue_ndx) = exp(rnorm(log(pred_ll_cpue(ll_cpue_ndx) + 0.0001), (se_ll_cpue(ll_cpue_ndx) / obs_ll_cpue(ll_cpue_ndx))));
       }
       ++ll_cpue_ndx;
     }
@@ -912,7 +912,7 @@ Type CurrentAssessment(objective_function<Type>* obj) {
       // Simulate lognormal observations
       // you may want include a bias correction for the mean of -0.5 sigma^2 so the distribution has expectation = predicted value.
       SIMULATE {
-        obs_nmfs_trwl_bio(srv_nmfs_trwl_bio_ndx) = exp(rnorm(log(pred_nmfs_trwl_bio(srv_nmfs_trwl_bio_ndx) + 0.0001), square(se_nmfs_trwl_bio(srv_nmfs_trwl_bio_ndx) / obs_nmfs_trwl_bio(srv_nmfs_trwl_bio_ndx))));
+        obs_nmfs_trwl_bio(srv_nmfs_trwl_bio_ndx) = exp(rnorm(log(pred_nmfs_trwl_bio(srv_nmfs_trwl_bio_ndx) + 0.0001), (se_nmfs_trwl_bio(srv_nmfs_trwl_bio_ndx) / obs_nmfs_trwl_bio(srv_nmfs_trwl_bio_ndx))));
       }
       ++srv_nmfs_trwl_bio_ndx;
     }
@@ -926,7 +926,7 @@ Type CurrentAssessment(objective_function<Type>* obj) {
       // Simulate lognormal observations
       // you may want include a bias correction for the mean of -0.5 sigma^2 so the distribution has expectation = predicted value.
       SIMULATE {
-        obs_jap_fishery_ll_bio(srv_jap_fishery_ll_bio_ndx) = exp(rnorm(log(pred_jap_fishery_ll_bio(srv_jap_fishery_ll_bio_ndx) + 0.0001), square(se_jap_fishery_ll_bio(srv_jap_fishery_ll_bio_ndx) / obs_jap_fishery_ll_bio(srv_jap_fishery_ll_bio_ndx))));
+        obs_jap_fishery_ll_bio(srv_jap_fishery_ll_bio_ndx) = exp(rnorm(log(pred_jap_fishery_ll_bio(srv_jap_fishery_ll_bio_ndx) + 0.0001), (se_jap_fishery_ll_bio(srv_jap_fishery_ll_bio_ndx) / obs_jap_fishery_ll_bio(srv_jap_fishery_ll_bio_ndx))));
       }
       ++srv_jap_fishery_ll_bio_ndx;
     }
