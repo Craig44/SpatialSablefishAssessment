@@ -330,6 +330,7 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   int age_ndx;
   int len_ndx;
   int min_age = 0;
+  int n_regions = 1;
   while(min_age < ages(0)){
     min_age++;
   }
@@ -1025,10 +1026,7 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   REPORT(annual_trwl_catch_pred);
   REPORT(annual_ll_catch_pred);
 
-
-  REPORT(ll_sel_pars);
-  REPORT(trwl_sel_pars);
-
+  // Selectivity outputs
   REPORT(sel_ll_m);
   REPORT(sel_ll_f);
   REPORT(sel_trwl_f);
@@ -1042,16 +1040,17 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   REPORT(sel_srv_jap_fishery_ll);
 
   REPORT(srv_dom_ll_sel_pars);
-  REPORT(srv_dom_ll_q);
-
   REPORT(srv_jap_ll_sel_pars);
-  REPORT(srv_jap_ll_q);
-
   REPORT(srv_nmfs_trwl_sel_pars);
+  REPORT(ll_sel_pars);
+  REPORT(trwl_sel_pars);
 
   // Catchability coeffecients
   REPORT(srv_jap_fishery_ll_q);
   REPORT(ll_cpue_q);
+  REPORT(srv_jap_ll_q);
+  REPORT( srv_nmfs_trwl_q );
+  REPORT(srv_dom_ll_q);
 
   REPORT(F_ll_m);
   REPORT(F_ll_f);
@@ -1064,7 +1063,7 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   REPORT(years);
   REPORT(length_bins);
   REPORT(n_projections_years);
-
+  REPORT( n_regions );
   // Report model expected/predicted values
   REPORT(pred_ll_catchatage);
   REPORT(pred_trwl_catchatlgth_m);
@@ -1091,9 +1090,7 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   REPORT(obs_ll_catchatage);
   REPORT(obs_trwl_catchatlgth_m);
   REPORT(obs_trwl_catchatlgth_f);
-  REPORT(obs_dom_ll_bio);
-  REPORT(obs_jap_ll_bio);
-  REPORT(obs_ll_cpue);
+
   REPORT(obs_srv_dom_ll_age);
   REPORT(obs_srv_dom_ll_lgth_m);
   REPORT(obs_srv_dom_ll_lgth_f);
@@ -1106,13 +1103,56 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   REPORT(obs_ll_catchatlgth_m);
   REPORT(obs_ll_catchatlgth_f);
   REPORT(obs_nmfs_trwl_bio);
-  REPORT(obs_jap_fishery_ll_bio);
+  REPORT(obs_dom_ll_bio);
+  REPORT(obs_jap_ll_bio);
+  REPORT(obs_ll_cpue);
   REPORT(obs_jap_fishery_ll_bio);
   REPORT(obs_srv_jap_fishery_ll_lgth);
   REPORT(ll_fishery_catch);
   REPORT(trwl_fishery_catch);
+
+  // REport standard errors
+  REPORT(se_dom_ll_bio);
+  REPORT(se_jap_ll_bio);
+  REPORT(se_ll_cpue);
+  REPORT(se_jap_fishery_ll_bio);
+  REPORT(se_nmfs_trwl_bio);
   // Report model type to help R functions
   REPORT(model_type);
+
+  // Likelihood indicators
+  REPORT(ll_catchatage_comp_likelihood);
+  REPORT( ll_catchatlgth_comp_likelihood);
+  REPORT(trwl_catchatlgth_comp_likelihood);
+  REPORT(dom_ll_bio_likelihood);
+  REPORT(jap_ll_bio_likelihood);
+  REPORT(nmfs_trwl_bio_likelihood);
+  REPORT(ll_cpue_likelihood);
+  REPORT(jap_fishery_ll_bio_likelihood);
+  REPORT(srv_dom_ll_age_comp_likelihood);
+  REPORT(srv_dom_ll_lgth_comp_likelihood);
+  REPORT(srv_jap_ll_age_comp_likelihood);
+  REPORT(srv_jap_ll_lgth_comp_likelihood);
+  REPORT(srv_jap_fishery_ll_lgth_comp_likelihood);
+  REPORT(srv_nmfs_trwl_age_comp_likelihood);
+  REPORT(srv_nmfs_trwl_lgth_comp_likelihood);
+
+  // observation time indicators
+  REPORT(ll_catchatage_indicator);
+  REPORT(ll_catchatlgth_indicator);
+  REPORT(ll_cpue_indicator);
+  REPORT(trwl_catchatlgth_indicator);
+  REPORT(srv_dom_ll_age_indicator);
+  REPORT(srv_dom_ll_lgth_indicator);
+  REPORT(srv_dom_ll_bio_indicator);
+  REPORT(srv_nmfs_trwl_age_indicator);
+  REPORT( srv_nmfs_trwl_lgth_indicator);
+  REPORT(srv_nmfs_trwl_bio_indicator);
+  REPORT( srv_jap_ll_age_indicator);
+  REPORT(srv_jap_ll_lgth_indicator);
+  REPORT(srv_jap_ll_bio_indicator);
+  REPORT(srv_jap_fishery_ll_bio_indicator);
+  REPORT(srv_jap_fishery_ll_lgth_indicator);
   // REMOVE these objects once we have validated
   // I created them for reporting interim calculations
   return nll.sum();

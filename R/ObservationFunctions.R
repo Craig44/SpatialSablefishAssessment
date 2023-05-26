@@ -523,20 +523,49 @@ plot_catch_fit = function(MLE_report, region_key = NULL) {
 #' plot_index_fit
 #' @param MLE_report a list that is output from obj$report() usually once an optimsation routine has been done.
 #' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
+#' @param resid
+#' \itemize{
+#'   \item F - conventional observed with predicted with standard errors
+#'   \item T - Pearson residuals with smoother
+#' }
 #' @return ggplot2 object that will plot if an observation occurs in a year and region
 #' @export
-plot_index_fit = function(MLE_report, region_key = NULL) {
+plot_index_fit = function(MLE_report, region_key = NULL, resid = F) {
 
   full_df = get_index(MLE_report, region_key)
+  gplt = NULL
+  if(MLE_report$model_type == 0) {
+    if(resid) {
+      gplt = ggplot(full_df, aes(x = Year)) +
+        geom_point(aes(y = Pearsons_residuals, col = "Pearson residuals")) +
+        geom_smooth(aes(y = Pearsons_residuals, col = "Smoother", fill = "Smoother"), alpha = 0.6) +
+        geom_hline(yintercept = c(-2,2), col = "gray60", linetype = "dashed") +
+        guides( linewidth = "none", linetype = "none") +
+        labs(y = "Index", col = "", linetype = "", fill = "") +
+        facet_wrap(~label, ncol = 2, scales = "free_y") +
+        theme_bw()
+    } else {
+      gplt = ggplot(full_df, aes(x = Year)) +
+        geom_point(aes(y = Observed, col = "Observed")) +
+        geom_line(aes(y = Predicted, col = "Predicted"), linewidth= 1.1, linetype = "dashed") +
+        geom_errorbar(aes(ymin=L_CI, ymax=U_CI, col = "Observed"), width=.2, position=position_dodge(.9)) +
+        guides( linewidth = "none", linetype = "none") +
+        labs(y = "Index", col = "", linetype = "") +
+        facet_wrap(~label, ncol = 2, scales = "free_y") +
+        theme_bw()
+    }
 
-  gplt = ggplot(full_df, aes(x = Year)) +
-    geom_point(aes(y = Observed, col = "Observed")) +
-    geom_line(aes(y = Predicted, col = "Predicted"), linewidth= 1.1, linetype = "dashed") +
-    geom_errorbar(aes(ymin=L_CI, ymax=U_CI, col = "Observed"), width=.2, position=position_dodge(.9)) +
-    guides( linewidth = "none", linetype = "none") +
-    labs(y = "Index", col = "", linetype = "") +
-    facet_wrap(~Region, ncol = 2, scales = "free_y") +
-    theme_bw()
+  } else {
+    gplt = ggplot(full_df, aes(x = Year)) +
+      geom_point(aes(y = Observed, col = "Observed")) +
+      geom_line(aes(y = Predicted, col = "Predicted"), linewidth= 1.1, linetype = "dashed") +
+      geom_errorbar(aes(ymin=L_CI, ymax=U_CI, col = "Observed"), width=.2, position=position_dodge(.9)) +
+      guides( linewidth = "none", linetype = "none") +
+      labs(y = "Index", col = "", linetype = "") +
+      facet_wrap(~Region, ncol = 2, scales = "free_y") +
+      theme_bw()
+  }
+
   return(gplt)
 }
 
@@ -550,27 +579,51 @@ plot_index_fit = function(MLE_report, region_key = NULL) {
 get_index = function(MLE_report, region_key = NULL) {
   years = MLE_report$years
   regions = 1:MLE_report$n_regions
-  dimnames(MLE_report$obs_srv_dom_ll_bio) = dimnames(MLE_report$pred_srv_dom_ll_bio) =   dimnames(MLE_report$obs_srv_dom_ll_se) = list(regions, years)
-  MLE_report$obs_srv_dom_ll_bio[MLE_report$srv_dom_ll_bio_indicator == 0] = NA
-  MLE_report$obs_srv_dom_ll_se[MLE_report$srv_dom_ll_bio_indicator == 0] = NA
-  MLE_report$pred_srv_dom_ll_bio[MLE_report$srv_dom_ll_bio_indicator == 0] = NA
+  full_df = NULL
+  if(MLE_report$model_type == 0) {
+    jap_fishery_cpue = data.frame(Year = MLE_report$years[MLE_report$srv_jap_fishery_ll_bio_indicator == 1],SE = MLE_report$se_jap_fishery_ll_bio, Observed = MLE_report$obs_jap_fishery_ll_bio, Predicted = MLE_report$pred_jap_fishery_ll_bio, label = "Japanese CPUE")
+    ## convert the SE of an estimator to a standard deviation that is the
+    ## right scale for the lognormal distribution
+    ## first calculate CV = sigma/mean then pass this to the log_sigma function
+    if(MLE_report$jap_fishery_ll_bio_likelihood == 0)
+      jap_fishery_cpue$SE = log_sigma(jap_fishery_cpue$SE / jap_fishery_cpue$Observed)
+    fixed_cpue = data.frame(Year = MLE_report$years[MLE_report$ll_cpue_indicator == 1],SE = MLE_report$se_ll_cpue, Observed = MLE_report$obs_ll_cpue, Predicted = MLE_report$pred_ll_cpue, label = "Fixed gear CPUE")
+    if(MLE_report$ll_cpue_likelihood == 0)
+      fixed_cpue$SE = log_sigma(fixed_cpue$SE / fixed_cpue$Observed)
+    jap_srv_ll = data.frame(Year = MLE_report$years[MLE_report$srv_jap_ll_bio_indicator == 1],SE = MLE_report$se_jap_ll_bio, Observed = MLE_report$obs_jap_ll_bio, Predicted = MLE_report$pred_jap_ll_bio, label = "Japanese LL survey")
+    if(MLE_report$jap_ll_bio_likelihood == 0)
+      jap_srv_ll$SE = log_sigma(jap_srv_ll$SE / jap_srv_ll$Observed)
+    srv_nmfs_trwl = data.frame(Year = MLE_report$years[MLE_report$srv_nmfs_trwl_bio_indicator == 1],SE = MLE_report$se_nmfs_trwl_bio, Observed = MLE_report$obs_nmfs_trwl_bio, Predicted = MLE_report$pred_nmfs_trwl_bio, label = "NMFS trawl survey")
+    if(MLE_report$nmfs_trwl_bio_likelihood == 0)
+      srv_nmfs_trwl$SE = log_sigma(srv_nmfs_trwl$SE / srv_nmfs_trwl$Observed)
+    srv_dom_ll = data.frame(Year = MLE_report$years[MLE_report$srv_dom_ll_bio_indicator == 1],SE = MLE_report$se_dom_ll_bio, Observed = MLE_report$obs_dom_ll_bio, Predicted = MLE_report$pred_dom_ll_bio, label = "Domestic LL survey")
+    if(MLE_report$dom_ll_bio_likelihood == 0)
+      srv_dom_ll$SE = log_sigma(srv_dom_ll$SE / srv_dom_ll$Observed)
+    ## combine all datasets
+    full_df = rbind(jap_fishery_cpue, fixed_cpue, jap_srv_ll, srv_nmfs_trwl, srv_dom_ll)
+    full_df$Region = 1
+  } else {
+    dimnames(MLE_report$obs_srv_dom_ll_bio) = dimnames(MLE_report$pred_srv_dom_ll_bio) =   dimnames(MLE_report$obs_srv_dom_ll_se) = list(regions, years)
+    MLE_report$obs_srv_dom_ll_bio[MLE_report$srv_dom_ll_bio_indicator == 0] = NA
+    MLE_report$obs_srv_dom_ll_se[MLE_report$srv_dom_ll_bio_indicator == 0] = NA
+    MLE_report$pred_srv_dom_ll_bio[MLE_report$srv_dom_ll_bio_indicator == 0] = NA
 
-  index_obs = reshape2::melt(MLE_report$obs_srv_dom_ll_bio)
-  index_se = reshape2::melt(MLE_report$obs_srv_dom_ll_se)
-  index_fit = reshape2::melt(MLE_report$pred_srv_dom_ll_bio)
-  colnames(index_obs) = c("Region", "Year", "Observed")
-  colnames(index_fit) = c("Region", "Year", "Predicted")
-  colnames(index_se) = c("Region", "Year", "SE")
-  ## convert the SE of an estimator to a standard deviation that is the
-  ## right scale for the lognormal distribution
-  ## first calculate CV = sigma/mean then pass this to the log_sigma function
-  if(MLE_report$srv_dom_ll_bio_likelihood == 0)
-    index_se$SE = log_sigma(index_se$SE / index_obs$Observed)
-
-  CIs = lognormal_CI(index_obs$Observed, sigma = index_se$SE, CI = 0.95)
-  index_obs$Predicted = index_fit$Predicted
-  index_obs$SE = index_se$SE
-  full_df = index_obs
+    index_obs = reshape2::melt(MLE_report$obs_srv_dom_ll_bio)
+    index_se = reshape2::melt(MLE_report$obs_srv_dom_ll_se)
+    index_fit = reshape2::melt(MLE_report$pred_srv_dom_ll_bio)
+    colnames(index_obs) = c("Region", "Year", "Observed")
+    colnames(index_fit) = c("Region", "Year", "Predicted")
+    colnames(index_se) = c("Region", "Year", "SE")
+    index_obs$Predicted = index_fit$Predicted
+    ## convert the SE of an estimator to a standard deviation that is the
+    ## right scale for the lognormal distribution
+    ## first calculate CV = sigma/mean then pass this to the log_sigma function
+    if(MLE_report$srv_dom_ll_bio_likelihood == 0)
+      index_se$SE = log_sigma(index_se$SE / index_obs$Observed)
+    index_obs$SE = index_se$SE
+    full_df = index_obs
+  }
+  CIs = lognormal_CI(full_df$Observed, sigma = full_df$SE, CI = 0.95)
   full_df$U_CI = CIs$upper
   full_df$L_CI = CIs$lower
 
