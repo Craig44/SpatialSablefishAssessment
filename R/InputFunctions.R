@@ -7,7 +7,13 @@
 #' @export
 plot_input_catches = function(data, region_key = NULL) {
   years = data$years
-  regions = 1:data$n_regions
+  if(data$model == "Assessment") {
+    regions = 1:1
+    data$fixed_fishery_catch = matrix(data$ll_fishery_catch, nrow = 1)
+    data$trwl_fishery_catch = matrix(data$trwl_fishery_catch, nrow = 1)
+  } else {
+    regions = 1:data$n_regions
+  }
   dimnames(data$fixed_fishery_catch) = dimnames(data$trwl_fishery_catch)  = list(regions, years)
   fixed_catch = reshape2::melt(data$fixed_fishery_catch)
   trwl_catch = reshape2::melt(data$trwl_fishery_catch)
@@ -32,7 +38,6 @@ plot_input_catches = function(data, region_key = NULL) {
 }
 
 
-
 #'
 #' get_input_observations
 #' @param data list that is passed to the MakeADfun for the TMB model
@@ -42,65 +47,125 @@ plot_input_catches = function(data, region_key = NULL) {
 #' @export
 get_input_observations = function(data, region_key = NULL) {
   years = data$years
-  regions = 1:data$n_regions
-  dimnames(data$fixed_catchatage_indicator) = dimnames(data$fixed_catchatlgth_indicator) = dimnames(data$trwl_catchatlgth_indicator) = dimnames(data$srv_dom_ll_catchatage_indicator) = dimnames(data$srv_dom_ll_bio_indicator) = list(regions, years)
-  dimnames(data$tag_recovery_indicator) = list(1:dim(data$tag_recovery_indicator)[1], regions, years[which(data$tag_recovery_indicator_by_year == 1)])
-  fixed_catchatage = reshape2::melt(data$fixed_catchatage_indicator)
-  fixed_catchatlgth  = reshape2::melt(data$fixed_catchatlgth_indicator)
-  trwl_catchatlgth = reshape2::melt(data$trwl_catchatlgth_indicator)
-  srv_dom_ll_catchatage = reshape2::melt(data$srv_dom_ll_catchatage_indicator)
-  srv_dom_ll_bio = reshape2::melt(data$srv_dom_ll_bio_indicator)
-  tag_recovery_detailed = NULL
-  if(sum(data$tag_recovery_indicator) != 0) {
-    tag_recovery_detailed = reshape2::melt(data$tag_recovery_indicator)
-    colnames(tag_recovery_detailed) = c("Tag release", "Region", "Year", "indicator")
-    tag_recovery_detailed$label = "Tag recovery"
-    ## collapse tag recoveries across release events
-    tag_recovery_detailed = tag_recovery_detailed %>% group_by(Region, Year, label) %>% summarise(indicator = ifelse(sum(indicator)>0, 1, 0))
+  full_df = NULL
+  if(data$model == "Assessment") {
+    obs_indicator_df = data.frame(year = data$years,
+               fixed_gear_age = data$ll_catchatage_indicator,
+               fixed_gear_lgth = data$ll_catchatlgth_indicator,
+               trawl_gear_lgth = data$trwl_catchatlgth_indicator,
+               longline_survey_age = data$srv_dom_ll_age_indicator,
+               longline_survey_lgth = data$srv_dom_ll_lgth_indicator,
+               longline_survey_bio = data$srv_dom_ll_bio_indicator,
+               nmfs_survey_age = data$srv_nmfs_trwl_age_indicator,
+               nmfs_survey_lgth = data$srv_nmfs_trwl_lgth_indicator,
+               nmfs_survey_bio = data$srv_nmfs_trwl_bio_indicator,
+               japanese_survey_age = data$srv_jap_ll_age_indicator,
+               japanese_survey_lgth = data$srv_jap_ll_lgth_indicator,
+               japanese_survey_bio = data$srv_jap_ll_bio_indicator,
+               japanese_gear_bio = data$srv_jap_fishery_ll_bio_indicator,
+               japanese_gear_lgth = data$srv_jap_fishery_ll_lgth_indicator
+      )
+    full_df = obs_indicator_df %>% pivot_longer(!year)
 
-  }
-  colnames(fixed_catchatage) = colnames(fixed_catchatlgth) = colnames(trwl_catchatlgth) = colnames(srv_dom_ll_catchatage) = colnames(srv_dom_ll_bio) = c("Region", "Year", "indicator")
-  ## tag releases
-  tag_release_df = NULL
-  if((sum(data$male_tagged_cohorts_by_age) + sum(data$female_tagged_cohorts_by_age)) > 0) {
-    dimnames(data$male_tagged_cohorts_by_age) = dimnames(data$female_tagged_cohorts_by_age) = list(data$ages, regions,  data$years[which(data$tag_release_event_this_year == 1)])
-    tag_releases_m = reshape2::melt(data$male_tagged_cohorts_by_age)
-    tag_releases_f = reshape2::melt(data$female_tagged_cohorts_by_age)
-    tag_releases = rbind(tag_releases_m, tag_releases_f)
-    colnames(tag_releases) = c("Age", "Region", "Year", "releases")
-    tag_release_df = tag_releases %>% group_by(Region, Year) %>% summarise(indicator = ifelse(sum(releases) > 0, 1, 0))
-    tag_release_df$label = "Tag Releases"
-  }
-  fixed_catchatlgth$label = "Fishery Fixed LF"
-  fixed_catchatage$label = "Fishery Fixed AF"
-  trwl_catchatlgth$label = "Fishery Trawl LF"
-  srv_dom_ll_catchatage$label = "Survey LL AF"
-  srv_dom_ll_bio$label = "Survey LL Biomass"
-  ## combine
-  full_df = rbind(fixed_catchatage, trwl_catchatlgth, srv_dom_ll_catchatage, srv_dom_ll_bio, fixed_catchatlgth, tag_recovery_detailed, tag_release_df)
+    colnames(full_df) = c("Year", "label", "indicator")
+    full_df$indicator = ifelse(full_df$indicator == 0, NA, 1)
 
-  if(is.null(region_key)) {
-    full_df$Region = paste0("Region ", full_df$Region)
+    region_lab = "Alaska"
+    if(is.null(region_key))
+      region_lab = region_key$area[region_key$TMB_ndx + 1]
+    full_df$Region = region_lab
+
+    fixed_catch = trawl_catch = expand.grid(years, unique(full_df$Region))
+    colnames(fixed_catch) = colnames(trawl_catch) = c("Year", "Region")
+    fixed_catch$indicator = 1
+    trawl_catch$indicator = 1
+    fixed_catch$indicator = 1
+    trawl_catch$indicator = 1
+    trawl_catch$label = "trawl_gear_catch"
+    fixed_catch$label = "fixed_gear_catch"
+    full_df = bind_rows(full_df, trawl_catch, fixed_catch)
+
+    ## Create labels
+    full_df$type = Reduce(c, lapply(strsplit(full_df$label, split = "_"), function(x) {x[3]}))
+    full_df$obs_type = Reduce(c, lapply(strsplit(full_df$label, split = "_"), function(x) {x[2]}))
+    full_df$source = Reduce(c, lapply(strsplit(full_df$label, split = "_"), function(x) {x[1]}))
+    ##
+    full_df = full_df %>% mutate(type =
+                         case_when(type == "age"  ~ "Age",
+                                   type == "bio"  ~ "Abundance",
+                                   type == "catch"  ~ "Catch",
+                                   type == "lgth"  ~ "Length"),
+                         obs_type = case_when(obs_type == "gear" ~ "Fishery",
+                                            obs_type == "survey" ~ "Survey"),
+                         source = case_when(source == "fixed" ~ "Fixed",
+                                            source == "japanese" ~ "Japanese LL",
+                                            source == "longline" ~ "Domestic LL",
+                                            source == "nmfs" ~ "NMFS",
+                                            source == "trawl" ~ "Trawl"
+                                            )
+                         )
+
+
   } else {
-    full_df$Region = region_key$area[match(full_df$Region, (region_key$TMB_ndx + 1))]
+    regions = 1:data$n_regions
+    dimnames(data$fixed_catchatage_indicator) = dimnames(data$fixed_catchatlgth_indicator) = dimnames(data$trwl_catchatlgth_indicator) = dimnames(data$srv_dom_ll_catchatage_indicator) = dimnames(data$srv_dom_ll_bio_indicator) = list(regions, years)
+    dimnames(data$tag_recovery_indicator) = list(1:dim(data$tag_recovery_indicator)[1], regions, years[which(data$tag_recovery_indicator_by_year == 1)])
+    fixed_catchatage = reshape2::melt(data$fixed_catchatage_indicator)
+    fixed_catchatlgth  = reshape2::melt(data$fixed_catchatlgth_indicator)
+    trwl_catchatlgth = reshape2::melt(data$trwl_catchatlgth_indicator)
+    srv_dom_ll_catchatage = reshape2::melt(data$srv_dom_ll_catchatage_indicator)
+    srv_dom_ll_bio = reshape2::melt(data$srv_dom_ll_bio_indicator)
+    tag_recovery_detailed = NULL
+    if(sum(data$tag_recovery_indicator) != 0) {
+      tag_recovery_detailed = reshape2::melt(data$tag_recovery_indicator)
+      colnames(tag_recovery_detailed) = c("Tag release", "Region", "Year", "indicator")
+      tag_recovery_detailed$label = "Tag recovery"
+      ## collapse tag recoveries across release events
+      tag_recovery_detailed = tag_recovery_detailed %>% group_by(Region, Year, label) %>% summarise(indicator = ifelse(sum(indicator)>0, 1, 0))
+
+    }
+    colnames(fixed_catchatage) = colnames(fixed_catchatlgth) = colnames(trwl_catchatlgth) = colnames(srv_dom_ll_catchatage) = colnames(srv_dom_ll_bio) = c("Region", "Year", "indicator")
+    ## tag releases
+    tag_release_df = NULL
+    if((sum(data$male_tagged_cohorts_by_age) + sum(data$female_tagged_cohorts_by_age)) > 0) {
+      dimnames(data$male_tagged_cohorts_by_age) = dimnames(data$female_tagged_cohorts_by_age) = list(data$ages, regions,  data$years[which(data$tag_release_event_this_year == 1)])
+      tag_releases_m = reshape2::melt(data$male_tagged_cohorts_by_age)
+      tag_releases_f = reshape2::melt(data$female_tagged_cohorts_by_age)
+      tag_releases = rbind(tag_releases_m, tag_releases_f)
+      colnames(tag_releases) = c("Age", "Region", "Year", "releases")
+      tag_release_df = tag_releases %>% group_by(Region, Year) %>% summarise(indicator = ifelse(sum(releases) > 0, 1, 0))
+      tag_release_df$label = "Tag Releases"
+    }
+    fixed_catchatlgth$label = "Fishery Fixed LF"
+    fixed_catchatage$label = "Fishery Fixed AF"
+    trwl_catchatlgth$label = "Fishery Trawl LF"
+    srv_dom_ll_catchatage$label = "Survey LL AF"
+    srv_dom_ll_bio$label = "Survey LL Biomass"
+    ## combine
+    full_df = rbind(fixed_catchatage, trwl_catchatlgth, srv_dom_ll_catchatage, srv_dom_ll_bio, fixed_catchatlgth, tag_recovery_detailed, tag_release_df)
+
+    if(is.null(region_key)) {
+      full_df$Region = paste0("Region ", full_df$Region)
+    } else {
+      full_df$Region = region_key$area[match(full_df$Region, (region_key$TMB_ndx + 1))]
+    }
+
+    full_df$indicator = ifelse(full_df$indicator == 0, NA, 1)
+
+    fixed_catch = trawl_catch = expand.grid(years, unique(full_df$Region))
+    colnames(fixed_catch) = colnames(trawl_catch) = c("Year", "Region")
+    fixed_catch$indicator = 1
+    trawl_catch$indicator = 1
+    fixed_catch$indicator = 1
+    trawl_catch$indicator = 1
+    trawl_catch$label = "Trawl catch"
+    fixed_catch$label = "Fixed catch"
+    full_df = bind_rows(full_df, trawl_catch, fixed_catch)
+
+    possible_labels = c("Fixed catch", "Trawl catch", "Survey LL Biomass", "Fishery Fixed AF", "Survey LL AF", "Fishery Fixed LF", "Fishery Trawl LF", "Tag recovery", "Tag Releases")
+    actual_labels = unique(full_df$label)
+    full_df$label = factor(full_df$label, levels = rev(possible_labels[possible_labels %in% actual_labels]), ordered = T)
   }
-
-  full_df$indicator = ifelse(full_df$indicator == 0, NA, 1)
-
-  fixed_catch = trawl_catch = expand.grid(years, unique(full_df$Region))
-  colnames(fixed_catch) = colnames(trawl_catch) = c("Year", "Region")
-  fixed_catch$indicator = 1
-  trawl_catch$indicator = 1
-  fixed_catch$indicator = 1
-  trawl_catch$indicator = 1
-  trawl_catch$label = "Trawl catch"
-  fixed_catch$label = "Fixed catch"
-  full_df = bind_rows(full_df, trawl_catch, fixed_catch)
-
-  possible_labels = c("Fixed catch", "Trawl catch", "Survey LL Biomass", "Fishery Fixed AF", "Survey LL AF", "Fishery Fixed LF", "Fishery Trawl LF", "Tag recovery", "Tag Releases")
-  actual_labels = unique(full_df$label)
-  full_df$label = factor(full_df$label, levels = rev(possible_labels[possible_labels %in% actual_labels]), ordered = T)
-
   return(full_df)
 }
 
@@ -113,17 +178,31 @@ get_input_observations = function(data, region_key = NULL) {
 plot_input_observations = function(data, region_key = NULL) {
 
   full_df = get_input_observations(data, region_key)
-
-  gplt = ggplot(full_df) +
-    geom_point(aes(x = Year, y = label, col = label, size = indicator)) +
-    guides(colour = "none", size = "none") +
-    labs(y = "") +
-    facet_wrap(~Region, ncol = 1) +
-    theme_bw() +
-    theme(
-      axis.text = element_text(size = 14),
-      axis.title = element_text(size = 14)
-    )
+  gplt = NULL
+  if(data$model == "Assessment") {
+    full_df$temp_label = paste0(full_df$source, "-", full_df$obs_type)
+    gplt = ggplot(full_df) +
+      geom_point(aes(x = Year, y = temp_label, col = label, size = indicator)) +
+      guides(colour = "none", size = "none") +
+      labs(y = "") +
+      facet_wrap(~type, ncol = 1) +
+      theme_bw() +
+      theme(
+        axis.text = element_text(size = 14),
+        axis.title = element_text(size = 14)
+      )
+  } else {
+    gplt = ggplot(full_df) +
+      geom_point(aes(x = Year, y = label, col = label, size = indicator)) +
+      guides(colour = "none", size = "none") +
+      labs(y = "") +
+      facet_wrap(~Region, ncol = 1) +
+      theme_bw() +
+      theme(
+        axis.text = element_text(size = 14),
+        axis.title = element_text(size = 14)
+      )
+  }
   return(gplt)
 }
 

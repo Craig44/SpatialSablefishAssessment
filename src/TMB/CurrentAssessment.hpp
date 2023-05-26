@@ -115,9 +115,6 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   DATA_IVECTOR(ll_cpue_q_by_year_indicator);       // Catchability time-block to apply when deriving model predictions each year
 
   // Observational stuff
-
-
-
   DATA_MATRIX(ageing_error_matrix);                 // Ageing error/missclassification matrix n_ages x n_ages
   DATA_VECTOR(log_likelihood_weights);              // YUCK!!! as soon as you can delete this and 'weight' likelihoods using the respective dispersion parameters
   // 0 = ll_age, 1 = trwl lgth male, 2 = trwl lgth female, 3 = srv_dom_ll_bio
@@ -332,6 +329,10 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   int year_ndx;
   int age_ndx;
   int len_ndx;
+  int min_age = 0;
+  while(min_age < ages(0)){
+    min_age++;
+  }
   Type m_plus_group = 0.0;
   Type f_plus_group = 0.0;
 
@@ -463,9 +464,26 @@ Type CurrentAssessment(objective_function<Type>* obj) {
    * 22 - Recruitment penalty/hyper prior if model is hierachical
    */
 
-
   /*
    * Initialise the partition (age structure)
+   */
+  init_natage_m(0) = exp(ln_mean_rec + ln_rec_dev(0) + sigma_R_sq/2)/2; //mean_rec * exp((sigma_R*sigma_R)/2)/2;
+  init_natage_f(0) = init_natage_m(0);
+
+  for(age_ndx = 1; age_ndx < n_ages; age_ndx++) {
+    // include recruitment variation in intial age-comp
+    init_natage_f(age_ndx) = exp(ln_mean_rec - (M(age_ndx - 1, 0)) * age_ndx) / 2;
+    init_natage_m(age_ndx) = exp(ln_mean_rec - (M(age_ndx - 1, 0)) * age_ndx) / 2;
+  }
+  // plus group
+  init_natage_f(n_ages - 1) = (exp(ln_mean_rec - (M(n_ages - 2, 0)) * (n_ages - 1)) / (1.0 - exp(-(M(n_ages - 2, 0))))) / 2.0;
+  init_natage_m(n_ages - 1) = (exp(ln_mean_rec - (M(n_ages - 2, 0)) * (n_ages - 1)) / (1.0 - exp(-(M(n_ages - 2, 0))))) / 2.0;
+  // Calculate B0
+  for(age_ndx = 0; age_ndx < n_ages; age_ndx++)
+    Bzero += init_natage_f(age_ndx) * pow(exp(-M(age_ndx, 0)), spawning_time_proportion(0)) * weight_maturity_prod_f(age_ndx, 0);
+
+  /*
+   * Initialise the partition (age structure) with initial F
    */
   init_natage_m(0) = exp(ln_mean_rec + ln_rec_dev(0) + sigma_R_sq/2)/2; //mean_rec * exp((sigma_R*sigma_R)/2)/2;
   init_natage_f(0) = init_natage_m(0);
@@ -995,6 +1013,8 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   REPORT(annual_F_trwl);
   REPORT(annual_F_ll);
   REPORT(annual_recruitment);
+  REPORT( ln_rec_dev );
+  REPORT( sigma_R );
   REPORT(S_f);
   REPORT(S_m);
   REPORT(weight_maturity_prod_f);
@@ -1037,6 +1057,13 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   REPORT(F_ll_f);
   REPORT(F_trwl_m);
   REPORT(F_trwl_f);
+
+  //
+  REPORT(ages);
+  REPORT( min_age );
+  REPORT(years);
+  REPORT(length_bins);
+  REPORT(n_projections_years);
 
   // Report model expected/predicted values
   REPORT(pred_ll_catchatage);
@@ -1082,6 +1109,8 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   REPORT(obs_jap_fishery_ll_bio);
   REPORT(obs_jap_fishery_ll_bio);
   REPORT(obs_srv_jap_fishery_ll_lgth);
+  REPORT(ll_fishery_catch);
+  REPORT(trwl_fishery_catch);
   // Report model type to help R functions
   REPORT(model_type);
   // REMOVE these objects once we have validated

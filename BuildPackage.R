@@ -15,7 +15,7 @@ library(testthat)
 ## otherwise this compile function wont register a change in source code.
 pkgbuild::compile_dll() # need to compile src first
 devtools::document()
-devtools::install() ## but I prefer to use Githubs
+#devtools::install() ## but I prefer to use R-studios "Build/Install/Button"
 #devtools::check()
 #rcmdcheck::rcmdcheck(args = "--no-manual", error_on = "error")
 ## Run unit tests for Package

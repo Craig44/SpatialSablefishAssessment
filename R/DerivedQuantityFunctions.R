@@ -30,30 +30,31 @@ plot_fishing_mortalities = function(MLE_report, region_key = NULL) {
 #' @return data frame in long format
 #' @export
 get_fishing_mortalities = function(MLE_report, region_key = NULL) {
-  years = MLE_report$years
-  projyears = min(MLE_report$years):(max(MLE_report$years) + MLE_report$n_projections_years)
-  fixed_F = MLE_report$annual_F_fixed
-  trwl_F = MLE_report$annual_F_trwl
-  full_f_df = NULL;
+  regions = NULL
+  fixed_F = trwl_F = NULL
   if(MLE_report$model_type == 0) {
-
-
+    regions = paste0("Region ", 1:1)
+    fixed_F = matrix(MLE_report$annual_F_ll, nrow = 1)
+    trwl_F = matrix(MLE_report$annual_F_trwl, nrow = 1)
   } else {
-    regions = 1:MLE_report$n_regions
-    dimnames(fixed_F) = dimnames(trwl_F) = list(regions, projyears)
-    molten_fixed_F = reshape2::melt(fixed_F)
-    molten_trwl_F = reshape2::melt(trwl_F)
-
-    colnames(molten_fixed_F) = colnames(molten_trwl_F) = c("Region","Year",  "F")
-    molten_fixed_F$Fishery = "Fixed gear"
-    molten_trwl_F$Fishery = "Trawl"
-    full_f_df = rbind(molten_fixed_F, molten_trwl_F)
-    if(is.null(region_key)) {
-      full_f_df$Region = paste0("Region ", full_f_df$Region)
-    } else {
-      full_f_df$Region = region_key$area[match(full_f_df$Region, (region_key$TMB_ndx + 1))]
-    }
+    regions = paste0("Region ", 1:MLE_report$n_regions)
+    fixed_F = MLE_report$annual_F_fixed
+    trwl_F = MLE_report$annual_F_trwl
   }
+  if(!is.null(region_key))
+    regions = region_key$area[region_key$TMB_ndx + 1]
+
+  projyears = min(MLE_report$years):(max(MLE_report$years) + MLE_report$n_projections_years)
+  full_f_df = NULL;
+
+  dimnames(fixed_F) = dimnames(trwl_F) = list(regions, projyears)
+  molten_fixed_F = reshape2::melt(fixed_F)
+  molten_trwl_F = reshape2::melt(trwl_F)
+
+  colnames(molten_fixed_F) = colnames(molten_trwl_F) = c("Region","Year",  "F")
+  molten_fixed_F$Fishery = "Fixed gear"
+  molten_trwl_F$Fishery = "Trawl"
+  full_f_df = rbind(molten_fixed_F, molten_trwl_F)
 
   return(full_f_df);
 }
@@ -65,8 +66,27 @@ get_fishing_mortalities = function(MLE_report, region_key = NULL) {
 #' @export
 get_catches = function(MLE_report, region_key = NULL) {
   years = MLE_report$years
-  regions = 1:MLE_report$n_regions
+  regions = NULL
+
+  if(MLE_report$model_type == 0) {
+    regions = paste0("Region ", 1:1)
+  } else {
+    regions = paste0("Region ", 1:MLE_report$n_regions)
+  }
+  if(!is.null(region_key))
+    regions = region_key$area[region_key$TMB_ndx + 1]
+
+  if(MLE_report$model_type == 0) {
+    MLE_report$fixed_fishery_catch = matrix(MLE_report$ll_fishery_catch, nrow = 1)
+    MLE_report$trwl_fishery_catch = matrix(MLE_report$trwl_fishery_catch, nrow = 1)
+    MLE_report$annual_fixed_catch_pred = matrix(MLE_report$annual_ll_catch_pred, nrow = 1)
+    MLE_report$annual_trwl_catch_pred = matrix(MLE_report$annual_trwl_catch_pred, nrow = 1)
+  }
+
   dimnames(MLE_report$fixed_fishery_catch) = dimnames(MLE_report$trwl_fishery_catch) = list(regions, years)
+  dimnames(MLE_report$annual_fixed_catch_pred) = dimnames(MLE_report$annual_trwl_catch_pred) = list(regions, years)
+
+
   fixed_catch = reshape2::melt(MLE_report$fixed_fishery_catch)
   trwl_catch = reshape2::melt(MLE_report$trwl_fishery_catch)
   colnames(fixed_catch) = colnames(trwl_catch) = c("Region", "Year", "Catch")
@@ -80,7 +100,6 @@ get_catches = function(MLE_report, region_key = NULL) {
   }
   obs_full_df$type = "Observed"
 
-  dimnames(MLE_report$annual_fixed_catch_pred) = dimnames(MLE_report$annual_trwl_catch_pred) = list(regions, years)
   fixed_catch = reshape2::melt(MLE_report$annual_fixed_catch_pred)
   trwl_catch = reshape2::melt(MLE_report$annual_trwl_catch_pred)
   colnames(fixed_catch) = colnames(trwl_catch) = c("Region", "Year", "Catch")
@@ -146,11 +165,20 @@ plot_movement = function(MLE_report, region_key = NULL) {
 #' @return data frame
 #' @export
 get_selectivities = function(MLE_report) {
-  sel_df = data.frame(fixed_male = MLE_report$sel_fixed_m, fixed_female = MLE_report$sel_fixed_f,
-                      trawl_male = MLE_report$sel_trwl_m, trawl_female = MLE_report$sel_trwl_f,
-                      surveyll_male = MLE_report$sel_srv_dom_ll_m, surveyll_female = MLE_report$sel_srv_dom_ll_f,
-                      age = MLE_report$ages
-  )
+  sel_df = NULL
+  if(MLE_report$model_type == 0) {
+    sel_df = data.frame(fixed_male = MLE_report$sel_ll_m, fixed_female = MLE_report$sel_ll_f,
+                        trawl_male = MLE_report$sel_trwl_m, trawl_female = MLE_report$sel_trwl_f,
+                        surveyll_male = MLE_report$sel_srv_dom_ll_m, surveyll_female = MLE_report$sel_srv_dom_ll_f,
+                        age = MLE_report$ages
+    )
+  } else {
+    sel_df = data.frame(fixed_male = MLE_report$sel_fixed_m, fixed_female = MLE_report$sel_fixed_f,
+                        trawl_male = MLE_report$sel_trwl_m, trawl_female = MLE_report$sel_trwl_f,
+                        surveyll_male = MLE_report$sel_srv_dom_ll_m, surveyll_female = MLE_report$sel_srv_dom_ll_f,
+                        age = MLE_report$ages
+    )
+  }
   sel_lng_df = sel_df %>% tidyr::pivot_longer(!age)
   sel_lng_df$gear = Reduce(c, lapply(sel_lng_df$name %>% stringr::str_split(pattern = "_"), function(x){x[1]}))
   sel_lng_df$sex = Reduce(c, lapply(sel_lng_df$name %>% stringr::str_split(pattern = "_"), function(x){x[2]}))
@@ -180,25 +208,44 @@ plot_selectivities = function(MLE_report) {
 #' @export
 #'
 get_recruitment = function(MLE_report, region_key = NULL) {
-  regions = paste0("Region ", 1:MLE_report$n_regions)
+  if(MLE_report$model_type == 0) {
+    regions = paste0("Region ", 1:1)
+  } else {
+    regions = paste0("Region ", 1:MLE_report$n_regions)
+  }
   if(!is.null(region_key))
     regions = region_key$area[region_key$TMB_ndx + 1]
   projyears = min(MLE_report$years):(max(MLE_report$years) + MLE_report$n_projections_years)
 
-  dimnames(MLE_report$recruitment_yr) = list(projyears, regions)
-  dimnames(MLE_report$recruitment_devs) = list(regions, projyears)
-  dimnames(MLE_report$recruitment_multipliers) = list(regions, projyears)
+  ssbs = NULL
+  if(MLE_report$model_type == 0) {
+    MLE_report$annual_recruitment = matrix(MLE_report$annual_recruitment, ncol = 1)
+    MLE_report$ln_rec_dev = matrix(MLE_report$ln_rec_dev, ncol= 1)
+    dimnames(MLE_report$annual_recruitment) = list(projyears, regions)
+    dimnames(MLE_report$ln_rec_dev) = list(projyears, regions)
+    MLE_report$recruitment_multipliers = MLE_report$ln_rec_dev
+    MLE_report$recruitment_multipliers = exp(MLE_report$recruitment_multipliers + 0.5*MLE_report$sigma_R^2)
+    names(MLE_report$mean_rec) = regions
+    recruit_df = reshape2::melt(MLE_report$annual_recruitment)
+    recruit_dev_df = reshape2::melt(MLE_report$ln_rec_dev)
+    recruit_ycs_df = reshape2::melt(MLE_report$recruitment_multipliers)
+    colnames(recruit_dev_df) =  c("Year", "Region", "Recruitment_deviation")
+    colnames(recruit_ycs_df) = c("Year", "Region", "YCS")
+  } else {
+    dimnames(MLE_report$recruitment_yr) = list(projyears, regions)
+    dimnames(MLE_report$recruitment_devs) = list(regions, projyears)
+    dimnames(MLE_report$recruitment_multipliers) = list(regions, projyears)
 
-  names(MLE_report$mean_rec) = regions
-  recruit_df = reshape2::melt(MLE_report$recruitment_yr)
-  recruit_dev_df = reshape2::melt(MLE_report$recruitment_devs)
-  recruit_ycs_df = reshape2::melt(MLE_report$recruitment_multipliers)
-
-
+    names(MLE_report$mean_rec) = regions
+    recruit_df = reshape2::melt(MLE_report$recruitment_yr)
+    recruit_dev_df = reshape2::melt(MLE_report$recruitment_devs)
+    recruit_ycs_df = reshape2::melt(MLE_report$recruitment_multipliers)
+    colnames(recruit_dev_df) = c("Region", "Year", "Recruitment_deviation")
+    colnames(recruit_ycs_df) = c("Region", "Year", "YCS")
+  }
   mean_recruit_df = reshape2::melt(as.matrix(MLE_report$mean_rec))
   colnames(recruit_df) = c("Year","Region", "Recruitment")
-  colnames(recruit_dev_df) = c("Region", "Year", "Recruitment_deviation")
-  colnames(recruit_ycs_df) = c("Region", "Year", "YCS")
+
 
   recruit_df$Recruitment_devs = recruit_dev_df
   colnames(mean_recruit_df) = c("Region", "row_ndx","Mean_recruitment")
@@ -236,10 +283,17 @@ get_SSB = function(MLE_report, region_key = NULL, depletion = F) {
   years = MLE_report$years
   projyears = min(MLE_report$years):(max(MLE_report$years) + MLE_report$n_projections_years)
 
-  regions = 1:MLE_report$n_regions
-  ssbs = MLE_report$SSB_yr
+  ssbs = NULL
+  if(MLE_report$model_type == 0) {
+    regions = 1:1
+    ssbs = matrix(MLE_report$SSB, ncol = 1)
+  } else {
+    regions = 1:MLE_report$n_regions
+    ssbs = MLE_report$SSB_yr
+  }
   if(depletion)
     ssbs = sweep(ssbs, MARGIN = 2, STATS = MLE_report$Bzero, FUN = "/") * 100
+
 
   dimnames(ssbs) = list(projyears, regions)
   molten_ssbs = reshape2::melt(ssbs)
@@ -273,14 +327,16 @@ plot_SSB = function(MLE_report, region_key = NULL, depletion = F) {
       guides(colour = "none", linewidth = "none") +
       labs(y = "Depletion (SSB/B0 %)") +
       facet_wrap(~Region) +
-      theme_bw()
+      theme_bw() +
+      ylim(0, NA)
   } else {
     gplt = ggplot(molten_ssbs) +
       geom_line(aes(x = Year, y = SSB, col = Region), linewidth= 1.1) +
       guides(colour = "none", linewidth = "none") +
       labs(y = "Spawning Stock Biomass (SSB)") +
       facet_wrap(~Region) +
-      theme_bw()
+      theme_bw() +
+      ylim(0, NA)
   }
 
   return(gplt)
@@ -296,6 +352,10 @@ plot_SSB = function(MLE_report, region_key = NULL, depletion = F) {
 #' @export
 
 get_other_derived_quantities <- function(MLE_report, data, region_key = NULL) {
+  if(MLE_report$model_type == 0) {
+    cat("Skipping this function not built for the Current Assessment")
+    return(NULL)
+  }
   Region_lab = paste0("Region ", 1:MLE_report$n_regions)
   if(!is.null(region_key))
     Region_lab =  region_key$area[region_key$TMB_ndx + 1]
