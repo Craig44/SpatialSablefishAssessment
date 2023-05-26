@@ -3,18 +3,49 @@
 #' @return data frame with age-frequency info
 #' @export
 get_negloglike <- function(MLE_report) {
-  AF_fixed_like = ifelse(MLE_report$fixed_catchatage_comp_likelihood == 0, "Multinomial", "Dirichlet-Multinomial")
-  LF_fixed_like = ifelse(MLE_report$fixed_catchatlgth_comp_likelihood == 0, "Multinomial", "Dirichlet-Multinomial")
-  AF_srv_like = ifelse(MLE_report$srv_dom_ll_catchatage_comp_likelihood == 0, "Multinomial", "Dirichlet-Multinomial")
-  LF_trwl_like = ifelse(MLE_report$trwl_catchatlgth_comp_likelihood == 0, "Multinomial", "Dirichlet-Multinomial")
-  tag_likelihood = switch(MLE_report$tag_likelihood + 1,
-                          "Poissson",
-                          "Negative Binomial",
-                          "Multinomial")
+  nll_df= NULL
+  if(MLE_report$model_type == 0) {
+    nll_label = c("ll- fishery age comp",
+    "trwl-fishery length male comp",
+    "trwl-fishery length female comp",
+    "srv Domestic ll Biomass",
+    "srv Japanese ll Biomass",
+    "Fishery CPUE",
+    "Domestic ll Age",
+    "Domestic ll Length male",
+    "srv Domestic ll Length female",
+    "srv Japanese ll Age",
+    "srv Japanese ll Length male",
+    "srv Japanese ll Length female",
+    "srv GOA trwl Age",
+    "srv GOA trwl  Length male",
+    "srv GOA trwl  Length female",
+    "ll-fishery length male comp",
+    "ll-fishery length female comp",
+    "srv GOA trwl biomass index",
+    "srv Japanese Fishery longline biomass index",
+    "srv Japanese Fishery longline Length Frequency",
+    "Longline fishery catch Sum of squares",
+    "Trawl fishery catch Sum of squares",
+    "Recruitment penalty")
 
-  nll_df = data.frame(negloglike = round(MLE_report$nll,4),
-                      observations = c("Fixed AF", "Trawl LF", "Fixed LF","Survey AF","Survey abund","Fixed catch","Trawl catch","Tag recovery", "Recruitment", "Initialisation devs", "posfun penalty"),
-                      distribution = c(AF_fixed_like, LF_trwl_like, LF_fixed_like, AF_srv_like, "lognormal", "lognormal", "lognormal", tag_likelihood, "lognormal", "lognormal", ""))
+    nll_df = data.frame(negloglike = round(MLE_report$nll,4),
+                        observations = nll_label)
+
+  } else {
+    AF_fixed_like = ifelse(MLE_report$fixed_catchatage_comp_likelihood == 0, "Multinomial", "Dirichlet-Multinomial")
+    LF_fixed_like = ifelse(MLE_report$fixed_catchatlgth_comp_likelihood == 0, "Multinomial", "Dirichlet-Multinomial")
+    AF_srv_like = ifelse(MLE_report$srv_dom_ll_catchatage_comp_likelihood == 0, "Multinomial", "Dirichlet-Multinomial")
+    LF_trwl_like = ifelse(MLE_report$trwl_catchatlgth_comp_likelihood == 0, "Multinomial", "Dirichlet-Multinomial")
+    tag_likelihood = switch(MLE_report$tag_likelihood + 1,
+                            "Poissson",
+                            "Negative Binomial",
+                            "Multinomial")
+
+    nll_df = data.frame(negloglike = round(MLE_report$nll,4),
+                        observations = c("Fixed AF", "Trawl LF", "Fixed LF","Survey AF","Survey abund","Fixed catch","Trawl catch","Tag recovery", "Recruitment", "Initialisation devs", "posfun penalty"),
+                        distribution = c(AF_fixed_like, LF_trwl_like, LF_fixed_like, AF_srv_like, "lognormal", "lognormal", "lognormal", tag_likelihood, "lognormal", "lognormal", ""))
+  }
   return(nll_df)
 }
 #' get_n_datasets get a data frame of the number of data sets
@@ -22,6 +53,10 @@ get_negloglike <- function(MLE_report) {
 #' @return data frame with age-frequency info
 #' @export
 get_n_datasets <- function(MLE_report) {
+  if(MLE_report$model_type == 0) {
+    cat("Skipping this function not built for the Current Assessment")
+    return(NULL)
+  }
   years = data$years
   regions = 1:data$n_regions
   dimnames(data$fixed_catchatage_indicator) = dimnames(data$fixed_catchatlgth_indicator) = dimnames(data$trwl_catchatlgth_indicator) = dimnames(data$srv_dom_ll_catchatage_indicator) = dimnames(data$srv_dom_ll_bio_indicator) = list(regions, years)

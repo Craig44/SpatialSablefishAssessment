@@ -53,7 +53,7 @@ get_fishing_mortalities = function(MLE_report, region_key = NULL) {
 
   colnames(molten_fixed_F) = colnames(molten_trwl_F) = c("Region","Year",  "F")
   molten_fixed_F$Fishery = "Fixed gear"
-  molten_trwl_F$Fishery = "Trawl"
+  molten_trwl_F$Fishery = "Trawl gear"
   full_f_df = rbind(molten_fixed_F, molten_trwl_F)
 
   return(full_f_df);
@@ -196,7 +196,12 @@ plot_selectivities = function(MLE_report) {
   gplt = ggplot(sel_lng_df, aes(x = age, y = value, col = sex, linetype = sex)) +
     geom_line(linewidth = 1.1) +
     facet_wrap(~gear) +
-    theme_bw()
+    theme_bw() +
+    labs(x = "Age", y = "Selectivity", col = "Sex.timeblock", linetype = "Sex.timeblock") +
+    theme(
+      axis.text = element_text(size = 14),
+      axis.title = element_text(size = 14)
+    )
   return(gplt)
 }
 
@@ -389,4 +394,36 @@ get_other_derived_quantities <- function(MLE_report, data, region_key = NULL) {
 
   return(list(catchabilities = molten_catchabilties, scalar_quants = scalar_quants, spatial_params = spatial_params, tag_reporting_rate = tag_reporting_rate))
 
+}
+
+
+
+#'
+#' get_qs
+#' @param MLE_report a list that is output from obj$report() usually once an optimsation routine has been done.
+#' @return A data frame of catchabilities
+#' @export
+
+get_qs <- function(MLE_report) {
+  molten_catchabilties = NULL
+  if(MLE_report$model_type == 0) {
+    ## four catchabilities in this model
+    ## they are dynamic in terms of number of time-blocks
+    ll_cpue = data.frame(Q = MLE_report$ll_cpue_q, label = "Fixed gear CPUE", time_block = paste0("TimeBlock: ", 1:length(MLE_report$ll_cpue_q)))
+    srv_dom_ll = data.frame(Q = MLE_report$srv_dom_ll_q, label = "Domestic LL survey", time_block = paste0("TimeBlock: ", 1:length(MLE_report$srv_dom_ll_q)))
+    jap_fishery_cpue = data.frame(Q = MLE_report$srv_jap_fishery_ll_q, label = "Japanese CPUE", time_block = paste0("TimeBlock: ", 1:length(MLE_report$srv_jap_fishery_ll_q)))
+    srv_jap_ll = data.frame(Q = MLE_report$srv_jap_ll_q, label = "Japanese LL survey", time_block = paste0("TimeBlock: ", 1:length(MLE_report$srv_jap_ll_q)))
+    # combine thiese
+    molten_catchabilties = rbind(ll_cpue, srv_dom_ll, jap_fishery_cpue, srv_jap_ll)
+  } else {
+    Region_lab = paste0("Region ", 1:MLE_report$n_regions)
+    if(!is.null(region_key))
+      Region_lab =  region_key$area[region_key$TMB_ndx + 1]
+
+    catchability = MLE_report$srv_dom_ll_q
+    dimnames(catchability) = list(Region_lab, paste0("Block-", 1:ncol(catchability)))
+    molten_catchabilties = reshape2::melt(catchability)
+    colnames(molten_catchabilties) = c("Region", "time-block", "q")
+  }
+  return(molten_catchabilties)
 }

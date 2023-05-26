@@ -52,6 +52,7 @@ get_input_observations = function(data, region_key = NULL) {
     obs_indicator_df = data.frame(year = data$years,
                fixed_gear_age = data$ll_catchatage_indicator,
                fixed_gear_lgth = data$ll_catchatlgth_indicator,
+               fixed_gear_bio = data$ll_cpue_indicator,
                trawl_gear_lgth = data$trwl_catchatlgth_indicator,
                longline_survey_age = data$srv_dom_ll_age_indicator,
                longline_survey_lgth = data$srv_dom_ll_lgth_indicator,
@@ -212,25 +213,69 @@ plot_input_observations = function(data, region_key = NULL) {
 #' @return ggplot2 object visualising the time-blocks for selectivities and catchabilities
 #' @export
 plot_input_timeblocks = function(data) {
-  projyears = min(data$years):(max(data$years) + data$n_projections_years)
-  full_df = data.frame(Year = projyears, fixed_sel = data$fixed_sel_by_year_indicator +1, trwl_sel = data$trwl_sel_by_year_indicator +1, srv_dom_ll_sel = data$srv_dom_ll_sel_by_year_indicator +1, srv_dom_ll_q = data$srv_dom_ll_q_by_year_indicator +1)
 
-  full_df_lng = full_df %>% pivot_longer(!Year)
-  colnames(full_df_lng) = c("Year", "label", "time_block")
-  full_df_lng$time_block = factor(full_df_lng$time_block)
-  full_df_lng = full_df_lng %>% mutate(label = case_when(
-    label == "fixed_sel" ~ "Fixed\nSelectivity",
-    label == "trwl_sel" ~ "Trawl\nSelectivity",
-    label == "srv_dom_ll_sel" ~ "Survey\nSelectivity",
-    label == "srv_dom_ll_q" ~ "Survey\nCatchability"
-  ))
-  gplt = ggplot(full_df_lng) +
-    geom_point(aes(x = Year, y = label, col = time_block, fill = time_block), size = 3) +
-    guides(size = "none", fill = "none") +
-    labs(x = "Year", y = "", col = "Time block") +
-    theme_bw() +
-    theme(axis.text = element_text(size = 13),
-          axis.title = element_text(size = 13))
+  if(data$model == "Assessment") {
+    ## assessment model
+    full_df = data.frame(Year = data$years,
+                         fixed_sel = data$ll_sel_by_year_indicator +1,
+                         fixed_q = data$ll_cpue_q_by_year_indicator + 1,
+                         trwl_sel = data$trwl_sel_by_year_indicator +1,
+                         srvdomll_sel = data$srv_dom_ll_sel_by_year_indicator +1,
+                         srvdomll_q = data$srv_dom_ll_q_by_year_indicator +1,
+                         srvjapll_sel = data$srv_jap_fishery_ll_sel_by_year_indicator +1,
+                         srvjapll_q = data$srv_jap_fishery_ll_q_by_year_indicator +1,
+                         srvnmfs_sel = data$srv_nmfs_trwl_sel_by_year_indicator +1,
+                         srvnmfs_q = data$srv_nmfs_trwl_q_by_year_indicator +1,
+                         japll_sel = data$srv_jap_fishery_ll_sel_by_year_indicator +1,
+                         japll_q = data$srv_jap_fishery_ll_q_by_year_indicator +1)
+
+    full_df_lng = full_df %>% pivot_longer(!Year)
+    ## Create labels
+    full_df_lng$label = Reduce(c, lapply(strsplit(full_df_lng$name, split = "_"), function(x) {x[1]}))
+    full_df_lng$type = Reduce(c, lapply(strsplit(full_df_lng$name, split = "_"), function(x) {x[2]}))
+
+    ##
+    full_df_lng = full_df_lng %>% mutate(label =
+                                   case_when(label == "fixed"  ~ "Fixed gear fishery",
+                                             label == "trwl"  ~ "Trawl gear fishery",
+                                             label == "japll"  ~ "Japanese LL survey",
+                                             label == "srvdomll"  ~ "Domestic LL survey",
+                                             label == "srvjapll"  ~ "Japanese LL fishery",
+                                             label == "srvnmfs"  ~ "NMFS survey"),
+                                   type = case_when(type == "q" ~ "Catchability",
+                                                    type == "sel" ~ "Selectivity")
+    )
+
+    gplt = ggplot(full_df_lng) +
+      geom_point(aes(x = Year, y = label, col = factor(value), fill = factor(value)), size = 3) +
+      facet_wrap(~type, ncol = 1) +
+      guides(size = "none", fill = "none") +
+      labs(x = "Year", y = "", col = "Time block") +
+      theme_bw() +
+      theme(axis.text = element_text(size = 13),
+            axis.title = element_text(size = 13))
+  } else {
+    ## Spatial tag-integrated model
+    projyears = min(data$years):(max(data$years) + data$n_projections_years)
+    full_df = data.frame(Year = projyears, fixed_sel = data$fixed_sel_by_year_indicator +1, trwl_sel = data$trwl_sel_by_year_indicator +1, srv_dom_ll_sel = data$srv_dom_ll_sel_by_year_indicator +1, srv_dom_ll_q = data$srv_dom_ll_q_by_year_indicator +1)
+
+    full_df_lng = full_df %>% pivot_longer(!Year)
+    colnames(full_df_lng) = c("Year", "label", "time_block")
+    full_df_lng$time_block = factor(full_df_lng$time_block)
+    full_df_lng = full_df_lng %>% mutate(label = case_when(
+      label == "fixed_sel" ~ "Fixed\nSelectivity",
+      label == "trwl_sel" ~ "Trawl\nSelectivity",
+      label == "srv_dom_ll_sel" ~ "Survey\nSelectivity",
+      label == "srv_dom_ll_q" ~ "Survey\nCatchability"
+    ))
+    gplt = ggplot(full_df_lng) +
+      geom_point(aes(x = Year, y = label, col = time_block, fill = time_block), size = 3) +
+      guides(size = "none", fill = "none") +
+      labs(x = "Year", y = "", col = "Time block") +
+      theme_bw() +
+      theme(axis.text = element_text(size = 13),
+            axis.title = element_text(size = 13))
+  }
   return(gplt)
 }
 
