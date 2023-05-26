@@ -1,0 +1,31 @@
+# `Assessment` `data` and `parameter` descriptions {-}
+
+Users need to population a named list containing `data` inputs and a named list specifying starting values for estimable `parameters` which are both passed to TMB's `MakeADFun` function. This section outlines the elements and corresponding dimensions of both `data` and `parameters`.
+
+
+## `data` {-}
+
+- `ages` vector of ages. Length `n_ages`
+- `years` vector of years from start year to current year. length `n_years`
+- `length_bins` vector of length bin midpoints. length. `n_length_bins`
+- `n_projections_years` integer of future years to project the model `n_projyears = n_years + n_projections_years`
+- `do_projection` integer 0 means don't do projection 1 does a stochastic projection (**should be turned off during estimation**)
+- `n_init_rec_devs` number of initial n_age_deviations (`parameter$ln_init_rec_dev`) to multiply against the initial numbers at age to have non equilibrium initial age-structure. A value of zero will **not** apply these initial devs and expects `parameter$ln_init_rec_dev` to have length 1. These deviations are applied equally to both male and female.
+- `M` Natural mortality array with dimensions `n_ages` \(\times\) `n_projyears`
+- `maturity` proportion mature array with dimensions `n_ages` \(\times\) `n_projyears`
+- `male_mean_weight_by_age` male mean weight at age array with dimensions `n_ages` \(\times\) `n_projyears`. Units are in kgs, this is because we track millions of fish in the partition, so any weight calculation is in kilo tonnes
+- `female_mean_weight_by_age` female mean weight at age array with dimensions `n_ages` \(\times\) `n_projyears`. Units are in kgs, this is because we track millions of fish in the partition, so any weight calculation is in kilo tonnes
+- `male_age_length_transition` male age-length transtion matrix for each year. An array with dimensions `n_ages` \(\times\)`n_length_bins` \(\times\) `n_projyears`
+- `female_age_length_transition` female age-length transtion matrix for each year. An array with dimensions `n_ages` \(\times\)`n_length_bins` \(\times\) `n_projyears`
+- `SrType` Stock recruitment type 2 = Beverton holt, 3 = average (NO SR)
+- `spawning_time_proportion` vector of proportions that indicate when during the year spawning occurs. Length = `n_projyears`
+
+- `ll_fishery_catch` vector of annual catch for the fixed gear fishery. Units are kilo tonnes
+- `trwl_fishery_catch` vector of annual catch for the Trawl gear fishery. Units are kilo tonnes
+
+
+## `parameters` {-}
+
+
+- `ln_mean_rec` scalar of natural logarithm of mean recruitment (units are log millions). 
+
