@@ -25,7 +25,12 @@ plot_mean_age(
 
 \item{subset_years}{vector of years to plot it for}
 
-\item{sex}{character that allows users to specify if the want sex specific plots}
+\item{sex}{character that allows users to specify if the want sex specific plots
+\itemize{
+\item \code{male}
+\item \code{female}
+\item \code{both}
+}}
 
 \item{region_key}{data.frame with colnames area and TMB_ndx for providing real region names to objects}
 }

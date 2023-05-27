@@ -9,6 +9,20 @@ When editing TMB code and recompiling you need to go into the `src/` directory a
 
 Any model that is added, should be able to be unit-tested. For `TagIntegrated` model I created a mirror model called `TagIntegratedValidate` which has heaps more switches which I didn't want in the production version, but needed to validate isolated functionality. Although this creates duplicate code bases I still think it is the best approach. When you do this it is recommended that you add a unit-test which checks the production and validation model are the same. This will tell you when you change functionality in one of the models and not the other, thus keeping them compatible and the unit-tests trustworthy.
 
+## Adding a new R dependency {-}
+
+All external dependencies are described in the `R/SpatialSablefishAssessment-package.R`. I try to import specific functions from packages using the following syntax
+
+`#' @importFrom package function `
+
+i.e., 
+
+
+`#' @importFrom ggplot2 geom_point`
+
+
+So, if you build a function which uses a function from say `dplyr` or `ggplot2` that isn't in `SpatialSablefishAssessment-package.R`. You will need to add it there. If you want to use functionality from another library then you will also need to update the `DESCRIPTION` file
+
 
 ## Tips {-}
 

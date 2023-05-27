@@ -15,15 +15,15 @@ get_AF(
 \arguments{
 \item{MLE_report}{a list that is output from obj$report() usually once an optimsation routine has been done.}
 
-\item{observation}{character labeling the observation you want to plot. See below for options
+\item{observation}{character labeling the observation you want to plot. See below for options. Ignored if \code{MLE_report$model_type == 0} and will return all age comps.
 \itemize{
 \item \code{fixed}
 \item \code{srv_dom_ll}
 }}
 
-\item{subset_years}{vector of years to plot it for}
+\item{subset_years}{vector of years to get observation for it. Ignored if \code{MLE_report$model_type == 0}.}
 
-\item{sex}{character that allows users to specify if the want sex specific plots
+\item{sex}{character that allows users to specify if the want sex specific plots. Ignored if \code{MLE_report$model_type == 0}.
 \itemize{
 \item \code{both}
 \item \code{male}
