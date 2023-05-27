@@ -4,12 +4,17 @@
 \alias{plot_index_fit}
 \title{plot_index_fit}
 \usage{
-plot_index_fit(MLE_report, region_key = NULL)
+plot_index_fit(MLE_report, region_key = NULL, resid = F)
 }
 \arguments{
 \item{MLE_report}{a list that is output from obj$report() usually once an optimsation routine has been done.}
 
 \item{region_key}{data.frame with colnames area and TMB_ndx for providing real region names to objects}
+
+\item{resid}{\itemize{
+\item F - conventional observed with predicted with standard errors
+\item T - Pearson residuals with smoother
+}}
 }
 \value{
 ggplot2 object that will plot if an observation occurs in a year and region
