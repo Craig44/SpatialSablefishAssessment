@@ -1,0 +1,73 @@
+# How to use `SpatialSablefishAssessment` in a MSE {-}
+
+
+```r
+## get MLE quantities
+mle_report = my_model$report(mle_optim$par)
+
+#########
+## Plot interesting
+## Model quantities i.e., recruitment SSBs model fits etc
+#########
+
+## movement assumption
+plot_movement(mle_report, region_key = region_key)
+# starting values
+plot_movement(OM_report, region_key)
+# plot selectivities
+plot_selectivities(mle_report)
+# starting values
+plot_selectivities(OM_report)
+
+## Regional SSBs
+ssb_plt = plot_SSB(mle_report, region_key = region_key)
+ssb_plt
+## sum SSB over all regions
+ggplot(ssb_plt$data %>% group_by(Year) %>% summarise(total_ssb = sum(SSB)), aes(x = Year, y = total_ssb)) +
+  geom_line(linewidth = 1.1) +
+  ylim(0,NA)
+
+## plot F's
+plot_fishing_mortalities(MLE_report = mle_report, region_key = region_key)
+
+## plot fits to observations
+
+# catch and index
+plot_catch_fit(MLE_report = mle_report, region_key = region_key) + facet_wrap(label~Region, ncol = n_regions) + ylab("Catch (mt)")
+plot_index_fit(MLE_report = mle_report, region_key = region_key)
+
+# survey AFs
+first_year_set = c(1981, seq(from = 1985, to = 1993, by = 2), 1996:1999)
+plot_AF(MLE_report = mle_report, region_key = region_key, label = "srv_dom_ll", subset_years = first_year_set, sex = "male") +
+  ggtitle("Male survey AF") +
+  guides(shape = "none", linetype = "none") +
+  ylim(0,20)
+plot_AF(MLE_report = mle_report, region_key = region_key, label = "srv_dom_ll", subset_years = first_year_set, sex = "female") +
+  ggtitle("Female survey AF") +
+  guides(shape = "none", linetype = "none")
+  
+# fishery LFs
+# Fixed gear
+plot_LF(MLE_report = mle_report, region_key = region_key, label = "fixed", subset_years = 1991:1999, sex = "male") +
+  ggtitle("Male fixed LF") +
+  guides(shape = "none", linetype = "none")
+plot_LF(MLE_report = mle_report, region_key = region_key, label = "fixed", subset_years = 1991:1999, sex = "female") +
+  ggtitle("Female fixed LF") +
+  guides(shape = "none", linetype = "none")
+
+# plot by tag releases event
+tag_fits_by_age_sex = get_tag_recovery_obs_fitted_values(mle_report, region_key = region_key)
+tag_fits = tag_fits_by_age_sex %>% group_by(release_event, unique_recovery_id) %>% summarise(observed = sum(observed), predicted = sum(predicted), recovery_year = unique(recovery_year), recovery_region = unique(recovery_region), release_region = unique(release_region), release_year = unique(release_year))
+tag_fits$resid = tag_fits$observed - tag_fits$predicted
+tag_fits$stand_resid = tag_fits$resid / tag_fits$predicted
+tag_fits$resid_sign = ifelse(tag_fits$resid < 0, "negative", "positive")
+unique_release_events = unique(tag_fits$release_event)
+gplt = ggplot(tag_fits %>% filter(release_event %in% unique_release_events[1:16]), aes(x = recovery_year, y = recovery_region)) +
+  geom_point(aes(size = abs(stand_resid), col = resid_sign)) +
+  labs(x = "Recovery year", y = "Recovery region", size = "Pearson residuals") +
+  theme_bw() +
+  scale_size_area() +
+  facet_wrap(~release_event) +
+  scale_x_discrete(breaks = every_nth(n = 5))
+
+```
