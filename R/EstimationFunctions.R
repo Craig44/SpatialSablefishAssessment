@@ -716,7 +716,6 @@ set_up_parameters <- function(data, parameters,
         }
       }
     }
-    counter = counter + n_srv_sel_time_blocks * n_sel_pars_for_this_time_block - 1
   }
   if(is.null(arrays_with_elements_fixed[["ln_srv_sel_pars"]]) & !is.null(sel_params_to_turn_off))
     arrays_with_elements_fixed[["ln_srv_sel_pars"]] = sel_params_to_turn_off
