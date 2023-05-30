@@ -162,6 +162,7 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   DATA_VECTOR_INDICATOR(keep_obs_dom_ll_bio, obs_dom_ll_bio);
   DATA_INTEGER(dom_ll_bio_likelihood);                  // 0 = ADMB, 1 = lnorm
   vector<Type> pred_dom_ll_bio(n_dom_ll_bio);           // Sex aggregated predicted
+  pred_dom_ll_bio.setZero();                            // initialise vector to be filled with zeros
 
   // Survey biomass for the Japanease Longline survey
   DATA_IVECTOR(srv_jap_ll_bio_indicator);               // length(srv_jap_ll_bio_indicator) = n_years.  1 = calculate catch at age in this year, 0 = don't calculate catch at age
@@ -171,6 +172,7 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   DATA_VECTOR_INDICATOR(keep_obs_jap_ll_bio, obs_jap_ll_bio);
   DATA_INTEGER(jap_ll_bio_likelihood);                  // 0 = ADMB, 1 = lnorm
   vector<Type> pred_jap_ll_bio(n_jap_ll_bio);           // Sex aggregated predicted
+  pred_jap_ll_bio.setZero();                            // initialise vector to be filled with zeros
 
   // Survey NMFS GOA trawl survey
   DATA_IVECTOR(srv_nmfs_trwl_bio_indicator);               // length(srv_nmfs_trwl_bio_indicator) = n_years.  1 = calculate catch at age in this year, 0 = don't calculate catch at age
@@ -180,6 +182,7 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   DATA_VECTOR_INDICATOR(keep_obs_nmfs_trwl_bio, obs_nmfs_trwl_bio);
   DATA_INTEGER(nmfs_trwl_bio_likelihood);                  // 0 = ADMB, 1 = lnorm
   vector<Type> pred_nmfs_trwl_bio(n_nmfs_trwl_bio);        // Sex aggregated predicted
+  pred_nmfs_trwl_bio.setZero();                           // initialise vector to be filled with zeros
 
   // Longline CPUE
   DATA_IVECTOR(ll_cpue_indicator);                      // length(ll_cpue_indicator) = n_years.  1 = calculate catch at age in this year, 0 = don't calculate catch at age
@@ -189,6 +192,7 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   DATA_VECTOR_INDICATOR(keep_obs_ll_cpue, obs_ll_cpue);
   DATA_INTEGER(ll_cpue_likelihood);                      // 0 = ADMB, 1 = lnorm
   vector<Type> pred_ll_cpue(n_ll_cpue);                  // Sex aggregated predicted
+  pred_ll_cpue.setZero();                               // initialise vector to be filled with zeros
 
   // Japanease Longline Fishery NOTE!!!!! this is an index and LF only not an actual fishery? Need to ask Dan why?
   DATA_IVECTOR(srv_jap_fishery_ll_bio_indicator);               // length(srv_jap_fishery_ll_bio_indicator) = n_years.  1 = calculate catch at age in this year, 0 = don't calculate catch at age
@@ -198,7 +202,7 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   DATA_VECTOR_INDICATOR(keep_obs_jap_fishery_ll_bio, obs_jap_fishery_ll_bio);
   DATA_INTEGER(jap_fishery_ll_bio_likelihood);                  // 0 = ADMB, 1 = lnorm
   vector<Type> pred_jap_fishery_ll_bio(n_jap_fishery_ll_bio);           // Sex aggregated predicted
-  pred_jap_fishery_ll_bio.setZero();
+  pred_jap_fishery_ll_bio.setZero();                                    // initialise vector to be filled with zeros
 
   // Survey age for the Domestic Longline
   DATA_IVECTOR(srv_dom_ll_age_indicator);               // length(srv_dom_ll_age_indicator) = n_years.  1 = calculate catch at age in this year, 0 = don't calculate catch at age
