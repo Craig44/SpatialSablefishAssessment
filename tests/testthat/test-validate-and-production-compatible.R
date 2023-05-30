@@ -31,8 +31,8 @@ test_that("compatibility-single-release-with-movement-and-Z", {
   data$obs_fixed_catchatlgth = array(5, dim = dim(data$obs_fixed_catchatlgth))
   data$fixed_catchatage_indicator[data$fixed_catchatage_indicator == 0] = 1
   data$obs_fixed_catchatage = array(5, dim = dim(data$obs_fixed_catchatage))
-  data$srv_dom_ll_catchatage_indicator[data$srv_dom_ll_catchatage_indicator == 0] = 1
-  data$obs_srv_dom_ll_catchatage = array(5, dim = dim(data$obs_srv_dom_ll_catchatage))
+  data$srv_catchatage_indicator[data$srv_catchatage_indicator == 0] = 1
+  data$obs_srv_catchatage = array(5, dim = dim(data$obs_srv_catchatage))
 
 
   parameters$logistic_tag_reporting_rate = matrix(logit(0.2), nrow = data$n_regions, ncol = sum(data$tag_recovery_indicator))
@@ -106,19 +106,19 @@ test_that("compatibility-single-release-with-movement-and-Z-dirichletmultinomial
   data$obs_fixed_catchatlgth = array(6, dim = dim(data$obs_fixed_catchatlgth))
   data$fixed_catchatage_indicator[data$fixed_catchatage_indicator == 0] = 1
   data$obs_fixed_catchatage = array(7, dim = dim(data$obs_fixed_catchatage))
-  data$srv_dom_ll_catchatage_indicator[data$srv_dom_ll_catchatage_indicator == 0] = 1
-  data$obs_srv_dom_ll_catchatage = array(8, dim = dim(data$obs_srv_dom_ll_catchatage))
+  data$srv_catchatage_indicator[data$srv_catchatage_indicator == 0] = 1
+  data$obs_srv_catchatage = array(8, dim = dim(data$obs_srv_catchatage))
 
   data$trwl_catchatlgth_indicator[data$trwl_catchatlgth_indicator == 0] = 1
   data$fixed_catchatlgth_indicator[data$fixed_catchatlgth_indicator == 0] = 1
   data$fixed_catchatage_comp_likelihood = 1
-  data$srv_dom_ll_catchatage_comp_likelihood = 1
+  data$srv_catchatage_comp_likelihood = 1
 
   parameters$logistic_tag_reporting_rate = matrix(logit(0.2), nrow = data$n_regions, ncol = sum(data$tag_recovery_indicator))
   parameters$trans_fixed_catchatlgth_error = log(0.1)
   parameters$trans_theta_trwl_catchatlgth_error = log(0.2)
   parameters$trans_fixed_catchatage_error = log(10)
-  parameters$trans_srv_dom_ll_catchatage = log(7.4)
+  parameters$trans_srv_catchatage = log(7.4)
 
   validate_model <- TMB::MakeADFun(data = data,
                                    parameters = parameters,
@@ -174,19 +174,19 @@ test_that("compatibility-single-release-with-movement-and-Z-tag-likelihood-multi
   data$obs_fixed_catchatlgth = array(6, dim = dim(data$obs_fixed_catchatlgth))
   data$fixed_catchatage_indicator[data$fixed_catchatage_indicator == 0] = 1
   data$obs_fixed_catchatage = array(7, dim = dim(data$obs_fixed_catchatage))
-  data$srv_dom_ll_catchatage_indicator[data$srv_dom_ll_catchatage_indicator == 0] = 1
-  data$obs_srv_dom_ll_catchatage = array(8, dim = dim(data$obs_srv_dom_ll_catchatage))
+  data$srv_catchatage_indicator[data$srv_catchatage_indicator == 0] = 1
+  data$obs_srv_catchatage = array(8, dim = dim(data$obs_srv_catchatage))
 
   data$trwl_catchatlgth_indicator[data$trwl_catchatlgth_indicator == 0] = 1
   data$fixed_catchatlgth_indicator[data$fixed_catchatlgth_indicator == 0] = 1
   data$fixed_catchatage_comp_likelihood = 1
-  data$srv_dom_ll_catchatage_comp_likelihood = 1
+  data$srv_catchatage_comp_likelihood = 1
 
   parameters$logistic_tag_reporting_rate = matrix(logit(0.2), nrow = data$n_regions, ncol = sum(data$tag_recovery_indicator))
   parameters$trans_fixed_catchatlgth_error = log(0.1)
   parameters$trans_theta_trwl_catchatlgth_error = log(0.2)
   parameters$trans_fixed_catchatage_error = log(10)
-  parameters$trans_srv_dom_ll_catchatage = log(7.4)
+  parameters$trans_srv_catchatage = log(7.4)
 
   validate_model <- TMB::MakeADFun(data = data,
                                    parameters = parameters,

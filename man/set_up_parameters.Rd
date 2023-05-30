@@ -28,7 +28,7 @@ set_up_parameters(
   est_fixed_AF_theta = F,
   est_fixed_LF_theta = F,
   est_trwl_LF_theta = F,
-  est_srv_ll_AF_theta = F,
+  est_AF_theta = F,
   est_prop_male_recruit = "off",
   est_SR_pars = F
 )
@@ -40,9 +40,9 @@ set_up_parameters(
 
 \item{na_map}{an existing map that has already had parameters turned off, not well tested}
 
-\item{srv_sel_first_param_shared_by_sex}{bool, whether the first survey selectivity parameter is shared among male and female for all time-blocks}
+\item{srv_sel_first_param_shared_by_sex}{vector of bool specifying whether the first survey selectivity parameter is shared among male and female for all time-blocks. There needs to be a bool for each of the n_surveys}
 
-\item{srv_sel_second_param_shared_by_sex}{bool, whether the second survey selectivity parameter is shared among male and female for all time-blocks}
+\item{srv_sel_second_param_shared_by_sex}{vector of bool specifying whether the second survey selectivity parameter is shared among male and female for all time-blocks. There needs to be a bool for each of the n_surveys}
 
 \item{srv_sel_third_param_shared_by_sex}{bool, whether the third survey selectivity parameter is shared among male and female for all time-blocks}
 
@@ -88,7 +88,7 @@ set_up_parameters(
 
 \item{est_trwl_LF_theta}{bool whether you want to estimate the theta parameter for trawl gear LF}
 
-\item{est_srv_ll_AF_theta}{bool whether you want to estimate the theta parameter for longline survey AF}
+\item{est_AF_theta}{vector of bool specifying whether you want to estimate the theta parameter for survey AF likelihood. length is n_suveys}
 
 \item{est_prop_male_recruit}{vector of years that indicate time-blocks or one of the following strings
 \itemize{

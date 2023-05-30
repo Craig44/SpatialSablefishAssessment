@@ -26,8 +26,6 @@ data$ages = ages
 data$years = years
 data$length_bins = length_bins
 data$n_regions = nrow(region_key)
-n_surveys = 1
-data$n_surveys = n_surveys
 n_regions = data$n_regions
 n_ages = length(data$ages)
 n_length_bins = length(data$length_bins) # the last length bin value is the minimum for a length plus group
@@ -111,8 +109,8 @@ data$fixed_sel_by_year_indicator = as.vector(rep(0, n_projyears), mode = "intege
 data$trwl_sel_type = as.vector(rep(1, 1), mode = "integer")
 data$trwl_sel_by_year_indicator = as.vector(rep(0, n_projyears), mode = "integer")
 
-data$srv_sel_type = matrix(rep(0, 1), ncol = data$n_surveys)
-data$srv_sel_by_year_indicator = matrix(rep(0, n_projyears), ncol = data$n_surveys)
+data$srv_dom_ll_sel_type = as.vector(rep(0, 1), mode = "integer")
+data$srv_dom_ll_sel_by_year_indicator = as.vector(rep(0, n_projyears), mode = "integer")
 
 #'
 #' Tag release stuff
@@ -163,22 +161,22 @@ data$fixed_catchatlgth_comp_likelihood = 0
 
 
 ### Survey LL proportions at age
-data$srv_catchatage_indicator = array(0, dim = c(n_regions, n_years, n_surveys))
-data$obs_srv_catchatage = array(5, dim = c(n_ages * 2, n_regions, n_years, n_surveys))
+data$srv_dom_ll_catchatage_indicator = matrix(0, nrow = n_regions, ncol = n_years)
+data$obs_srv_dom_ll_catchatage = array(5, dim = c(n_ages * 2, n_regions, n_years))
 
-data$srv_catchatage_covar_structure = rep(1, n_surveys)
-data$srv_catchatage_comp_likelihood = rep(0, n_surveys)
+data$srv_dom_ll_catchatage_covar_structure = 0
+data$srv_dom_ll_catchatage_comp_likelihood = 0
 
 ### Survey LL index
-data$srv_bio_indicator = array(0, dim = c(n_regions, n_years, n_surveys))
-data$obs_srv_bio = array(1, dim = c(n_regions, n_years,n_surveys))
-data$obs_srv_se = array(0.2, dim = c(n_regions, n_years, n_surveys))
+data$srv_dom_ll_bio_indicator = matrix(0, nrow = n_regions, ncol = n_years)
+data$obs_srv_dom_ll_bio = array(1, dim = c(n_regions, n_years))
+data$obs_srv_dom_ll_se = array(0.2, dim = c(n_regions, n_years))
 
-data$srv_bio_likelihood = rep(1, n_surveys)
-data$srv_obs_is_abundance = rep(1, n_surveys)
-data$srv_q_by_year_indicator = matrix(0, nrow = n_years, ncol = n_surveys)
-data$srv_q_transformation = rep(1, n_surveys) ## logistic
-data$q_is_nuisance = rep(0, n_surveys)
+data$srv_dom_ll_bio_likelihood = 1
+data$srv_dom_ll_obs_is_abundance = 1
+data$srv_dom_ll_q_by_year_indicator = rep(0, n_years)
+data$srv_dom_ll_q_transformation = 1 ## logistic
+data$q_is_nuisance = 0
 
 tag_recovery_years = 2011:2020
 # drop any recovery years before release years
@@ -257,7 +255,7 @@ parameters$ln_mean_rec = rnorm(data$n_regions, log(14), 0.3)
 ## Fishery selectivity
 parameters$ln_fixed_sel_pars = array(0, dim = c(1, 2, 2))
 parameters$ln_trwl_sel_pars = array(0, dim = c(1, 2, 2))
-parameters$ln_srv_sel_pars = array(0, dim = c(1, 2, 2, 1))
+parameters$ln_srv_dom_ll_sel_pars = array(0, dim = c(1, 2, 2))
 
 ## populate parameters Note some of the male delta values are set to the female values. Line 1800 tem.tpl
 parameters$ln_fixed_sel_pars[1,1,1] = 2.111
@@ -271,10 +269,10 @@ parameters$ln_trwl_sel_pars[1,1,2] = 2.011
 parameters$ln_trwl_sel_pars[1,2,2] = 2.2150
 
 ## NOTE: all delta parameters for all survey selectivities are fixed based on srv_dom_ll_1
-parameters$ln_srv_sel_pars[1,1,1, 1] = 2.111
-parameters$ln_srv_sel_pars[1,2,1, 1] = -0.711
-parameters$ln_srv_sel_pars[1,1,2, 1] = 1.576
-parameters$ln_srv_sel_pars[1,2,2, 1] = -0.7118
+parameters$ln_srv_dom_ll_sel_pars[1,1,1] = 2.111
+parameters$ln_srv_dom_ll_sel_pars[1,2,1] = -0.711
+parameters$ln_srv_dom_ll_sel_pars[1,1,2] = 1.576
+parameters$ln_srv_dom_ll_sel_pars[1,2,2] = -0.7118
 
 ## movement pars
 parameters$transformed_movement_pars = matrix(NA, nrow = n_regions - 1, ncol = n_regions)
@@ -288,7 +286,7 @@ parameters$ln_trwl_F_avg = -2.965016
 parameters$ln_trwl_F_devs = array(0, dim = c(n_regions, n_projyears))
 
 parameters$ln_init_F_avg = parameters$ln_fixed_F_avg
-parameters$trans_srv_q = array(logit(0.2), dim = c(data$n_regions, length(unique(data$srv_q_by_year_indicator[,1])), n_surveys))
+parameters$trans_srv_dom_ll_q = array(logit(0.2), dim = c(data$n_regions, length(unique(data$srv_dom_ll_q_by_year_indicator))))
 parameters$trans_rec_dev = array(0, dim = c(1, n_years))
 parameters$ln_init_rec_dev = 0
 parameters$ln_catch_sd = log(0.02)
@@ -298,32 +296,17 @@ parameters$trans_SR_pars = log(0.8)
 parameters$trans_trwl_catchatlgth_error = log(1)
 parameters$trans_fixed_catchatlgth_error = log(1)
 parameters$trans_fixed_catchatage_error = log(1)
-parameters$trans_srv_catchatage_error = rep(log(1), n_surveys)
+parameters$trans_srv_dom_ll_catchatage_error = log(1)
 parameters$logistic_prop_recruit_male = rep(0, length(data$years))
 
 ## reporting rate
 parameters$logistic_tag_reporting_rate = array(logit(0.999), dim = c(n_regions, length(tag_recovery_years)))
 parameters$ln_tag_phi = log(1)
 data$model = "TagIntegratedValidate"
-save(data, parameters, region_key, file = file.path("inst", "testdata", "MockSablefishModel.RData"))
+save(data, parameters, region_key, file = file.path("inst", "testdata", "MockAgeBasedMovementModel.RData"))
 
 ## rm functions so we don't get a namespace clash
 rm(list = c("get_tag_release_ndx", "logit", "simplex","Q_sum_to_zero_QR"))
 
-validate_input_data_and_parameters(data, parameters)
+#validate_input_data_and_parameters(data, parameters)
 
-########################
-## Check this model data parameter combo doesn't cause issues when making the AD object
-########################
-data$model = "TagIntegratedValidate"
-modA <- TMB::MakeADFun(data = data,
-                       parameters = parameters,
-                       DLL = "SpatialSablefishAssessment_TMBExports")
-
-data$model = "TagIntegrated"
-modA <- TMB::MakeADFun(data = data,
-                       parameters = parameters,
-                       DLL = "SpatialSablefishAssessment_TMBExports")
-
-modA$fn()
-modA$fn()

@@ -26,6 +26,7 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   DATA_INTEGER(n_projections_years);                // number of years to project the model beyond max(years)
   DATA_INTEGER(do_projection);                      // Should we project the model to last_projection_year. 1 = yes, 0 = no
   DATA_INTEGER(n_regions);                          // number of regions in the model
+  DATA_INTEGER(n_surveys);                          // number of surveys
 
   int n_years = years.size();
   int n_projyears = n_years + n_projections_years;
@@ -81,8 +82,8 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   DATA_IVECTOR(trwl_sel_by_year_indicator);         // Selectivity time-block to apply in each model year
 
   // Survey stuff
-  DATA_IVECTOR(srv_dom_ll_sel_type);                // Selectivity type for each row of ln_fixed_sel_m_pars and ln_fixed_sel_f_pars
-  DATA_IVECTOR(srv_dom_ll_sel_by_year_indicator);   // Selectivity time-block to apply in each model year
+  DATA_IARRAY(srv_sel_type);                       // Selectivity type dim: n_time_blocks x n_surveys
+  DATA_IARRAY(srv_sel_by_year_indicator);          // Selectivity time-block to apply in each model year. dim: n_years x n_surveys
 
 
   // Tag-release information
@@ -121,27 +122,24 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   DATA_INTEGER(fixed_catchatlgth_comp_likelihood);             // 0 = old multinomial, 1 = TMB's multinomial. //0 = MVN (can be applied to both comp_type), 1 = Multinomial, 2 = dirichlet-multinomial
   array<Type> pred_fixed_catchatlgth(obs_fixed_catchatlgth.dim); // Sex disaggregated predicted catch at age
 
-  // Longline survey catch at age
-  DATA_IARRAY(srv_dom_ll_catchatage_indicator);            // dim: n_regions x n_years.  1 = calculate catch at age in this year and region, 0 = don't calculate catch at age
-  DATA_ARRAY(obs_srv_dom_ll_catchatage);                   // Longline domestic survey composition observations dim = 2*n_ages x n_regions x n_years. NOTE: male first then female
-  DATA_ARRAY_INDICATOR(keep_srv_dom_ll_catchatage_comp, obs_srv_dom_ll_catchatage); // Used for OSA residuals, when not using the multinomial likelihood
-  DATA_INTEGER(srv_dom_ll_catchatage_covar_structure);             // 0 = iid, 5 = AR(1), 2 = Unstructured.
-  DATA_INTEGER(srv_dom_ll_catchatage_comp_likelihood);             // 0 = old multinomial, 1 = TMB's multinomial. //0 = MVN (can be applied to both comp_type), 1 = Multinomial, 2 = dirichlet-multinomial
-  array<Type> pred_srv_dom_ll_catchatage(obs_srv_dom_ll_catchatage.dim); // Sex disaggregated predicted catch at age
-
-  // Longline survey biomass
-  DATA_IARRAY(srv_dom_ll_bio_indicator);                      // dim: n_regions x n_years.  1 = calculate catch at age in this year and region, 0 = don't calculate observation
-  DATA_ARRAY(obs_srv_dom_ll_bio);                             // Longline domestic survey biomass observations dim = n_regions x n_years.
-  DATA_ARRAY(obs_srv_dom_ll_se);                              // Longline domestic survey biomass standard errors
-  DATA_ARRAY_INDICATOR(keep_srv_dom_ll_bio_comp, obs_srv_dom_ll_bio); // Used for OSA residuals, when not using the multinomial likelihood
-  DATA_INTEGER(srv_dom_ll_bio_likelihood);               // 0 is old lognormal, 1 = dlnorm call
-  DATA_INTEGER(srv_dom_ll_obs_is_abundance);                     // 1 = Abundance (Numbers), 0 = Biomass (Weight)
-
-  array<Type> pred_srv_dom_ll_bio(obs_srv_dom_ll_bio.dim);    // Sex disaggregated predicted catch at age
-  DATA_IVECTOR(srv_dom_ll_q_by_year_indicator);               // Catchability time-block to apply when deriving model predictions each year
-  DATA_INTEGER(srv_dom_ll_q_transformation);                  // 0 = log, 1 = logistic (bound between 0-1)
-  DATA_INTEGER(q_is_nuisance);                                // 0 means we estimate the q parameter (trans_srv_dom_ll_q) as a free parameter. 1 means we calculate the nuisance q based on the MLE value given the set of parameters. When 1 then the free parameter needs to be turned off during estimation
-
+  // survey catch at age
+  DATA_IARRAY(srv_catchatage_indicator);                   // dim: n_regions x n_years x n_surveys.  1 = calculate catch at age in this year and region, 0 = don't calculate catch at age
+  DATA_ARRAY(obs_srv_catchatage);                   // Longline domestic survey composition observations dim = 2*n_ages x n_regions x n_years x n_surveys. NOTE: male first then female
+  DATA_ARRAY_INDICATOR(keep_srv_catchatage_comp, obs_srv_catchatage); // Used for OSA residuals, when not using the multinomial likelihood
+  DATA_INTEGER(srv_catchatage_covar_structure);             // 0 = iid, 5 = AR(1), 2 = Unstructured.
+  DATA_IVECTOR(srv_catchatage_comp_likelihood);             // 0 = old multinomial, 1 = TMB's multinomial. //0 = MVN (can be applied to both comp_type), 1 = Multinomial, 2 = dirichlet-multinomial
+  array<Type> pred_srv_catchatage(obs_srv_catchatage.dim); // Sex disaggregated predicted catch at age
+  // survey biomass
+  DATA_IARRAY(srv_bio_indicator);                             // dim: n_regions x n_years x n_surveys.  1 = calculate catch at age in this year and region, 0 = don't calculate observation
+  DATA_ARRAY(obs_srv_bio);                             // Survey biomass observations dim = n_regions x n_years x n_surveys.
+  DATA_ARRAY(obs_srv_se);                              // Survey biomass standard errors dim = n_regions x n_years x n_surveys.
+  DATA_ARRAY_INDICATOR(keep_srv_bio, obs_srv_bio); // Used for OSA residuals, when not using the multinomial likelihood
+  DATA_IVECTOR(srv_bio_likelihood);                     // 0 is old lognormal, 1 = dlnorm call
+  DATA_IVECTOR(srv_obs_is_abundance);                     // 1 = Abundance (Numbers), 0 = Biomass (Weight). length n_surveys
+  array<Type> pred_srv_bio(obs_srv_bio.dim);    // Sex disaggregated predicted catch at age
+  DATA_IARRAY(srv_q_by_year_indicator);               // Catchability time-block to apply when deriving model predictions dim: year x n_surveys
+  DATA_IVECTOR(srv_q_transformation);                  // 0 = log, 1 = logistic (bound between 0-1) length n_surveys
+  DATA_IVECTOR(q_is_nuisance);                                // 0 means we estimate the q parameter (trans_srv_q) as a free parameter. 1 means we calculate the nuisance q based on the MLE value given the set of parameters. When 1 then the free parameter needs to be turned off during estimation length n_surveys
 
   // Tag recovery observations Sexually disaggregated?
   // Note: All tag recoveries are assumed from the fixed fishery!!!
@@ -206,8 +204,8 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   PARAMETER(ln_init_F_avg);                                 // log average initial Fishing mortality used when F_method == 1, else should not be estimated
   PARAMETER(ln_catch_sd);                                   // Shared across all gears
   //
-  PARAMETER_ARRAY(trans_srv_dom_ll_q);                      // transformed catchabilities parameters for srv_dom_ll n_regions x n_q_time-blocks
-  PARAMETER_ARRAY(ln_srv_dom_ll_sel_pars);                  // log selectivity parameters for domestic longline surveyr, dim: time-blocks:  max(sel parameters): sex
+  PARAMETER_ARRAY(trans_srv_q);                             // logistic catchabilities parameters for srv n_regions x n_q_time-blocks x n_surveys
+  PARAMETER_ARRAY(ln_srv_sel_pars);                         // log selectivity parameters for surveyr, dim: time-blocks:  max(sel parameters): sex x n_surveys
   PARAMETER_ARRAY(logistic_tag_reporting_rate);             // dim: n_regions x n_tag_recovery_years
 
   // nuisance parameters
@@ -223,7 +221,7 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   PARAMETER_VECTOR(trans_trwl_catchatlgth_error);           //
   PARAMETER_VECTOR(trans_fixed_catchatlgth_error);          //
   PARAMETER_VECTOR(trans_fixed_catchatage_error);           //
-  PARAMETER_VECTOR(trans_srv_dom_ll_catchatage_error);      //
+  PARAMETER_VECTOR(trans_srv_catchatage_error);    //
 
   PARAMETER_VECTOR(logistic_prop_recruit_male);             //  logistic_prop_recruit_male. length: n_years
 
@@ -231,6 +229,7 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   int year_ndx;
   int proj_year_ndx;
   int age_ndx;
+  int srv_ndx;
   //int len_ndx;
   int region_ndx;
   int release_region_ndx;
@@ -358,22 +357,25 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   array<Type> trwl_sel_pars(ln_trwl_sel_pars.dim);
   trwl_sel_pars = exp(ln_trwl_sel_pars);
 
-  array<Type> srv_dom_ll_sel_pars(ln_srv_dom_ll_sel_pars.dim);
-  srv_dom_ll_sel_pars = exp(ln_srv_dom_ll_sel_pars);
+  array<Type> srv_sel_pars(ln_srv_sel_pars.dim);
+  srv_sel_pars = exp(ln_srv_sel_pars);
 
-  array<Type> srv_dom_ll_q(trans_srv_dom_ll_q.dim);
-  srv_dom_ll_q.fill(1.0);
+  array<Type> srv_q(trans_srv_q.dim);
+  srv_q.fill(1.0); // if nuisance expected values will be initially calculated assuming q = 1
+
   // Are we estimating q as a free parameter of deriving it as a nuisance parameter
-  if(q_is_nuisance == 0) {
-    if(srv_dom_ll_q_transformation == 0) {
-      for(int i = 0; i < srv_dom_ll_q.dim(0); ++i) { // region
-        for(int j = 0; j < srv_dom_ll_q.dim(1); ++j) // time-blocks
-          srv_dom_ll_q(i,j) = exp(trans_srv_dom_ll_q(i,j));
-      }
-    } else if(srv_dom_ll_q_transformation == 1) {
-      for(int i = 0; i < srv_dom_ll_q.dim(0); ++i) { // region
-        for(int j = 0; j < srv_dom_ll_q.dim(1); ++j) // time-blocks
-          srv_dom_ll_q(i,j) = invlogit(trans_srv_dom_ll_q(i,j));
+  for(srv_ndx = 0; srv_ndx < n_surveys; ++srv_ndx) {
+    if(q_is_nuisance(srv_ndx) == 0) {
+      if(srv_q_transformation(srv_ndx) == 0) {
+        for(int i = 0; i < srv_q.dim(0); ++i) { // region
+          for(int j = 0; j < srv_q.dim(1); ++j) // time-blocks
+            srv_q(i,j,srv_ndx) = exp(trans_srv_q(i,j, srv_ndx));
+        }
+      } else if(srv_q_transformation(srv_ndx) == 1) {
+        for(int i = 0; i < srv_q.dim(0); ++i) { // region
+          for(int j = 0; j < srv_q.dim(1); ++j) // time-blocks
+            srv_q(i,j, srv_ndx) = invlogit(trans_srv_q(i,j,srv_ndx));
+        }
       }
     }
   }
@@ -406,7 +408,7 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   Type theta_fixed_catchatage = 1;
   Type theta_fixed_catchatlgth = 1;
   Type theta_trwl_catchatlgth = 1;
-  Type theta_srv_dom_ll_catchatage = 1;
+  vector<Type> theta_srv_catchatage(n_surveys);
 
   if(fixed_catchatage_comp_likelihood == 1)
     theta_fixed_catchatage = exp(trans_fixed_catchatage_error(0));
@@ -417,9 +419,13 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   if(trwl_catchatlgth_comp_likelihood == 1)
     theta_trwl_catchatlgth = exp(trans_trwl_catchatlgth_error(0));
 
-  if(srv_dom_ll_catchatage_comp_likelihood == 1)
-    theta_srv_dom_ll_catchatage = exp(trans_srv_dom_ll_catchatage_error(0));
-
+  for(srv_ndx = 0; srv_ndx < n_surveys; ++srv_ndx) {
+    if(srv_catchatage_comp_likelihood(srv_ndx) == 1) {
+      theta_srv_catchatage(srv_ndx) = exp(trans_srv_catchatage_error(srv_ndx));
+    } else {
+      theta_srv_catchatage(srv_ndx) = 1.0;
+    }
+  }
 
   // Declare Derived quantities
   array<Type> SSB_yr(n_projyears, n_regions);
@@ -500,8 +506,10 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   array<Type> sel_fixed_m(n_ages, ln_fixed_sel_pars.dim(0));                  // Longline selectivity Male. dim: n_age x n_time_blocks
   array<Type> sel_trwl_f(n_ages, ln_trwl_sel_pars.dim(0));                    // Trawl selectivity Female. dim: n_ages x n_projyears
   array<Type> sel_trwl_m(n_ages, ln_trwl_sel_pars.dim(0));                    // Trawl selectivity Male. dim: n_ages x n_projyears
-  array<Type> sel_srv_dom_ll_f(n_ages, ln_srv_dom_ll_sel_pars.dim(0));        // Longline survey selectivity Female. dim: n_ages x n_projyears
-  array<Type> sel_srv_dom_ll_m(n_ages, ln_srv_dom_ll_sel_pars.dim(0));        // Longline survey selectivity Male. dim: n_ages x n_projyears
+  array<Type> sel_srv_f(n_ages, ln_srv_sel_pars.dim(0), n_surveys);         // survey selectivities Female. dim: n_ages x n_time_blocks x n_surveys
+  array<Type> sel_srv_m(n_ages, ln_srv_sel_pars.dim(0), n_surveys);         // survey selectivities Male. dim: n_ages x n_time_blocks x n_surveys
+  array<Type> tmp_sel_srv_f(n_ages, ln_srv_sel_pars.dim(0));                // Temporary survey selectivities Female. dim: n_ages x n_time_blocks x n_surveys
+  array<Type> tmp_sel_srv_m(n_ages, ln_srv_sel_pars.dim(0));                // Temporary survey selectivities Male. dim: n_ages x n_time_blocks x n_surveys
 
   vector<Type> pred_recoveries_multinomial_release(n_regions * n_years_to_retain_tagged_cohorts_for + 1);
   vector<Type> obs_recoveries_multinomial_release(n_regions * n_years_to_retain_tagged_cohorts_for + 1);
@@ -527,9 +535,13 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   BuildSelectivity(fixed_sel_pars.col(1), fixed_sel_type, ages, sel_fixed_f);
   BuildSelectivity(trwl_sel_pars.col(0), trwl_sel_type, ages, sel_trwl_m);
   BuildSelectivity(trwl_sel_pars.col(1), trwl_sel_type, ages, sel_trwl_f);
-  BuildSelectivity(srv_dom_ll_sel_pars.col(0), srv_dom_ll_sel_type, ages, sel_srv_dom_ll_m);
-  BuildSelectivity(srv_dom_ll_sel_pars.col(1), srv_dom_ll_sel_type, ages, sel_srv_dom_ll_f);
+  for(srv_ndx = 0; srv_ndx < n_surveys; ++srv_ndx) {
+    BuildSelectivity(srv_sel_pars.col(srv_ndx).col(0), srv_sel_type.col(srv_ndx), ages, tmp_sel_srv_m);
+    BuildSelectivity(srv_sel_pars.col(srv_ndx).col(1), srv_sel_type.col(srv_ndx), ages, tmp_sel_srv_f);
+    sel_srv_m.col(srv_ndx) = tmp_sel_srv_m;
+    sel_srv_f.col(srv_ndx) = tmp_sel_srv_f;
 
+  }
 
   // Pre-calculate F, Z and survivorship only if F_method == 0
 
@@ -1249,56 +1261,57 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
           }
         }
       }
-      // Check if we have Survey Longline age composition in this region and year
-      if(srv_dom_ll_catchatage_indicator(region_ndx, year_ndx) == 1) {
-        // Get catch at age for males and account for ageing error
-        temp_numbers_at_age = natage_m.col(year_ndx).col(region_ndx).vec() * sel_srv_dom_ll_m.col(srv_dom_ll_sel_by_year_indicator(year_ndx)).vec() * S_m_mid.col(year_ndx).col(region_ndx).vec();
-        temp_numbers_at_age_after_ageing_error = (temp_numbers_at_age.matrix().transpose()) * ageing_error_matrix;
-        numbers_at_age_and_sex.segment(0,n_ages) = temp_numbers_at_age_after_ageing_error;
-        // Now Get catch at age for females and account for ageing error
-        temp_numbers_at_age = natage_f.col(year_ndx).col(region_ndx).vec() * sel_srv_dom_ll_f.col(srv_dom_ll_sel_by_year_indicator(year_ndx)).vec() * S_f_mid.col(year_ndx).col(region_ndx).vec();
-        temp_numbers_at_age_after_ageing_error = (temp_numbers_at_age.matrix().transpose()) * ageing_error_matrix;
-        numbers_at_age_and_sex.segment(n_ages,n_ages) = temp_numbers_at_age_after_ageing_error;
-        // do posfun so no zero proportions
-        for(int i = 0; i < numbers_at_age_and_sex.size(); ++i)
-          numbers_at_age_and_sex(i) = posfun(numbers_at_age_and_sex(i), eps_for_posfun, pen_posfun);
-        // normalise to sum = 1 across both sexes
-        numbers_at_age_and_sex /= numbers_at_age_and_sex.sum();
-        // Store in predicted container
-        pred_srv_dom_ll_catchatage.col(year_ndx).col(region_ndx) = numbers_at_age_and_sex;
-        // Get observaiton for LL evaluation
-        temp_observed_age_and_sex = obs_srv_dom_ll_catchatage.col(year_ndx).col(region_ndx);
-        // evaluate the likelihood
-        if(srv_dom_ll_catchatage_comp_likelihood == 0) {
-          nll(3) -= dmultinom(temp_observed_age_and_sex, numbers_at_age_and_sex, true);
-          SIMULATE {
-            effective_sample_size = temp_observed_age_and_sex.sum();
-            temp_observed_age_and_sex = rmultinom(numbers_at_age_and_sex, effective_sample_size);
-            obs_srv_dom_ll_catchatage.col(year_ndx).col(region_ndx) = temp_observed_age_and_sex;
-          }
-        } else if (srv_dom_ll_catchatage_comp_likelihood == 1) {
-          N_input = sum(temp_observed_age_and_sex);
-          temp_observed_age_and_sex /= N_input;
-          nll(3) -= ddirichletmulti(temp_observed_age_and_sex, numbers_at_age_and_sex, N_input, theta_srv_dom_ll_catchatage, 1);
-
-          SIMULATE {
-            temp_observed_age_and_sex = rdirichletmulti(numbers_at_age_and_sex, N_input, theta_srv_dom_ll_catchatage);
-            obs_srv_dom_ll_catchatage.col(year_ndx).col(region_ndx) = temp_observed_age_and_sex;
+      // Check if we have Survey age composition in this region and year
+      for(srv_ndx = 0; srv_ndx < n_surveys; ++srv_ndx) {
+        if(srv_catchatage_indicator(region_ndx, year_ndx, srv_ndx) == 1) {
+          // Get catch at age for males and account for ageing error
+          temp_numbers_at_age = natage_m.col(year_ndx).col(region_ndx).vec() * sel_srv_m.col(srv_ndx).col(srv_sel_by_year_indicator(year_ndx, srv_ndx)).vec() * S_m_mid.col(year_ndx).col(region_ndx).vec();
+          temp_numbers_at_age_after_ageing_error = (temp_numbers_at_age.matrix().transpose()) * ageing_error_matrix;
+          numbers_at_age_and_sex.segment(0,n_ages) = temp_numbers_at_age_after_ageing_error;
+          // Now Get catch at age for females and account for ageing error
+          temp_numbers_at_age = natage_f.col(year_ndx).col(region_ndx).vec() * sel_srv_f.col(srv_ndx).col(srv_sel_by_year_indicator(year_ndx, srv_ndx)).vec() * S_f_mid.col(year_ndx).col(region_ndx).vec();
+          temp_numbers_at_age_after_ageing_error = (temp_numbers_at_age.matrix().transpose()) * ageing_error_matrix;
+          numbers_at_age_and_sex.segment(n_ages,n_ages) = temp_numbers_at_age_after_ageing_error;
+          // do posfun so no zero proportions
+          for(int i = 0; i < numbers_at_age_and_sex.size(); ++i)
+            numbers_at_age_and_sex(i) = posfun(numbers_at_age_and_sex(i), eps_for_posfun, pen_posfun);
+          // normalise to sum = 1 across both sexes
+          numbers_at_age_and_sex /= numbers_at_age_and_sex.sum();
+          // Store in predicted container
+          pred_srv_catchatage.col(srv_ndx).col(year_ndx).col(region_ndx) = numbers_at_age_and_sex;
+          // Get observaiton for LL evaluation
+          temp_observed_age_and_sex = obs_srv_catchatage.col(srv_ndx).col(year_ndx).col(region_ndx);
+          // evaluate the likelihood
+          if(srv_catchatage_comp_likelihood(srv_ndx) == 0) {
+            nll(3) -= dmultinom(temp_observed_age_and_sex, numbers_at_age_and_sex, true);
+            SIMULATE {
+              effective_sample_size = temp_observed_age_and_sex.sum();
+              temp_observed_age_and_sex = rmultinom(numbers_at_age_and_sex, effective_sample_size);
+              obs_srv_catchatage.col(srv_ndx).col(year_ndx).col(region_ndx) = temp_observed_age_and_sex;
+            }
+          } else if (srv_catchatage_comp_likelihood(srv_ndx) == 1) {
+            N_input = sum(temp_observed_age_and_sex);
+            temp_observed_age_and_sex /= N_input;
+            nll(3) -= ddirichletmulti(temp_observed_age_and_sex, numbers_at_age_and_sex, N_input, theta_srv_catchatage(srv_ndx), 1);
+            SIMULATE {
+              temp_observed_age_and_sex = rdirichletmulti(numbers_at_age_and_sex, N_input, theta_srv_catchatage(srv_ndx));
+              obs_srv_catchatage.col(srv_ndx).col(year_ndx).col(region_ndx) = temp_observed_age_and_sex;
+            }
           }
         }
-      }
-      // Check if we have Survey Longline biomass obsevation in this region and year
-      if(srv_dom_ll_bio_indicator(region_ndx, year_ndx) == 1) {
-        if(srv_dom_ll_obs_is_abundance == 1) {
-          // numbers calculation
-          for(age_ndx = 0; age_ndx < n_ages; age_ndx++)
-            pred_srv_dom_ll_bio(region_ndx, year_ndx) += natage_m(age_ndx, region_ndx, year_ndx) * sel_srv_dom_ll_m(age_ndx, srv_dom_ll_sel_by_year_indicator(year_ndx)) * S_m_mid(age_ndx, region_ndx, year_ndx) + natage_f(age_ndx, region_ndx, year_ndx) * sel_srv_dom_ll_f(age_ndx, srv_dom_ll_sel_by_year_indicator(year_ndx)) * S_f_mid(age_ndx, region_ndx, year_ndx) ;
-        } else if (srv_dom_ll_obs_is_abundance == 0) {
-          // Weight calculation
-          for(age_ndx = 0; age_ndx < n_ages; age_ndx++)
-            pred_srv_dom_ll_bio(region_ndx, year_ndx) += natage_m(age_ndx, region_ndx, year_ndx) * sel_srv_dom_ll_m(age_ndx, srv_dom_ll_sel_by_year_indicator(year_ndx)) * male_mean_weight_by_age(age_ndx, year_ndx) * S_m_mid(age_ndx, region_ndx, year_ndx) + natage_f(age_ndx, region_ndx, year_ndx) * sel_srv_dom_ll_f(age_ndx, srv_dom_ll_sel_by_year_indicator(year_ndx)) * female_mean_weight_by_age(age_ndx, year_ndx) * S_f_mid(age_ndx, region_ndx, year_ndx) ;
+        // Check if we have Survey biomass obsevation in this region and year
+        if(srv_bio_indicator(region_ndx, year_ndx, srv_ndx) == 1) {
+          if(srv_obs_is_abundance(srv_ndx) == 1) {
+            // numbers calculation
+            for(age_ndx = 0; age_ndx < n_ages; age_ndx++)
+              pred_srv_bio(region_ndx, year_ndx, srv_ndx) += natage_m(age_ndx, region_ndx, year_ndx) * sel_srv_m(age_ndx, srv_sel_by_year_indicator(year_ndx, srv_ndx), srv_ndx) * S_m_mid(age_ndx, region_ndx, year_ndx) + natage_f(age_ndx, region_ndx, year_ndx) * sel_srv_f(age_ndx, srv_sel_by_year_indicator(year_ndx, srv_ndx), srv_ndx) * S_f_mid(age_ndx, region_ndx, year_ndx) ;
+          } else if (srv_obs_is_abundance(srv_ndx) == 0) {
+            // Weight calculation
+            for(age_ndx = 0; age_ndx < n_ages; age_ndx++)
+              pred_srv_bio(region_ndx, year_ndx, srv_ndx) += natage_m(age_ndx, region_ndx, year_ndx) * sel_srv_m(age_ndx, srv_sel_by_year_indicator(year_ndx, srv_ndx), srv_ndx) * male_mean_weight_by_age(age_ndx, year_ndx) * S_m_mid(age_ndx, region_ndx, year_ndx) + natage_f(age_ndx, region_ndx, year_ndx) * sel_srv_f(age_ndx, srv_sel_by_year_indicator(year_ndx, srv_ndx), srv_ndx) * female_mean_weight_by_age(age_ndx, year_ndx) * S_f_mid(age_ndx, region_ndx, year_ndx) ;
+          }
+          pred_srv_bio(region_ndx, year_ndx, srv_ndx) *= srv_q(region_ndx, srv_q_by_year_indicator(year_ndx, srv_ndx), srv_ndx);
         }
-        pred_srv_dom_ll_bio(region_ndx, year_ndx) *= srv_dom_ll_q(region_ndx, srv_dom_ll_q_by_year_indicator(year_ndx));
       }
       // Calculate the Not captured group if tag-likelihood is multinomial release conditioned
       if(tag_likelihood == 2) {
@@ -1329,48 +1342,51 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   /*
    *  Evaluate the survey abundance index here, this way we can calculate nuisance q's if the user asks for it
    */
-  if(q_is_nuisance == 1) {
-    // calculate nuisance q
-    Type S3 = 0.0;
-    Type S4 = 0.0;
-    Type n_obs = 0.0;
-    for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
-      S3 = 0.0;
-      S4 = 0.0;
-      n_obs = 0.0;
-      for(year_ndx = 0; year_ndx < n_years; ++year_ndx) {
-        if(srv_dom_ll_bio_indicator(region_ndx, year_ndx) == 1) {
-          n_obs += 1.0;
-          if(srv_dom_ll_bio_likelihood == 0) {
-            S3 += log(obs_srv_dom_ll_bio(region_ndx, year_ndx) / pred_srv_dom_ll_bio(region_ndx, year_ndx))/square(obs_srv_dom_ll_se(region_ndx, year_ndx) / obs_srv_dom_ll_bio(region_ndx, year_ndx));
-            S4 += 1.0 / square(obs_srv_dom_ll_se(region_ndx, year_ndx) / obs_srv_dom_ll_bio(region_ndx, year_ndx));
-          } else if(srv_dom_ll_bio_likelihood == 1) {
-            S3 += log(obs_srv_dom_ll_bio(region_ndx, year_ndx) / pred_srv_dom_ll_bio(region_ndx, year_ndx))/square(obs_srv_dom_ll_se(region_ndx, year_ndx));
-            S4 += 1.0 / square(obs_srv_dom_ll_se(region_ndx, year_ndx));
+  // calculate nuisance q
+  Type S3 = 0.0;
+  Type S4 = 0.0;
+  Type n_obs = 0.0;
+  for(srv_ndx = 0; srv_ndx < n_surveys; ++srv_ndx) {
+    if(q_is_nuisance(srv_ndx) == 1) {
+      for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
+        S3 = 0.0;
+        S4 = 0.0;
+        n_obs = 0.0;
+        for(year_ndx = 0; year_ndx < n_years; ++year_ndx) {
+          if(srv_bio_indicator(region_ndx, year_ndx, srv_ndx) == 1) {
+            n_obs += 1.0;
+            if(srv_bio_likelihood(srv_ndx) == 0) {
+              S3 += log(obs_srv_bio(region_ndx, year_ndx, srv_ndx) / pred_srv_bio(region_ndx, year_ndx, srv_ndx))/square(obs_srv_se(region_ndx, year_ndx, srv_ndx) / obs_srv_bio(region_ndx, year_ndx, srv_ndx));
+              S4 += 1.0 / square(obs_srv_se(region_ndx, year_ndx, srv_ndx) / obs_srv_bio(region_ndx, year_ndx, srv_ndx));
+            } else if(srv_bio_likelihood(srv_ndx) == 1) {
+              S3 += log(obs_srv_bio(region_ndx, year_ndx, srv_ndx) / pred_srv_bio(region_ndx, year_ndx, srv_ndx))/square(obs_srv_se(region_ndx, year_ndx, srv_ndx));
+              S4 += 1.0 / square(obs_srv_se(region_ndx, year_ndx, srv_ndx));
+            }
           }
         }
+        // the final calculation
+        srv_q(region_ndx, 0, srv_ndx) = exp((0.5*n_obs + S3) / S4);
       }
-      // the final calculation
-      srv_dom_ll_q(region_ndx, 0) = exp((0.5*n_obs + S3) / S4);
     }
   }
+  for(srv_ndx = 0; srv_ndx < n_surveys; ++srv_ndx) {
+    for(year_ndx = 0; year_ndx < n_years; ++year_ndx) {
+      for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
+        if(srv_bio_indicator(region_ndx, year_ndx, srv_ndx) == 1) {
+          if(q_is_nuisance(srv_ndx) == 1)
+            pred_srv_bio(region_ndx, year_ndx, srv_ndx) *= srv_q(region_ndx, 0, srv_ndx);
 
-  for(year_ndx = 0; year_ndx < n_years; ++year_ndx) {
-    for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
-      if(srv_dom_ll_bio_indicator(region_ndx, year_ndx) == 1) {
-        if(q_is_nuisance == 1)
-          pred_srv_dom_ll_bio(region_ndx, year_ndx) *= srv_dom_ll_q(region_ndx, 0);
-
-        if(srv_dom_ll_bio_likelihood == 0) {
-          nll(4) += square((log(obs_srv_dom_ll_bio(region_ndx, year_ndx) + 0.0001) - log(pred_srv_dom_ll_bio(region_ndx, year_ndx) + 0.0001) ))/ (2.0 * square(obs_srv_dom_ll_se(region_ndx, year_ndx) / obs_srv_dom_ll_bio(region_ndx, year_ndx)));
-          // not sure how best to simulate from this likelihood. I think this is right but worth having another look
-          SIMULATE {
-            obs_srv_dom_ll_bio(region_ndx, year_ndx) = exp(rnorm(log(pred_srv_dom_ll_bio(region_ndx, year_ndx) + 0.0001), obs_srv_dom_ll_se(region_ndx, year_ndx) / obs_srv_dom_ll_bio(region_ndx, year_ndx)));
-          }
-        } else if(srv_dom_ll_bio_likelihood == 1) {
-          nll(4) -= dlnorm(obs_srv_dom_ll_bio(region_ndx, year_ndx), log(pred_srv_dom_ll_bio(region_ndx, year_ndx)) - 0.5 * obs_srv_dom_ll_se(region_ndx, year_ndx) * obs_srv_dom_ll_se(region_ndx, year_ndx), obs_srv_dom_ll_se(region_ndx, year_ndx), true);
-          SIMULATE {
-            obs_srv_dom_ll_bio(region_ndx, year_ndx) = exp(rnorm(log(pred_srv_dom_ll_bio(region_ndx, year_ndx)) - 0.5 * obs_srv_dom_ll_se(region_ndx, year_ndx) * obs_srv_dom_ll_se(region_ndx, year_ndx), obs_srv_dom_ll_se(region_ndx, year_ndx)));
+          if(srv_bio_likelihood(srv_ndx) == 0) {
+            nll(4) += square((log(obs_srv_bio(region_ndx, year_ndx, srv_ndx) + 0.0001) - log(pred_srv_bio(region_ndx, year_ndx, srv_ndx) + 0.0001) ))/ (2.0 * square(obs_srv_se(region_ndx, year_ndx, srv_ndx) / obs_srv_bio(region_ndx, year_ndx, srv_ndx)));
+            // not sure how best to simulate from this likelihood. I think this is right but worth having another look
+            SIMULATE {
+              obs_srv_bio(region_ndx, year_ndx, srv_ndx) = exp(rnorm(log(pred_srv_bio(region_ndx, year_ndx, srv_ndx) + 0.0001), obs_srv_se(region_ndx, year_ndx, srv_ndx) / obs_srv_bio(region_ndx, year_ndx, srv_ndx)));
+            }
+          } else if(srv_bio_likelihood(srv_ndx) == 1) {
+            nll(4) -= dlnorm(obs_srv_bio(region_ndx, year_ndx, srv_ndx), log(pred_srv_bio(region_ndx, year_ndx, srv_ndx)) - 0.5 * obs_srv_se(region_ndx, year_ndx, srv_ndx) * obs_srv_se(region_ndx, year_ndx, srv_ndx), obs_srv_se(region_ndx, year_ndx, srv_ndx), true);
+            SIMULATE {
+              obs_srv_bio(region_ndx, year_ndx, srv_ndx) = exp(rnorm(log(pred_srv_bio(region_ndx, year_ndx, srv_ndx)) - 0.5 * obs_srv_se(region_ndx, year_ndx, srv_ndx) * obs_srv_se(region_ndx, year_ndx, srv_ndx), obs_srv_se(region_ndx, year_ndx, srv_ndx)));
+            }
           }
         }
       }
@@ -1670,12 +1686,12 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   REPORT(sel_fixed_f);
   REPORT(sel_trwl_f);
   REPORT(sel_trwl_m);
-  REPORT(sel_srv_dom_ll_f);
-  REPORT(sel_srv_dom_ll_m);
+  REPORT(sel_srv_f);
+  REPORT(sel_srv_m);
 
 
-  REPORT(srv_dom_ll_sel_pars);
-  REPORT(srv_dom_ll_q);
+  REPORT(srv_sel_pars);
+  REPORT(srv_q);
   // estimated variances
   REPORT(sigma_R);
   REPORT( SR_pars );
@@ -1707,15 +1723,15 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   REPORT(pred_fixed_catchatage);
   REPORT(pred_trwl_catchatlgth);
   REPORT(pred_fixed_catchatlgth);
-  REPORT(pred_srv_dom_ll_catchatage);
-  REPORT(pred_srv_dom_ll_bio);
+  REPORT(pred_srv_catchatage);
+  REPORT(pred_srv_bio);
   REPORT(pred_tag_recovery);
 
   // Composition parameters
   REPORT( theta_fixed_catchatage);
   REPORT( theta_fixed_catchatlgth);
   REPORT( theta_trwl_catchatlgth);
-  REPORT( theta_srv_dom_ll_catchatage);
+  REPORT( theta_srv_catchatage);
 
   // REPORT dimensions so accesor functions and plotting functions only need the $report() object
   REPORT(n_regions);
@@ -1729,8 +1745,8 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   REPORT( fixed_catchatage_indicator );
   REPORT( trwl_catchatlgth_indicator );
   REPORT( fixed_catchatlgth_indicator );
-  REPORT( srv_dom_ll_catchatage_indicator );
-  REPORT( srv_dom_ll_bio_indicator );
+  REPORT( srv_catchatage_indicator );
+  REPORT( srv_bio_indicator );
   REPORT( tag_recovery_indicator_by_year );
   REPORT( tag_recovery_indicator );
   REPORT( tag_release_event_this_year );
@@ -1739,15 +1755,15 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   REPORT( fixed_catchatage_comp_likelihood );
   REPORT( trwl_catchatlgth_comp_likelihood );
   REPORT( fixed_catchatlgth_comp_likelihood );
-  REPORT( srv_dom_ll_catchatage_comp_likelihood );
-  REPORT( srv_dom_ll_bio_likelihood );
-  REPORT( srv_dom_ll_q_transformation );
+  REPORT( srv_catchatage_comp_likelihood );
+  REPORT( srv_bio_likelihood );
+  REPORT( srv_q_transformation );
   REPORT( apply_fixed_movement );
 
   // Report observations
-  REPORT( obs_srv_dom_ll_bio );
-  REPORT( obs_srv_dom_ll_se );
-  REPORT( obs_srv_dom_ll_catchatage );
+  REPORT( obs_srv_bio );
+  REPORT( obs_srv_se );
+  REPORT( obs_srv_catchatage );
   REPORT( obs_trwl_catchatlgth );
   REPORT( obs_fixed_catchatage );
   REPORT( obs_fixed_catchatlgth );

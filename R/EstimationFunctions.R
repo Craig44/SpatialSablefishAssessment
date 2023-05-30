@@ -104,7 +104,8 @@ fix_pars <- function(par_list, pars_to_exclude, vec_elements_to_exclude = NULL, 
         first_param_factor = param_factor
         vec_ndx = 1;
         ## TMB converts arrays to vectors down columns (not by rows)
-        ## can handle up to 3-dimension arrays
+        ## can handle up to 4-dimension arrays
+        ## over two dimensions we collapse to vectors based on outer dimensions
         if(length(dim(params_in_this_par)) == 2) {
           for(col_ndx in 1:ncol(params_in_this_par)) {
             for(row_ndx in 1:nrow(params_in_this_par)) {
@@ -143,8 +144,32 @@ fix_pars <- function(par_list, pars_to_exclude, vec_elements_to_exclude = NULL, 
               }
             }
           }
+        } else if (length(dim(params_in_this_par)) == 4) {
+          # param_factor = 14
+          counter = 1;
+          for(dim4_ndx in 1:dim(params_in_this_par)[4]) {
+            for(dim3_ndx in 1:dim(params_in_this_par)[3]) {
+              for(dim2_ndx in 1:dim(params_in_this_par)[2]) {
+                for(dim1_ndx in 1:dim(params_in_this_par)[1]) {
+                  ## check if we need to drop this value
+                  dropping_this_element = F
+                  for(drop_ndx in 1:nrow(elements_to_drop)) {
+                    if(all(c(dim1_ndx, dim2_ndx, dim3_ndx, dim4_ndx) == elements_to_drop[drop_ndx,])) {
+                      dropping_this_element = T
+                      break;
+                    }
+                  }
+                  if(!dropping_this_element) {
+                    mapped_vector[vec_ndx] = param_factor
+                    param_factor = param_factor + 1
+                  }
+                  vec_ndx = vec_ndx + 1;
+                }
+              }
+            }
+          }
         } else {
-          stop("this function can only deal with 2 or 3 dimensional arrays")
+          stop("this function can only deal with 2, 3 or 4 dimensional arrays")
         }
         mapped_vector = factor(mapped_vector, levels = first_param_factor:max(mapped_vector, na.rm = T))
         mapped_pars[[pars[i]]] = mapped_vector;
@@ -163,12 +188,73 @@ fix_pars <- function(par_list, pars_to_exclude, vec_elements_to_exclude = NULL, 
   return(mapped_pars);
 }
 
+#' get_TMB_vector_from_array
+#' @param element a vector of integers specifying the element of an array, length represents the array dimension
+#' @param array the array that we are searching for
+#' @return element of vector
+#' @export
+get_TMB_vector_from_array <- function(element, array) {
+  n_dims = length(element)
+  if(n_dims != length(dim(array)))
+    stop("element should be the same length as array has dimensions")
+  vector_ndx = 1
+  if(n_dims == 2) {
+    for(dim2 in 1:dim(array)[2]) {
+      for(dim1 in 1:dim(array)[1]) {
+        if(all(c(dim1, dim2) == element)) {
+          return(vector_ndx)
+        }
+        vector_ndx = vector_ndx + 1
+      }
+    }
+  } else if (n_dims == 3) {
+    for(dim3 in 1:dim(array)[3]) {
+      for(dim2 in 1:dim(array)[2]) {
+        for(dim1 in 1:dim(array)[1]) {
+          if(all(c(dim1, dim2, dim3) == element)) {
+            return(vector_ndx)
+          }
+          vector_ndx = vector_ndx + 1
+        }
+      }
+    }
+  } else if (n_dims == 4) {
+    for(dim4 in 1:dim(array)[4]) {
+      for(dim3 in 1:dim(array)[3]) {
+        for(dim2 in 1:dim(array)[2]) {
+          for(dim1 in 1:dim(array)[1]) {
+            if(all(c(dim1, dim2, dim3, dim4) == element)) {
+              return(vector_ndx)
+            }
+            vector_ndx = vector_ndx + 1
+          }
+        }
+      }
+    }
+  } else if (n_dims == 5) {
+    for(dim5 in 1:dim(array)[5]) {
+      for(dim4 in 1:dim(array)[4]) {
+        for(dim3 in 1:dim(array)[3]) {
+          for(dim2 in 1:dim(array)[2]) {
+            for(dim1 in 1:dim(array)[1]) {
+              if(all(c(dim1, dim2, dim3, dim4, dim5) == element)) {
+                return(vector_ndx)
+              }
+              vector_ndx = vector_ndx + 1
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 #' set_up_parameters utility function to help 'turn off' parameters and share estimated parameters across elements
 #' @param data a list of data inputs for the model
 #' @param parameters a list of parameter values for the model
 #' @param na_map an existing map that has already had parameters turned off, not well tested
-#' @param srv_sel_first_param_shared_by_sex bool, whether the first survey selectivity parameter is shared among male and female for all time-blocks
-#' @param srv_sel_second_param_shared_by_sex bool, whether the second survey selectivity parameter is shared among male and female for all time-blocks
+#' @param srv_sel_first_param_shared_by_sex vector of bool specifying whether the first survey selectivity parameter is shared among male and female for all time-blocks. There needs to be a bool for each of the n_surveys
+#' @param srv_sel_second_param_shared_by_sex vector of bool specifying whether the second survey selectivity parameter is shared among male and female for all time-blocks. There needs to be a bool for each of the n_surveys
 #' @param srv_sel_third_param_shared_by_sex bool, whether the third survey selectivity parameter is shared among male and female for all time-blocks
 #' @param fixed_sel_first_shared_by_sex bool, whether the first fixed gear selectivity parameter is shared among male and female for all time-blocks
 #' @param fixed_sel_second_shared_by_sex bool, whether the second fixed gear selectivity parameter is shared among male and female for all time-blocks
@@ -195,7 +281,7 @@ fix_pars <- function(par_list, pars_to_exclude, vec_elements_to_exclude = NULL, 
 #' @param est_fixed_AF_theta bool whether you want to estimate the theta parameter for fixed gear AF
 #' @param est_fixed_LF_theta bool whether you want to estimate the theta parameter for fixed gear LF
 #' @param est_trwl_LF_theta bool whether you want to estimate the theta parameter for trawl gear LF
-#' @param est_srv_ll_AF_theta bool whether you want to estimate the theta parameter for longline survey AF
+#' @param est_AF_theta vector of bool specifying whether you want to estimate the theta parameter for survey AF likelihood. length is n_suveys
 #' @param est_prop_male_recruit vector of years that indicate time-blocks or one of the following strings
 #' \itemize{
 #'   \item `off`: not estimated
@@ -226,13 +312,39 @@ set_up_parameters <- function(data, parameters,
                               est_fixed_AF_theta = F,
                               est_fixed_LF_theta = F,
                               est_trwl_LF_theta = F,
-                              est_srv_ll_AF_theta = F,
+                              est_AF_theta = F,
                               est_prop_male_recruit = "off",
                               est_SR_pars = F
 
 ) {
-
-
+  if(length(srv_sel_first_param_shared_by_sex) != data$n_surveys) {
+    if(length(srv_sel_first_param_shared_by_sex) == 1) {
+      srv_sel_first_param_shared_by_sex = rep(srv_sel_first_param_shared_by_sex[1], data$n_surveys)
+    } else {
+      stop(paste0("srv_sel_first_param_shared_by_sex needs to be of length ", data$n_surveys))
+    }
+  }
+  if(length(srv_sel_second_param_shared_by_sex) != data$n_surveys) {
+    if(length(srv_sel_second_param_shared_by_sex) == 1) {
+      srv_sel_second_param_shared_by_sex = rep(srv_sel_second_param_shared_by_sex[1], data$n_surveys)
+    } else {
+      stop(paste0("srv_sel_second_param_shared_by_sex needs to be of length ", data$n_surveys))
+    }
+  }
+  if(length(srv_sel_third_param_shared_by_sex) != data$n_surveys) {
+    if(length(srv_sel_third_param_shared_by_sex) == 1) {
+      srv_sel_third_param_shared_by_sex = rep(srv_sel_third_param_shared_by_sex[1], data$n_surveys)
+    } else {
+      stop(paste0("srv_sel_third_param_shared_by_sex needs to be of length ", data$n_surveys))
+    }
+  }
+  if(length(est_AF_theta) != data$n_surveys) {
+    if(length(est_AF_theta) == 1) {
+      est_AF_theta = rep(est_AF_theta[1], data$n_surveys)
+    } else {
+      stop(paste0("est_AF_theta needs to be of length ", data$n_surveys))
+    }
+  }
   if(is.numeric(tag_reporting_rate)) {
     print("tag reporting rate estimated in time-blocks")
   } else {
@@ -338,8 +450,8 @@ set_up_parameters <- function(data, parameters,
     est_fixed_LF_theta = F
   if(data$trwl_catchatlgth_comp_likelihood == 0)
     est_trwl_LF_theta = F
-  if(data$srv_dom_ll_catchatage_comp_likelihood == 0)
-    est_srv_ll_AF_theta = F
+  if(all(data$srv_catchatage_comp_likelihood == 0))
+    est_AF_theta = rep(F, data$n_surveys)
 
   ## now fix them
   if(!est_fixed_AF_theta)
@@ -348,36 +460,94 @@ set_up_parameters <- function(data, parameters,
     parameters_completely_fixed = c(parameters_completely_fixed, c("trans_fixed_catchatlgth_error"))
   if(!est_trwl_LF_theta)
     parameters_completely_fixed = c(parameters_completely_fixed, c("trans_trwl_catchatlgth_error"))
-  if(!est_srv_ll_AF_theta)
-    parameters_completely_fixed = c(parameters_completely_fixed, c("trans_srv_dom_ll_catchatage_error"))
+  if(!all(est_AF_theta)) {
+    parameters_completely_fixed = c(parameters_completely_fixed, c("trans_srv_catchatage_error"))
+  } else if(any(est_AF_theta)) {
+    thetas_to_turn_off = NULL
+    for(srv_ndx in 1:data$n_surveys) {
+      if(est_AF_theta[srv_ndx]) {
+        thetas_to_turn_off = c(thetas_to_turn_off, srv_ndx)
+      }
+    }
+    vectors_with_elements_fixed[["trans_srv_catchatage_error"]] = thetas_to_turn_off
+  }
 
   ## survey catchability regional and annual
   base_q_vals = list()
   copy_q_vals = list()
   qs_are_turned_off = FALSE
   if(!is.null(na_map)) {
-    if(all(is.na(na_map$trans_srv_dom_ll_q)))
+    if(all(is.na(na_map$trans_srv_q)))
       qs_are_turned_off = TRUE
   }
   ## check if q is nuisance and so turn off free estimated parameters
-  if(data$q_is_nuisance == 1) {
+
+  if(all(data$q_is_nuisance == 1)) {
+    ## don't estimate Q's
     qs_are_turned_off = TRUE
-    parameters_completely_fixed = c(parameters_completely_fixed, c("trans_srv_dom_ll_q"))
+    parameters_completely_fixed = c(parameters_completely_fixed, c("trans_srv_q"))
+  } else if(any(data$q_is_nuisance == 1)) {
+    ## don't estimate Q's for surveys that are nuisance
+    q_elements_fixed = NULL
+    for(srv_ndx in 1:data$n_surveys) {
+      if(data$q_is_nuisance[srv_ndx] == 1) {
+        ## turn off elements for this survey's Q
+        tmp_ndx = expand.grid(1:(dim(parameters$trans_srv_q)[1]),1:(dim(parameters$trans_srv_q)[2]))
+        tmp_ndx = cbind(tmp_ndx, rep(srv_ndx, nrow(tmp_ndx)))
+        q_elements_fixed = rbind(q_elements_fixed, tmp_ndx)
+      }
+    }
+    arrays_with_elements_fixed[["trans_srv_q"]] = q_elements_fixed
   }
+  ## some surveys may have catch-at-age but not abundance
+  srv_has_abundance = apply(data$srv_bio_indicator, c(3), sum) >= 1
+  ## n_qs per survey
+  n_qs_for_srv = apply(data$srv_q_by_year_indicator, c(2), function(x) {length(unique(x))})
+  ## n_qs per survey
+  n_sel_for_srv = apply(data$srv_sel_by_year_indicator, c(2), function(x) {length(unique(x))})
   if(!qs_are_turned_off) {
     if(data$n_regions > 1) {
       if(!srv_q_spatial) {
         ## regionally similar q's
-        drop_first_ndx_for_space = seq(from = 1, to = ncol(parameters$trans_srv_dom_ll_q) * data$n_regions, by = data$n_regions)[1:ncol(parameters$trans_srv_dom_ll_q)]
-        logis_sel_q = list(trans_srv_dom_ll_q = expand.grid(1:data$n_regions, 1:ncol(parameters$trans_srv_dom_ll_q))[-drop_first_ndx_for_space,])
-        arrays_with_elements_fixed[["trans_srv_dom_ll_q"]] = logis_sel_q$trans_srv_dom_ll_q
+        drop_first_ndx_for_space = seq(from = 1, to = data$n_regions * ncol(parameters$trans_srv_q) * data$n_surveys, by = data$n_regions)
+        logis_sel_q = list(trans_srv_q = expand.grid(1:data$n_regions, 1:ncol(parameters$trans_srv_q) , 1:data$n_surveys)[-drop_first_ndx_for_space,])
         start_vals = 1
-        for(j in 1:ncol(parameters$trans_srv_dom_ll_q)) {
-          base_q_vals = append(base_q_vals, rep(list(trans_srv_dom_ll_q = start_vals), data$n_regions - 1))
-          copy_q_vals = append(copy_q_vals, evalit(paste0("list(",paste(paste0("trans_srv_dom_ll_q = ", (start_vals + 1):(start_vals + data$n_regions - 1)), collapse = ", "),")")))
-          start_vals = start_vals + data$n_regions
+        for(srv_ndx in 1:data$n_surveys) {
+          ## time-blocks
+          for(j in 1:ncol(parameters$trans_srv_q)) {
+            if(n_qs_for_srv[srv_ndx] >= j) {
+              ## Fix this time-blocks to have same q among regions
+              base_q_vals = append(base_q_vals, rep(list(trans_srv_q = start_vals), data$n_regions - 1))
+              copy_q_vals = append(copy_q_vals, evalit(paste0("list(",paste(paste0("trans_srv_q = ", (start_vals + 1):(start_vals + data$n_regions - 1)), collapse = ", "),")")))
+              start_vals = start_vals + data$n_regions
+            } else {
+              ## no parameters for this time-block so just turn off the first value
+              logis_sel_q$trans_srv_q = rbind(logis_sel_q$trans_srv_q, c(1,j,srv_ndx))
+            }
+          }
+        }
+        arrays_with_elements_fixed[["trans_srv_q"]] = logis_sel_q$trans_srv_q
+      } else {
+        ## estimating Free q's for all regions. Some surveys don't have multiple time-blocks and we want to turn
+        ## these are off.
+        q_elements_turned_off = NULL
+        for(srv_ndx in 1:data$n_surveys) {
+          for(j in 1:ncol(parameters$trans_srv_q)) {
+            if(j > n_qs_for_srv[srv_ndx])
+              q_elements_turned_off = rbind(q_elements_turned_off, expand.grid(1:data$n_regions, j, srv_ndx))
+          }
+        }
+        arrays_with_elements_fixed[["trans_srv_q"]] = q_elements_turned_off
+      }
+    } else {
+      # single area model and need to check if we need to turn off some Q's for surveys that don't have multiple time-blocks
+      q_elements_turned_off = NULL
+      for(srv_ndx in 1:data$n_surveys) {
+        for(j in 1:ncol(parameters$trans_srv_q)) {
+          q_elements_turned_off = rbind(q_elements_turned_off, expand.grid(1:data$n_regions, j, srv_ndx))
         }
       }
+      arrays_with_elements_fixed[["trans_srv_q"]] = q_elements_turned_off
     }
   }
   ## no tag recovery observations
@@ -525,70 +695,97 @@ set_up_parameters <- function(data, parameters,
   ## are we sharing selectivity parameters
   base_srv_sel_param_vals = list()
   copy_srv_sel_param_vals = list()
-  if(srv_sel_first_param_shared_by_sex) {
-    ## turn off females delta param will be set the same as male
-    srv_sel_param_elements_to_fix = cbind(1:dim(parameters$ln_srv_dom_ll_sel_pars)[1], 1,2)
-
-    ## fix male and female for all time-blocks
-    counter = 1
-    n_time_blocks = dim(parameters$ln_srv_dom_ll_sel_pars)[1]
-    for(t_ndx in 1:n_time_blocks) {
-      n_sel_pars_for_this_time_block = get_number_of_sel_pars(data$srv_dom_ll_sel_type[t_ndx]);
-      this_bse_lst = list(ln_srv_dom_ll_sel_pars = counter)
-      this_cpy_lst = list(ln_srv_dom_ll_sel_pars = counter + n_time_blocks * n_sel_pars_for_this_time_block)
-      base_srv_sel_param_vals = append(base_srv_sel_param_vals, this_bse_lst)
-      copy_srv_sel_param_vals = append(copy_srv_sel_param_vals, this_cpy_lst)
-      counter = counter + 1
+  sel_params_to_turn_off = NULL
+  n_srv_sel_time_blocks = dim(parameters$ln_srv_sel_pars)[1]
+  for(srv_ndx in 1:data$n_surveys) {
+    for(t_blocks in 1:n_srv_sel_time_blocks) {
+      if(t_blocks > n_sel_for_srv[srv_ndx]) {
+        # turn off these selectivity params
+        sel_params_to_turn_off = rbind(sel_params_to_turn_off, as.matrix(expand.grid(t_blocks, 1:dim(parameters$ln_srv_sel_pars)[2], 1:2, srv_ndx)))
+      } else {
+        if(srv_sel_first_param_shared_by_sex[srv_ndx]) {
+          ## turn off females delta param will be set the same as male
+          srv_sel_param_elements_to_fix = c(t_blocks, 1, 2, srv_ndx)
+          ## fix male and female for all time-blocks
+          n_sel_pars_for_this_time_block = get_number_of_sel_pars(data$srv_sel_type[t_blocks, srv_ndx]);
+          this_cpy_lst = list(ln_srv_sel_pars = get_TMB_vector_from_array(c(t_blocks, 1, 2, srv_ndx), parameters$ln_srv_sel_pars))
+          this_bse_lst = list(ln_srv_sel_pars = get_TMB_vector_from_array(c(t_blocks, 1, 1, srv_ndx), parameters$ln_srv_sel_pars))
+          base_srv_sel_param_vals = append(base_srv_sel_param_vals, this_bse_lst)
+          copy_srv_sel_param_vals = append(copy_srv_sel_param_vals, this_cpy_lst)
+          sel_params_to_turn_off = rbind(sel_params_to_turn_off, srv_sel_param_elements_to_fix)
+        }
+      }
     }
-    arrays_with_elements_fixed[["ln_srv_dom_ll_sel_pars"]] = srv_sel_param_elements_to_fix
+    counter = counter + n_srv_sel_time_blocks * n_sel_pars_for_this_time_block - 1
   }
-  if(srv_sel_second_param_shared_by_sex) {
-    ## turn off females delta param will be set the same as male
-    srv_sel_param_elements_to_fix = cbind(1:dim(parameters$ln_srv_dom_ll_sel_pars)[1], 2,2)
+  if(is.null(arrays_with_elements_fixed[["ln_srv_sel_pars"]]) & !is.null(sel_params_to_turn_off))
+    arrays_with_elements_fixed[["ln_srv_sel_pars"]] = sel_params_to_turn_off
 
-    ## fix male and female for all time-blocks
-    n_time_blocks = dim(parameters$ln_srv_dom_ll_sel_pars)[1]
-    counter = n_time_blocks + 1
-
-    for(t_ndx in 1:n_time_blocks) {
-      n_sel_pars_for_this_time_block = get_number_of_sel_pars(data$srv_dom_ll_sel_type[t_ndx]);
-      this_bse_lst = list(ln_srv_dom_ll_sel_pars = counter)
-      this_cpy_lst = list(ln_srv_dom_ll_sel_pars = counter + n_time_blocks * n_sel_pars_for_this_time_block)
-      base_srv_sel_param_vals = append(base_srv_sel_param_vals, this_bse_lst)
-      copy_srv_sel_param_vals = append(copy_srv_sel_param_vals, this_cpy_lst)
-      counter = counter + 1
+  sel_params_to_turn_off = NULL
+  for(srv_ndx in 1:data$n_surveys) {
+    for(t_blocks in 1:n_srv_sel_time_blocks) {
+      if(t_blocks > n_sel_for_srv[srv_ndx]) {
+        # turn off these selectivity params
+        sel_params_to_turn_off = rbind(sel_params_to_turn_off, as.matrix(expand.grid(t_blocks, 1:dim(parameters$ln_srv_sel_pars)[2], 1:2, srv_ndx)))
+      } else {
+        if(srv_sel_second_param_shared_by_sex[srv_ndx]) {
+          ## turn off females delta param will be set the same as male
+          srv_sel_param_elements_to_fix = c(t_blocks, 2, 2, srv_ndx)
+          ## fix male and female for all time-blocks
+          n_sel_pars_for_this_time_block = dim(parameters$ln_srv_sel_pars)[2];
+          this_cpy_lst = list(ln_srv_sel_pars = get_TMB_vector_from_array(c(t_blocks, 2, 2, srv_ndx), parameters$ln_srv_sel_pars))
+          this_bse_lst = list(ln_srv_sel_pars = get_TMB_vector_from_array(c(t_blocks, 2, 1, srv_ndx), parameters$ln_srv_sel_pars))
+          base_srv_sel_param_vals = append(base_srv_sel_param_vals, this_bse_lst)
+          copy_srv_sel_param_vals = append(copy_srv_sel_param_vals, this_cpy_lst)
+          sel_params_to_turn_off = rbind(sel_params_to_turn_off, srv_sel_param_elements_to_fix)
+        }
+      }
     }
-    if(is.null(arrays_with_elements_fixed[["ln_srv_dom_ll_sel_pars"]])) {
-      arrays_with_elements_fixed[["ln_srv_dom_ll_sel_pars"]] = srv_sel_param_elements_to_fix
+  }
+  if(!is.null(sel_params_to_turn_off)) {
+    if(is.null(arrays_with_elements_fixed[["ln_srv_sel_pars"]])) {
+      arrays_with_elements_fixed[["ln_srv_sel_pars"]] = sel_params_to_turn_off
     } else {
-      arrays_with_elements_fixed[["ln_srv_dom_ll_sel_pars"]] = rbind(arrays_with_elements_fixed[["ln_srv_dom_ll_sel_pars"]], srv_sel_param_elements_to_fix)
+      arrays_with_elements_fixed[["ln_srv_sel_pars"]] = rbind(arrays_with_elements_fixed[["ln_srv_sel_pars"]], sel_params_to_turn_off)
     }
   }
-  if(srv_sel_third_param_shared_by_sex) {
-    ## skip if not 3 parameter double normal
-    if(!any(data$srv_dom_ll_sel_type == 5))
-      next;
-    ## turn off females delta param will be set the same as male
-    srv_sel_param_elements_to_fix = cbind(1:dim(parameters$ln_srv_dom_ll_sel_pars)[1], 3,2)
 
-    ## fix male and female for all time-blocks
-    n_time_blocks = dim(parameters$ln_srv_dom_ll_sel_pars)[1]
-    counter = n_time_blocks + 2
 
-    for(t_ndx in 1:n_time_blocks) {
-      n_sel_pars_for_this_time_block = get_number_of_sel_pars(data$srv_dom_ll_sel_type[t_ndx]);
-      this_bse_lst = list(ln_srv_dom_ll_sel_pars = counter)
-      this_cpy_lst = list(ln_srv_dom_ll_sel_pars = counter + n_time_blocks * n_sel_pars_for_this_time_block)
-      base_srv_sel_param_vals = append(base_srv_sel_param_vals, this_bse_lst)
-      copy_srv_sel_param_vals = append(copy_srv_sel_param_vals, this_cpy_lst)
-      counter = counter + 1
+  sel_params_to_turn_off = NULL
+  for(srv_ndx in 1:data$n_surveys) {
+    for(t_blocks in 1:n_srv_sel_time_blocks) {
+      ## skip if not 3 parameter double normal
+      if(!any(data$srv_sel_type[t_blocks, srv_ndx] == 5))
+        next;
+      if(t_blocks > n_sel_for_srv[srv_ndx]) {
+        # turn off these selectivity params
+        sel_params_to_turn_off = rbind(sel_params_to_turn_off, as.matrix(expand.grid(t_blocks, 1:dim(parameters$ln_srv_sel_pars)[2], 1:2, srv_ndx)))
+      } else {
+        if(srv_sel_third_param_shared_by_sex[srv_ndx]) {
+          ## turn off females delta param will be set the same as male
+          srv_sel_param_elements_to_fix = c(t_blocks, 3, 2, srv_ndx)
+          ## fix male and female for all time-blocks
+          n_sel_pars_for_this_time_block = get_number_of_sel_pars(data$srv_sel_type[t_blocks, srv_ndx]);
+          this_cpy_lst= list(ln_srv_sel_pars = get_TMB_vector_from_array(c(t_blocks, 3, 2, srv_ndx), parameters$ln_srv_sel_pars))
+          this_bse_lst = list(ln_srv_sel_pars = get_TMB_vector_from_array(c(t_blocks, 3, 1, srv_ndx), parameters$ln_srv_sel_pars))
+          base_srv_sel_param_vals = append(base_srv_sel_param_vals, this_bse_lst)
+          copy_srv_sel_param_vals = append(copy_srv_sel_param_vals, this_cpy_lst)
+          counter = counter + 1
+          sel_params_to_turn_off = rbind(sel_params_to_turn_off, srv_sel_param_elements_to_fix)
+        }
+      }
     }
-    if(is.null(arrays_with_elements_fixed[["ln_srv_dom_ll_sel_pars"]])) {
-      arrays_with_elements_fixed[["ln_srv_dom_ll_sel_pars"]] = srv_sel_param_elements_to_fix
+  }
+  if(!is.null(sel_params_to_turn_off)) {
+    if(is.null(arrays_with_elements_fixed[["ln_srv_sel_pars"]])) {
+      arrays_with_elements_fixed[["ln_srv_sel_pars"]] = sel_params_to_turn_off
     } else {
-      arrays_with_elements_fixed[["ln_srv_dom_ll_sel_pars"]] = rbind(arrays_with_elements_fixed[["ln_srv_dom_ll_sel_pars"]], srv_sel_param_elements_to_fix)
+      arrays_with_elements_fixed[["ln_srv_sel_pars"]] = rbind(arrays_with_elements_fixed[["ln_srv_sel_pars"]], sel_params_to_turn_off)
     }
   }
+  dup_ndx = which(duplicated(arrays_with_elements_fixed[["ln_srv_sel_pars"]]))
+  if( length(dup_ndx) > 0)
+    arrays_with_elements_fixed[["ln_srv_sel_pars"]] = arrays_with_elements_fixed[["ln_srv_sel_pars"]][-dup_ndx,]
   ## fixed gear fishery
   ## are we sharing selectivity parameters
   base_fixed_sel_param_vals = list()
@@ -661,17 +858,18 @@ set_up_parameters <- function(data, parameters,
   ## are we sharing selectivity parameters
   base_trwl_sel_param_vals = list()
   copy_trwl_sel_param_vals = list()
+  n_trwl_sel_time_blocks = dim(parameters$ln_trwl_sel_pars)[1]
+
   if(trwl_sel_first_shared_by_sex) {
     ## turn off females delta param will be set the same as male
     trwl_sel_param_elements_to_fix = cbind(1:dim(parameters$ln_trwl_sel_pars)[1], 1,2)
 
     ## fix male and female for all time-blocks
     counter = 1
-    n_time_blocks = dim(parameters$ln_trwl_sel_pars)[1]
-    for(t_ndx in 1:n_time_blocks) {
+    for(t_ndx in 1:n_trwl_sel_time_blocks) {
       n_sel_pars_for_this_time_block = get_number_of_sel_pars(data$trwl_sel_type[t_ndx]);
       this_bse_lst = list(ln_trwl_sel_pars = counter)
-      this_cpy_lst = list(ln_trwl_sel_pars = counter + n_time_blocks * n_sel_pars_for_this_time_block)
+      this_cpy_lst = list(ln_trwl_sel_pars = counter + n_trwl_sel_time_blocks * n_sel_pars_for_this_time_block)
       base_trwl_sel_param_vals = append(base_trwl_sel_param_vals, this_bse_lst)
       copy_trwl_sel_param_vals = append(copy_trwl_sel_param_vals, this_cpy_lst)
       counter = counter + 1
@@ -683,12 +881,11 @@ set_up_parameters <- function(data, parameters,
     trwl_sel_param_elements_to_fix = cbind(1:dim(parameters$ln_trwl_sel_pars)[1], 2,2)
 
     ## fix male and female for all time-blocks
-    n_time_blocks = dim(parameters$ln_trwl_sel_pars)[1]
-    counter = n_time_blocks + 1
-    for(t_ndx in 1:n_time_blocks) {
+    counter = n_trwl_sel_time_blocks + 1
+    for(t_ndx in 1:n_trwl_sel_time_blocks) {
       n_sel_pars_for_this_time_block = get_number_of_sel_pars(data$trwl_sel_type[t_ndx]);
       this_bse_lst = list(ln_trwl_sel_pars = counter)
-      this_cpy_lst = list(ln_trwl_sel_pars = counter + n_time_blocks * n_sel_pars_for_this_time_block)
+      this_cpy_lst = list(ln_trwl_sel_pars = counter + n_trwl_sel_time_blocks * n_sel_pars_for_this_time_block)
       base_trwl_sel_param_vals = append(base_trwl_sel_param_vals, this_bse_lst)
       copy_trwl_sel_param_vals = append(copy_trwl_sel_param_vals, this_cpy_lst)
       counter = counter + 1
@@ -707,12 +904,11 @@ set_up_parameters <- function(data, parameters,
     trwl_sel_param_elements_to_fix = cbind(1:dim(parameters$ln_trwl_sel_pars)[1], 3,2)
 
     ## fix male and female for all time-blocks
-    n_time_blocks = dim(parameters$ln_trwl_sel_pars)[1]
-    counter = n_time_blocks + 2
-    for(t_ndx in 1:n_time_blocks) {
+    counter = n_trwl_sel_time_blocks + 2
+    for(t_ndx in 1:n_trwl_sel_time_blocks) {
       n_sel_pars_for_this_time_block = get_number_of_sel_pars(data$trwl_sel_type[t_ndx]); ##
       this_bse_lst = list(ln_trwl_sel_pars = counter)
-      this_cpy_lst = list(ln_trwl_sel_pars = counter + n_time_blocks * n_sel_pars_for_this_time_block)
+      this_cpy_lst = list(ln_trwl_sel_pars = counter + n_trwl_sel_time_blocks * n_sel_pars_for_this_time_block)
       base_trwl_sel_param_vals = append(base_trwl_sel_param_vals, this_bse_lst)
       copy_trwl_sel_param_vals = append(copy_trwl_sel_param_vals, this_cpy_lst)
       counter = counter + 1
@@ -897,21 +1093,21 @@ post_optim_sanity_checks <- function(mle_obj, mle_pars, max_abs_gradient = 0.000
     passed_post_sanity_checks = F
   }
   ## Survey Catchability
-  if(mle_report$srv_dom_ll_q_transformation == 1) {
-    if(any(mle_report$srv_dom_ll_q > 0.95)){
+  if(mle_report$srv_q_transformation == 1) {
+    if(any(mle_report$srv_q > 0.95)){
       cat("Found survey catchability greater than 0.95. This is an extreme value (possible convergence at bound)and worthy of furthur investigation.\n")
       passed_post_sanity_checks = F
     }
-    if(any(mle_report$srv_dom_ll_q < 0.00001)){
+    if(any(mle_report$srv_q < 0.00001)){
       cat("Found survey catchability less than 0.00001. This is an extreme value (possible convergence at bound) and worthy of furthur investigation.\n")
       passed_post_sanity_checks = F
     }
-  } else if(mle_report$srv_dom_ll_q_transformation == 0) {
-    if(any(mle_report$srv_dom_ll_q > 20)){
-      cat("Found survey catchability greater than 20. This is an extreme value (possible convergence at bound)and worthy of furthur investigation.\n")
+  } else if(mle_report$srv_q_transformation == 0) {
+    if(any(mle_report$srv_q > 200)){
+      cat("Found survey catchability greater than 200. This is an extreme value (possible convergence at bound)and worthy of furthur investigation.\n")
       passed_post_sanity_checks = F
     }
-    if(any(mle_report$srv_dom_ll_q < 1e-6)){
+    if(any(mle_report$srv_q < 1e-6)){
       cat("Found survey catchability less than 1e-6. This is an extreme value (possible convergence at bound) and worthy of furthur investigation.\n")
       passed_post_sanity_checks = F
     }
@@ -934,7 +1130,7 @@ post_optim_sanity_checks <- function(mle_obj, mle_pars, max_abs_gradient = 0.000
     cat("Found fixed fishery selectivity pars greater than 40 This is an extreme value (possible convergence at bound) and worthy of furthur investigation.\n")
     passed_post_sanity_checks = F
   }
-  if(any(mle_report$srv_dom_ll_sel_pars > 40)){
+  if(any(mle_report$srv_sel_pars > 40)){
     cat("Found survey selectivity pars greater than 40 This is an extreme value (possible convergence at bound) and worthy of furthur investigation.\n")
     passed_post_sanity_checks = F
   }
