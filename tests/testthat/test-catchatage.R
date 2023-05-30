@@ -15,9 +15,9 @@ test_that("catch-at-age-fixed-multinomial", {
   data$fixed_catchatage_indicator[data$fixed_catchatage_indicator == 0] = 1
   data$obs_fixed_catchatage = array(5, dim = dim(data$obs_fixed_catchatage))
   data$fixed_catchatage_comp_likelihood = 0
-  data$srv_dom_ll_catchatage_indicator[data$srv_dom_ll_catchatage_indicator == 0] = 1
-  data$obs_srv_dom_ll_catchatage = array(10, dim = dim(data$obs_srv_dom_ll_catchatage))
-  data$srv_dom_ll_catchatage_comp_likelihood = 0
+  data$srv_catchatage_indicator[data$srv_catchatage_indicator == 0] = 1
+  data$obs_srv_catchatage = array(10, dim = dim(data$obs_srv_catchatage))
+  data$srv_catchatage_comp_likelihood = rep(0, data$n_surveys)
   test_model <- TMB::MakeADFun(data = data,
                                parameters = parameters,
                                DLL = "SpatialSablefishAssessment_TMBExports", silent  = T)
@@ -42,9 +42,11 @@ test_that("catch-at-age-fixed-multinomial", {
 
   ## Survey likelihood
   expected_nll = 0
-  for(y in 1:(length(data$years))) {
-    for(r in 1:data$n_regions) {
-      expected_nll = expected_nll - sum(dmultinom_upd(x = test_report$obs_srv_dom_ll_catchatage[,r,y], prob = test_report$pred_srv_dom_ll_catchatage[,r,y], log = T))
+  for(srv_ndx in 1:data$n_surveys) {
+    for(y in 1:(length(data$years))) {
+      for(r in 1:data$n_regions) {
+        expected_nll = expected_nll - sum(dmultinom_upd(x = test_report$obs_srv_catchatage[,r,y, srv_ndx], prob = test_report$pred_srv_catchatage[,r,y, srv_ndx], log = T))
+      }
     }
   }
   expect_equal(test_report$nll[4], expected_nll, tolerance = 0.1) ## with one log likelihood value
@@ -65,9 +67,9 @@ test_that("catch-at-age-fixed-dirichlet-multinomial", {
   data$fixed_catchatage_indicator[data$fixed_catchatage_indicator == 0] = 1
   data$obs_fixed_catchatage = array(5, dim = dim(data$obs_fixed_catchatage))
   data$fixed_catchatage_comp_likelihood = 1
-  data$srv_dom_ll_catchatage_indicator[data$srv_dom_ll_catchatage_indicator == 0] = 1
-  data$obs_srv_dom_ll_catchatage = array(10, dim = dim(data$obs_srv_dom_ll_catchatage))
-  data$srv_dom_ll_catchatage_comp_likelihood = 1
+  data$srv_catchatage_indicator[data$srv_catchatage_indicator == 0] = 1
+  data$obs_srv_catchatage = array(10, dim = dim(data$obs_srv_catchatage))
+  data$srv_catchatage_comp_likelihood = rep(1, data$n_surveys)
   test_model <- TMB::MakeADFun(data = data,
                                parameters = parameters,
                                DLL = "SpatialSablefishAssessment_TMBExports", silent  = T)
@@ -93,9 +95,11 @@ test_that("catch-at-age-fixed-dirichlet-multinomial", {
 
   ## Survey likelihood
   expected_nll = 0
-  for(y in 1:(length(data$years))) {
-    for(r in 1:data$n_regions) {
-      expected_nll = expected_nll - sum(ddirichmult(obs = test_report$obs_srv_dom_ll_catchatage[,r,y]/ sum(test_report$obs_srv_dom_ll_catchatage[,r,y]), est = test_report$pred_srv_dom_ll_catchatage[,r,y], beta = sum(test_report$obs_srv_dom_ll_catchatage[,r,y]) * test_report$theta_srv_dom_ll_catchatage, n = sum(test_report$obs_srv_dom_ll_catchatage[,r,y]), log_it = T))
+  for(srv_ndx in 1:data$n_surveys) {
+    for(y in 1:(length(data$years))) {
+      for(r in 1:data$n_regions) {
+        expected_nll = expected_nll - sum(ddirichmult(obs = test_report$obs_srv_catchatage[,r,y,srv_ndx]/ sum(test_report$obs_srv_catchatage[,r,y, srv_ndx]), est = test_report$pred_srv_catchatage[,r,y, srv_ndx], beta = sum(test_report$obs_srv_catchatage[,r,y, srv_ndx]) * test_report$theta_srv_catchatage[srv_ndx], n = sum(test_report$obs_srv_catchatage[,r,y, srv_ndx]), log_it = T))
+      }
     }
   }
   expect_equal(test_report$nll[4], expected_nll, tolerance = 0.1) ## with one log likelihood value
@@ -103,7 +107,7 @@ test_that("catch-at-age-fixed-dirichlet-multinomial", {
 
   ## small theta
   parameters$trans_fixed_catchatage_error = log(0.1)
-  parameters$trans_srv_dom_ll_catchatage = log(0.2)
+  parameters$trans_srv_catchatage = rep(log(0.2), data$n_surveys)
   test_model <- TMB::MakeADFun(data = data,
                                parameters = parameters,
                                DLL = "SpatialSablefishAssessment_TMBExports", silent  = T)
@@ -119,16 +123,18 @@ test_that("catch-at-age-fixed-dirichlet-multinomial", {
   expect_equal(test_report$nll[1], expected_nll, tolerance = 0.1) ## with one log likelihood value
   ## Survey likelihood
   expected_nll = 0
-  for(y in 1:(length(data$years))) {
-    for(r in 1:data$n_regions) {
-      expected_nll = expected_nll - sum(ddirichmult(obs = test_report$obs_srv_dom_ll_catchatage[,r,y]/ sum(test_report$obs_srv_dom_ll_catchatage[,r,y]), est = test_report$pred_srv_dom_ll_catchatage[,r,y], beta = sum(test_report$obs_srv_dom_ll_catchatage[,r,y]) * test_report$theta_srv_dom_ll_catchatage, n = sum(test_report$obs_srv_dom_ll_catchatage[,r,y]), log_it = T))
+  for(srv_ndx in 1:data$n_surveys) {
+    for(y in 1:(length(data$years))) {
+      for(r in 1:data$n_regions) {
+        expected_nll = expected_nll - sum(ddirichmult(obs = test_report$obs_srv_catchatage[,r,y,srv_ndx]/ sum(test_report$obs_srv_catchatage[,r,y,srv_ndx]), est = test_report$pred_srv_catchatage[,r,y,srv_ndx], beta = sum(test_report$obs_srv_catchatage[,r,y,srv_ndx]) * test_report$theta_srv_catchatage[srv_ndx], n = sum(test_report$obs_srv_catchatage[,r,y,srv_ndx]), log_it = T))
+      }
     }
   }
   expect_equal(test_report$nll[4], expected_nll, tolerance = 0.1) ## with one log likelihood value
 
   ## large Theta
   parameters$trans_fixed_catchatage_error = log(10)
-  parameters$trans_srv_dom_ll_catchatage = log(7.4)
+  parameters$trans_srv_catchatage = rep(log(7.4), data$n_surveys)
 
   test_model <- TMB::MakeADFun(data = data,
                                parameters = parameters,
@@ -145,9 +151,11 @@ test_that("catch-at-age-fixed-dirichlet-multinomial", {
   expect_equal(test_report$nll[1], expected_nll, tolerance = 0.1) ## with one log likelihood value
   ## Survey likelihood
   expected_nll = 0
-  for(y in 1:(length(data$years))) {
-    for(r in 1:data$n_regions) {
-      expected_nll = expected_nll - sum(ddirichmult(obs = test_report$obs_srv_dom_ll_catchatage[,r,y]/ sum(test_report$obs_srv_dom_ll_catchatage[,r,y]), est = test_report$pred_srv_dom_ll_catchatage[,r,y], beta = sum(test_report$obs_srv_dom_ll_catchatage[,r,y]) * test_report$theta_srv_dom_ll_catchatage, n = sum(test_report$obs_srv_dom_ll_catchatage[,r,y]), log_it = T))
+  for(srv_ndx in 1:data$n_surveys) {
+    for(y in 1:(length(data$years))) {
+      for(r in 1:data$n_regions) {
+        expected_nll = expected_nll - sum(ddirichmult(obs = test_report$obs_srv_catchatage[,r,y,srv_ndx]/ sum(test_report$obs_srv_catchatage[,r,y,srv_ndx]), est = test_report$pred_srv_catchatage[,r,y,srv_ndx], beta = sum(test_report$obs_srv_catchatage[,r,y,srv_ndx]) * test_report$theta_srv_catchatage[srv_ndx], n = sum(test_report$obs_srv_catchatage[,r,y,srv_ndx]), log_it = T))
+      }
     }
   }
   expect_equal(test_report$nll[4], expected_nll, tolerance = 0.1) ## with one log likelihood value

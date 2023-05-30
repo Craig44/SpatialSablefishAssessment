@@ -7,7 +7,7 @@
 get_max_sel_pars(sel_type_for_blocks)
 }
 \arguments{
-\item{sel_type_for_blocks}{vector of selecvitiy types}
+\item{sel_type_for_blocks}{vector of selectivity types}
 }
 \value{
 integer specifying the number of parameters for this selectivity parameter

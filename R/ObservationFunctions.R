@@ -35,7 +35,7 @@ get_negloglike <- function(MLE_report) {
   } else {
     AF_fixed_like = ifelse(MLE_report$fixed_catchatage_comp_likelihood == 0, "Multinomial", "Dirichlet-Multinomial")
     LF_fixed_like = ifelse(MLE_report$fixed_catchatlgth_comp_likelihood == 0, "Multinomial", "Dirichlet-Multinomial")
-    AF_srv_like = ifelse(MLE_report$srv_dom_ll_catchatage_comp_likelihood == 0, "Multinomial", "Dirichlet-Multinomial")
+    AF_srv_like = ifelse(MLE_report$srv_catchatage_comp_likelihood == 0, "Multinomial", "Dirichlet-Multinomial")
     LF_trwl_like = ifelse(MLE_report$trwl_catchatlgth_comp_likelihood == 0, "Multinomial", "Dirichlet-Multinomial")
     tag_likelihood = switch(MLE_report$tag_likelihood + 1,
                             "Poissson",

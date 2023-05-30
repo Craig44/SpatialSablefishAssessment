@@ -5,7 +5,7 @@
 
 #'
 #' get_max_sel_pars
-#' @param sel_type_for_blocks vector of selecvitiy types
+#' @param sel_type_for_blocks vector of selectivity types
 #' @return integer specifying the number of parameters for this selectivity parameter
 #' @export
 
@@ -102,6 +102,7 @@ validate_input_data_and_parameters = function(data, parameters) {
   n_projyears = length(data$years) +  data$n_projections_years
   n_years = length(data$years)
   n_regions = data$n_regions
+  n_surveys = data$n_surveys
   projyears = min(data$years):(max(data$years) + data$n_projections_years)
 
   if(!data$do_projection %in% c(0,1))
@@ -197,10 +198,27 @@ validate_input_data_and_parameters = function(data, parameters) {
   if(!check$result)
     return(paste0("trwl_sel_by_year_indicator: ", check$message))
 
-  ## srv_dom_ll_sel_by_year_indicator
-  check = check_length(data$srv_dom_ll_sel_by_year_indicator, n_projyears)
+  ## srv_sel_by_year_indicator
+  check = check_dim(data$srv_sel_by_year_indicator, c(n_projyears, n_surveys))
   if(!check$result)
-    return(paste0("srv_dom_ll_sel_by_year_indicator: ", check$message))
+    return(paste0("srv_sel_by_year_indicator: ", check$message))
+
+  n_survey_sel_time_blocks = max(apply(data$srv_sel_by_year_indicator, MARGIN = 2, function(x){length(unique(x))}))
+  ## srv_sel_type
+  check = check_dim(data$srv_sel_type, c(n_survey_sel_time_blocks, n_surveys))
+  if(!check$result)
+    return(paste0("srv_sel_type: ", check$message))
+  if(length(unique(as.vector(data$srv_sel_type))) > 1)
+    warning("'srv_sel_type', has different selectivity types, you will need to be careful how you turn off values (or map) values for parameters$ln_srv_sel_pars")
+
+  ## srv_obs_is_abundance
+  check = check_length(data$srv_obs_is_abundance, n_surveys)
+  if(!check$result)
+    return(paste0("srv_obs_is_abundance: ", check$message))
+  ## q_is_nuisance
+  check = check_length(data$q_is_nuisance, n_surveys)
+  if(!check$result)
+    return(paste0("q_is_nuisance: ", check$message))
 
   ## tag release
   ## tag_release_event_this_year
@@ -261,35 +279,35 @@ validate_input_data_and_parameters = function(data, parameters) {
   if(any(is.na(data$obs_fixed_catchatlgth)))
     return(paste0("NA's found in obs_fixed_catchatlgth"))
 
-  ## srv_dom_ll_catchatage_indicator
-  check = check_dim(data$srv_dom_ll_catchatage_indicator, c(n_regions, n_years))
+  ## srv_catchatage_indicator
+  check = check_dim(data$srv_catchatage_indicator, c(n_regions, n_years, n_surveys))
   if(!check$result)
-    return(paste0("srv_dom_ll_catchatage_indicator: ", check$message))
-  ## obs_srv_dom_ll_catchatage
-  check = check_dim(data$obs_srv_dom_ll_catchatage, c(2*n_ages, n_regions, n_years))
+    return(paste0("srv_catchatage_indicator: ", check$message))
+  ## obs_srv_catchatage
+  check = check_dim(data$obs_srv_catchatage, c(2*n_ages, n_regions, n_years, n_surveys))
   if(!check$result)
-    return(paste0("obs_srv_dom_ll_catchatage: ", check$message))
-  if(any(is.na(data$obs_srv_dom_ll_catchatage)))
-    return(paste0("NA's found in obs_srv_dom_ll_catchatage"))
+    return(paste0("obs_srv_catchatage: ", check$message))
+  if(any(is.na(data$obs_srv_catchatage)))
+    return(paste0("NA's found in obs_catchatage"))
 
-  ## srv_dom_ll_bio_indicator
-  check = check_dim(data$srv_dom_ll_bio_indicator, c(n_regions, n_years))
+  ## srv_bio_indicator
+  check = check_dim(data$srv_bio_indicator, c(n_regions, n_years, n_surveys))
   if(!check$result)
-    return(paste0("srv_dom_ll_bio_indicator: ", check$message))
-  ## obs_srv_dom_ll_bio
-  check = check_dim(data$obs_srv_dom_ll_bio, c(n_regions, n_years))
+    return(paste0("srv_bio_indicator: ", check$message))
+  ## obs_srv_bio
+  check = check_dim(data$obs_srv_bio, c(n_regions, n_years, n_surveys))
   if(!check$result)
-    return(paste0("obs_srv_dom_ll_bio: ", check$message))
+    return(paste0("obs_srv_bio: ", check$message))
 
-  if(any(is.na(data$obs_srv_dom_ll_bio)))
-    return(paste0("NA's found in obs_srv_dom_ll_bio"))
-  ## obs_srv_dom_ll_se
-  check = check_dim(data$obs_srv_dom_ll_se, c(n_regions, n_years))
+  if(any(is.na(data$obs_srv_bio)))
+    return(paste0("NA's found in obs_srv_bio"))
+  ## obs_srv_se
+  check = check_dim(data$obs_srv_se, c(n_regions, n_years, n_surveys))
   if(!check$result)
-    return(paste0("obs_srv_dom_ll_se: ", check$message))
+    return(paste0("obs_srv_se: ", check$message))
 
-  if(any(is.na(data$obs_srv_dom_ll_se)))
-    return(paste0("NA's found in obs_srv_dom_ll_se"))
+  if(any(is.na(data$obs_srv_se)))
+    return(paste0("NA's found in obs_srv_se"))
   ## tag recovery observations
   ## tag_recovery_indicator
   check = check_length(data$tag_recovery_indicator_by_year, n_years)
@@ -394,32 +412,33 @@ validate_input_data_and_parameters = function(data, parameters) {
     return(paste0("ln_trwl_sel_pars: ", check$message))
 
   # Survey sel pars
-  n_fixed_sel_time_blocks = length(unique(data$srv_dom_ll_sel_by_year_indicator))
-  if(!any(data$srv_dom_ll_sel_by_year_indicator == 0))
-    return("Could not find a 0 index in srv_dom_ll_sel_by_year_indicator, this is likely an error")
-  max_sel_pars = get_max_sel_pars(data$srv_dom_ll_sel_type)
-  check = check_dim(parameters$ln_srv_dom_ll_sel_pars, c(n_fixed_sel_time_blocks, max_sel_pars, 2))
+  if(!any(data$srv_sel_by_year_indicator == 0))
+    return("Could not find a 0 index in srv_sel_by_year_indicator, this is likely an error")
+  max_sel_pars = max(apply(data$srv_sel_type, MARGIN = 2, function(x){get_max_sel_pars(x)}))
+  check = check_dim(parameters$ln_srv_sel_pars, c(n_survey_sel_time_blocks, max_sel_pars, 2, n_surveys))
   if(!check$result)
-    return(paste0("ln_srv_dom_ll_sel_pars: ", check$message))
+    return(paste0("ln_srv_sel_pars: ", check$message))
 
 
-  # srv_dom_ll_q_by_year_indicator
-  check = check_length(data$srv_dom_ll_q_by_year_indicator, n_years)
+  # srv_q_by_year_indicator
+  check = check_dim(data$srv_q_by_year_indicator, c(n_years, n_surveys) )
   if(!check$result)
-    return(paste0("srv_dom_ll_q_by_year_indicator: ", check$message))
+    return(paste0("srv_q_by_year_indicator: ", check$message))
 
-  if(data$q_is_nuisance == 0) {
-    n_fixed_survey_q_time_blocks = length(unique(data$srv_dom_ll_q_by_year_indicator))
-    if(!any(data$srv_dom_ll_q_by_year_indicator == 0))
-      return("Could not find a 0 index in srv_dom_ll_q_by_year_indicator, this is likely an error")
-  } else if(data$q_is_nuisance == 1) {
-    if(!all(data$srv_dom_ll_q_by_year_indicator == 0))
-      return("When data$q_is_nuisance = 1, then srv_dom_ll_q_by_year_indicator must be all zeros")
+  for(srv_ndx in 1:n_surveys) {
+    if(any(data$q_is_nuisance[srv_ndx] == 0)) {
+      n_fixed_survey_q_time_blocks = length(unique(data$srv_q_by_year_indicator[,srv_ndx]))
+      if(!any(data$srv_q_by_year_indicator[srv_ndx] == 0))
+        return("Could not find a 0 index in srv_q_by_year_indicator, this is likely an error")
+    } else if(data$q_is_nuisance[srv_ndx] == 1) {
+      if(!all(data$srv_q_by_year_indicator[,srv_ndx] == 0))
+        return("When data$q_is_nuisance = 1, then srv_q_by_year_indicator must be all zeros")
+    }
   }
 
-  check = check_dim(parameters$trans_srv_dom_ll_q, c(n_regions, length(unique(data$srv_dom_ll_q_by_year_indicator))))
+  check = check_dim(parameters$trans_srv_q, c(n_regions, max(apply(data$srv_q_by_year_indicator, MARGIN = 2, function(x){length(unique(x))})), n_surveys))
   if(!check$result)
-    return(paste0("trans_srv_dom_ll_q: ", check$message))
+    return(paste0("trans_srv_q: ", check$message))
 
   # movement parameters transformed_movement_pars
   if(data$model == "TagIntegratedAgeBasedMovement") {
@@ -516,11 +535,13 @@ validate_input_data_and_parameters = function(data, parameters) {
       return(paste0("trans_trwl_catchatlgth_error: ", check$message))
   }
   ## trans_trwl_catchatlgth_error
-  if(data$srv_dom_ll_catchatage_comp_likelihood == 1) {
-    ## dirichlet multinomial
-    check = check_length(parameters$trans_srv_dom_ll_catchatage_error, 1)
-    if(!check$result)
-      return(paste0("trans_srv_dom_ll_catchatage_error: ", check$message))
+  for(srv_ndx in 1:n_surveys) {
+    if(data$srv_catchatage_comp_likelihood[srv_ndx] == 1) {
+      ## dirichlet multinomial
+      check = check_length(parameters$trans_srv_catchatage_error[srv_ndx], 1)
+      if(!check$result)
+        return(paste0("trans_srv_catchatage_error: ", check$message))
+    }
   }
 
   print("Success!! Hopefully the model wont crash (no promises though)")

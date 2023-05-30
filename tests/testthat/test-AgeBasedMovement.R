@@ -7,7 +7,7 @@
 #'
 test_that("AgeBasedMovementTagIntegratedModel", {
   ## Read in mock data
-  load(system.file("testdata", "MockSablefishModel.RData",package="SpatialSablefishAssessment"))
+  load(system.file("testdata", "MockAgeBasedMovementModel.RData",package="SpatialSablefishAssessment"))
   data$model = "TagIntegratedAgeBasedMovement"
   ## no Z or movement
   data$apply_fixed_movement = 1
@@ -41,6 +41,7 @@ test_that("AgeBasedMovementTagIntegratedModel", {
 test_that("AgeBasedMovementTagIntegratedModel-noagebasedMovement-no-move", {
   ## Read in mock data
   load(system.file("testdata", "MockSablefishModel.RData",package="SpatialSablefishAssessment"))
+
   data$model = "TagIntegrated"
   data$apply_fixed_movement = 1
 
@@ -52,6 +53,7 @@ test_that("AgeBasedMovementTagIntegratedModel-noagebasedMovement-no-move", {
 
   test_report_int = test_model_int$report()
 
+  load(system.file("testdata", "MockAgeBasedMovementModel.RData",package="SpatialSablefishAssessment"))
   data$model = "TagIntegratedAgeBasedMovement"
   ## no Z or movement
   data$age_based_movement = 0
@@ -85,6 +87,7 @@ test_that("AgeBasedMovementTagIntegratedModel-noagebasedMovement-no-move", {
 test_that("AgeBasedMovementTagIntegratedModel-noagebasedMovement-move", {
   ## Read in mock data
   load(system.file("testdata", "MockSablefishModel.RData",package="SpatialSablefishAssessment"))
+
   data$model = "TagIntegrated"
   data$apply_fixed_movement = 0
 
@@ -96,9 +99,13 @@ test_that("AgeBasedMovementTagIntegratedModel-noagebasedMovement-move", {
 
   test_report_int = test_model_int$report()
 
+  load(system.file("testdata", "MockAgeBasedMovementModel.RData",package="SpatialSablefishAssessment"))
   data$model = "TagIntegratedAgeBasedMovement"
   ## no Z or movement
   data$age_based_movement = 0
+  data$apply_fixed_movement = 0
+
+  data$tag_likelihood = 0 ## Poisson
   data$fixed_movement_matrix_young = data$fixed_movement_matrix
   data$fixed_movement_matrix_old = data$fixed_movement_matrix
   data$obs_tag_recovery = array(10/length(data$ages), dim = c(length(data$ages), dim(data$obs_tag_recovery)))
