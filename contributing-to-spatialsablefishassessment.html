@@ -6,7 +6,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <title>Contributing to SpatialSablefishAssessment | SpatialSablefishAssessment</title>
   <meta name="description" content="This Gitbook describes the spatial sablefish stock assessment R package and how to use it" />
-  <meta name="generator" content="bookdown 0.34 and GitBook 2.6.7" />
+  <meta name="generator" content="bookdown 0.33 and GitBook 2.6.7" />
 
   <meta property="og:title" content="Contributing to SpatialSablefishAssessment | SpatialSablefishAssessment" />
   <meta property="og:type" content="book" />
@@ -23,14 +23,14 @@
 <meta name="author" content="C.Marsh" />
 
 
-<meta name="date" content="2023-05-27" />
+<meta name="date" content="2023-05-30" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   
   
-<link rel="prev" href="assessment-data-and-parameter-descriptions.html"/>
+<link rel="prev" href="how-to-use-spatialsablefishassessment-in-a-mse.html"/>
 <link rel="next" href="references.html"/>
 <script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.min.js"></script>
@@ -119,10 +119,6 @@ code span.vs { color: #4070a0; } /* VerbatimString */
 code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
 </style>
 
-<style type="text/css">
-  
-  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
-</style>
 <style type="text/css">
 /* Used with Pandoc 2.11+ new --citeproc when CSL is used */
 div.csl-bib-body { }
@@ -238,8 +234,10 @@ div.csl-indent {
 <li class="chapter" data-level="" data-path="assessment-data-and-parameter-descriptions.html"><a href="assessment-data-and-parameter-descriptions.html#data-1"><i class="fa fa-check"></i><code>data</code></a></li>
 <li class="chapter" data-level="" data-path="assessment-data-and-parameter-descriptions.html"><a href="assessment-data-and-parameter-descriptions.html#parameters-1"><i class="fa fa-check"></i><code>parameters</code></a></li>
 </ul></li>
+<li class="chapter" data-level="" data-path="how-to-use-spatialsablefishassessment-in-a-mse.html"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html"><i class="fa fa-check"></i>How to use <code>SpatialSablefishAssessment</code> in a MSE</a></li>
 <li class="chapter" data-level="" data-path="contributing-to-spatialsablefishassessment.html"><a href="contributing-to-spatialsablefishassessment.html"><i class="fa fa-check"></i>Contributing to <code>SpatialSablefishAssessment</code></a>
 <ul>
+<li class="chapter" data-level="" data-path="contributing-to-spatialsablefishassessment.html"><a href="contributing-to-spatialsablefishassessment.html#adding-a-new-r-dependency"><i class="fa fa-check"></i>Adding a new R dependency</a></li>
 <li class="chapter" data-level="" data-path="contributing-to-spatialsablefishassessment.html"><a href="contributing-to-spatialsablefishassessment.html#tips"><i class="fa fa-check"></i>Tips</a></li>
 </ul></li>
 <li class="chapter" data-level="" data-path="references.html"><a href="references.html"><i class="fa fa-check"></i>References</a></li>
@@ -269,6 +267,14 @@ div.csl-indent {
 <p>The Github repository contains a R script called <code>BuildPackage.R</code> which contains most of the calls that are triggered by the Github actions.</p>
 <p>When editing TMB code and recompiling you need to go into the <code>src/</code> directory and delete any files with the extension <code>.dll</code> or <code>.o</code>. You should also do this in the <code>src/TMB</code> directory. If you don’t delete these libraries sometimes the <code>pkgbuild::compile_dll()</code> wont recompile the source code with the updated changes. It is best to get into the habit of doing this when dealing with the TMB source code.</p>
 <p>Any model that is added, should be able to be unit-tested. For <code>TagIntegrated</code> model I created a mirror model called <code>TagIntegratedValidate</code> which has heaps more switches which I didn’t want in the production version, but needed to validate isolated functionality. Although this creates duplicate code bases I still think it is the best approach. When you do this it is recommended that you add a unit-test which checks the production and validation model are the same. This will tell you when you change functionality in one of the models and not the other, thus keeping them compatible and the unit-tests trustworthy.</p>
+<div id="adding-a-new-r-dependency" class="section level2 unnumbered hasAnchor">
+<h2>Adding a new R dependency<a href="contributing-to-spatialsablefishassessment.html#adding-a-new-r-dependency" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>All external dependencies are described in the <code>R/SpatialSablefishAssessment-package.R</code>. I try to import specific functions from packages using the following syntax</p>
+<p><code>#' @importFrom package function</code></p>
+<p>i.e.,</p>
+<p><code>#' @importFrom ggplot2 geom_point</code></p>
+<p>So, if you build a function which uses a function from say <code>dplyr</code> or <code>ggplot2</code> that isn’t in <code>SpatialSablefishAssessment-package.R</code>. You will need to add it there. If you want to use functionality from another library then you will also need to update the <code>DESCRIPTION</code> file</p>
+</div>
 <div id="tips" class="section level2 unnumbered hasAnchor">
 <h2>Tips<a href="contributing-to-spatialsablefishassessment.html#tips" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <p>You can create a new model by adding a completely new model into the R package by including an new <code>.hpp</code> file in the <code>src/TMB</code> directory. To allow the R package access to this new model, modify the file called <code>SpatialSablefishAssessment_TMBExports.cpp</code> which is also located in the <code>src/TMB</code> directory. In your new <code>.hpp</code> file you can use/call any function that defined in the files found at <code>inst/include</code> directory. These contain selectivity functions and other useful transformation functions that are shared across all models.</p>
@@ -280,7 +286,7 @@ div.csl-indent {
           </div>
         </div>
       </div>
-<a href="assessment-data-and-parameter-descriptions.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="how-to-use-spatialsablefishassessment-in-a-mse.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
 <a href="references.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
     </div>
   </div>

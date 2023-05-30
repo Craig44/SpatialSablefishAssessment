@@ -4,18 +4,18 @@
 
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <title>Page not found | SpatialSablefishAssessment</title>
+  <title>How to use SpatialSablefishAssessment in a MSE | SpatialSablefishAssessment</title>
   <meta name="description" content="This Gitbook describes the spatial sablefish stock assessment R package and how to use it" />
   <meta name="generator" content="bookdown 0.33 and GitBook 2.6.7" />
 
-  <meta property="og:title" content="Page not found | SpatialSablefishAssessment" />
+  <meta property="og:title" content="How to use SpatialSablefishAssessment in a MSE | SpatialSablefishAssessment" />
   <meta property="og:type" content="book" />
   
   <meta property="og:description" content="This Gitbook describes the spatial sablefish stock assessment R package and how to use it" />
   <meta name="github-repo" content="https://github.com/Craig44/SpatialSablefishAssessment" />
 
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="Page not found | SpatialSablefishAssessment" />
+  <meta name="twitter:title" content="How to use SpatialSablefishAssessment in a MSE | SpatialSablefishAssessment" />
   
   <meta name="twitter:description" content="This Gitbook describes the spatial sablefish stock assessment R package and how to use it" />
   
@@ -30,8 +30,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   
   
-
-
+<link rel="prev" href="assessment-data-and-parameter-descriptions.html"/>
+<link rel="next" href="contributing-to-spatialsablefishassessment.html"/>
 <script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.min.js"></script>
 <link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
@@ -261,19 +261,84 @@ div.csl-indent {
           <div class="page-inner">
 
             <section class="normal" id="section-">
-<div id="page-not-found" class="section level1">
-<h1>Page not found</h1>
-<p>The page you requested cannot be found (perhaps it was moved or renamed).</p>
-<p>You may want to try searching to find the page's new location, or use
-the table of contents to find the page you are looking for.</p>
+<div id="how-to-use-spatialsablefishassessment-in-a-mse" class="section level1 unnumbered hasAnchor">
+<h1>How to use <code>SpatialSablefishAssessment</code> in a MSE<a href="how-to-use-spatialsablefishassessment-in-a-mse.html#how-to-use-spatialsablefishassessment-in-a-mse" class="anchor-section" aria-label="Anchor link to header"></a></h1>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="do">## get MLE quantities</span></span>
+<span id="cb18-2"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-2" aria-hidden="true" tabindex="-1"></a>mle_report <span class="ot">=</span> my_model<span class="sc">$</span><span class="fu">report</span>(mle_optim<span class="sc">$</span>par)</span>
+<span id="cb18-3"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-4"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="do">#########</span></span>
+<span id="cb18-5"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-5" aria-hidden="true" tabindex="-1"></a><span class="do">## Plot interesting</span></span>
+<span id="cb18-6"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-6" aria-hidden="true" tabindex="-1"></a><span class="do">## Model quantities i.e., recruitment SSBs model fits etc</span></span>
+<span id="cb18-7"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-7" aria-hidden="true" tabindex="-1"></a><span class="do">#########</span></span>
+<span id="cb18-8"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-9"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-9" aria-hidden="true" tabindex="-1"></a><span class="do">## movement assumption</span></span>
+<span id="cb18-10"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-10" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_movement</span>(mle_report, <span class="at">region_key =</span> region_key)</span>
+<span id="cb18-11"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-11" aria-hidden="true" tabindex="-1"></a><span class="co"># starting values</span></span>
+<span id="cb18-12"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-12" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_movement</span>(OM_report, region_key)</span>
+<span id="cb18-13"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-13" aria-hidden="true" tabindex="-1"></a><span class="co"># plot selectivities</span></span>
+<span id="cb18-14"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-14" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_selectivities</span>(mle_report)</span>
+<span id="cb18-15"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-15" aria-hidden="true" tabindex="-1"></a><span class="co"># starting values</span></span>
+<span id="cb18-16"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-16" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_selectivities</span>(OM_report)</span>
+<span id="cb18-17"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-18"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-18" aria-hidden="true" tabindex="-1"></a><span class="do">## Regional SSBs</span></span>
+<span id="cb18-19"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-19" aria-hidden="true" tabindex="-1"></a>ssb_plt <span class="ot">=</span> <span class="fu">plot_SSB</span>(mle_report, <span class="at">region_key =</span> region_key)</span>
+<span id="cb18-20"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-20" aria-hidden="true" tabindex="-1"></a>ssb_plt</span>
+<span id="cb18-21"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-21" aria-hidden="true" tabindex="-1"></a><span class="do">## sum SSB over all regions</span></span>
+<span id="cb18-22"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-22" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(ssb_plt<span class="sc">$</span>data <span class="sc">%&gt;%</span> <span class="fu">group_by</span>(Year) <span class="sc">%&gt;%</span> <span class="fu">summarise</span>(<span class="at">total_ssb =</span> <span class="fu">sum</span>(SSB)), <span class="fu">aes</span>(<span class="at">x =</span> Year, <span class="at">y =</span> total_ssb)) <span class="sc">+</span></span>
+<span id="cb18-23"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">linewidth =</span> <span class="fl">1.1</span>) <span class="sc">+</span></span>
+<span id="cb18-24"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylim</span>(<span class="dv">0</span>,<span class="cn">NA</span>)</span>
+<span id="cb18-25"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-26"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-26" aria-hidden="true" tabindex="-1"></a><span class="do">## plot F&#39;s</span></span>
+<span id="cb18-27"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-27" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_fishing_mortalities</span>(<span class="at">MLE_report =</span> mle_report, <span class="at">region_key =</span> region_key)</span>
+<span id="cb18-28"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-29"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-29" aria-hidden="true" tabindex="-1"></a><span class="do">## plot fits to observations</span></span>
+<span id="cb18-30"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-31"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-31" aria-hidden="true" tabindex="-1"></a><span class="co"># catch and index</span></span>
+<span id="cb18-32"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-32" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_catch_fit</span>(<span class="at">MLE_report =</span> mle_report, <span class="at">region_key =</span> region_key) <span class="sc">+</span> <span class="fu">facet_wrap</span>(label<span class="sc">~</span>Region, <span class="at">ncol =</span> n_regions) <span class="sc">+</span> <span class="fu">ylab</span>(<span class="st">&quot;Catch (mt)&quot;</span>)</span>
+<span id="cb18-33"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-33" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_index_fit</span>(<span class="at">MLE_report =</span> mle_report, <span class="at">region_key =</span> region_key)</span>
+<span id="cb18-34"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-35"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-35" aria-hidden="true" tabindex="-1"></a><span class="co"># survey AFs</span></span>
+<span id="cb18-36"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-36" aria-hidden="true" tabindex="-1"></a>first_year_set <span class="ot">=</span> <span class="fu">c</span>(<span class="dv">1981</span>, <span class="fu">seq</span>(<span class="at">from =</span> <span class="dv">1985</span>, <span class="at">to =</span> <span class="dv">1993</span>, <span class="at">by =</span> <span class="dv">2</span>), <span class="dv">1996</span><span class="sc">:</span><span class="dv">1999</span>)</span>
+<span id="cb18-37"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-37" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_AF</span>(<span class="at">MLE_report =</span> mle_report, <span class="at">region_key =</span> region_key, <span class="at">label =</span> <span class="st">&quot;srv_dom_ll&quot;</span>, <span class="at">subset_years =</span> first_year_set, <span class="at">sex =</span> <span class="st">&quot;male&quot;</span>) <span class="sc">+</span></span>
+<span id="cb18-38"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-38" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">&quot;Male survey AF&quot;</span>) <span class="sc">+</span></span>
+<span id="cb18-39"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">guides</span>(<span class="at">shape =</span> <span class="st">&quot;none&quot;</span>, <span class="at">linetype =</span> <span class="st">&quot;none&quot;</span>) <span class="sc">+</span></span>
+<span id="cb18-40"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-40" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylim</span>(<span class="dv">0</span>,<span class="dv">20</span>)</span>
+<span id="cb18-41"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-41" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_AF</span>(<span class="at">MLE_report =</span> mle_report, <span class="at">region_key =</span> region_key, <span class="at">label =</span> <span class="st">&quot;srv_dom_ll&quot;</span>, <span class="at">subset_years =</span> first_year_set, <span class="at">sex =</span> <span class="st">&quot;female&quot;</span>) <span class="sc">+</span></span>
+<span id="cb18-42"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">&quot;Female survey AF&quot;</span>) <span class="sc">+</span></span>
+<span id="cb18-43"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-43" aria-hidden="true" tabindex="-1"></a>  <span class="fu">guides</span>(<span class="at">shape =</span> <span class="st">&quot;none&quot;</span>, <span class="at">linetype =</span> <span class="st">&quot;none&quot;</span>)</span>
+<span id="cb18-44"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-44" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb18-45"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-45" aria-hidden="true" tabindex="-1"></a><span class="co"># fishery LFs</span></span>
+<span id="cb18-46"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-46" aria-hidden="true" tabindex="-1"></a><span class="co"># Fixed gear</span></span>
+<span id="cb18-47"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-47" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_LF</span>(<span class="at">MLE_report =</span> mle_report, <span class="at">region_key =</span> region_key, <span class="at">label =</span> <span class="st">&quot;fixed&quot;</span>, <span class="at">subset_years =</span> <span class="dv">1991</span><span class="sc">:</span><span class="dv">1999</span>, <span class="at">sex =</span> <span class="st">&quot;male&quot;</span>) <span class="sc">+</span></span>
+<span id="cb18-48"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-48" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">&quot;Male fixed LF&quot;</span>) <span class="sc">+</span></span>
+<span id="cb18-49"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-49" aria-hidden="true" tabindex="-1"></a>  <span class="fu">guides</span>(<span class="at">shape =</span> <span class="st">&quot;none&quot;</span>, <span class="at">linetype =</span> <span class="st">&quot;none&quot;</span>)</span>
+<span id="cb18-50"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-50" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_LF</span>(<span class="at">MLE_report =</span> mle_report, <span class="at">region_key =</span> region_key, <span class="at">label =</span> <span class="st">&quot;fixed&quot;</span>, <span class="at">subset_years =</span> <span class="dv">1991</span><span class="sc">:</span><span class="dv">1999</span>, <span class="at">sex =</span> <span class="st">&quot;female&quot;</span>) <span class="sc">+</span></span>
+<span id="cb18-51"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-51" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">&quot;Female fixed LF&quot;</span>) <span class="sc">+</span></span>
+<span id="cb18-52"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-52" aria-hidden="true" tabindex="-1"></a>  <span class="fu">guides</span>(<span class="at">shape =</span> <span class="st">&quot;none&quot;</span>, <span class="at">linetype =</span> <span class="st">&quot;none&quot;</span>)</span>
+<span id="cb18-53"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-54"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-54" aria-hidden="true" tabindex="-1"></a><span class="co"># plot by tag releases event</span></span>
+<span id="cb18-55"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-55" aria-hidden="true" tabindex="-1"></a>tag_fits_by_age_sex <span class="ot">=</span> <span class="fu">get_tag_recovery_obs_fitted_values</span>(mle_report, <span class="at">region_key =</span> region_key)</span>
+<span id="cb18-56"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-56" aria-hidden="true" tabindex="-1"></a>tag_fits <span class="ot">=</span> tag_fits_by_age_sex <span class="sc">%&gt;%</span> <span class="fu">group_by</span>(release_event, unique_recovery_id) <span class="sc">%&gt;%</span> <span class="fu">summarise</span>(<span class="at">observed =</span> <span class="fu">sum</span>(observed), <span class="at">predicted =</span> <span class="fu">sum</span>(predicted), <span class="at">recovery_year =</span> <span class="fu">unique</span>(recovery_year), <span class="at">recovery_region =</span> <span class="fu">unique</span>(recovery_region), <span class="at">release_region =</span> <span class="fu">unique</span>(release_region), <span class="at">release_year =</span> <span class="fu">unique</span>(release_year))</span>
+<span id="cb18-57"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-57" aria-hidden="true" tabindex="-1"></a>tag_fits<span class="sc">$</span>resid <span class="ot">=</span> tag_fits<span class="sc">$</span>observed <span class="sc">-</span> tag_fits<span class="sc">$</span>predicted</span>
+<span id="cb18-58"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-58" aria-hidden="true" tabindex="-1"></a>tag_fits<span class="sc">$</span>stand_resid <span class="ot">=</span> tag_fits<span class="sc">$</span>resid <span class="sc">/</span> tag_fits<span class="sc">$</span>predicted</span>
+<span id="cb18-59"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-59" aria-hidden="true" tabindex="-1"></a>tag_fits<span class="sc">$</span>resid_sign <span class="ot">=</span> <span class="fu">ifelse</span>(tag_fits<span class="sc">$</span>resid <span class="sc">&lt;</span> <span class="dv">0</span>, <span class="st">&quot;negative&quot;</span>, <span class="st">&quot;positive&quot;</span>)</span>
+<span id="cb18-60"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-60" aria-hidden="true" tabindex="-1"></a>unique_release_events <span class="ot">=</span> <span class="fu">unique</span>(tag_fits<span class="sc">$</span>release_event)</span>
+<span id="cb18-61"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-61" aria-hidden="true" tabindex="-1"></a>gplt <span class="ot">=</span> <span class="fu">ggplot</span>(tag_fits <span class="sc">%&gt;%</span> <span class="fu">filter</span>(release_event <span class="sc">%in%</span> unique_release_events[<span class="dv">1</span><span class="sc">:</span><span class="dv">16</span>]), <span class="fu">aes</span>(<span class="at">x =</span> recovery_year, <span class="at">y =</span> recovery_region)) <span class="sc">+</span></span>
+<span id="cb18-62"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-62" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="fu">aes</span>(<span class="at">size =</span> <span class="fu">abs</span>(stand_resid), <span class="at">col =</span> resid_sign)) <span class="sc">+</span></span>
+<span id="cb18-63"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-63" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;Recovery year&quot;</span>, <span class="at">y =</span> <span class="st">&quot;Recovery region&quot;</span>, <span class="at">size =</span> <span class="st">&quot;Pearson residuals&quot;</span>) <span class="sc">+</span></span>
+<span id="cb18-64"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-64" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>() <span class="sc">+</span></span>
+<span id="cb18-65"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-65" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_size_area</span>() <span class="sc">+</span></span>
+<span id="cb18-66"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-66" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span>release_event) <span class="sc">+</span></span>
+<span id="cb18-67"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb18-67" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_discrete</span>(<span class="at">breaks =</span> <span class="fu">every_nth</span>(<span class="at">n =</span> <span class="dv">5</span>))</span></code></pre></div>
+
 </div>
             </section>
 
           </div>
         </div>
       </div>
-
-
+<a href="assessment-data-and-parameter-descriptions.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="contributing-to-spatialsablefishassessment.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
     </div>
   </div>
 <script src="libs/gitbook-2.6.7/js/app.min.js"></script>
@@ -304,7 +369,7 @@ gitbook.start({
 "size": 2
 },
 "edit": {
-"link": "https://github.com/Craig44/SpatialSablefishAssessment/edit/main/%s",
+"link": "https://github.com/Craig44/SpatialSablefishAssessment/edit/main/06-MSE.Rmd",
 "text": "Edit"
 },
 "history": {
