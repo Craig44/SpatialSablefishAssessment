@@ -10,7 +10,7 @@ get_negloglike <- function(MLE_report) {
     "trwl-fishery length female comp",
     "srv Domestic ll Biomass",
     "srv Japanese ll Biomass",
-    "Fishery CPUE",
+    "ll Fishery CPUE",
     "Domestic ll Age",
     "Domestic ll Length male",
     "srv Domestic ll Length female",
@@ -23,14 +23,14 @@ get_negloglike <- function(MLE_report) {
     "ll-fishery length male comp",
     "ll-fishery length female comp",
     "srv GOA trwl biomass index",
-    "srv Japanese Fishery longline biomass index",
-    "srv Japanese Fishery longline Length Frequency",
+    "Historic Japanese Fishery CPUE index",
+    "Historic Japanese Fishery Length Frequency",
     "Longline fishery catch Sum of squares",
     "Trawl fishery catch Sum of squares",
     "Recruitment penalty")
 
     nll_df = data.frame(negloglike = round(MLE_report$nll,4),
-                        observations = nll_label)
+                        observations = nll_label, distribution = NA)
 
   } else {
     AF_fixed_like = ifelse(MLE_report$fixed_catchatage_comp_likelihood == 0, "Multinomial", "Dirichlet-Multinomial")
@@ -54,7 +54,7 @@ get_negloglike <- function(MLE_report) {
 #' @export
 get_n_datasets <- function(MLE_report) {
   if(MLE_report$model_type == 0) {
-    cat("Skipping this function not built for the Current Assessment")
+    cat("Skipping this function has not been modified for the model type: Assessment")
     return(NULL)
   }
   years = data$years
@@ -122,7 +122,7 @@ get_n_datasets <- function(MLE_report) {
 #' @param observation character labeling the observation you want to plot. See below for options. Ignored if `MLE_report$model_type == 0` and will return all age comps.
 #' \itemize{
 #'   \item `fixed`
-#'   \item `srv_dom_ll`
+#'   \item `srv`
 #' }
 #' @param subset_years vector of years to get observation for it. Ignored if `MLE_report$model_type == 0`.
 #' @param sex character that allows users to specify if the want sex specific plots. Ignored if `MLE_report$model_type == 0`.
@@ -132,10 +132,11 @@ get_n_datasets <- function(MLE_report) {
 #'   \item `female`
 #' }
 #' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
+#' @param survey_labels character vector for each of the n_surveys
 #' @return data frame with age-frequency info
 #' @export
 
-get_AF <- function(MLE_report, observation = "fixed", subset_years = NULL, sex = "both", region_key = NULL) {
+get_AF <- function(MLE_report, observation = "fixed", subset_years = NULL, sex = "both", region_key = NULL, survey_labels = NULL) {
   full_df = NULL
   if(MLE_report$model_type == 0) {
     #
@@ -167,11 +168,13 @@ get_AF <- function(MLE_report, observation = "fixed", subset_years = NULL, sex =
     full_df$Sex = "Combined"
   } else {
 
-    if(!observation %in% c("fixed","srv_dom_ll"))
+    if(!observation %in% c("fixed","srv"))
       stop("observation not one of the expected values.")
     if(!sex %in% c("both", "male", "female"))
       stop('sex not one of the expected values. Expected one of the following "both", "male", "female"')
-
+    surveys = paste0("Survey ", 1:MLE_report$n_surveys)
+    if(!is.null(survey_labels))
+      surveys = survey_labels
     years = MLE_report$years
     regions = 1:MLE_report$n_regions
     ages = MLE_report$ages
@@ -179,18 +182,18 @@ get_AF <- function(MLE_report, observation = "fixed", subset_years = NULL, sex =
     obs_indicator = get(paste0(observation,"_catchatage_indicator"), MLE_report)
     obs_df = get(paste0("obs_",observation,"_catchatage"), MLE_report)
     pred_df = get(paste0("pred_",observation,"_catchatage"), MLE_report)
-    dimnames(obs_df) = dimnames(pred_df) = list(c(paste0("M_",ages), paste0("F_",ages)), regions, years)
-    dimnames(obs_indicator) = list(regions, years)
+    dimnames(obs_df) = dimnames(pred_df) = list(c(paste0("M_",ages), paste0("F_",ages)), regions, years, surveys)
+    dimnames(obs_indicator) = list(regions, years, surveys)
     NA_ndx = which(obs_indicator == 0, arr.ind = T)
     if(nrow(NA_ndx) > 0) {
       for(i in 1:nrow(NA_ndx)) {
-        obs_df[,NA_ndx[i,1], NA_ndx[i,2]] = NA
-        pred_df[,NA_ndx[i,1], NA_ndx[i,2]] = NA
+        obs_df[,NA_ndx[i,1], NA_ndx[i,2],1] = NA
+        pred_df[,NA_ndx[i,1], NA_ndx[i,2],1] = NA
       }
     }
     molten_obs = reshape2::melt(obs_df)
     molten_pred = reshape2::melt(pred_df)
-    colnames(molten_obs) = c("S_Age", "Region", "Year", "Observed")
+    colnames(molten_obs) = c("S_Age", "Region", "Year", "Survey", "Observed")
     molten_obs$Predicted = molten_pred$value
     if(is.null(region_key)) {
       molten_obs$Region = paste0("Region ", molten_obs$Region)
@@ -202,7 +205,7 @@ get_AF <- function(MLE_report, observation = "fixed", subset_years = NULL, sex =
     molten_obs$Sex = ifelse(substring(molten_obs$S_Age, first = 0, last = 1) == "M", "Male", "Female")
     full_df = molten_obs
     ## multiple predicted proportions by effective sample size
-    full_df= full_df %>% group_by(Year, Region) %>% mutate(Predicted = Predicted * sum(Observed))
+    full_df= full_df %>% group_by(Year, Region, Survey) %>% mutate(Predicted = Predicted * sum(Observed))
 
     if(sex == "male")
       full_df = full_df %>% dplyr::filter(Sex == "Male")
@@ -229,7 +232,7 @@ get_AF <- function(MLE_report, observation = "fixed", subset_years = NULL, sex =
 #' \itemize{
 #'   \item `trwl`
 #'   \item `fixed`
-#'   \item `srv_dom_ll`
+#'   \item `srv`
 #' }
 #' If `MLE_report$model_type == 0` i.a., assessment model
 #' \itemize{
@@ -246,9 +249,10 @@ get_AF <- function(MLE_report, observation = "fixed", subset_years = NULL, sex =
 #'   \item `both`
 #' }
 #' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
+#' @param survey_labels character vector for each of the n_surveys
 #' @return ggplot2 object that will plot if an observation occurs in a year and region
 #' @export
-plot_AF = function(MLE_report, observation = "srv_dom_ll", subset_years = NULL, sex = "both", region_key = NULL) {
+plot_AF = function(MLE_report, observation = "srv", subset_years = NULL, sex = "both", region_key = NULL, survey_labels = NULL) {
   gplt = NULL
   if(MLE_report$model_type == 0) {
     full_df = get_AF(MLE_report = MLE_report, subset_years = subset_years, region_key = region_key)
@@ -272,7 +276,7 @@ plot_AF = function(MLE_report, observation = "srv_dom_ll", subset_years = NULL, 
       facet_wrap(~Year) +
       theme_bw()
   } else {
-    full_df = get_AF(MLE_report = MLE_report, observation = observation, subset_years = subset_years, sex = sex, region_key = region_key)
+    full_df = get_AF(MLE_report = MLE_report, observation = observation, subset_years = subset_years, sex = sex, region_key = region_key, survey_labels = survey_labels)
 
     ## plot
     gplt = ggplot(full_df, aes(x = Age)) +
@@ -293,7 +297,7 @@ plot_AF = function(MLE_report, observation = "srv_dom_ll", subset_years = NULL, 
 #'   \item all
 #'   \item trwl
 #'   \item fixed
-#'   \item srv_dom_ll
+#'   \item srv
 #' }
 #' @param subset_years vector of years to plot it for
 #' @param sex character that allows users to specify if the want sex specific plots
@@ -303,9 +307,10 @@ plot_AF = function(MLE_report, observation = "srv_dom_ll", subset_years = NULL, 
 #'   \item `both`
 #' }
 #' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
+#' @param survey_labels character vector for each of the n_surveys
 #' @return a data frame of mean ages
 #' @export
-get_mean_age = function(MLE_report, observation = "fixed", subset_years = NULL, sex = "both", region_key = NULL) {
+get_mean_age = function(MLE_report, observation = "fixed", subset_years = NULL, sex = "both", region_key = NULL, survey_labels = NULL) {
   full_df = NULL
   years = MLE_report$years
   regions = 1:MLE_report$n_regions
@@ -324,7 +329,7 @@ get_mean_age = function(MLE_report, observation = "fixed", subset_years = NULL, 
 
     ## get objects
     if(observation != "all") {
-      full_df = get_AF(MLE_report = MLE_report, observation = observation, subset_years = subset_years, sex = sex, region_key = region_key)
+      full_df = get_AF(MLE_report = MLE_report, observation = observation, subset_years = subset_years, sex = sex, region_key = region_key, survey_labels = survey_labels)
     } else {
       full_df = NULL;
       obs_labs = c("srv_dom_ll","fixed")
@@ -378,15 +383,16 @@ get_mean_age = function(MLE_report, observation = "fixed", subset_years = NULL, 
 #'   \item `both`
 #' }
 #' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
+#' @param survey_labels character vector for each of the n_surveys
 #' @return ggplot2 object that will plot if an observation occurs in a year and region
 #' @export
-plot_mean_age = function(MLE_report, observation = "fixed", subset_years = NULL, sex = "both", region_key = NULL) {
+plot_mean_age = function(MLE_report, observation = "fixed", subset_years = NULL, sex = "both", region_key = NULL, survey_labels = NULL) {
   if(!observation %in% c("all","fixed","srv_dom_ll"))
     stop("observation not one of the expected values.")
   if(!sex %in% c("both", "male", "female"))
     stop('sex not one of the expected values. Expected one of the following "both", "male", "female"')
 
-  full_df = get_mean_age(MLE_report = MLE_report, observation = observation, subset_years = subset_years, sex = sex, region_key = region_key)
+  full_df = get_mean_age(MLE_report = MLE_report, observation = observation, subset_years = subset_years, sex = sex, region_key = region_key, survey_labels = survey_labels)
 
   ## plot
   gplt = ggplot(full_df, aes(x = Year)) +
@@ -421,6 +427,7 @@ plot_mean_age = function(MLE_report, observation = "fixed", subset_years = NULL,
 get_LF = function(MLE_report, observation = "fixed", subset_years = NULL, sex = "both", region_key = NULL) {
   if(!sex %in% c("both", "male", "female"))
     stop('sex not one of the expected values. Expected one of the following "both", "male", "female"')
+  length_bins = MLE_report$length_bins
 
   full_df = NULL
   if(MLE_report$model_type == 0) {
@@ -433,32 +440,7 @@ get_LF = function(MLE_report, observation = "fixed", subset_years = NULL, sex = 
       if(sex != "both") {
         sex_label = substring(sex, first =0, last = 1)
         obs_indicator = get(lgth_indicators[i], MLE_report)
-        if(lgth_obs_label[i] == "Japanese LL fishery") {
-          obs_df = get(lgth_obs[i], MLE_report)
-          pred_df = get(lgth_pred[i], MLE_report)
-        } else {
-          obs_df = get(paste0(lgth_obs[i], "_", sex_label), MLE_report)
-          pred_df = get(paste0(lgth_pred[i], "_", sex_label), MLE_report)
-        }
-        label = lgth_obs_label[i]
-        obs_years = MLE_report$years[obs_indicator == 1]
-        dimnames(obs_df) = dimnames(pred_df) = list(MLE_report$length_bins,obs_years)
-        molten_obs = reshape2::melt(obs_df)
-        molten_pred = reshape2::melt(pred_df)
-        colnames(molten_obs) = c("Age", "Year", "Observed")
-        molten_obs$Predicted = molten_pred$value
-        if(is.null(region_key)) {
-          molten_obs$Region = paste0("Region ", 1)
-        } else {
-          molten_obs$Region = region_key$area[1]
-        }
-        molten_obs$observation = label
-        molten_obs$Sex = sex
-        full_df = rbind(full_df, molten_obs)
-      } else {
-        for(sex_ndx in c("male", "female")) {
-          sex_label = substring(sex_ndx, first =0, last = 1)
-          obs_indicator = get(lgth_indicators[i], MLE_report)
+        if(sum(obs_indicator) > 0) { ## no data in for this observation
           if(lgth_obs_label[i] == "Japanese LL fishery") {
             obs_df = get(lgth_obs[i], MLE_report)
             pred_df = get(lgth_pred[i], MLE_report)
@@ -468,10 +450,10 @@ get_LF = function(MLE_report, observation = "fixed", subset_years = NULL, sex = 
           }
           label = lgth_obs_label[i]
           obs_years = MLE_report$years[obs_indicator == 1]
-          dimnames(obs_df) = dimnames(pred_df) = list(MLE_report$ages,obs_years)
+          dimnames(obs_df) = dimnames(pred_df) = list(MLE_report$length_bins,obs_years)
           molten_obs = reshape2::melt(obs_df)
           molten_pred = reshape2::melt(pred_df)
-          colnames(molten_obs) = c("Age", "Year", "Observed")
+          colnames(molten_obs) = c("Length", "Year", "Observed")
           molten_obs$Predicted = molten_pred$value
           if(is.null(region_key)) {
             molten_obs$Region = paste0("Region ", 1)
@@ -479,8 +461,42 @@ get_LF = function(MLE_report, observation = "fixed", subset_years = NULL, sex = 
             molten_obs$Region = region_key$area[1]
           }
           molten_obs$observation = label
-          molten_obs$Sex = sex_ndx
+          molten_obs$Sex = sex
+          if(lgth_obs_label[i] == "Japanese LL fishery")
+            molten_obs$Sex = "Combined"
+
           full_df = rbind(full_df, molten_obs)
+        }
+      } else {
+        for(sex_ndx in c("male", "female")) {
+          sex_label = substring(sex_ndx, first =0, last = 1)
+          obs_indicator = get(lgth_indicators[i], MLE_report)
+          if(sum(obs_indicator) > 0) { ## no data in for this observation
+            if(lgth_obs_label[i] == "Japanese LL fishery") {
+              obs_df = get(lgth_obs[i], MLE_report)
+              pred_df = get(lgth_pred[i], MLE_report)
+            } else {
+              obs_df = get(paste0(lgth_obs[i], "_", sex_label), MLE_report)
+              pred_df = get(paste0(lgth_pred[i], "_", sex_label), MLE_report)
+            }
+            label = lgth_obs_label[i]
+            obs_years = MLE_report$years[obs_indicator == 1]
+            dimnames(obs_df) = dimnames(pred_df) = list(MLE_report$length_bins, obs_years)
+            molten_obs = reshape2::melt(obs_df)
+            molten_pred = reshape2::melt(pred_df)
+            colnames(molten_obs) = c("Length", "Year", "Observed")
+            molten_obs$Predicted = molten_pred$value
+            if(is.null(region_key)) {
+              molten_obs$Region = paste0("Region ", 1)
+            } else {
+              molten_obs$Region = region_key$area[1]
+            }
+            molten_obs$observation = label
+            molten_obs$Sex = sex_ndx
+            if(lgth_obs_label[i] == "Japanese LL fishery")
+              molten_obs$Sex = "Combined"
+            full_df = rbind(full_df, molten_obs)
+          }
         }
       }
     }
@@ -494,7 +510,6 @@ get_LF = function(MLE_report, observation = "fixed", subset_years = NULL, sex = 
 
     years = MLE_report$years
     regions = 1:MLE_report$n_regions
-    length_bins = MLE_report$length_bins
     ## get objects
     obs_indicator = get(paste0(observation,"_catchatlgth_indicator"), MLE_report)
     obs_df = get(paste0("obs_",observation,"_catchatlgth"), MLE_report)
@@ -601,9 +616,13 @@ get_mean_length = function(MLE_report, observation = "fixed", subset_years = NUL
   }
 
   ## multiple predicted proportions by effective sample size
-  full_df= full_df %>% group_by(Year, Region, observation) %>% mutate(N_eff = sum(Observed), Observed_prop = Observed / N_eff, Predicted_prop = Predicted / sum(Predicted))
-
-  full_df= full_df %>% group_by(Year, Region, observation, Sex) %>% summarise(Ey = sum(Length * Predicted_prop), Oy = sum(Length * Observed_prop), E_squared_y = sum(Length^2 * Predicted_prop), N_eff = mean(N_eff))
+  if(MLE_report$model_type == 0) {
+    full_df= full_df %>% group_by(Year, Region, observation, Sex) %>% mutate(N_eff = sum(Observed), Observed_prop = Observed / N_eff, Predicted_prop = Predicted / sum(Predicted))
+    full_df= full_df %>% group_by(Year, Region, observation, Sex) %>% summarise(Ey = sum(Length * Predicted_prop), Oy = sum(Length * Observed_prop), E_squared_y = sum(Length^2 * Predicted_prop), N_eff = mean(N_eff))
+  } else  {
+    full_df= full_df %>% group_by(Year, Region, observation) %>% mutate(N_eff = sum(Observed), Observed_prop = Observed / N_eff, Predicted_prop = Predicted / sum(Predicted))
+    full_df= full_df %>% group_by(Year, Region, observation, Sex) %>% summarise(Ey = sum(Length * Predicted_prop), Oy = sum(Length * Observed_prop), E_squared_y = sum(Length^2 * Predicted_prop), N_eff = mean(N_eff))
+  }
   full_df$Ry = full_df$Oy - full_df$Ey
   full_df$SEy = sqrt((full_df$E_squared_y - full_df$Ey^2) / full_df$N_eff)
   full_df$'Std.res' <- (full_df$Oy - full_df$Ey)/full_df$SEy
@@ -703,7 +722,7 @@ plot_index_fit = function(MLE_report, region_key = NULL, resid = F) {
         geom_hline(yintercept = c(-2,2), col = "gray60", linetype = "dashed") +
         guides( linewidth = "none", linetype = "none") +
         labs(y = "Index", col = "", linetype = "", fill = "") +
-        facet_wrap(~label, ncol = 2, scales = "free_y") +
+        facet_wrap(~observation, ncol = 2, scales = "free_y") +
         theme_bw()
     } else {
       gplt = ggplot(full_df, aes(x = Year)) +
@@ -712,7 +731,7 @@ plot_index_fit = function(MLE_report, region_key = NULL, resid = F) {
         geom_errorbar(aes(ymin=L_CI, ymax=U_CI, col = "Observed"), width=.2, position=position_dodge(.9)) +
         guides( linewidth = "none", linetype = "none") +
         labs(y = "Index", col = "", linetype = "") +
-        facet_wrap(~label, ncol = 2, scales = "free_y") +
+        facet_wrap(~observation, ncol = 2, scales = "free_y") +
         theme_bw()
     }
 
@@ -735,51 +754,56 @@ plot_index_fit = function(MLE_report, region_key = NULL, resid = F) {
 #' get_index
 #' @param MLE_report a list that is output from obj$report() usually once an optimsation routine has been done.
 #' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
+#' @param survey_labels character vector for each of the n_surveys
 #' @return ggplot2 object that will plot if an observation occurs in a year and region
 #' @export
-get_index = function(MLE_report, region_key = NULL) {
+get_index = function(MLE_report, region_key = NULL, survey_labels = NULL) {
   years = MLE_report$years
   regions = 1:MLE_report$n_regions
   full_df = NULL
   if(MLE_report$model_type == 0) {
-    jap_fishery_cpue = data.frame(Year = MLE_report$years[MLE_report$srv_jap_fishery_ll_bio_indicator == 1],SE = MLE_report$se_jap_fishery_ll_bio, Observed = MLE_report$obs_jap_fishery_ll_bio, Predicted = MLE_report$pred_jap_fishery_ll_bio, label = "Japanese CPUE")
+    jap_fishery_cpue = data.frame(Year = MLE_report$years[MLE_report$srv_jap_fishery_ll_bio_indicator == 1],SE = MLE_report$se_jap_fishery_ll_bio, Observed = MLE_report$obs_jap_fishery_ll_bio, Predicted = MLE_report$pred_jap_fishery_ll_bio, observation = "Japanese CPUE")
     ## convert the SE of an estimator to a standard deviation that is the
     ## right scale for the lognormal distribution
     ## first calculate CV = sigma/mean then pass this to the log_sigma function
     if(MLE_report$jap_fishery_ll_bio_likelihood == 0)
       jap_fishery_cpue$SE = log_sigma(jap_fishery_cpue$SE / jap_fishery_cpue$Observed)
-    fixed_cpue = data.frame(Year = MLE_report$years[MLE_report$ll_cpue_indicator == 1],SE = MLE_report$se_ll_cpue, Observed = MLE_report$obs_ll_cpue, Predicted = MLE_report$pred_ll_cpue, label = "Fixed gear CPUE")
+    fixed_cpue = data.frame(Year = MLE_report$years[MLE_report$ll_cpue_indicator == 1],SE = MLE_report$se_ll_cpue, Observed = MLE_report$obs_ll_cpue, Predicted = MLE_report$pred_ll_cpue, observation = "Fixed gear CPUE")
     if(MLE_report$ll_cpue_likelihood == 0)
       fixed_cpue$SE = log_sigma(fixed_cpue$SE / fixed_cpue$Observed)
-    jap_srv_ll = data.frame(Year = MLE_report$years[MLE_report$srv_jap_ll_bio_indicator == 1],SE = MLE_report$se_jap_ll_bio, Observed = MLE_report$obs_jap_ll_bio, Predicted = MLE_report$pred_jap_ll_bio, label = "Japanese LL survey")
+    jap_srv_ll = data.frame(Year = MLE_report$years[MLE_report$srv_jap_ll_bio_indicator == 1],SE = MLE_report$se_jap_ll_bio, Observed = MLE_report$obs_jap_ll_bio, Predicted = MLE_report$pred_jap_ll_bio, observation = "Japanese LL survey")
     if(MLE_report$jap_ll_bio_likelihood == 0)
       jap_srv_ll$SE = log_sigma(jap_srv_ll$SE / jap_srv_ll$Observed)
-    srv_nmfs_trwl = data.frame(Year = MLE_report$years[MLE_report$srv_nmfs_trwl_bio_indicator == 1],SE = MLE_report$se_nmfs_trwl_bio, Observed = MLE_report$obs_nmfs_trwl_bio, Predicted = MLE_report$pred_nmfs_trwl_bio, label = "NMFS trawl survey")
+    srv_nmfs_trwl = data.frame(Year = MLE_report$years[MLE_report$srv_nmfs_trwl_bio_indicator == 1],SE = MLE_report$se_nmfs_trwl_bio, Observed = MLE_report$obs_nmfs_trwl_bio, Predicted = MLE_report$pred_nmfs_trwl_bio, observation = "NMFS trawl survey")
     if(MLE_report$nmfs_trwl_bio_likelihood == 0)
       srv_nmfs_trwl$SE = log_sigma(srv_nmfs_trwl$SE / srv_nmfs_trwl$Observed)
-    srv_dom_ll = data.frame(Year = MLE_report$years[MLE_report$srv_dom_ll_bio_indicator == 1],SE = MLE_report$se_dom_ll_bio, Observed = MLE_report$obs_dom_ll_bio, Predicted = MLE_report$pred_dom_ll_bio, label = "Domestic LL survey")
+    srv_dom_ll = data.frame(Year = MLE_report$years[MLE_report$srv_dom_ll_bio_indicator == 1],SE = MLE_report$se_dom_ll_bio, Observed = MLE_report$obs_dom_ll_bio, Predicted = MLE_report$pred_dom_ll_bio, observation = "Domestic LL survey")
     if(MLE_report$dom_ll_bio_likelihood == 0)
       srv_dom_ll$SE = log_sigma(srv_dom_ll$SE / srv_dom_ll$Observed)
     ## combine all datasets
     full_df = rbind(jap_fishery_cpue, fixed_cpue, jap_srv_ll, srv_nmfs_trwl, srv_dom_ll)
     full_df$Region = 1
   } else {
-    dimnames(MLE_report$obs_srv_dom_ll_bio) = dimnames(MLE_report$pred_srv_dom_ll_bio) =   dimnames(MLE_report$obs_srv_dom_ll_se) = list(regions, years)
-    MLE_report$obs_srv_dom_ll_bio[MLE_report$srv_dom_ll_bio_indicator == 0] = NA
-    MLE_report$obs_srv_dom_ll_se[MLE_report$srv_dom_ll_bio_indicator == 0] = NA
-    MLE_report$pred_srv_dom_ll_bio[MLE_report$srv_dom_ll_bio_indicator == 0] = NA
+    surveys = paste0("Survey ", 1:MLE_report$n_surveys)
+    if(!is.null(survey_labels))
+      surveys = survey_labels
 
-    index_obs = reshape2::melt(MLE_report$obs_srv_dom_ll_bio)
-    index_se = reshape2::melt(MLE_report$obs_srv_dom_ll_se)
-    index_fit = reshape2::melt(MLE_report$pred_srv_dom_ll_bio)
-    colnames(index_obs) = c("Region", "Year", "Observed")
-    colnames(index_fit) = c("Region", "Year", "Predicted")
-    colnames(index_se) = c("Region", "Year", "SE")
+    dimnames(MLE_report$obs_srv_bio) = dimnames(MLE_report$pred_srv_bio) =   dimnames(MLE_report$obs_srv_se) = list(regions, years, surveys)
+    MLE_report$obs_srv_bio[MLE_report$srv_dom_indicator == 0] = NA
+    MLE_report$obs_srv_se[MLE_report$srv_dom_indicator == 0] = NA
+    MLE_report$pred_srv_bio[MLE_report$srv_bio_indicator == 0] = NA
+
+    index_obs = reshape2::melt(MLE_report$obs_srv_bio)
+    index_se = reshape2::melt(MLE_report$obs_srv_se)
+    index_fit = reshape2::melt(MLE_report$pred_srv_bio)
+    colnames(index_obs) = c("Region", "Year", "Survey", "Observed")
+    colnames(index_fit) = c("Region", "Year", "Survey", "Predicted")
+    colnames(index_se) = c("Region", "Year", "Survey", "SE")
     index_obs$Predicted = index_fit$Predicted
     ## convert the SE of an estimator to a standard deviation that is the
     ## right scale for the lognormal distribution
     ## first calculate CV = sigma/mean then pass this to the log_sigma function
-    if(MLE_report$srv_dom_ll_bio_likelihood == 0)
+    if(MLE_report$srv_bio_likelihood == 0)
       index_se$SE = log_sigma(index_se$SE / index_obs$Observed)
     index_obs$SE = index_se$SE
     full_df = index_obs
@@ -796,6 +820,7 @@ get_index = function(MLE_report, region_key = NULL) {
     full_df$Region = region_key$area[match(full_df$Region, (region_key$TMB_ndx + 1))]
   }
   full_df = full_df %>% dplyr::filter(!is.na(Observed))
+  ## change name from label to
   return(full_df)
 }
 
@@ -820,13 +845,8 @@ get_index = function(MLE_report, region_key = NULL) {
 Francis_reweighting <- function(MLE_report, region_key = NULL) {
   years = data$years
   regions = 1:data$n_regions
-  age_obs_label = c("fixed","srv_dom_ll")
-  len_obs_label = c("fixed","trwl")
-  age_comp_df = len_comp_df = NULL
-  for(age_ndx in 1:length(age_obs_label))
-    age_comp_df = rbind(age_comp_df, get_AF(MLE_report = MLE_report, region_key = region_key, observation = age_obs_label[age_ndx], sex = "both"))
-  for(len_ndx in 1:length(len_obs_label))
-    len_comp_df = rbind(len_comp_df, get_LF(MLE_report = MLE_report, region_key = region_key, observation = len_obs_label[len_ndx], sex = "both"))
+  age_comp_df = get_AF(MLE_report = MLE_report, region_key = region_key, observation = "all", sex = "both")
+  len_comp_df = get_LF(MLE_report = MLE_report, region_key = region_key, observation = "all", sex = "both")
   ## drop NA observed
   len_comp_df = len_comp_df %>% filter(!is.na(Observed))
   age_comp_df = age_comp_df %>% filter(!is.na(Observed))
@@ -861,10 +881,11 @@ Francis_reweighting <- function(MLE_report, region_key = NULL) {
 #' @param sd_report if you have already run `TMB::sdreport` then you can pass this function it. Which can save a time
 #' @param include_param_uncertainty boolean whether to simulate parameters from a multivariate normal distribution for each simulation
 #' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
+#' @param survey_labels character vector for each of the n_surveys
 #' @return named list containing simualted observations for all key obsevations
 #' @export
 
-simulate_observations <- function(obj, n_sims = 200, sd_report = NULL, include_param_uncertainty = F, region_key = NULL) {
+simulate_observations <- function(obj, n_sims = 200, sd_report = NULL, include_param_uncertainty = F, region_key = NULL, survey_labels = NULL) {
   fixed_effect_pars = get_tmb_fixed_effects(obj)
   all_pars = obj$env$last.par.best
   if(include_param_uncertainty) {
@@ -874,8 +895,8 @@ simulate_observations <- function(obj, n_sims = 200, sd_report = NULL, include_p
   }
   mle_rep = obj$report(all_pars)
   ## get the real observed data and save them in the following datasets
-  obs_index_df = get_index(mle_rep, region_key = region_key)
-  obs_srv_AF_df = get_AF(mle_rep, observation = "srv_dom_ll", region_key = region_key)
+  obs_index_df = get_index(mle_rep, region_key = region_key, survey_labels)
+  obs_srv_AF_df = get_AF(mle_rep, observation = "srv_dom_ll", region_key = region_key, survey_labels)
   obs_fixed_AF_df = get_AF(mle_rep, observation = "fixed", region_key = region_key)
   obs_fixed_LF_df = get_LF(mle_rep, observation = "fixed", region_key = region_key)
   obs_trwl_LF_df = get_LF(mle_rep, observation = "trwl", region_key = region_key)
@@ -1137,7 +1158,6 @@ summarise_LF_quant_resids <- function(LF_sim_resids, sex = "M", obs_label = "") 
 #' @return a joint plot
 summarise_tag_quant_resids <- function(tag_sim_resids, recovery_year = T) {
   if(recovery_year) {
-
     rel_reg_rec_yr_plt = ggplot(tag_sim_resids, aes(x = recovery_year, group = recovery_year, y = (qnorm_transformed_scaled_resids))) +
       geom_boxplot() +
       labs(x = "Recovery Year", y = "") +
@@ -1185,7 +1205,6 @@ summarise_tag_quant_resids <- function(tag_sim_resids, recovery_year = T) {
 #' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
 #' @return data.frame
 #' @export
-
 get_comp_sample_size <- function(MLE_report, data, region_key = NULL) {
   years = MLE_report$years
   regions = 1:MLE_report$n_regions
@@ -1196,47 +1215,58 @@ get_comp_sample_size <- function(MLE_report, data, region_key = NULL) {
   }
   ages = MLE_report$ages
   length_bins = MLE_report$length_bins
-
   sample_sizes = NULL
-  ## check likelihoods
-  ## fixed catch at age
-  dimnames(data$obs_fixed_catchatage)= list(c(paste0("M_",ages), paste0("F_",ages)), regions, years)
-  molten_fixed_catchatage = reshape2::melt(data$obs_fixed_catchatage)
-  colnames(molten_fixed_catchatage) = c("s_age", "Region", "Year", "value")
-  this_sample_size = molten_fixed_catchatage %>% group_by(Region, Year) %>% summarise(N_input = sum(value), N_eff = N_input)
-  if(data$fixed_catchatage_comp_likelihood == 1)
-    this_sample_size$N_eff = (1 + this_sample_size$N_input * MLE_report$theta_fixed_catchatage ) / (1 + MLE_report$theta_fixed_catchatage)
-  this_sample_size$observation = "Fixed Catch-at-age"
-  sample_sizes = rbind(sample_sizes, this_sample_size)
+  if(MLE_report$model_type == 0) {
+    LFs = get_LF(MLE_report = MLE_report, observation = "all", subset_years = NULL, region_key = region_key, sex = "both")
+    this_sample_size = LFs %>% group_by(Year, Region, observation, Sex) %>% summarise(N_eff = sum(Observed), N_input = sum(Observed))
+    this_sample_size$observation = paste0(this_sample_size$observation, " LF")
+    sample_sizes = rbind(sample_sizes, this_sample_size)
+    AFs = get_AF(MLE_report = MLE_report, observation = "all", subset_years = NULL, region_key = region_key, sex = "both")
+    this_sample_size = LFs %>% group_by(Year, Region, observation, Sex) %>% summarise(N_eff = sum(Observed), N_input = sum(Observed))
+    this_sample_size$observation = paste0(this_sample_size$observation, " AF")
+    sample_sizes = rbind(sample_sizes, this_sample_size)
 
-  ## fixed catch at length
-  dimnames(data$obs_fixed_catchatlgth)= list(c(paste0("M_",length_bins), paste0("F_",length_bins)), regions, years)
-  molten_fixed_catchatlgth = reshape2::melt(data$obs_fixed_catchatlgth)
-  colnames(molten_fixed_catchatlgth) = c("s_lgth", "Region", "Year", "value")
-  this_sample_size = molten_fixed_catchatlgth %>% group_by(Region, Year) %>% summarise(N_input = sum(value), N_eff = N_input)
-  if(data$fixed_catchatlgth_comp_likelihood == 1)
-    this_sample_size$N_eff = (1 + this_sample_size$N_input * MLE_report$theta_fixed_catchatlgth ) / (1 + MLE_report$theta_fixed_catchatlgth)
-  this_sample_size$observation = "Fixed Catch-at-length"
-  sample_sizes = rbind(sample_sizes, this_sample_size)
+  } else {
+    ## check likelihoods
+    ## fixed catch at age
+    dimnames(data$obs_fixed_catchatage)= list(c(paste0("M_",ages), paste0("F_",ages)), regions, years)
+    molten_fixed_catchatage = reshape2::melt(data$obs_fixed_catchatage)
+    colnames(molten_fixed_catchatage) = c("s_age", "Region", "Year", "value")
+    this_sample_size = molten_fixed_catchatage %>% group_by(Region, Year) %>% summarise(N_input = sum(value), N_eff = N_input)
+    if(data$fixed_catchatage_comp_likelihood == 1)
+      this_sample_size$N_eff = (1 + this_sample_size$N_input * MLE_report$theta_fixed_catchatage ) / (1 + MLE_report$theta_fixed_catchatage)
+    this_sample_size$observation = "Fixed Catch-at-age"
+    sample_sizes = rbind(sample_sizes, this_sample_size)
 
-  ## Trawl catch at length
-  dimnames(data$obs_trwl_catchatlgth)= list(c(paste0("M_",length_bins), paste0("F_",length_bins)), regions, years)
-  molten_trwl_catchatlgth = reshape2::melt(data$obs_trwl_catchatlgth)
-  colnames(molten_trwl_catchatlgth) = c("s_lgth", "Region", "Year", "value")
-  this_sample_size = molten_trwl_catchatlgth %>% group_by(Region, Year) %>% summarise(N_input = sum(value), N_eff = N_input)
-  if(data$trwl_catchatlgth_comp_likelihood == 1)
-    this_sample_size$N_eff = (1 + this_sample_size$N_input * MLE_report$theta_trwl_catchatlgth) / (1 + MLE_report$theta_trwl_catchatlgth)
-  this_sample_size$observation = "Trawl Catch-at-length"
-  sample_sizes = rbind(sample_sizes, this_sample_size)
-  ## Survey catch at age
-  dimnames(data$obs_srv_dom_ll_catchatage)= list(c(paste0("M_",ages), paste0("F_",ages)), regions, years)
-  molten_srv_catchatage = reshape2::melt(data$obs_srv_dom_ll_catchatage)
-  colnames(molten_srv_catchatage) = c("s_age", "Region", "Year", "value")
-  this_sample_size = molten_srv_catchatage %>% group_by(Region, Year) %>% summarise(N_input = sum(value), N_eff = N_input)
-  if(data$srv_dom_ll_catchatage_comp_likelihood == 1)
-    this_sample_size$N_eff = (1 + this_sample_size$N_input * MLE_report$theta_srv_dom_ll_catchatage ) / (1 + MLE_report$theta_srv_dom_ll_catchatage)
-  this_sample_size$observation = "Survey Catch-at-age"
-  sample_sizes = rbind(sample_sizes, this_sample_size)
+    ## fixed catch at length
+    dimnames(data$obs_fixed_catchatlgth)= list(c(paste0("M_",length_bins), paste0("F_",length_bins)), regions, years)
+    molten_fixed_catchatlgth = reshape2::melt(data$obs_fixed_catchatlgth)
+    colnames(molten_fixed_catchatlgth) = c("s_lgth", "Region", "Year", "value")
+    this_sample_size = molten_fixed_catchatlgth %>% group_by(Region, Year) %>% summarise(N_input = sum(value), N_eff = N_input)
+    if(data$fixed_catchatlgth_comp_likelihood == 1)
+      this_sample_size$N_eff = (1 + this_sample_size$N_input * MLE_report$theta_fixed_catchatlgth ) / (1 + MLE_report$theta_fixed_catchatlgth)
+    this_sample_size$observation = "Fixed Catch-at-length"
+    sample_sizes = rbind(sample_sizes, this_sample_size)
+
+    ## Trawl catch at length
+    dimnames(data$obs_trwl_catchatlgth)= list(c(paste0("M_",length_bins), paste0("F_",length_bins)), regions, years)
+    molten_trwl_catchatlgth = reshape2::melt(data$obs_trwl_catchatlgth)
+    colnames(molten_trwl_catchatlgth) = c("s_lgth", "Region", "Year", "value")
+    this_sample_size = molten_trwl_catchatlgth %>% group_by(Region, Year) %>% summarise(N_input = sum(value), N_eff = N_input)
+    if(data$trwl_catchatlgth_comp_likelihood == 1)
+      this_sample_size$N_eff = (1 + this_sample_size$N_input * MLE_report$theta_trwl_catchatlgth) / (1 + MLE_report$theta_trwl_catchatlgth)
+    this_sample_size$observation = "Trawl Catch-at-length"
+    sample_sizes = rbind(sample_sizes, this_sample_size)
+    ## Survey catch at age
+    dimnames(data$obs_srv_dom_ll_catchatage)= list(c(paste0("M_",ages), paste0("F_",ages)), regions, years)
+    molten_srv_catchatage = reshape2::melt(data$obs_srv_dom_ll_catchatage)
+    colnames(molten_srv_catchatage) = c("s_age", "Region", "Year", "value")
+    this_sample_size = molten_srv_catchatage %>% group_by(Region, Year) %>% summarise(N_input = sum(value), N_eff = N_input)
+    if(data$srv_dom_ll_catchatage_comp_likelihood == 1)
+      this_sample_size$N_eff = (1 + this_sample_size$N_input * MLE_report$theta_srv_dom_ll_catchatage ) / (1 + MLE_report$theta_srv_dom_ll_catchatage)
+    this_sample_size$observation = "Survey Catch-at-age"
+    sample_sizes = rbind(sample_sizes, this_sample_size)
+  }
   return(sample_sizes)
 }
 
@@ -1248,27 +1278,47 @@ get_comp_sample_size <- function(MLE_report, data, region_key = NULL) {
 #' @param plot_n_eff boolean if T plot effective sample size else plot input sample size
 #' @return data.frame
 #' @export
-
 plot_comp_sample_size <- function(MLE_report, data, region_key = NULL, plot_n_eff = T) {
   sample_size_df = get_comp_sample_size(MLE_report, data, region_key)
   sample_size_df = sample_size_df %>% filter(N_input > 0)
   #sample_size_df$N_input =  dplyr::na_if(sample_size_df$N_input, 0)
   #sample_size_df$N_eff =  dplyr::na_if(sample_size_df$N_eff, 0)
   gplt = NULL
-  if(plot_n_eff) {
-    gplt <- ggplot(sample_size_df, aes(x = Year, y = N_eff, col = observation)) +
-      geom_line(linewidth = 1.1) +
-      geom_point(size = 1.1) +
-      theme_bw() +
-      labs(x = "Year", y = "Effective sample size") +
-      facet_wrap(~Region)
+  if(MLE_report$model_type == 0) {
+    if(plot_n_eff) {
+      gplt <- ggplot(sample_size_df, aes(x = Year, y = N_eff, col = observation)) +
+        geom_line(linewidth = 0.8, linetype= "dashed") +
+        geom_point(size = 1.6) +
+        theme_bw() +
+        labs(x = "Year", y = "Effective sample size") +
+        theme(legend.position = "none") +
+        facet_wrap(~observation)
+    } else {
+      gplt <- ggplot(sample_size_df, aes(x = Year, y = N_input, col = observation)) +
+        geom_line(linewidth = 0.8, linetype= "dashed") +
+        geom_point(size = 1.6) +
+        theme_bw() +
+        labs(x = "Year", y = "Input sample size") +
+        theme(legend.position = "none") +
+        facet_wrap(~observation)
+    }
   } else {
-    gplt <- ggplot(sample_size_df, aes(x = Year, y = N_input, col = observation)) +
-      geom_line(linewidth = 1.1) +
-      geom_point(size = 1.1) +
-      theme_bw() +
-      labs(x = "Year", y = "Input sample size") +
-      facet_wrap(~Region)
+    if(plot_n_eff) {
+      gplt <- ggplot(sample_size_df, aes(x = Year, y = N_eff, col = observation)) +
+        geom_line(linewidth = 1.1) +
+        geom_point(size = 1.1) +
+        theme_bw() +
+        labs(x = "Year", y = "Effective sample size") +
+        facet_wrap(~Region)
+    } else {
+      gplt <- ggplot(sample_size_df, aes(x = Year, y = N_input, col = observation)) +
+        geom_line(linewidth = 1.1) +
+        geom_point(size = 1.1) +
+        theme_bw() +
+        labs(x = "Year", y = "Input sample size") +
+        facet_wrap(~Region)
+    }
   }
+
   return(gplt)
 }

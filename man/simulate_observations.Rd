@@ -9,7 +9,8 @@ simulate_observations(
   n_sims = 200,
   sd_report = NULL,
   include_param_uncertainty = F,
-  region_key = NULL
+  region_key = NULL,
+  survey_labels = NULL
 )
 }
 \arguments{
@@ -22,6 +23,8 @@ simulate_observations(
 \item{include_param_uncertainty}{boolean whether to simulate parameters from a multivariate normal distribution for each simulation}
 
 \item{region_key}{data.frame with colnames area and TMB_ndx for providing real region names to objects}
+
+\item{survey_labels}{character vector for each of the n_surveys}
 }
 \value{
 named list containing simualted observations for all key obsevations

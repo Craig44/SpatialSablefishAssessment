@@ -9,7 +9,8 @@ get_mean_age(
   observation = "fixed",
   subset_years = NULL,
   sex = "both",
-  region_key = NULL
+  region_key = NULL,
+  survey_labels = NULL
 )
 }
 \arguments{
@@ -20,7 +21,7 @@ get_mean_age(
 \item all
 \item trwl
 \item fixed
-\item srv_dom_ll
+\item srv
 }}
 
 \item{subset_years}{vector of years to plot it for}
@@ -33,6 +34,8 @@ get_mean_age(
 }}
 
 \item{region_key}{data.frame with colnames area and TMB_ndx for providing real region names to objects}
+
+\item{survey_labels}{character vector for each of the n_surveys}
 }
 \value{
 a data frame of mean ages

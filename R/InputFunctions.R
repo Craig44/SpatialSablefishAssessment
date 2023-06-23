@@ -42,10 +42,11 @@ plot_input_catches = function(data, region_key = NULL) {
 #' get_input_observations
 #' @param data list that is passed to the MakeADfun for the TMB model
 #' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
+#' @param survey_labels character vector for each of the n_surveys
 #' @return data.frame when observation occurs in a year and region
 #' @importFrom dplyr bind_rows
 #' @export
-get_input_observations = function(data, region_key = NULL) {
+get_input_observations = function(data, region_key = NULL, survey_labels = NULL) {
   years = data$years
   full_df = NULL
   if(data$model == "Assessment") {
@@ -109,13 +110,18 @@ get_input_observations = function(data, region_key = NULL) {
 
   } else {
     regions = 1:data$n_regions
-    dimnames(data$fixed_catchatage_indicator) = dimnames(data$fixed_catchatlgth_indicator) = dimnames(data$trwl_catchatlgth_indicator) = dimnames(data$srv_dom_ll_catchatage_indicator) = dimnames(data$srv_dom_ll_bio_indicator) = list(regions, years)
+    dimnames(data$fixed_catchatage_indicator) = dimnames(data$fixed_catchatlgth_indicator) = dimnames(data$trwl_catchatlgth_indicator)= list(regions, years)
+    surveys = paste0("Survey ", 1:data$n_surveys)
+    if(!is.null(survey_labels))
+      surveys = survey_labels
+    dimnames(data$srv_catchatage_indicator) = list(regions, years, paste0(surveys, " AF"))
+    dimnames(data$srv_bio_indicator) = list(regions, years, paste0(surveys, " bio"))
     dimnames(data$tag_recovery_indicator) = list(1:dim(data$tag_recovery_indicator)[1], regions, years[which(data$tag_recovery_indicator_by_year == 1)])
     fixed_catchatage = reshape2::melt(data$fixed_catchatage_indicator)
     fixed_catchatlgth  = reshape2::melt(data$fixed_catchatlgth_indicator)
     trwl_catchatlgth = reshape2::melt(data$trwl_catchatlgth_indicator)
-    srv_dom_ll_catchatage = reshape2::melt(data$srv_dom_ll_catchatage_indicator)
-    srv_dom_ll_bio = reshape2::melt(data$srv_dom_ll_bio_indicator)
+    srv_catchatage = reshape2::melt(data$srv_catchatage_indicator)
+    srv_bio = reshape2::melt(data$srv_bio_indicator)
     tag_recovery_detailed = NULL
     if(sum(data$tag_recovery_indicator) != 0) {
       tag_recovery_detailed = reshape2::melt(data$tag_recovery_indicator)
@@ -123,9 +129,10 @@ get_input_observations = function(data, region_key = NULL) {
       tag_recovery_detailed$label = "Tag recovery"
       ## collapse tag recoveries across release events
       tag_recovery_detailed = tag_recovery_detailed %>% group_by(Region, Year, label) %>% summarise(indicator = ifelse(sum(indicator)>0, 1, 0))
-
+      tag_recovery_detailed$type = "tag"
     }
-    colnames(fixed_catchatage) = colnames(fixed_catchatlgth) = colnames(trwl_catchatlgth) = colnames(srv_dom_ll_catchatage) = colnames(srv_dom_ll_bio) = c("Region", "Year", "indicator")
+    colnames(fixed_catchatage) = colnames(fixed_catchatlgth) = colnames(trwl_catchatlgth) = c("Region", "Year", "indicator")
+    colnames(srv_catchatage) = colnames(srv_bio) = c("Region", "Year", "label", "indicator")
     ## tag releases
     tag_release_df = NULL
     if((sum(data$male_tagged_cohorts_by_age) + sum(data$female_tagged_cohorts_by_age)) > 0) {
@@ -136,14 +143,21 @@ get_input_observations = function(data, region_key = NULL) {
       colnames(tag_releases) = c("Age", "Region", "Year", "releases")
       tag_release_df = tag_releases %>% group_by(Region, Year) %>% summarise(indicator = ifelse(sum(releases) > 0, 1, 0))
       tag_release_df$label = "Tag Releases"
+      tag_release_df$type = "tag"
     }
     fixed_catchatlgth$label = "Fishery Fixed LF"
+    fixed_catchatlgth$type = "length"
+
     fixed_catchatage$label = "Fishery Fixed AF"
+    fixed_catchatage$type = "age"
+
     trwl_catchatlgth$label = "Fishery Trawl LF"
-    srv_dom_ll_catchatage$label = "Survey LL AF"
-    srv_dom_ll_bio$label = "Survey LL Biomass"
+    trwl_catchatlgth$type = "length"
+
+    srv_catchatage$type = "age"
+    srv_bio$type = "abundance"
     ## combine
-    full_df = rbind(fixed_catchatage, trwl_catchatlgth, srv_dom_ll_catchatage, srv_dom_ll_bio, fixed_catchatlgth, tag_recovery_detailed, tag_release_df)
+    full_df = rbind(fixed_catchatage, trwl_catchatlgth, srv_catchatage, srv_bio, fixed_catchatlgth, tag_recovery_detailed, tag_release_df)
 
     if(is.null(region_key)) {
       full_df$Region = paste0("Region ", full_df$Region)
@@ -161,11 +175,11 @@ get_input_observations = function(data, region_key = NULL) {
     trawl_catch$indicator = 1
     trawl_catch$label = "Trawl catch"
     fixed_catch$label = "Fixed catch"
-    full_df = bind_rows(full_df, trawl_catch, fixed_catch)
+    trawl_catch$type = "catch"
+    fixed_catch$type = "catch"
 
-    possible_labels = c("Fixed catch", "Trawl catch", "Survey LL Biomass", "Fishery Fixed AF", "Survey LL AF", "Fishery Fixed LF", "Fishery Trawl LF", "Tag recovery", "Tag Releases")
-    actual_labels = unique(full_df$label)
-    full_df$label = factor(full_df$label, levels = rev(possible_labels[possible_labels %in% actual_labels]), ordered = T)
+    full_df = bind_rows(full_df, trawl_catch, fixed_catch)
+    full_df$type = factor(full_df$type, levels = rev(c("catch", "age", "length", "abundance", "tag")), ordered = T)
   }
   return(full_df)
 }
@@ -174,11 +188,12 @@ get_input_observations = function(data, region_key = NULL) {
 #' plot_input_observations
 #' @param data list that is passed to the MakeADfun for the TMB model
 #' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
+#' @param survey_labels character vector for each of the n_surveys
 #' @return ggplot2 object that will plot if an observation occurs in a year and region
 #' @export
-plot_input_observations = function(data, region_key = NULL) {
+plot_input_observations = function(data, region_key = NULL, survey_labels = NULL) {
 
-  full_df = get_input_observations(data, region_key)
+  full_df = get_input_observations(data, region_key, survey_labels)
   gplt = NULL
   if(data$model == "Assessment") {
     full_df$temp_label = paste0(full_df$source, "-", full_df$obs_type)
@@ -193,8 +208,9 @@ plot_input_observations = function(data, region_key = NULL) {
         axis.title = element_text(size = 14)
       )
   } else {
+
     gplt = ggplot(full_df) +
-      geom_point(aes(x = Year, y = label, col = label, size = indicator)) +
+      geom_point(aes(x = Year, y = forcats::fct_reorder(label, as.integer(type)), col = label, size = indicator)) +
       guides(colour = "none", size = "none") +
       labs(y = "") +
       facet_wrap(~Region, ncol = 1) +
@@ -210,9 +226,10 @@ plot_input_observations = function(data, region_key = NULL) {
 #'
 #' plot_input_timeblocks
 #' @param data list that is passed to the MakeADfun for the TMB model
+#' @param survey_labels character vector for each of the n_surveys
 #' @return ggplot2 object visualising the time-blocks for selectivities and catchabilities
 #' @export
-plot_input_timeblocks = function(data) {
+plot_input_timeblocks = function(data, survey_labels = NULL) {
 
   if(data$model == "Assessment") {
     ## assessment model
@@ -257,16 +274,31 @@ plot_input_timeblocks = function(data) {
   } else {
     ## Spatial tag-integrated model
     projyears = min(data$years):(max(data$years) + data$n_projections_years)
-    full_df = data.frame(Year = projyears, fixed_sel = data$fixed_sel_by_year_indicator +1, trwl_sel = data$trwl_sel_by_year_indicator +1, srv_dom_ll_sel = data$srv_dom_ll_sel_by_year_indicator +1, srv_dom_ll_q = data$srv_dom_ll_q_by_year_indicator +1)
+    full_df = data.frame(Year = projyears, fixed_sel = data$fixed_sel_by_year_indicator +1, trwl_sel = data$trwl_sel_by_year_indicator +1)
+
+    surveys = paste0("Survey ", 1:data$n_surveys)
+    if(!is.null(survey_labels))
+      surveys = survey_labels
+
+    srv_sel = reshape2::melt(data$srv_sel_by_year_indicator +1)
+    srv_q = reshape2::melt(data$srv_q_by_year_indicator +1)
+
+    srv_q$survey = paste0(surveys[srv_q$Var2], "\nCatchability")
+    srv_sel$survey = paste0(surveys[srv_sel$Var2], "\nSelectivity")
+    colnames(srv_sel) = colnames(srv_q) = c("year_ndx", "survey_ndx", "time_block", "label")
+    srv_q$Year = projyears[srv_q$year_ndx]
+    srv_sel$Year = projyears[srv_sel$year_ndx]
 
     full_df_lng = full_df %>% pivot_longer(!Year)
     colnames(full_df_lng) = c("Year", "label", "time_block")
+    full_df_lng = rbind(full_df_lng, srv_q %>% dplyr::select(colnames(full_df_lng)),  srv_sel %>% dplyr::select(colnames(full_df_lng)))
+
     full_df_lng$time_block = factor(full_df_lng$time_block)
     full_df_lng = full_df_lng %>% mutate(label = case_when(
       label == "fixed_sel" ~ "Fixed\nSelectivity",
       label == "trwl_sel" ~ "Trawl\nSelectivity",
-      label == "srv_dom_ll_sel" ~ "Survey\nSelectivity",
-      label == "srv_dom_ll_q" ~ "Survey\nCatchability"
+      .default = label
+
     ))
     gplt = ggplot(full_df_lng) +
       geom_point(aes(x = Year, y = label, col = time_block, fill = time_block), size = 3) +

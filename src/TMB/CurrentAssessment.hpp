@@ -471,26 +471,27 @@ Type CurrentAssessment(objective_function<Type>* obj) {
 
   /*
    * Initialise the partition (age structure)
+   * at equilibrium only M and R0
    */
-  init_natage_m(0) = exp(ln_mean_rec + ln_rec_dev(0) + sigma_R_sq/2)/2; //mean_rec * exp((sigma_R*sigma_R)/2)/2;
+  init_natage_m(0) = exp(ln_mean_rec)/2.0; //mean_rec * exp((sigma_R*sigma_R)/2)/2;
   init_natage_f(0) = init_natage_m(0);
 
   for(age_ndx = 1; age_ndx < n_ages; age_ndx++) {
     // include recruitment variation in intial age-comp
-    init_natage_f(age_ndx) = exp(ln_mean_rec - (M(age_ndx - 1, 0)) * age_ndx) / 2;
-    init_natage_m(age_ndx) = exp(ln_mean_rec - (M(age_ndx - 1, 0)) * age_ndx) / 2;
+    init_natage_f(age_ndx) = exp(ln_mean_rec - (M(age_ndx - 1, 0)) * age_ndx) / 2.0;
+    init_natage_m(age_ndx) = exp(ln_mean_rec - (M(age_ndx - 1, 0)) * age_ndx) / 2.0;
   }
   // plus group
-  init_natage_f(n_ages - 1) = (exp(ln_mean_rec - (M(n_ages - 2, 0)) * (n_ages - 1)) / (1.0 - exp(-(M(n_ages - 2, 0))))) / 2.0;
-  init_natage_m(n_ages - 1) = (exp(ln_mean_rec - (M(n_ages - 2, 0)) * (n_ages - 1)) / (1.0 - exp(-(M(n_ages - 2, 0))))) / 2.0;
+  init_natage_f(n_ages - 1) = (exp(ln_mean_rec - (M(n_ages - 1, 0)) * (n_ages - 1)) / (1.0 - exp(-(M(n_ages - 1, 0))))) / 2.0;
+  init_natage_m(n_ages - 1) = (exp(ln_mean_rec - (M(n_ages - 1, 0)) * (n_ages - 1)) / (1.0 - exp(-(M(n_ages - 1, 0))))) / 2.0;
   // Calculate B0
   for(age_ndx = 0; age_ndx < n_ages; age_ndx++)
     Bzero += init_natage_f(age_ndx) * pow(exp(-M(age_ndx, 0)), spawning_time_proportion(0)) * weight_maturity_prod_f(age_ndx, 0);
 
   /*
-   * Initialise the partition (age structure) with initial F
+   * Initialise the partition (age structure) with initial F and initial age devs
    */
-  init_natage_m(0) = exp(ln_mean_rec + ln_rec_dev(0) + sigma_R_sq/2)/2; //mean_rec * exp((sigma_R*sigma_R)/2)/2;
+  init_natage_m(0) = exp(ln_mean_rec + ln_rec_dev(0) + sigma_R_sq/2.0)/2.0; //mean_rec * exp((sigma_R*sigma_R)/2)/2;
   init_natage_f(0) = init_natage_m(0);
 
   for(age_ndx = 1; age_ndx < n_ages; age_ndx++) {
@@ -499,14 +500,14 @@ Type CurrentAssessment(objective_function<Type>* obj) {
       init_natage_f(age_ndx) = exp(ln_mean_rec - (M(age_ndx - 1, 0) + init_F_hist * sel_ll_f(age_ndx, 0)) * age_ndx + ln_init_rec_dev(age_ndx - 1) + sigma_R_sq/2) / 2;
       init_natage_m(age_ndx) = exp(ln_mean_rec - (M(age_ndx - 1, 0) + init_F_hist * sel_ll_m(age_ndx, 0)) * age_ndx + ln_init_rec_dev(age_ndx - 1) + sigma_R_sq/2) / 2;
     } else {
-      // assume equilibrium recruitment variation for these ages
-      init_natage_f(age_ndx) = exp(ln_mean_rec - (M(age_ndx - 1, 0) + init_F_hist * sel_ll_f(age_ndx, 0)) * age_ndx) / 2;
-      init_natage_m(age_ndx) = exp(ln_mean_rec - (M(age_ndx - 1, 0) + init_F_hist * sel_ll_m(age_ndx, 0)) * age_ndx) / 2;
+      // assume the last initial age deviation for these
+      init_natage_f(age_ndx) = exp(ln_mean_rec - (M(age_ndx - 1, 0) + init_F_hist * sel_ll_f(age_ndx, 0)) * age_ndx + ln_init_rec_dev(ln_init_rec_dev.size() - 1) + sigma_R_sq/2) / 2;
+      init_natage_m(age_ndx) = exp(ln_mean_rec - (M(age_ndx - 1, 0) + init_F_hist * sel_ll_m(age_ndx, 0)) * age_ndx + ln_init_rec_dev(ln_init_rec_dev.size() - 1) + sigma_R_sq/2) / 2;
     }
   }
   // plus group
-  init_natage_f(n_ages - 1) = (exp(ln_mean_rec - (M(n_ages - 2, 0) + init_F_hist * sel_ll_f(n_ages - 2, 0)) * (n_ages - 1)) / (1.0 - exp(-(M(n_ages - 2, 0) + init_F_hist * sel_ll_f(n_ages - 2, 0))))) / 2.0;
-  init_natage_m(n_ages - 1) = (exp(ln_mean_rec - (M(n_ages - 2, 0) + init_F_hist * sel_ll_m(n_ages - 2, 0)) * (n_ages - 1)) / (1.0 - exp(-(M(n_ages - 2, 0) + init_F_hist * sel_ll_m(n_ages - 2, 0))))) / 2.0;
+  init_natage_f(n_ages - 1) = (exp(ln_mean_rec - (M(n_ages - 1, 0) + init_F_hist * sel_ll_f(n_ages - 1, 0)) * (n_ages - 1)) / (1.0 - exp(-(M(n_ages - 1, 0) + init_F_hist * sel_ll_f(n_ages - 1, 0))))) / 2.0;
+  init_natage_m(n_ages - 1) = (exp(ln_mean_rec - (M(n_ages - 1, 0) + init_F_hist * sel_ll_m(n_ages - 1, 0)) * (n_ages - 1)) / (1.0 - exp(-(M(n_ages - 1, 0) + init_F_hist * sel_ll_m(n_ages - 1, 0))))) / 2.0;
   // set numbers at age
   natage_m.col(0) = init_natage_m;
   natage_f.col(0) = init_natage_f;
@@ -1009,6 +1010,7 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   REPORT(Bzero);
   REPORT(init_natage_f);
   REPORT(init_natage_m);
+  REPORT(ln_init_rec_dev);
   REPORT(SSB);
   REPORT(natage_f);
   REPORT(natage_m);
@@ -1022,6 +1024,8 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   REPORT( sigma_R );
   REPORT(S_f);
   REPORT(S_m);
+  REPORT(Z_f);
+  REPORT(Z_m);
   REPORT(weight_maturity_prod_f);
   REPORT(catchatage_ll_m);
   REPORT(catchatage_trwl_m);

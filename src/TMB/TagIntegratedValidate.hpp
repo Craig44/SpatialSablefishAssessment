@@ -1739,6 +1739,7 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   REPORT( min_age );
   REPORT(years);
   REPORT(length_bins);
+  REPORT(n_surveys);
   REPORT(n_projections_years);
   REPORT( n_years_to_retain_tagged_cohorts_for );
   // Report indicators - this is mainly to aid plotting functions from report() calls

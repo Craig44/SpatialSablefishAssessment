@@ -9,7 +9,8 @@ plot_mean_age(
   observation = "fixed",
   subset_years = NULL,
   sex = "both",
-  region_key = NULL
+  region_key = NULL,
+  survey_labels = NULL
 )
 }
 \arguments{
@@ -33,6 +34,8 @@ plot_mean_age(
 }}
 
 \item{region_key}{data.frame with colnames area and TMB_ndx for providing real region names to objects}
+
+\item{survey_labels}{character vector for each of the n_surveys}
 }
 \value{
 ggplot2 object that will plot if an observation occurs in a year and region

@@ -1689,6 +1689,7 @@ Type TagIntegrated(objective_function<Type>* obj) {
 
   // REPORT dimensions so accesor functions and plotting functions only need the $report() object
   REPORT(n_regions);
+  REPORT(n_surveys);
   REPORT(ages);
   REPORT( min_age );
   REPORT(years);

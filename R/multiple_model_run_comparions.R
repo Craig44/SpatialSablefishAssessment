@@ -176,10 +176,17 @@ get_multiple_Bzeros <- function(mle_ls, run_labels = NULL, region_key = NULL) {
       cat("report at element ", i, " was null, so skipping\n")
       next;
     }
-    regions = paste0("Region ", 1:mle_ls[[i]]$n_regions)
-    if(!is.null(region_key))
-      regions = region_key$area[region_key$TMB_ndx + 1]
-    this_Bzero = data.frame(Bzero = mle_ls[[i]]$Bzero, Binit = mle_ls[[i]]$Binit, Bzero_with_recent_growth = mle_ls[[i]]$Bzero_w_recent_growth, Region = regions)
+    if(mle_ls[[i]]$model_type == 0) {
+      regions = paste0("Region ", 1:mle_ls[[i]]$n_regions)
+      if(!is.null(region_key))
+        regions = region_key$area[region_key$TMB_ndx + 1]
+      this_Bzero = data.frame(Bzero = mle_ls[[i]]$Bzero, Rzero = mle_ls[[i]]$mean_rec, Binit = NA, Bzero_with_recent_growth = NA, Region = regions)
+    } else {
+      regions = paste0("Region ", 1:mle_ls[[i]]$n_regions)
+      if(!is.null(region_key))
+        regions = region_key$area[region_key$TMB_ndx + 1]
+      this_Bzero = data.frame(Bzero = mle_ls[[i]]$Bzero, Rzero = mle_ls[[i]]$mean_rec, Binit = mle_ls[[i]]$Binit, Bzero_with_recent_growth = mle_ls[[i]]$Bzero_w_recent_growth, Region = regions)
+    }
     if(!is.null(run_labels)) {
       this_Bzero$label = run_labels[i]
     } else {
@@ -235,29 +242,19 @@ get_multiple_catchabilities <- function(mle_ls, run_labels = NULL, region_key = 
     if(length(run_labels) != length(mle_ls))
       stop(paste0("Number of models provided ", length(mle_ls), ", number of run labels ", length(run_labels), " these need to be the same"))
   }
-
-
-
   full_q_df = NULL
   for(i in 1:length(mle_ls)) {
     if(is.null(mle_ls[[i]])) {
       cat("report at element ", i, " was null, so skipping\n")
       next;
     }
-    Region_lab = paste0("Region ", 1:mle_ls[[i]]$n_regions)
-    if(!is.null(region_key))
-      Region_lab =  region_key$area[region_key$TMB_ndx + 1]
-    catchability = mle_ls[[i]]$srv_dom_ll_q
-    dimnames(catchability) = list(Region_lab, paste0("Block-", 1:ncol(catchability)))
-    this_q = reshape2::melt(catchability)
-    colnames(this_q) = c("Region", "time-block", "q")
-
+    q_df = get_qs(mle_ls[[i]])
     if(!is.null(run_labels)) {
-      this_q$label = run_labels[i]
+      q_df$label = run_labels[i]
     } else {
-      this_q$label = i
+      q_df$label = i
     }
-    full_q_df = rbind(full_q_df, this_q)
+    full_q_df = rbind(full_q_df, q_df)
   }
   full_q_df$label = factor(full_q_df$label)
   return(full_q_df)
@@ -466,7 +463,7 @@ get_multiple_nlls <- function(mle_ls, run_labels = NULL, region_key = NULL) {
     }
     this_nll = get_negloglike(MLE_report = mle_ls[[i]])
     ## add totol
-    this_nll = rbind(this_nll, data.frame(negloglike = round(sum(this_nll$negloglike),4), observations = "Total", distribution = ""))
+    this_nll = rbind(this_nll, data.frame(negloglike = round(sum(this_nll$negloglike),4), observations = "Total", distribution = NA))
     ## addd label
     if(!is.null(run_labels)) {
       this_nll$label = run_labels[i]

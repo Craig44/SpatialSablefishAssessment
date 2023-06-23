@@ -9,7 +9,8 @@ get_AF(
   observation = "fixed",
   subset_years = NULL,
   sex = "both",
-  region_key = NULL
+  region_key = NULL,
+  survey_labels = NULL
 )
 }
 \arguments{
@@ -18,7 +19,7 @@ get_AF(
 \item{observation}{character labeling the observation you want to plot. See below for options. Ignored if \code{MLE_report$model_type == 0} and will return all age comps.
 \itemize{
 \item \code{fixed}
-\item \code{srv_dom_ll}
+\item \code{srv}
 }}
 
 \item{subset_years}{vector of years to get observation for it. Ignored if \code{MLE_report$model_type == 0}.}
@@ -31,6 +32,8 @@ get_AF(
 }}
 
 \item{region_key}{data.frame with colnames area and TMB_ndx for providing real region names to objects}
+
+\item{survey_labels}{character vector for each of the n_surveys}
 }
 \value{
 data frame with age-frequency info

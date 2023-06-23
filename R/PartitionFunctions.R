@@ -43,7 +43,10 @@ get_init_nage = function(MLE_report, region_key = NULL) {
   years = MLE_report$years
   regions = 1:MLE_report$n_regions
   ages = MLE_report$ages
-
+  if(MLE_report$model_type == 0) {
+    MLE_report$init_natage_f = matrix(MLE_report$init_natage_f, ncol = 1)
+    MLE_report$init_natage_m = matrix(MLE_report$init_natage_f, ncol = 1)
+  }
   dimnames(MLE_report$init_natage_f) = dimnames(MLE_report$init_natage_m) = list(ages, regions)
   f_init_age = reshape2::melt(MLE_report$init_natage_f)
   m_init_age = reshape2::melt(MLE_report$init_natage_m)

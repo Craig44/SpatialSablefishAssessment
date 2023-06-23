@@ -4,12 +4,14 @@
 \alias{get_input_observations}
 \title{get_input_observations}
 \usage{
-get_input_observations(data, region_key = NULL)
+get_input_observations(data, region_key = NULL, survey_labels = NULL)
 }
 \arguments{
 \item{data}{list that is passed to the MakeADfun for the TMB model}
 
 \item{region_key}{data.frame with colnames area and TMB_ndx for providing real region names to objects}
+
+\item{survey_labels}{character vector for each of the n_surveys}
 }
 \value{
 data.frame when observation occurs in a year and region

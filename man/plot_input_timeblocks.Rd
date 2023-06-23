@@ -4,10 +4,12 @@
 \alias{plot_input_timeblocks}
 \title{plot_input_timeblocks}
 \usage{
-plot_input_timeblocks(data)
+plot_input_timeblocks(data, survey_labels = NULL)
 }
 \arguments{
 \item{data}{list that is passed to the MakeADfun for the TMB model}
+
+\item{survey_labels}{character vector for each of the n_surveys}
 }
 \value{
 ggplot2 object visualising the time-blocks for selectivities and catchabilities
