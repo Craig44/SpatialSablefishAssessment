@@ -93,11 +93,6 @@ get_catches = function(MLE_report, region_key = NULL) {
   fixed_catch$Fishery = "Fixed gear"
   trwl_catch$Fishery = "Trawl"
   obs_full_df = rbind(fixed_catch, trwl_catch)
-  if(is.null(region_key)) {
-    obs_full_df$Region = paste0("Region ", obs_full_df$Region)
-  } else {
-    obs_full_df$Region = region_key$area[match(obs_full_df$Region, (region_key$TMB_ndx + 1))]
-  }
   obs_full_df$type = "Observed"
 
   fixed_catch = reshape2::melt(MLE_report$annual_fixed_catch_pred)
@@ -106,11 +101,6 @@ get_catches = function(MLE_report, region_key = NULL) {
   fixed_catch$Fishery = "Fixed gear"
   trwl_catch$Fishery = "Trawl"
   pred_full_df = rbind(fixed_catch, trwl_catch)
-  if(is.null(region_key)) {
-    pred_full_df$Region = paste0("Region ", pred_full_df$Region)
-  } else {
-    pred_full_df$Region = region_key$area[match(pred_full_df$Region, (region_key$TMB_ndx + 1))]
-  }
   pred_full_df$type = "Predicted"
 
   full_df = rbind(obs_full_df, pred_full_df)
@@ -169,9 +159,13 @@ get_selectivities = function(MLE_report) {
   if(MLE_report$model_type == 0) {
     sel_df = data.frame(fixed_male = MLE_report$sel_ll_m, fixed_female = MLE_report$sel_ll_f,
                         trawl_male = MLE_report$sel_trwl_m, trawl_female = MLE_report$sel_trwl_f,
-                        surveyll_male = MLE_report$sel_srv_dom_ll_m, surveyll_female = MLE_report$sel_srv_dom_ll_f,
+                        domsurveyll_male = MLE_report$sel_srv_dom_ll_m, domsurveyll_female = MLE_report$sel_srv_dom_ll_f,
+                        japfishery_combined = MLE_report$sel_srv_jap_fishery_ll,
+                        japsurveyll_male = MLE_report$sel_srv_jap_ll_m, japsurveyll_female = MLE_report$sel_srv_jap_ll_f,
+                        nmfssurveytrwl_male = MLE_report$sel_srv_nmfs_trwl_m, nmfssurveytrwl_female = MLE_report$sel_srv_nmfs_trwl_f,
                         age = MLE_report$ages
     )
+
   } else {
     sel_df = data.frame(fixed_male = MLE_report$sel_fixed_m, fixed_female = MLE_report$sel_fixed_f,
                         trawl_male = MLE_report$sel_trwl_m, trawl_female = MLE_report$sel_trwl_f,
@@ -182,6 +176,10 @@ get_selectivities = function(MLE_report) {
   sel_lng_df = sel_df %>% tidyr::pivot_longer(!age)
   sel_lng_df$gear = Reduce(c, lapply(sel_lng_df$name %>% stringr::str_split(pattern = "_"), function(x){x[1]}))
   sel_lng_df$sex = Reduce(c, lapply(sel_lng_df$name %>% stringr::str_split(pattern = "_"), function(x){x[2]}))
+  time_block = as.numeric(Reduce(c, lapply(sel_lng_df$sex %>% stringr::str_split(pattern = "\\."), function(x){x[2]})))
+  sel_lng_df$sex = Reduce(c, lapply(sel_lng_df$sex %>% stringr::str_split(pattern = "\\."), function(x){x[1]}))
+  time_block[is.na(time_block)] = 1
+  sel_lng_df$time_block = time_block
   return(sel_lng_df)
 }
 

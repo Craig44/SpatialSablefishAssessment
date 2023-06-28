@@ -81,9 +81,13 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   DATA_VECTOR(spawning_time_proportion);            // proportion of time within a year that spawning occurs needed for each year length = n_projyears, bound between 0 and 1
 
   // Fishing stuff
+  DATA_INTEGER(catch_likelihood);                   // 0 is the ADMB formulation, 1 == normal with catch_sd
+  DATA_SCALAR(catch_sd);                            // only used if catch_likelihood == 1
   DATA_SCALAR(prop_F_hist);                         // Proportion of ll_F_avg that is applied during initialization
   DATA_VECTOR(ll_fishery_catch);                    // Observed catch for Longline fishery. length = n_years
   DATA_VECTOR(trwl_fishery_catch);                  // Observed catch for Trawl fishery. length = n_years
+  DATA_SCALAR(loglik_wgt_ll_catch);                 // Log-likelihood multiplier (Craig's not a fan of these)
+  DATA_SCALAR(loglik_wgt_trwl_catch);               // Log-likelihood multiplier (Craig's not a fan of these)
 
   // Selectivity indicator switches
   DATA_IVECTOR(ll_sel_type);                        // Selectivity type for each row of ln_ll_sel_m_pars and ln_ll_sel_f_pars
@@ -125,8 +129,9 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   DATA_ARRAY(obs_ll_catchatage);                   // Longline fishery composition observations dim = n_ages x ll_catchatage_comp
   DATA_ARRAY_INDICATOR(keep_ll_catchatage_comp, obs_ll_catchatage); // Used for OSA residuals, when not using the multinomial likelihood
   DATA_INTEGER(ll_catchatage_covar_structure);             // 0 = iid, 5 = AR(1), 2 = Unstructured.
-  DATA_INTEGER(ll_catchatage_comp_likelihood);             // 0 = old multinomial, 1 = TMB's multinomial. //0 = MVN (can be applied to both comp_type), 1 = Multinomial, 2 = dirichlet-multinomial
+  DATA_INTEGER(ll_catchatage_comp_likelihood);             // 0 = old multinomial, 1 = TMB's Multinomial, 2 = dirichlet-multinomial (not implemented)
   array<Type> pred_ll_catchatage(n_ages, n_ll_catchatage); // Sex disaggregated predicted catch at age
+  DATA_SCALAR(loglik_wgt_ll_catchatage);               // Log-likelihood multiplier (Craig's not a fan of these)
 
   // Longline catch at length (sex disaggregated)
   DATA_IVECTOR(ll_catchatlgth_indicator);            // length(ll_catchatlgth_indicator) = n_years.  1 = calculate catch at age in this year, 0 = don't calculate catch at age
@@ -136,7 +141,9 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   DATA_ARRAY(obs_ll_catchatlgth_f);                   // Trawl fishery composition observations dim = n_length_bins x ll_catchatlgth_comp
   DATA_ARRAY_INDICATOR(keep_ll_catchatlgth_f_comp, obs_ll_catchatlgth_f);
   DATA_INTEGER(ll_catchatlgth_covar_structure);             // 0 = iid, 5 = AR(1), 2 = Unstructured.
-  DATA_INTEGER(ll_catchatlgth_comp_likelihood);             // 0 = MVN (can be applied to both comp_type), 1 = Multinomial, 2 = dirichlet-multinomial
+  DATA_INTEGER(ll_catchatlgth_comp_likelihood);             // 0 = old multinomial, 1 = TMB's Multinomial, 2 = dirichlet-multinomial (not implemented)
+  DATA_SCALAR(loglik_wgt_ll_catchatlgth_m);                   // Log-likelihood multiplier (Craig's not a fan of these)
+  DATA_SCALAR(loglik_wgt_ll_catchatlgth_f);                   // Log-likelihood multiplier (Craig's not a fan of these)
 
   array<Type> pred_ll_catchatlgth_m(n_length_bins, n_ll_catchatlgth); // Sex disaggregated predicted catch at age
   array<Type> pred_ll_catchatlgth_f(n_length_bins, n_ll_catchatlgth); // Sex disaggregated predicted catch at age
@@ -148,8 +155,10 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   DATA_ARRAY_INDICATOR(keep_trwl_catchatlgth_m_comp, obs_trwl_catchatlgth_m);
   DATA_ARRAY(obs_trwl_catchatlgth_f);                   // Trawl fishery composition observations dim = n_length_bins x ll_catchatlgth_comp
   DATA_ARRAY_INDICATOR(keep_trwl_catchatlgth_f_comp, obs_trwl_catchatlgth_f);
-  DATA_INTEGER(trwl_catchatlgth_covar_structure);             // 0 = iid, 5 = AR(1), 2 = Unstructured.
-  DATA_INTEGER(trwl_catchatlgth_comp_likelihood);             // 0 = MVN (can be applied to both comp_type), 1 = Multinomial, 2 = dirichlet-multinomial
+  DATA_INTEGER(trwl_catchatlgth_covar_structure);             // placeholder - 0 = iid, 5 = AR(1), 2 = Unstructured.
+  DATA_INTEGER(trwl_catchatlgth_comp_likelihood);             // 0 = old multinomial, 1 = TMB's Multinomial, 2 = dirichlet-multinomial (not implemented)
+  DATA_SCALAR(loglik_wgt_trwl_catchatlgth_m);                   // Log-likelihood multiplier (Craig's not a fan of these)
+  DATA_SCALAR(loglik_wgt_trwl_catchatlgth_f);                   // Log-likelihood multiplier (Craig's not a fan of these)
 
   array<Type> pred_trwl_catchatlgth_m(n_length_bins, n_trwl_catchatlgth); // Sex disaggregated predicted catch at age
   array<Type> pred_trwl_catchatlgth_f(n_length_bins, n_trwl_catchatlgth); // Sex disaggregated predicted catch at age
@@ -210,8 +219,9 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   DATA_ARRAY(obs_srv_dom_ll_age);                          // Survey Domestic longline age obs. length =  n_srv_dom_ll_age
   DATA_ARRAY_INDICATOR(keep_obs_srv_dom_ll_age, obs_srv_dom_ll_age);
   DATA_INTEGER(srv_dom_ll_age_covar_structure);             // 0 = iid, 5 = AR(1), 2 = Unstructured.
-  DATA_INTEGER(srv_dom_ll_age_comp_likelihood);             // 0 = old multinomial, 1 = TMB's multinomial. //0 = MVN (can be applied to both comp_type), 1 = Multinomial, 2 = dirichlet-multinomial
+  DATA_INTEGER(srv_dom_ll_age_comp_likelihood);            // 0 = old multinomial, 1 = TMB's Multinomial, 2 = dirichlet-multinomial (not implemented)
   array<Type> pred_srv_dom_ll_age(n_ages, n_srv_dom_ll_age); // Sex aggregated predicted catch at age
+  DATA_SCALAR(loglik_wgt_srv_dom_ll_age);                   // Log-likelihood multiplier (Craig's not a fan of these)
 
   // Survey length Comp from the Domestic Longline survey
   DATA_IVECTOR(srv_dom_ll_lgth_indicator);               // length(srv_dom_ll_lgth_indicator) = n_years.  1 = calculate catch at age in this year, 0 = don't calculate catch at age
@@ -224,6 +234,8 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   DATA_INTEGER(srv_dom_ll_lgth_comp_likelihood);             // 0 = old multinomial, 1 = TMB's multinomial. //0 = MVN (can be applied to both comp_type), 1 = Multinomial, 2 = dirichlet-multinomial
   array<Type> pred_srv_dom_ll_lgth_m(n_length_bins, n_srv_dom_ll_lgth); // Sex disaggregated predicted catch at age
   array<Type> pred_srv_dom_ll_lgth_f(n_length_bins, n_srv_dom_ll_lgth); // Sex disaggregated predicted catch at age
+  DATA_SCALAR(loglik_wgt_srv_dom_ll_lgth_m);                   // Log-likelihood multiplier (Craig's not a fan of these)
+  DATA_SCALAR(loglik_wgt_srv_dom_ll_lgth_f);                   // Log-likelihood multiplier (Craig's not a fan of these)
 
   // Japanese LL age early survey
   DATA_IVECTOR(srv_jap_ll_age_indicator);               // length(srv_jap_ll_age_indicator) = n_years.  1 = calculate catch at age in this year, 0 = don't calculate catch at age
@@ -233,6 +245,7 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   DATA_INTEGER(srv_jap_ll_age_covar_structure);             // 0 = iid, 5 = AR(1), 2 = Unstructured.
   DATA_INTEGER(srv_jap_ll_age_comp_likelihood);             // 0 = old multinomial, 1 = TMB's multinomial. //0 = MVN (can be applied to both comp_type), 1 = Multinomial, 2 = dirichlet-multinomial
   array<Type> pred_srv_jap_ll_age(n_ages, n_srv_jap_ll_age); // Sex aggregated predicted catch at age
+  DATA_SCALAR(loglik_wgt_srv_jap_ll_age);                   // Log-likelihood multiplier (Craig's not a fan of these)
 
   // Japanese LL length Comp early survey
   DATA_IVECTOR(srv_jap_ll_lgth_indicator);               // length(srv_jap_ll_lgth_indicator) = n_years.  1 = calculate catch at age in this year, 0 = don't calculate catch at age
@@ -242,9 +255,11 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   DATA_ARRAY_INDICATOR(keep_obs_srv_jap_ll_lgth_m, obs_srv_jap_ll_lgth_m);
   DATA_ARRAY_INDICATOR(keep_obs_srv_jap_ll_lgth_f, obs_srv_jap_ll_lgth_f);
   DATA_INTEGER(srv_jap_ll_lgth_covar_structure);             // 0 = iid, 5 = AR(1), 2 = Unstructured.
-  DATA_INTEGER(srv_jap_ll_lgth_comp_likelihood);             // 0 = old multinomial, 1 = TMB's multinomial. //0 = MVN (can be applied to both comp_type), 1 = Multinomial, 2 = dirichlet-multinomial
+  DATA_INTEGER(srv_jap_ll_lgth_comp_likelihood);             // 0 = old multinomial, 1 = TMB's Multinomial, 2 = dirichlet-multinomial (not implemented)
   array<Type> pred_srv_jap_ll_lgth_m(n_length_bins, n_srv_jap_ll_lgth); // Sex disaggregated predicted catch at age
   array<Type> pred_srv_jap_ll_lgth_f(n_length_bins, n_srv_jap_ll_lgth); // Sex disaggregated predicted catch at age
+  DATA_SCALAR(loglik_wgt_srv_jap_ll_lgth_m);                   // Log-likelihood multiplier (Craig's not a fan of these)
+  DATA_SCALAR(loglik_wgt_srv_jap_ll_lgth_f);                   // Log-likelihood multiplier (Craig's not a fan of these)
 
   // Japanese LL Fishery length Comp early survey (Sex aggregated)
   DATA_IVECTOR(srv_jap_fishery_ll_lgth_indicator);               // length(srv_jap_fishery_ll_lgth_indicator) = n_years.  1 = calculate catch at age in this year, 0 = don't calculate catch at age
@@ -252,8 +267,9 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   DATA_ARRAY(obs_srv_jap_fishery_ll_lgth);                          // Survey Domestic longline length obs. length =  n_srv_jap_fishery_ll_lgth
   DATA_ARRAY_INDICATOR(keep_obs_srv_jap_fishery_ll_lgth, obs_srv_jap_fishery_ll_lgth);
   DATA_INTEGER(srv_jap_fishery_ll_lgth_covar_structure);             // 0 = iid, 5 = AR(1), 2 = Unstructured.
-  DATA_INTEGER(srv_jap_fishery_ll_lgth_comp_likelihood);             // 0 = old multinomial, 1 = TMB's multinomial. //0 = MVN (can be applied to both comp_type), 1 = Multinomial, 2 = dirichlet-multinomial
+  DATA_INTEGER(srv_jap_fishery_ll_lgth_comp_likelihood);             // 0 = old multinomial, 1 = TMB's Multinomial, 2 = dirichlet-multinomial (not implemented)
   array<Type> pred_srv_jap_fishery_ll_lgth(n_length_bins, n_srv_jap_fishery_ll_lgth); // Sex disaggregated predicted catch at age
+  DATA_SCALAR(loglik_wgt_srv_jap_fishery_ll_lgth);                   // Log-likelihood multiplier (Craig's not a fan of these)
 
   // NMFS bottom trawl age frequency
   DATA_IVECTOR(srv_nmfs_trwl_age_indicator);               // length(srv_nmfs_trwl_age_indicator) = n_years.  1 = calculate catch at age in this year, 0 = don't calculate catch at age
@@ -261,8 +277,9 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   DATA_ARRAY(obs_srv_nmfs_trwl_age);                          // Survey Domestic longline age obs. length =  n_srv_nmfs_trwl_age
   DATA_ARRAY_INDICATOR(keep_obs_srv_nmfs_trwl_age, obs_srv_nmfs_trwl_age);
   DATA_INTEGER(srv_nmfs_trwl_age_covar_structure);             // 0 = iid, 5 = AR(1), 2 = Unstructured.
-  DATA_INTEGER(srv_nmfs_trwl_age_comp_likelihood);             // 0 = old multinomial, 1 = TMB's multinomial. //0 = MVN (can be applied to both comp_type), 1 = Multinomial, 2 = dirichlet-multinomial
+  DATA_INTEGER(srv_nmfs_trwl_age_comp_likelihood);            // 0 = old multinomial, 1 = TMB's Multinomial, 2 = dirichlet-multinomial (not implemented)
   array<Type> pred_srv_nmfs_trwl_age(n_ages, n_srv_nmfs_trwl_age); // Sex aggregated predicted catch at age
+  DATA_SCALAR(loglik_wgt_srv_nmfs_trwl_age);                   // Log-likelihood multiplier (Craig's not a fan of these)
 
   // NMFS bottom trawl length Comp
   DATA_IVECTOR(srv_nmfs_trwl_lgth_indicator);               // length(srv_nmfs_trwl_lgth_indicator) = n_years.  1 = calculate catch at age in this year, 0 = don't calculate catch at age
@@ -272,9 +289,11 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   DATA_ARRAY_INDICATOR(keep_obs_srv_nmfs_trwl_lgth_m, obs_srv_nmfs_trwl_lgth_m);
   DATA_ARRAY_INDICATOR(keep_obs_srv_nmfs_trwl_lgth_f, obs_srv_nmfs_trwl_lgth_f);
   DATA_INTEGER(srv_nmfs_trwl_lgth_covar_structure);             // 0 = iid, 5 = AR(1), 2 = Unstructured.
-  DATA_INTEGER(srv_nmfs_trwl_lgth_comp_likelihood);             // 0 = old multinomial, 1 = TMB's multinomial. //0 = MVN (can be applied to both comp_type), 1 = Multinomial, 2 = dirichlet-multinomial
+  DATA_INTEGER(srv_nmfs_trwl_lgth_comp_likelihood);             // 0 = old multinomial, 1 = TMB's Multinomial, 2 = dirichlet-multinomial (not implemented)
   array<Type> pred_srv_nmfs_trwl_lgth_m(n_length_bins, n_srv_nmfs_trwl_lgth); // Sex disaggregated predicted catch at age
   array<Type> pred_srv_nmfs_trwl_lgth_f(n_length_bins, n_srv_nmfs_trwl_lgth); // Sex disaggregated predicted catch at age
+  DATA_SCALAR(loglik_wgt_srv_nmfs_trwl_lgth_m);                   // Log-likelihood multiplier (Craig's not a fan of these)
+  DATA_SCALAR(loglik_wgt_srv_nmfs_trwl_lgth_f);                   // Log-likelihood multiplier (Craig's not a fan of these)
 
   // Estimable parameters
   PARAMETER(ln_mean_rec);                           // Unfish equil recruitment (logged) (estimated)
@@ -440,8 +459,8 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   }
 
   vector<Type> nll(23); // slots
+  vector<Type> nll_weighted(23); // slots
   nll.setZero();
-
 
   /* nll components
    * 0 - ll- fishery age comp
@@ -983,16 +1002,33 @@ Type CurrentAssessment(objective_function<Type>* obj) {
       }
       ++srv_jap_fishery_ll_lgth_ndx;
     }
-
-
   }
 
   /*
    * Additional objective function components that are not observations
    */
-  // Sum of squares for catch
-  nll(20) = (square(vector<Type>(log(ll_fishery_catch+0.01)-log(annual_ll_catch_pred+0.01)))).sum();
-  nll(21) = (square(vector<Type>(log(trwl_fishery_catch+0.8)-log(annual_trwl_catch_pred+0.8)))).sum();
+  // Sum of squares for catch using the norm2 function same which is (sum(x^2))
+  if(catch_likelihood == 0) {
+    nll(20) = (square(vector<Type>(log(ll_fishery_catch+0.01)-log(annual_ll_catch_pred+0.01)))).sum();
+    nll(21) = (square(vector<Type>(log(trwl_fishery_catch+0.8)-log(annual_trwl_catch_pred+0.8)))).sum();
+  } else {
+    for(year_ndx = 0; year_ndx < ll_fishery_catch.size(); ++year_ndx) {
+      nll(20) -= dnorm(log(ll_fishery_catch(year_ndx)), log(annual_ll_catch_pred(year_ndx)) - 0.5 * catch_sd * catch_sd, catch_sd, true);
+      nll(21) -= dnorm(log(trwl_fishery_catch(year_ndx)), log(annual_trwl_catch_pred(year_ndx)) - 0.5 * catch_sd * catch_sd, catch_sd, true);
+    }
+  }
+  SIMULATE {
+    // Set simulated catch to predicted
+    if(catch_likelihood == 0) {
+      trwl_fishery_catch = annual_trwl_catch_pred;
+      ll_fishery_catch = annual_ll_catch_pred;
+    } else {
+      for(year_ndx = 0; year_ndx < ll_fishery_catch.size(); ++year_ndx) {
+        ll_fishery_catch(year_ndx) =  exp(rnorm(log(annual_ll_catch_pred(year_ndx)) - 0.5 * catch_sd * catch_sd, catch_sd));
+        trwl_fishery_catch(year_ndx) =  exp(rnorm(log(annual_trwl_catch_pred(year_ndx)) - 0.5 * catch_sd * catch_sd, catch_sd));
+      }
+    }
+  }
   // Recruitment penalty
   for(year_ndx = 0; year_ndx < n_init_rec_devs; ++year_ndx)
     nll(22) += square(ln_init_rec_dev(year_ndx) + sigma_R_sq / 2.)/(2.* sigma_R_sq);
@@ -1000,11 +1036,39 @@ Type CurrentAssessment(objective_function<Type>* obj) {
     nll(22) += square(ln_rec_dev(year_ndx) + sigma_R_sq / 2.)/(2.* sigma_R_sq);
   nll(22) += (ln_rec_dev.size() + n_init_rec_devs) * log(sigma_R);
 
+  // Apply Log likelihood weights Yuck!!
+  nll_weighted = nll;
+  nll_weighted(0) *= loglik_wgt_ll_catchatage;            // 0 - ll- fishery age comp
+  nll_weighted(1) *= loglik_wgt_trwl_catchatlgth_m;       // 1 - trwl-fishery length male comp
+  nll_weighted(2) *= loglik_wgt_trwl_catchatlgth_f;       // 2 - trwl-fishery length female comp
+  nll_weighted(3) *= 1.0;                                 // 3 - srv Domestic ll Biomass
+  nll_weighted(4) *= 1.0;                                 // 4 - srv Japanese ll Biomass
+  nll_weighted(5) *= 1.0;                                 // 5 - LL Fishery CPUE
+  nll_weighted(6) *= loglik_wgt_srv_dom_ll_age;           // 6 - srv Domestic ll Age
+  nll_weighted(7) *= loglik_wgt_srv_dom_ll_lgth_m;        // 7 - srv Domestic ll Length male
+  nll_weighted(8) *= loglik_wgt_srv_dom_ll_lgth_f;        // 8 - srv Domestic ll Length female
+  nll_weighted(9) *= loglik_wgt_srv_jap_ll_age;           // 9 - srv Japanese ll Age
+  nll_weighted(10) *= loglik_wgt_srv_jap_ll_lgth_m;       // 10 - srv Japanese ll Length male
+  nll_weighted(11) *= loglik_wgt_srv_jap_ll_lgth_f;       // 11 - srv Japanese ll Length female
+  nll_weighted(12) *= loglik_wgt_srv_nmfs_trwl_age;       // 12 - srv GOA trwl Age
+  nll_weighted(13) *= loglik_wgt_srv_nmfs_trwl_lgth_m;    // 13 - srv GOA trwl  Length male
+  nll_weighted(14) *= loglik_wgt_srv_nmfs_trwl_lgth_f;    // 14 - srv GOA trwl  Length female
+  nll_weighted(15) *= loglik_wgt_ll_catchatlgth_m;        // 15 - ll-fishery length male comp
+  nll_weighted(16) *= loglik_wgt_ll_catchatlgth_f;        // 16 - ll-fishery length female comp
+  nll_weighted(17) *= 1.0;                                // 17 - srv GOA trwl biomass index
+  nll_weighted(18) *= 1.0;                                // 18 - srv Japanese Fishery longline biomass index
+  nll_weighted(19) *= loglik_wgt_srv_jap_fishery_ll_lgth; // 19 - srv Japanese Fishery longline Length Frequency
+  nll_weighted(20) *= loglik_wgt_ll_catch;                // 20 - Longline fishery catch Sum of squares
+  nll_weighted(21) *= loglik_wgt_trwl_catch;              // 21 - Trawl fishery catch Sum of squares
+  nll_weighted(22) *= 1.0;                                // 22 - Recruitment penalty/hyper prior if model is hierachical
 
+
+  vector<Type> depletion = SSB / Bzero * 100;
   /*
    * Report section
    */
   REPORT(nll);
+  REPORT(nll_weighted);
   REPORT(mean_rec);
   REPORT(rec_dev);
   REPORT(Bzero);
@@ -1012,6 +1076,7 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   REPORT(init_natage_m);
   REPORT(ln_init_rec_dev);
   REPORT(SSB);
+  REPORT(depletion);
   REPORT(natage_f);
   REPORT(natage_m);
   REPORT(natlength_m);
@@ -1161,9 +1226,51 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   REPORT(srv_jap_ll_bio_indicator);
   REPORT(srv_jap_fishery_ll_bio_indicator);
   REPORT(srv_jap_fishery_ll_lgth_indicator);
+
+  // Likelihood weights
+  REPORT(loglik_wgt_ll_catch);
+  REPORT(loglik_wgt_trwl_catch);
+  REPORT(loglik_wgt_ll_catchatage);
+  REPORT(loglik_wgt_trwl_catchatlgth_m);
+  REPORT(loglik_wgt_trwl_catchatlgth_f);
+  REPORT(loglik_wgt_trwl_catch);
+  REPORT(loglik_wgt_srv_dom_ll_age);
+  REPORT(loglik_wgt_srv_dom_ll_lgth_m);
+  REPORT(loglik_wgt_srv_dom_ll_lgth_f);
+  REPORT(loglik_wgt_srv_jap_ll_age);
+  REPORT(loglik_wgt_srv_jap_ll_lgth_m);
+  REPORT(loglik_wgt_srv_jap_ll_lgth_f);
+  REPORT(loglik_wgt_srv_nmfs_trwl_age);
+  REPORT(loglik_wgt_srv_nmfs_trwl_lgth_m);
+  REPORT(loglik_wgt_srv_nmfs_trwl_lgth_f);
+  REPORT(loglik_wgt_srv_jap_fishery_ll_lgth);
+  REPORT(loglik_wgt_ll_catchatlgth_m);
+  REPORT(loglik_wgt_ll_catchatlgth_f);
+
   // REMOVE these objects once we have validated
   // I created them for reporting interim calculations
-  return nll.sum();
+
+  // standard error reports
+  ADREPORT(Bzero);
+  ADREPORT(mean_rec);
+  ADREPORT(depletion);
+  ADREPORT(SSB);
+  ADREPORT(annual_F_trwl);
+  ADREPORT(annual_F_ll);
+  ADREPORT(annual_recruitment);
+  ADREPORT(sel_ll_m);
+  ADREPORT(sel_ll_f);
+  ADREPORT(sel_trwl_f);
+  ADREPORT(sel_trwl_m);
+  ADREPORT(sel_srv_dom_ll_f);
+  ADREPORT(sel_srv_dom_ll_m);
+  ADREPORT(sel_srv_jap_ll_f);
+  ADREPORT(sel_srv_jap_ll_m);
+  ADREPORT(sel_srv_nmfs_trwl_f);
+  ADREPORT(sel_srv_nmfs_trwl_m);
+  ADREPORT(sel_srv_jap_fishery_ll);
+
+  return nll_weighted.sum();
 }
 
 #undef TMB_OBJECTIVE_PTR

@@ -324,3 +324,44 @@ extend_3darray_last_dim <- function(array_3d, n) {
   new_3d_array = abind(array_3d, replicate(array_3d[,,dim(array_3d)[3]], n = n), along = 3)
   return(new_3d_array)
 }
+
+#' convert_simdata_integers
+#' @param sim_data an array with 3 dimensions
+#' @param OM_data data that was passed to `MakeADFun`
+#' @details this function should be used if you get the following error from `MakeADFun` `Error in getParameterOrder(data, parameters, new.env(), DLL = DLL) : NOT A VECTOR!`
+#' @return sim_data list with integers converted
+#' @export
+convert_simdata_integers <-function(sim_data, OM_data) {
+  if(sim_data$model == "Assessment") {
+    sim_data$n_regions = OM_data$n_regions
+    sim_data$n_projections_years = OM_data$n_projections_years
+    sim_data$do_projection = OM_data$do_projection
+    sim_data$global_rec_devs = OM_data$global_rec_devs
+    sim_data$ll_catchatage_covar_structure = OM_data$ll_catchatage_covar_structure
+    sim_data$ll_catchatage_comp_likelihood = OM_data$ll_catchatage_covar_structure
+    sim_data$ll_catchatlgth_covar_structure = OM_data$ll_catchatlgth_covar_structure
+    sim_data$ll_catchatlgth_comp_likelihood = OM_data$ll_catchatlgth_comp_likelihood
+    sim_data$trwl_catchatlgth_covar_structure = OM_data$trwl_catchatlgth_covar_structure
+    sim_data$trwl_catchatlgth_comp_likelihood = OM_data$trwl_catchatlgth_comp_likelihood
+    sim_data$dom_ll_bio_likelihood = OM_data$dom_ll_bio_likelihood
+    sim_data$jap_ll_bio_likelihood = OM_data$jap_ll_bio_likelihood
+    sim_data$ll_cpue_likelihood = OM_data$ll_cpue_likelihood
+    sim_data$srv_dom_ll_age_covar_structure = OM_data$srv_dom_ll_age_covar_structure
+    sim_data$srv_dom_ll_age_comp_likelihood = OM_data$srv_dom_ll_age_comp_likelihood
+    sim_data$srv_dom_ll_lgth_covar_structure = OM_data$srv_dom_ll_lgth_covar_structure
+    sim_data$srv_dom_ll_lgth_comp_likelihood = OM_data$srv_dom_ll_lgth_comp_likelihood
+    sim_data$srv_jap_ll_age_covar_structure = OM_data$srv_jap_ll_age_covar_structure
+    sim_data$srv_jap_ll_age_comp_likelihood = OM_data$srv_jap_ll_age_comp_likelihood
+    sim_data$srv_jap_ll_lgth_covar_structure = OM_data$srv_jap_ll_lgth_covar_structure
+    sim_data$srv_jap_ll_lgth_comp_likelihood = OM_data$srv_jap_ll_lgth_comp_likelihood
+    sim_data$srv_nmfs_trwl_age_covar_structure = OM_data$srv_nmfs_trwl_age_covar_structure
+    sim_data$srv_nmfs_trwl_age_comp_likelihood = OM_data$srv_nmfs_trwl_age_comp_likelihood
+    sim_data$srv_nmfs_trwl_lgth_covar_structure = OM_data$srv_nmfs_trwl_lgth_covar_structure
+    sim_data$srv_nmfs_trwl_lgth_comp_likelihood = OM_data$srv_nmfs_trwl_lgth_comp_likelihood
+    sim_data$nmfs_trwl_bio_likelihood = OM_data$nmfs_trwl_bio_likelihood
+    sim_data$jap_fishery_ll_bio_likelihood = OM_data$jap_fishery_ll_bio_likelihood
+    sim_data$srv_jap_fishery_ll_lgth_covar_structure = OM_data$srv_jap_fishery_ll_lgth_covar_structure
+    sim_data$srv_jap_fishery_ll_lgth_comp_likelihood = OM_data$srv_jap_fishery_ll_lgth_comp_likelihood
+  }
+  return(sim_data)
+}

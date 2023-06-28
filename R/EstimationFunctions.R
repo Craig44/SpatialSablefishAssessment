@@ -247,6 +247,7 @@ get_TMB_vector_from_array <- function(element, array) {
       }
     }
   }
+  return(vector_ndx);
 }
 
 #' set_up_parameters utility function to help 'turn off' parameters and share estimated parameters across elements
