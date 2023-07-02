@@ -4,11 +4,14 @@
 library(ggplot2)
 library(SpatialSablefishAssessment)
 library(tidyverse)
+## The code line below will import three objects
+## 'data', 'parameters' and 'region_key' These are
+## objects that were based on the Sablefish 2021 assessment
 load(system.file("testdata", "MockAssessmentModel.RData",package="SpatialSablefishAssessment"))
 names(data)
+names(parameters)
 
-
-## simplify from the Sablefish assessment for demonstration purposes
+## simplify inputs from the Sablefish assessment for demonstration purposes
 ## Only one LL survey
 ## with constant selectivity and Q
 fishery_obs_years = 1990:2022
@@ -30,11 +33,12 @@ data$trwl_sel_type = c(0)
 data$srv_dom_ll_bio_indicator = as.numeric(data$years %in% survey_years)
 data$srv_dom_ll_lgth_indicator = as.numeric(data$years %in% survey_years)
 data$srv_dom_ll_age_indicator = as.numeric(data$years %in% survey_years)
-data$srv_dom_ll_bio_likelihood = 1
+data$srv_dom_ll_bio_likelihood = 1 # this changes the intepretation of input Standard errors
 data$obs_dom_ll_bio = rep(1, sum(data$srv_dom_ll_bio_indicator))
 data$se_dom_ll_bio = rep(0.07, sum(data$srv_dom_ll_bio_indicator))
 data$obs_srv_dom_ll_lgth_m = data$obs_srv_dom_ll_lgth_f = matrix(5, nrow = n_lgths, ncol = sum(data$srv_dom_ll_lgth_indicator))
 data$obs_srv_dom_ll_age = matrix(5, nrow = n_ages, ncol = sum(data$srv_dom_ll_age_indicator))
+# sample size for comp is 5 * n_ages = 150
 ## specify LL fishery observatiosn
 data$ll_cpue_indicator = rep(0, n_projyears)
 data$ll_catchatage_indicator = as.numeric(data$years %in% fishery_obs_years)
@@ -86,11 +90,17 @@ parameters$ln_ll_cpue_q = parameters$ln_ll_cpue_q[1]
 ## set init-devs to equilibrium i.e., age-structure at year 1 is assumed to be unfished
 parameters$ln_init_rec_dev = rep(-0.5*data$sigma_R^2, data$n_init_rec_devs)
 
+## Only estimate some of the models parameters
 estimated_pars = c("ln_mean_rec","ln_rec_dev","ln_ll_F_avg", "ln_ll_F_devs","ln_trwl_F_avg","ln_trwl_F_devs",
                    "ln_ll_sel_pars","ln_trwl_sel_pars","ln_srv_dom_ll_sel_pars", "ln_srv_dom_ll_q")
 
 na_map = fix_pars(par_list = parameters, pars_to_exclude = unique(names(parameters))[!unique(names(parameters)) %in% estimated_pars])
+## Don't worry that the below code fails.
+## Because I have turned off a lot of observations it will complain that observation
+## input containers are not == 0, but they can't be zero so just ignore for now
+## this function only makes sense when you are including all the observations.
 validate_input_data_and_parameters(data, parameters)
+## build OM to simulate data over the historic period
 OM <- TMB::MakeADFun(data = data,
                      parameters = parameters,
                      map = na_map,
@@ -99,28 +109,41 @@ OM <- TMB::MakeADFun(data = data,
 first_sim_data = OM$simulate(complete = T)
 first_sim_data = convert_simdata_integers(first_sim_data, data)
 
+## visualize some of the input assumptions
 plot_input_observations(data = first_sim_data)
 plot_input_catches(data = first_sim_data)
 plot_input_timeblocks(data = first_sim_data)
 plot_comp_sample_size(MLE_report = first_sim_data, data = first_sim_data) + ylim(0, NA)
 plot_age_error_matrix(data, F)
-
+# build an OM with the sim data
+# useful to compare negative log likelihoods
+# with EM's if any thing goes awry
 OM_for_report <- TMB::MakeADFun(data = first_sim_data,
                      parameters = parameters,
                      map = na_map,
                      DLL = "SpatialSablefishAssessment_TMBExports", silent  = T)
 OM_report = OM_for_report$report()
+# have a quick look at AF fits
 plot_AF(OM_report, observation = "srv_dom_ll")
 plot_AF(OM_report, observation = "fixed_gear")
 
-## estimate back the parameters
+## back estimate the parameters
+## Build EM
+## we are cheating by starting at the OM parameter
+## values. Should be explored in future investigations
 EM <- TMB::MakeADFun(data = first_sim_data,
                      parameters = parameters,
                      map = na_map,
                      DLL = "SpatialSablefishAssessment_TMBExports", silent  = T)
 unique(names(EM$par))
+## estimate
 first_MLE = nlminb(start = EM$par, objective = EM$fn, gradient  = EM$gr, control = list(eval.max = 1000, iter.max = 1000))
-#cat(" par ", names(EM$par)[which.max(EM$gr())], " had largest gradient = ", EM$gr()[which.max(EM$gr())], "\n")
+# check parameter with largest gradient after initial optimization
+cat(" par ", names(EM$par)[which.max(EM$gr())], " had largest gradient = ", EM$gr()[which.max(EM$gr())], "\n")
+
+## do an additional two Newton Raphson iterations to try and improve the fit.
+## this will also check that the Hessian is well defined because it is needed
+## to do the Newton Raphson iterations
 try_improve = tryCatch(expr =
                          for(i in 1:2) {
                            g = as.numeric(EM$gr(first_MLE$par))
@@ -131,9 +154,10 @@ try_improve = tryCatch(expr =
                        , error = function(e){e}, warning = function(w){w})
 
 if(inherits(try_improve, "error") | inherits(try_improve, "warning")) {
-  cat("didn't converge on simulation\n")
-  ## investigate furthur
+  cat("didn't converge!!!\n")
+  ## investigate further
 }
+## else get derived quantities
 mle_report = EM$report(first_MLE$par)
 ## save in a named list so we can use the get_multiple accessors
 mod_lst = list()
@@ -195,8 +219,6 @@ ggplot(data = index_df, aes(x = Year, y = Observed, col = label, linetype = labe
   geom_line(linewidth = 1.1) +
   facet_wrap(~observation) +
   theme_bw()
-
-
 
 ###########################
 ## Apply a constant F-rule
