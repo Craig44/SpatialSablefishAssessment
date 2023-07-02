@@ -53,9 +53,10 @@ vector<Type> double_normal_ogive(vector<Type>& ages, Type& sel_50, Type& delta) 
  *  5 = double normal with 3 parameters
  *  @param ages vector of ages.
  *  @param sel_array is a prepopulated array that will be fulled with the correct . Specifies which time-block selectivity to which year.
+ *  @param normalise if true then it will scale the selectivity to have max value = 1
  */
 template <class Type>
-void BuildSelectivity(array<Type> sel_params, vector<int> sel_type, vector<Type> ages, array<Type>& sel_array) {
+void BuildSelectivity(array<Type> sel_params, vector<int> sel_type, vector<Type> ages, array<Type>& sel_array, bool normalise) {
   int n_time_blocks = sel_params.dim(0);
   int n_ages = ages.size();
 
@@ -72,9 +73,6 @@ void BuildSelectivity(array<Type> sel_params, vector<int> sel_type, vector<Type>
         sel_array(age_ndx, i) = (1.0 / pow(ages[age_ndx],sel_params(i, 0)));
       // scale by max TODO: DELETE THIS after validated it shouldn't be here
       // A max call can cause AD issues. Or cause a split in the AD graph which I don't like at all.... consider using the expoential decay i.e., sel_type == 4 instead
-      Type max_sel = max(vector<Type>(sel_array.col(i)));
-      for(int age_ndx = 0; age_ndx < n_ages; ++age_ndx)
-        sel_array(age_ndx, i) /= max_sel;
     }  else if (sel_type(i) == 3) {
       // Alternative logistic parameterisation
       sel_array.col(i) = logistic_ogive(ages, sel_params(i, 0), sel_params(i, 1));
@@ -96,11 +94,12 @@ void BuildSelectivity(array<Type> sel_params, vector<int> sel_type, vector<Type>
     }
     // scale by max TODO: DELETE THIS after validated it shouldn't be here
     // A max call can cause AD issues.
-    //Type max_sel = max(vector<Type>(sel_array.col(i)));
-    //for(int age_ndx = 0; age_ndx < n_ages; ++age_ndx)
-    //  sel_array(age_ndx, i) /= max_sel;
+    if(normalise) {
+      Type max_sel = max(vector<Type>(sel_array.col(i)));
+      for(int age_ndx = 0; age_ndx < n_ages; ++age_ndx)
+        sel_array(age_ndx, i) /= max_sel;
+    }
   }
-
 }
 
 

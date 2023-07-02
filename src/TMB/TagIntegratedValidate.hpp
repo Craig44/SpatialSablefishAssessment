@@ -531,13 +531,13 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
    * Build selectivity objects
    */
   // the number of years needed for the sel_ll_f container.
-  BuildSelectivity(fixed_sel_pars.col(0), fixed_sel_type, ages, sel_fixed_m);
-  BuildSelectivity(fixed_sel_pars.col(1), fixed_sel_type, ages, sel_fixed_f);
-  BuildSelectivity(trwl_sel_pars.col(0), trwl_sel_type, ages, sel_trwl_m);
-  BuildSelectivity(trwl_sel_pars.col(1), trwl_sel_type, ages, sel_trwl_f);
+  BuildSelectivity(fixed_sel_pars.col(0), fixed_sel_type, ages, sel_fixed_m, false);
+  BuildSelectivity(fixed_sel_pars.col(1), fixed_sel_type, ages, sel_fixed_f, false);
+  BuildSelectivity(trwl_sel_pars.col(0), trwl_sel_type, ages, sel_trwl_m, false);
+  BuildSelectivity(trwl_sel_pars.col(1), trwl_sel_type, ages, sel_trwl_f, false);
   for(srv_ndx = 0; srv_ndx < n_surveys; ++srv_ndx) {
-    BuildSelectivity(srv_sel_pars.col(srv_ndx).col(0), srv_sel_type.col(srv_ndx), ages, tmp_sel_srv_m);
-    BuildSelectivity(srv_sel_pars.col(srv_ndx).col(1), srv_sel_type.col(srv_ndx), ages, tmp_sel_srv_f);
+    BuildSelectivity(srv_sel_pars.col(srv_ndx).col(0), srv_sel_type.col(srv_ndx), ages, tmp_sel_srv_m, false);
+    BuildSelectivity(srv_sel_pars.col(srv_ndx).col(1), srv_sel_type.col(srv_ndx), ages, tmp_sel_srv_f, false);
     sel_srv_m.col(srv_ndx) = tmp_sel_srv_m;
     sel_srv_f.col(srv_ndx) = tmp_sel_srv_f;
 

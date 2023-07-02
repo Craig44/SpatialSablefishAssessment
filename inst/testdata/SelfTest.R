@@ -3,7 +3,8 @@
 #'
 #'
 library(ggplot2)
-library(dplyr)
+library(SpatialSablefishAssessment)
+library(tidyverse)
 load(system.file("testdata", "MockAssessmentModel.RData",package="SpatialSablefishAssessment"))
 
 names(data)
@@ -34,7 +35,9 @@ parameters$ln_srv_dom_ll_sel_pars = array(parameters$ln_srv_dom_ll_sel_pars[1,,]
 
 ## Fix delta params.
 ## common delta params for all sexes and time-blocks per selectivity
-fix_these_parameters = unique(names(parameters)[!names(parameters) %in% c("ln_ll_F_avg","ln_ll_F_devs","ln_trwl_F_avg","ln_trwl_F_devs")])#c("ln_init_rec_dev")#c("ln_srv_jap_fishery_ll_sel_pars")
+#fix_these_parameters = unique(names(parameters)[!names(parameters) %in% c("ln_ll_F_avg","ln_ll_F_devs","ln_trwl_F_avg","ln_trwl_F_devs")])#c("ln_init_rec_dev")#c("ln_srv_jap_fishery_ll_sel_pars")
+fix_these_parameters = c("ln_init_rec_dev")
+
 ## turn off the delta parameters that we want to estimate
 ## as based on one value
 array_elements_to_exclude  = list()
@@ -100,39 +103,41 @@ for(i in 1:length(base_pars)) {
 }
 na_map = set_pars_to_be_the_same(par_list = parameters, map = na_map, base_parameters = new_base, copy_parameters = new_copy)
 
-fix_these_parameters = unique(names(parameters)[!names(parameters) %in% c("ln_ll_F_avg","ln_ll_F_devs","ln_trwl_F_avg","ln_trwl_F_devs")])#c("ln_init_rec_dev")#c("ln_srv_jap_fishery_ll_sel_pars")
-na_map = fix_pars(parameters, pars_to_exclude = c(fix_these_parameters))
+#fix_these_parameters = unique(names(parameters)[!names(parameters) %in% c("ln_mean_rec", "ln_rec_dev", "ln_ll_F_avg","ln_ll_F_devs","ln_trwl_F_avg","ln_trwl_F_devs")])#c("ln_init_rec_dev")#c("ln_srv_jap_fishery_ll_sel_pars")
+#na_map = fix_pars(parameters, pars_to_exclude = c(fix_these_parameters))
 
 
 ## turn off Japanese LF selectivity params
 #data$srv_jap_fishery_ll_lgth_indicator = rep(0, length(data$srv_jap_fishery_ll_lgth_indicator))
 parameters$ln_init_rec_dev = rep(-0.5*data$sigma_R^2, data$n_init_rec_devs)
 # change catch likelihood
-data$catch_likelihood = 1
+data$catch_likelihood = 0
 OM <- TMB::MakeADFun(data = data,
                      parameters = parameters,
                      map = na_map,
                      DLL = "SpatialSablefishAssessment_TMBExports", silent  = T)
 
-OM_report = OM$report()
-sim_data = OM$simulate(complete = T)
-est_lst = list()
-est_lst[["OM"]] = sim_data
-##
-
-## self test with SSBs
-SSBs = depletion = NULL
-i = 1
-for(i in 1:50) {
+## run simulation
+est_lst = OM_lst = list()
+set.seed(123)
+for(j in 1:50) {
+  if(j %% 10 ==  0)
+    cat("sim iteration = ", j, "\n")
   ## simulate OM_data
   sim_data = OM$simulate(complete = T)
   sim_data = convert_simdata_integers(sim_data, data)
-
   ## estimate
   EM <- TMB::MakeADFun(data = sim_data,
                        parameters = parameters,
                        map = na_map,
                        DLL = "SpatialSablefishAssessment_TMBExports", silent  =T,checkParameterOrder=TRUE)
+
+  ## use OM params for comparing EMs
+  OM_for_report <- TMB::MakeADFun(data = sim_data,
+                                  parameters = parameters,
+                                  map = na_map,
+                                  DLL = "SpatialSablefishAssessment_TMBExports", silent  = T)
+  OM_lst[[as.character(j)]] = OM_for_report$report()
   #check_gradients(EM)
   first_MLE = nlminb(start = EM$par, objective = EM$fn, gradient  = EM$gr, control = list(eval.max = 1000, iter.max = 1000))
   cat(" par ", names(EM$par)[which.max(EM$gr())], " had largest gradient = ", EM$gr()[which.max(EM$gr())], "\n")
@@ -143,18 +148,16 @@ for(i in 1:50) {
                              first_MLE$par = first_MLE$par - solve(h,g)
                              first_MLE$objective = EM$fn(first_MLE$par)
                            }
-                         , error = function(e){e})
+                         , error = function(e){e}, warning = function(w){w})
 
   if(inherits(try_improve, "error") | inherits(try_improve, "warning")) {
-    cat("didn't converge on simulation ", i, "\n")
+    cat("didn't converge on simulation ", j, "\n")
     ## investigate furthur
     h = optimHess(first_MLE$par, fn = EM$fn, gr = EM$gr)
-    cat("Problem parameter = ", names(first_MLE$par)[which(eigen(h)$values <= 1e-6)], "\n")
-
   } else {
     # get derived quantities
     mle_report = EM$report(first_MLE$par)
-    est_lst[[as.character(i)]] = mle_report
+    est_lst[[as.character(j)]] = mle_report
     #plot_catch_fit(mle_report)
   }
 }
@@ -165,11 +168,31 @@ ggplot(ssbs, aes(x = Year, y = SSB, col = label, linetype = label)) +
   geom_line(linewidth = 1.1) +
   theme_bw()
 
+Fs = get_multiple_Fs(est_lst, run_labels = names(est_lst))
+
 catch = get_multiple_catch_fits(est_lst, run_labels = names(est_lst))
 ggplot() +
   geom_point(data = catch %>% filter(type == "Observed"), aes(x = Year, y = Catch, shape = label), size = 1.6) +
-  geom_line(data = catch %>% filter(type == "Predicted"), aes(x = Year, y = Catch, col = label, linetype = label)) +
+  geom_line(data = catch %>% filter(type == "Predicted"), aes(x = Year, y = Catch, col = label, linetype = label), linewidth = 0.9) +
   theme_bw() +
   facet_wrap(~Fishery)
+
+## relative index fits
+index_df = get_multiple_index_fits(est_lst, run_labels = names(est_lst))
+ggplot(data = index_df, aes(x = Year, y = Pearsons_residuals, col = label, shape = label)) +
+  geom_point(size= 1.4) +
+  facet_wrap(~observation) +
+  theme_bw()
+
+ggplot(data = index_df, aes(x = Year, y = Predicted, col = label, linetype = label)) +
+  geom_line(linewidth = 1.1) +
+  facet_wrap(~observation) +
+  theme_bw()
+
+
+## compare negative loglikelihoods
+nlls = get_multiple_nlls(est_lst, run_labels = names(est_lst))
+nll_wider = nlls %>% pivot_wider(id_cols = observations, names_from = label, values_from = negloglike) %>% mutate(diff = abs(OM - `1`))
+print(nll_wider, n = 24)
 
 

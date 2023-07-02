@@ -27,7 +27,9 @@ get_negloglike <- function(MLE_report) {
     "Historic Japanese Fishery Length Frequency",
     "Longline fishery catch Sum of squares",
     "Trawl fishery catch Sum of squares",
-    "Recruitment penalty")
+    "Recruitment penalty",
+    "Longline_F_penalty",
+    "Trawl_F_penalty")
 
     nll_df = data.frame(negloglike = round(MLE_report$nll,4),
                         observations = nll_label, distribution = NA)

@@ -88,6 +88,7 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   DATA_VECTOR(trwl_fishery_catch);                  // Observed catch for Trawl fishery. length = n_years
   DATA_SCALAR(loglik_wgt_ll_catch);                 // Log-likelihood multiplier (Craig's not a fan of these)
   DATA_SCALAR(loglik_wgt_trwl_catch);               // Log-likelihood multiplier (Craig's not a fan of these)
+  DATA_SCALAR(loglik_wgt_Fs);                       // Log-likelihood multiplier (Craig's not a fan of these)
 
   // Selectivity indicator switches
   DATA_IVECTOR(ll_sel_type);                        // Selectivity type for each row of ln_ll_sel_m_pars and ln_ll_sel_f_pars
@@ -428,18 +429,18 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   /*
    * Build selectivity objects - The BuildSelectivity() method can be found in SetupSelectivities.hpp
    */
-  BuildSelectivity(ll_sel_pars.col(0), ll_sel_type, ages, sel_ll_m);
-  BuildSelectivity(ll_sel_pars.col(1), ll_sel_type, ages, sel_ll_f);
-  BuildSelectivity(trwl_sel_pars.col(0), trwl_sel_type, ages, sel_trwl_m);
-  BuildSelectivity(trwl_sel_pars.col(1), trwl_sel_type, ages, sel_trwl_f);
+  BuildSelectivity(ll_sel_pars.col(0), ll_sel_type, ages, sel_ll_m, false);
+  BuildSelectivity(ll_sel_pars.col(1), ll_sel_type, ages, sel_ll_f, false);
+  BuildSelectivity(trwl_sel_pars.col(0), trwl_sel_type, ages, sel_trwl_m, true);
+  BuildSelectivity(trwl_sel_pars.col(1), trwl_sel_type, ages, sel_trwl_f, true);
 
-  BuildSelectivity(srv_dom_ll_sel_pars.col(0), srv_dom_ll_sel_type, ages, sel_srv_dom_ll_m);
-  BuildSelectivity(srv_dom_ll_sel_pars.col(1), srv_dom_ll_sel_type, ages, sel_srv_dom_ll_f);
-  BuildSelectivity(srv_jap_ll_sel_pars.col(0), srv_jap_ll_sel_type, ages, sel_srv_jap_ll_m);
-  BuildSelectivity(srv_jap_ll_sel_pars.col(1), srv_jap_ll_sel_type, ages, sel_srv_jap_ll_f);
-  BuildSelectivity(srv_nmfs_trwl_sel_pars.col(0), srv_nmfs_trwl_sel_type, ages, sel_srv_nmfs_trwl_m);
-  BuildSelectivity(srv_nmfs_trwl_sel_pars.col(1), srv_nmfs_trwl_sel_type, ages, sel_srv_nmfs_trwl_f);
-  BuildSelectivity(srv_jap_fishery_ll_sel_pars, srv_jap_fishery_ll_sel_type, ages, sel_srv_jap_fishery_ll);
+  BuildSelectivity(srv_dom_ll_sel_pars.col(0), srv_dom_ll_sel_type, ages, sel_srv_dom_ll_m, false);
+  BuildSelectivity(srv_dom_ll_sel_pars.col(1), srv_dom_ll_sel_type, ages, sel_srv_dom_ll_f, false);
+  BuildSelectivity(srv_jap_ll_sel_pars.col(0), srv_jap_ll_sel_type, ages, sel_srv_jap_ll_m, false);
+  BuildSelectivity(srv_jap_ll_sel_pars.col(1), srv_jap_ll_sel_type, ages, sel_srv_jap_ll_f, false);
+  BuildSelectivity(srv_nmfs_trwl_sel_pars.col(0), srv_nmfs_trwl_sel_type, ages, sel_srv_nmfs_trwl_m, true);
+  BuildSelectivity(srv_nmfs_trwl_sel_pars.col(1), srv_nmfs_trwl_sel_type, ages, sel_srv_nmfs_trwl_f, true);
+  BuildSelectivity(srv_jap_fishery_ll_sel_pars, srv_jap_fishery_ll_sel_type, ages, sel_srv_jap_fishery_ll, false);
 
 
   // F, Z and survivorship
@@ -458,8 +459,8 @@ Type CurrentAssessment(objective_function<Type>* obj) {
     S_m_mid.col(year_ndx) = exp(-0.5 * Z_m.col(year_ndx));
   }
 
-  vector<Type> nll(23); // slots
-  vector<Type> nll_weighted(23); // slots
+  vector<Type> nll(25); // slots
+  vector<Type> nll_weighted(25); // slots
   nll.setZero();
 
   /* nll components
@@ -486,6 +487,8 @@ Type CurrentAssessment(objective_function<Type>* obj) {
    * 20 - Longline fishery catch Sum of squares
    * 21 - Trawl fishery catch Sum of squares
    * 22 - Recruitment penalty/hyper prior if model is hierachical
+   * 23 - F_penalty_ll - to make F_devs identifiable and a positive definite hessian
+   * 24 - F_penalty_trwl - to make F_devs identifiable and a positive definite hessian
    */
 
   /*
@@ -1017,6 +1020,7 @@ Type CurrentAssessment(objective_function<Type>* obj) {
       nll(21) -= dnorm(log(trwl_fishery_catch(year_ndx)), log(annual_trwl_catch_pred(year_ndx)) - 0.5 * catch_sd * catch_sd, catch_sd, true);
     }
   }
+
   SIMULATE {
     // Set simulated catch to predicted
     if(catch_likelihood == 0) {
@@ -1035,6 +1039,9 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   for(year_ndx = 0; year_ndx < ln_rec_dev.size(); ++year_ndx)
     nll(22) += square(ln_rec_dev(year_ndx) + sigma_R_sq / 2.)/(2.* sigma_R_sq);
   nll(22) += (ln_rec_dev.size() + n_init_rec_devs) * log(sigma_R);
+  // F-dev penalty
+  nll(23) = square(ln_ll_F_devs).sum();
+  nll(24) = square(ln_trwl_F_devs).sum();
 
   // Apply Log likelihood weights Yuck!!
   nll_weighted = nll;
@@ -1061,7 +1068,8 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   nll_weighted(20) *= loglik_wgt_ll_catch;                // 20 - Longline fishery catch Sum of squares
   nll_weighted(21) *= loglik_wgt_trwl_catch;              // 21 - Trawl fishery catch Sum of squares
   nll_weighted(22) *= 1.0;                                // 22 - Recruitment penalty/hyper prior if model is hierachical
-
+  nll_weighted(23) *= loglik_wgt_Fs;                      // 23 - Longline F penalty
+  nll_weighted(24) *= loglik_wgt_Fs;                      // 24 - Trawl F penalty
 
   vector<Type> depletion = SSB / Bzero * 100;
   /*
