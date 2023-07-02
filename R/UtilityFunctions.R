@@ -362,6 +362,7 @@ convert_simdata_integers <-function(sim_data, OM_data) {
     sim_data$jap_fishery_ll_bio_likelihood = OM_data$jap_fishery_ll_bio_likelihood
     sim_data$srv_jap_fishery_ll_lgth_covar_structure = OM_data$srv_jap_fishery_ll_lgth_covar_structure
     sim_data$srv_jap_fishery_ll_lgth_comp_likelihood = OM_data$srv_jap_fishery_ll_lgth_comp_likelihood
+    sim_data$catch_likelihood = OM_data$catch_likelihood
   }
   return(sim_data)
 }

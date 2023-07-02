@@ -318,7 +318,35 @@ get_multiple_mean_age_fits <- function(mle_ls, run_labels = NULL, region_key = N
   full_mean_age_df$label = factor(full_mean_age_df$label)
   return(full_mean_age_df)
 }
-
+#' get_multiple_AFs
+#'
+#' @param mle_ls list with multiple obj$report() calls
+#' @param run_labels vector of strings that are labels for each element in mle_ls
+#' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
+#' @return data frame with multiple catch fits
+#' @export
+get_multiple_AFs <- function(mle_ls, run_labels = NULL, region_key = NULL) {
+  if(!is.null(run_labels)) {
+    if(length(run_labels) != length(mle_ls))
+      stop(paste0("Number of models provided ", length(mle_ls), ", number of run labels ", length(run_labels), " these need to be the same"))
+  }
+  full_age_df = NULL
+  for(i in 1:length(mle_ls)) {
+    if(is.null(mle_ls[[i]])) {
+      cat("report at element ", i, " was null, so skipping\n")
+      next;
+    }
+    this_AF = get_AF(MLE_report = mle_ls[[i]], observation = "all", sex = "both", subset_years = NULL, region_key = region_key)
+    if(!is.null(run_labels)) {
+      this_AF$label = run_labels[i]
+    } else {
+      this_AF$label = i
+    }
+    full_age_df = rbind(full_age_df, this_AF)
+  }
+  full_age_df$label = factor(full_age_df$label)
+  return(full_age_df)
+}
 #' get_multiple_mean_length_fits
 #'
 #' @param mle_ls list with multiple obj$report() calls
@@ -348,6 +376,36 @@ get_multiple_mean_length_fits <- function(mle_ls, run_labels = NULL, region_key 
   full_mean_len_df$label = factor(full_mean_len_df$label)
   return(full_mean_len_df)
 }
+#' get_multiple_LFs
+#'
+#' @param mle_ls list with multiple obj$report() calls
+#' @param run_labels vector of strings that are labels for each element in mle_ls
+#' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
+#' @return data frame with multiple catch fits
+#' @export
+get_multiple_LFs <- function(mle_ls, run_labels = NULL, region_key = NULL) {
+  if(!is.null(run_labels)) {
+    if(length(run_labels) != length(mle_ls))
+      stop(paste0("Number of models provided ", length(mle_ls), ", number of run labels ", length(run_labels), " these need to be the same"))
+  }
+  full_lgth_df = NULL
+  for(i in 1:length(mle_ls)) {
+    if(is.null(mle_ls[[i]])) {
+      cat("report at element ", i, " was null, so skipping\n")
+      next;
+    }
+    this_LF = get_LF(MLE_report = mle_ls[[i]], observation = "all", sex = "both", subset_years = NULL, region_key = region_key)
+    if(!is.null(run_labels)) {
+      this_LF$label = run_labels[i]
+    } else {
+      this_LF$label = i
+    }
+    full_lgth_df = rbind(full_lgth_df, this_LF)
+  }
+  full_lgth_df$label = factor(full_lgth_df$label)
+  return(full_lgth_df)
+}
+
 #' get_multiple_Fs
 #'
 #' @param mle_ls list with multiple obj$report() calls
