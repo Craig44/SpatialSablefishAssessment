@@ -36,6 +36,28 @@ plot_input_catches = function(data, region_key = NULL) {
           axis.title = element_text(size = 13))
   return(gplt)
 }
+#'
+#' plot_age_error_matrix
+#' @param data list that is passed to the MakeADfun for the TMB model
+#' @param fill_text add value in ggplot
+#' @return ggplot2 object that will plot the ageing error matrix
+#' @export
+plot_age_error_matrix <- function(data, fill_text = F) {
+  ageing_error_mat = data$ageing_error_matrix
+  dimnames(ageing_error_mat) = list(data$ages, data$ages)
+  if(any(abs(rowSums(ageing_error_mat) - 1) > 0.01))
+    stop("ageing_error_mat expected to have rows that sum close to 1. This is not the case")
+  molten_age_error = reshape2::melt(ageing_error_mat)
+  colnames(molten_age_error) = c("Observed age", "Possible ages", "Proportion")
+  gplt = ggplot(molten_age_error, aes(y = `Observed age`, x = `Possible ages`, fill = Proportion)) +
+    geom_tile() +
+    scale_fill_gradient(low = "white", high = "red") +
+    #geom_text(aes(y = `Observed age`, x = `Possible ages`, label = round(Proportion,2)), color = "black", size = 4) +
+    theme_bw()
+  if(fill_text)
+    gplt = gplt + geom_text(aes(y = `Observed age`, x = `Possible ages`, label = round(Proportion,2)), color = "black", size = 2)
+  return(gplt)
+}
 
 
 #'
@@ -73,7 +95,7 @@ get_input_observations = function(data, region_key = NULL, survey_labels = NULL)
     full_df$indicator = ifelse(full_df$indicator == 0, NA, 1)
 
     region_lab = "Alaska"
-    if(is.null(region_key))
+    if(!is.null(region_key))
       region_lab = region_key$area[region_key$TMB_ndx + 1]
     full_df$Region = region_lab
 
