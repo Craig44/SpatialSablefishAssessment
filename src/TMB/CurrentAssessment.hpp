@@ -170,7 +170,7 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   DATA_VECTOR(obs_dom_ll_bio);                          // Survey Domestic longline biomass obs. length =  n_dom_ll_bio
   DATA_VECTOR(se_dom_ll_bio);                           // Survey Domestic longline biomass standard errors. length =  n_dom_ll_bio
   DATA_VECTOR_INDICATOR(keep_obs_dom_ll_bio, obs_dom_ll_bio);
-  DATA_INTEGER(dom_ll_bio_likelihood);                  // 0 = ADMB, 1 = lnorm
+  DATA_INTEGER(srv_dom_ll_bio_likelihood);                  // 0 = ADMB, 1 = lnorm
   vector<Type> pred_dom_ll_bio(n_dom_ll_bio);           // Sex aggregated predicted
   pred_dom_ll_bio.setZero();                            // initialise vector to be filled with zeros
 
@@ -180,7 +180,7 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   DATA_VECTOR(obs_jap_ll_bio);                          // Survey Japanese longline biomass obs. length =  n_jap_ll_bio
   DATA_VECTOR(se_jap_ll_bio);                           // Survey Japanese longline biomass standard errors. length =  n_jap_ll_bio
   DATA_VECTOR_INDICATOR(keep_obs_jap_ll_bio, obs_jap_ll_bio);
-  DATA_INTEGER(jap_ll_bio_likelihood);                  // 0 = ADMB, 1 = lnorm
+  DATA_INTEGER(srv_jap_ll_bio_likelihood);                  // 0 = ADMB, 1 = lnorm
   vector<Type> pred_jap_ll_bio(n_jap_ll_bio);           // Sex aggregated predicted
   pred_jap_ll_bio.setZero();                            // initialise vector to be filled with zeros
 
@@ -190,7 +190,7 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   DATA_VECTOR(obs_nmfs_trwl_bio);                          // Survey NMFS GOA trawl biomass obs. length =  n_nmfs_trwl_bio
   DATA_VECTOR(se_nmfs_trwl_bio);                           // Survey NMFS GOA trawl biomass standard errors. length =  n_nmfs_trwl_bio
   DATA_VECTOR_INDICATOR(keep_obs_nmfs_trwl_bio, obs_nmfs_trwl_bio);
-  DATA_INTEGER(nmfs_trwl_bio_likelihood);                  // 0 = ADMB, 1 = lnorm
+  DATA_INTEGER(srv_nmfs_trwl_bio_likelihood);                  // 0 = ADMB, 1 = lnorm
   vector<Type> pred_nmfs_trwl_bio(n_nmfs_trwl_bio);        // Sex aggregated predicted
   pred_nmfs_trwl_bio.setZero();                           // initialise vector to be filled with zeros
 
@@ -210,7 +210,7 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   DATA_VECTOR(obs_jap_fishery_ll_bio);                          // Survey Japanese longline biomass obs. length =  n_jap_fishery_ll_bio
   DATA_VECTOR(se_jap_fishery_ll_bio);                           // Survey Japanese longline biomass standard errors. length =  n_jap_fishery_ll_bio
   DATA_VECTOR_INDICATOR(keep_obs_jap_fishery_ll_bio, obs_jap_fishery_ll_bio);
-  DATA_INTEGER(jap_fishery_ll_bio_likelihood);                  // 0 = ADMB, 1 = lnorm
+  DATA_INTEGER(srv_jap_fishery_ll_bio_likelihood);                  // 0 = ADMB, 1 = lnorm
   vector<Type> pred_jap_fishery_ll_bio(n_jap_fishery_ll_bio);           // Sex aggregated predicted
   pred_jap_fishery_ll_bio.setZero();                                    // initialise vector to be filled with zeros
 
@@ -616,7 +616,7 @@ Type CurrentAssessment(objective_function<Type>* obj) {
       // so will contain both proportions and N_eff
       SIMULATE {
         Type sample_size = sum(obs_ll_catchatage.col(ll_catchatage_ndx));
-        vector<Type> temp_observed_age = rmultinom(temp_numbers_at_age, sample_size);
+        vector<Type> temp_observed_age = rmultinom(pred_ll_catchatage.col(ll_catchatage_ndx).vec(), sample_size);
         obs_ll_catchatage.col(ll_catchatage_ndx) = temp_observed_age;
       }
       ++ll_catchatage_ndx;
@@ -705,12 +705,21 @@ Type CurrentAssessment(objective_function<Type>* obj) {
         pred_dom_ll_bio(srv_dom_ll_bio_ndx) += proportion_male(year_ndx) * natage_m(age_ndx, year_ndx) * S_m_mid(age_ndx, year_ndx) * sel_srv_dom_ll_m(age_ndx, srv_dom_ll_sel_by_year_indicator(year_ndx)) * male_mean_weight_by_age(age_ndx, year_ndx) + (1.0 - proportion_male(year_ndx)) * natage_f(age_ndx, year_ndx) * S_f_mid(age_ndx, year_ndx) * sel_srv_dom_ll_f(age_ndx, srv_dom_ll_sel_by_year_indicator(year_ndx)) * female_mean_weight_by_age(age_ndx, year_ndx);
       // account for catchability and times 2 ???
       pred_dom_ll_bio(srv_dom_ll_bio_ndx)  *= 2 * srv_dom_ll_q(srv_dom_ll_q_by_year_indicator(year_ndx));
-      nll(3) += square((log(obs_dom_ll_bio(srv_dom_ll_bio_ndx) + 0.0001) - log(pred_dom_ll_bio(srv_dom_ll_bio_ndx) + 0.0001) ))/ (2.0 * square(se_dom_ll_bio(srv_dom_ll_bio_ndx) / obs_dom_ll_bio(srv_dom_ll_bio_ndx)));
-      // Simulate lognormal observations
-      // you may want include a bias correction for the mean of -0.5 sigma^2 so the distribution has expectation = predicted value.
-      SIMULATE {
-        obs_dom_ll_bio(srv_dom_ll_bio_ndx) = exp(rnorm(log(pred_dom_ll_bio(srv_dom_ll_bio_ndx) + 0.0001), (se_dom_ll_bio(srv_dom_ll_bio_ndx) / obs_dom_ll_bio(srv_dom_ll_bio_ndx))));
+      if(srv_dom_ll_bio_likelihood == 0) {
+        nll(3) += square((log(obs_dom_ll_bio(srv_dom_ll_bio_ndx) + 0.0001) - log(pred_dom_ll_bio(srv_dom_ll_bio_ndx) + 0.0001) ))/ (2.0 * square(se_dom_ll_bio(srv_dom_ll_bio_ndx) / obs_dom_ll_bio(srv_dom_ll_bio_ndx)));
+        // Simulate lognormal observations
+        // you may want include a bias correction for the mean of -0.5 sigma^2 so the distribution has expectation = predicted value.
+        SIMULATE {
+          obs_dom_ll_bio(srv_dom_ll_bio_ndx) = exp(rnorm(log(pred_dom_ll_bio(srv_dom_ll_bio_ndx) + 0.0001), (se_dom_ll_bio(srv_dom_ll_bio_ndx) / obs_dom_ll_bio(srv_dom_ll_bio_ndx))));
+        }
+      } else {
+        nll(3) -= dlnorm(obs_dom_ll_bio(srv_dom_ll_bio_ndx), log(pred_dom_ll_bio(srv_dom_ll_bio_ndx)) - 0.5 * se_dom_ll_bio(srv_dom_ll_bio_ndx) * se_dom_ll_bio(srv_dom_ll_bio_ndx), se_dom_ll_bio(srv_dom_ll_bio_ndx), true);
+        // Simulate lognormal observations
+        SIMULATE {
+          obs_dom_ll_bio(srv_dom_ll_bio_ndx) = exp(rnorm(log(pred_dom_ll_bio(srv_dom_ll_bio_ndx)) - 0.5 * se_dom_ll_bio(srv_dom_ll_bio_ndx) * se_dom_ll_bio(srv_dom_ll_bio_ndx), se_dom_ll_bio(srv_dom_ll_bio_ndx)));
+        }
       }
+
       ++srv_dom_ll_bio_ndx;
     }
 
@@ -735,11 +744,20 @@ Type CurrentAssessment(objective_function<Type>* obj) {
         pred_ll_cpue(ll_cpue_ndx) += natage_m(age_ndx, year_ndx) * S_m_mid(age_ndx, year_ndx) * sel_ll_m(age_ndx, ll_sel_by_year_indicator(year_ndx)) * male_mean_weight_by_age(age_ndx, year_ndx) + natage_f(age_ndx, year_ndx) * S_f_mid(age_ndx, year_ndx) * sel_ll_f(age_ndx, ll_sel_by_year_indicator(year_ndx)) * female_mean_weight_by_age(age_ndx, year_ndx);
       // account for catchability and times 2 ???
       pred_ll_cpue(ll_cpue_ndx)  *= ll_cpue_q(ll_cpue_q_by_year_indicator(year_ndx));
-      nll(5) += square((log(obs_ll_cpue(ll_cpue_ndx) + 0.0001) - log(pred_ll_cpue(ll_cpue_ndx) + 0.0001) ))/ (2.0 * square(se_ll_cpue(ll_cpue_ndx) / obs_ll_cpue(ll_cpue_ndx)));
-      // Simulate lognormal observations
-      // you may want include a bias correction for the mean of -0.5 sigma^2 so the distribution has expectation = predicted value.
-      SIMULATE {
-        obs_ll_cpue(ll_cpue_ndx) = exp(rnorm(log(pred_ll_cpue(ll_cpue_ndx) + 0.0001), (se_ll_cpue(ll_cpue_ndx) / obs_ll_cpue(ll_cpue_ndx))));
+      //nll(5) += square((log(obs_ll_cpue(ll_cpue_ndx) + 0.0001) - log(pred_ll_cpue(ll_cpue_ndx) + 0.0001) ))/ (2.0 * square(se_ll_cpue(ll_cpue_ndx) / obs_ll_cpue(ll_cpue_ndx)));
+      if(ll_cpue_likelihood == 0) {
+        nll(5) += square((log(obs_ll_cpue(ll_cpue_ndx) + 0.0001) - log(pred_ll_cpue(ll_cpue_ndx) + 0.0001) ))/ (2.0 * square(se_ll_cpue(ll_cpue_ndx) / obs_ll_cpue(ll_cpue_ndx)));
+        // Simulate lognormal observations
+        // you may want include a bias correction for the mean of -0.5 sigma^2 so the distribution has expectation = predicted value.
+        SIMULATE {
+          obs_ll_cpue(ll_cpue_ndx) = exp(rnorm(log(pred_ll_cpue(ll_cpue_ndx) + 0.0001), (se_ll_cpue(ll_cpue_ndx) / obs_ll_cpue(ll_cpue_ndx))));
+        }
+      } else {
+        nll(5) -= dlnorm(obs_ll_cpue(ll_cpue_ndx), log(pred_ll_cpue(ll_cpue_ndx)) - 0.5 * se_ll_cpue(ll_cpue_ndx) * se_ll_cpue(ll_cpue_ndx), se_ll_cpue(ll_cpue_ndx), true);
+        // Simulate lognormal observations
+        SIMULATE {
+          obs_ll_cpue(ll_cpue_ndx) = exp(rnorm(log(pred_ll_cpue(ll_cpue_ndx)) - 0.5 * se_ll_cpue(ll_cpue_ndx) * se_ll_cpue(ll_cpue_ndx), se_ll_cpue(ll_cpue_ndx)));
+        }
       }
       ++ll_cpue_ndx;
     }
@@ -954,11 +972,19 @@ Type CurrentAssessment(objective_function<Type>* obj) {
         pred_nmfs_trwl_bio(srv_nmfs_trwl_bio_ndx) += proportion_male(year_ndx) * natage_m(age_ndx, year_ndx) * S_m_mid(age_ndx, year_ndx) * sel_srv_nmfs_trwl_m(age_ndx, srv_nmfs_trwl_sel_by_year_indicator(year_ndx)) * male_mean_weight_by_age(age_ndx, year_ndx) + (1.0 - proportion_male(year_ndx)) * natage_f(age_ndx, year_ndx) * S_f_mid(age_ndx, year_ndx) * sel_srv_nmfs_trwl_f(age_ndx, srv_nmfs_trwl_sel_by_year_indicator(year_ndx)) * female_mean_weight_by_age(age_ndx, year_ndx);
       // account for catchability and times 2 ???
       pred_nmfs_trwl_bio(srv_nmfs_trwl_bio_ndx)  *= 2 * srv_nmfs_trwl_q(srv_nmfs_trwl_q_by_year_indicator(year_ndx));
-      nll(17) += square((log(obs_nmfs_trwl_bio(srv_nmfs_trwl_bio_ndx) + 0.0001) - log(pred_nmfs_trwl_bio(srv_nmfs_trwl_bio_ndx) + 0.0001) ))/ (2.0 * square(se_nmfs_trwl_bio(srv_nmfs_trwl_bio_ndx) / obs_nmfs_trwl_bio(srv_nmfs_trwl_bio_ndx)));
-      // Simulate lognormal observations
-      // you may want include a bias correction for the mean of -0.5 sigma^2 so the distribution has expectation = predicted value.
-      SIMULATE {
-        obs_nmfs_trwl_bio(srv_nmfs_trwl_bio_ndx) = exp(rnorm(log(pred_nmfs_trwl_bio(srv_nmfs_trwl_bio_ndx) + 0.0001), (se_nmfs_trwl_bio(srv_nmfs_trwl_bio_ndx) / obs_nmfs_trwl_bio(srv_nmfs_trwl_bio_ndx))));
+      if(srv_nmfs_trwl_bio_likelihood == 0) {
+        nll(17) += square((log(obs_nmfs_trwl_bio(srv_nmfs_trwl_bio_ndx) + 0.0001) - log(pred_nmfs_trwl_bio(srv_nmfs_trwl_bio_ndx) + 0.0001) ))/ (2.0 * square(se_nmfs_trwl_bio(srv_nmfs_trwl_bio_ndx) / obs_nmfs_trwl_bio(srv_nmfs_trwl_bio_ndx)));
+        // Simulate lognormal observations
+        // you may want include a bias correction for the mean of -0.5 sigma^2 so the distribution has expectation = predicted value.
+        SIMULATE {
+          obs_nmfs_trwl_bio(srv_nmfs_trwl_bio_ndx) = exp(rnorm(log(pred_nmfs_trwl_bio(srv_nmfs_trwl_bio_ndx) + 0.0001), (se_nmfs_trwl_bio(srv_nmfs_trwl_bio_ndx) / obs_nmfs_trwl_bio(srv_nmfs_trwl_bio_ndx))));
+        }
+      } else {
+        nll(17) -= dlnorm(obs_nmfs_trwl_bio(srv_nmfs_trwl_bio_ndx), log(pred_nmfs_trwl_bio(srv_nmfs_trwl_bio_ndx)) - 0.5 * se_nmfs_trwl_bio(srv_nmfs_trwl_bio_ndx) * se_nmfs_trwl_bio(srv_nmfs_trwl_bio_ndx), se_nmfs_trwl_bio(srv_nmfs_trwl_bio_ndx), true);
+        // Simulate lognormal observations
+        SIMULATE {
+          obs_nmfs_trwl_bio(srv_nmfs_trwl_bio_ndx) = exp(rnorm(log(pred_nmfs_trwl_bio(srv_nmfs_trwl_bio_ndx)) - 0.5 * se_nmfs_trwl_bio(srv_nmfs_trwl_bio_ndx) * se_nmfs_trwl_bio(srv_nmfs_trwl_bio_ndx), se_nmfs_trwl_bio(srv_nmfs_trwl_bio_ndx)));
+        }
       }
       ++srv_nmfs_trwl_bio_ndx;
     }
@@ -968,11 +994,19 @@ Type CurrentAssessment(objective_function<Type>* obj) {
         pred_jap_fishery_ll_bio(srv_jap_fishery_ll_bio_ndx) += natage_m(age_ndx, year_ndx) * S_m_mid(age_ndx, year_ndx) * sel_srv_jap_fishery_ll(age_ndx, srv_jap_fishery_ll_sel_by_year_indicator(year_ndx)) * male_mean_weight_by_age(age_ndx, year_ndx) + natage_f(age_ndx, year_ndx) * S_f_mid(age_ndx, year_ndx) * sel_srv_jap_fishery_ll(age_ndx, srv_jap_fishery_ll_sel_by_year_indicator(year_ndx)) * female_mean_weight_by_age(age_ndx, year_ndx);
       // account for catchability and times 2 ???
       pred_jap_fishery_ll_bio(srv_jap_fishery_ll_bio_ndx)  *= srv_jap_fishery_ll_q(srv_jap_fishery_ll_q_by_year_indicator(year_ndx));
-      nll(18) += square((log(obs_jap_fishery_ll_bio(srv_jap_fishery_ll_bio_ndx) + 0.0001) - log(pred_jap_fishery_ll_bio(srv_jap_fishery_ll_bio_ndx) + 0.0001) ))/ (2.0 * square(se_jap_fishery_ll_bio(srv_jap_fishery_ll_bio_ndx) / obs_jap_fishery_ll_bio(srv_jap_fishery_ll_bio_ndx)));
-      // Simulate lognormal observations
-      // you may want include a bias correction for the mean of -0.5 sigma^2 so the distribution has expectation = predicted value.
-      SIMULATE {
-        obs_jap_fishery_ll_bio(srv_jap_fishery_ll_bio_ndx) = exp(rnorm(log(pred_jap_fishery_ll_bio(srv_jap_fishery_ll_bio_ndx) + 0.0001), (se_jap_fishery_ll_bio(srv_jap_fishery_ll_bio_ndx) / obs_jap_fishery_ll_bio(srv_jap_fishery_ll_bio_ndx))));
+      if(srv_jap_fishery_ll_bio_likelihood == 0) {
+        nll(18) += square((log(obs_jap_fishery_ll_bio(srv_jap_fishery_ll_bio_ndx) + 0.0001) - log(pred_jap_fishery_ll_bio(srv_jap_fishery_ll_bio_ndx) + 0.0001) ))/ (2.0 * square(se_jap_fishery_ll_bio(srv_jap_fishery_ll_bio_ndx) / obs_jap_fishery_ll_bio(srv_jap_fishery_ll_bio_ndx)));
+        // Simulate lognormal observations
+        // you may want include a bias correction for the mean of -0.5 sigma^2 so the distribution has expectation = predicted value.
+        SIMULATE {
+          obs_jap_fishery_ll_bio(srv_jap_fishery_ll_bio_ndx) = exp(rnorm(log(pred_jap_fishery_ll_bio(srv_jap_fishery_ll_bio_ndx) + 0.0001), (se_jap_fishery_ll_bio(srv_jap_fishery_ll_bio_ndx) / obs_jap_fishery_ll_bio(srv_jap_fishery_ll_bio_ndx))));
+        }
+      } else {
+        nll(18) -= dlnorm(obs_jap_fishery_ll_bio(srv_jap_fishery_ll_bio_ndx), log(pred_jap_fishery_ll_bio(srv_jap_fishery_ll_bio_ndx)) - 0.5 * se_jap_fishery_ll_bio(srv_jap_fishery_ll_bio_ndx) * se_jap_fishery_ll_bio(srv_jap_fishery_ll_bio_ndx), se_jap_fishery_ll_bio(srv_jap_fishery_ll_bio_ndx), true);
+        // Simulate lognormal observations
+        SIMULATE {
+          obs_jap_fishery_ll_bio(srv_jap_fishery_ll_bio_ndx) = exp(rnorm(log(pred_jap_fishery_ll_bio(srv_jap_fishery_ll_bio_ndx)) - 0.5 * se_jap_fishery_ll_bio(srv_jap_fishery_ll_bio_ndx) * se_jap_fishery_ll_bio(srv_jap_fishery_ll_bio_ndx), se_jap_fishery_ll_bio(srv_jap_fishery_ll_bio_ndx)));
+        }
       }
       ++srv_jap_fishery_ll_bio_ndx;
     }
@@ -1205,11 +1239,11 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   REPORT(ll_catchatage_comp_likelihood);
   REPORT( ll_catchatlgth_comp_likelihood);
   REPORT(trwl_catchatlgth_comp_likelihood);
-  REPORT(dom_ll_bio_likelihood);
-  REPORT(jap_ll_bio_likelihood);
-  REPORT(nmfs_trwl_bio_likelihood);
+  REPORT(srv_dom_ll_bio_likelihood);
+  REPORT(srv_jap_ll_bio_likelihood);
+  REPORT(srv_nmfs_trwl_bio_likelihood);
   REPORT(ll_cpue_likelihood);
-  REPORT(jap_fishery_ll_bio_likelihood);
+  REPORT(srv_jap_fishery_ll_bio_likelihood);
   REPORT(srv_dom_ll_age_comp_likelihood);
   REPORT(srv_dom_ll_lgth_comp_likelihood);
   REPORT(srv_jap_ll_age_comp_likelihood);

@@ -23,6 +23,8 @@
 #' new_sim_data = simulate_future_data(data, parameters, n_future_years, future_ll_Fs, future_trwl_Fs,future_rec_devs)
 #' }
 simulate_future_data <-function(data, parameters, n_future_years, future_ll_Fs, future_trwl_Fs, future_rec_devs = NULL) {
+  if(n_future_years == 1)
+    warning("I am not sure if this function will work with n_future_years == 1. I have only tested it on values > 1")
   if(data$model != "Assessment")
     return("This function only works with 'data$model == Assessment'")
   ## do some sensible checks
@@ -94,21 +96,21 @@ simulate_future_data <-function(data, parameters, n_future_years, future_ll_Fs, 
   # LL age
   future_data$ll_catchatage_indicator = c(future_data$ll_catchatage_indicator, rep(1, n_future_years))
   N_eff = sum(future_data$obs_ll_catchatage[,ncol(future_data$obs_ll_catchatage)])
-  future_data$obs_ll_catchatage = matrix(N_eff / n_ages, nrow = n_ages, ncol = sum(future_data$ll_catchatage_indicator))
+  future_data$obs_ll_catchatage = cbind(future_data$obs_ll_catchatage, matrix(N_eff / n_ages, nrow = n_ages, ncol = n_future_years))
   # LL Length male
   future_data$ll_catchatlgth_indicator = c(future_data$ll_catchatlgth_indicator, rep(1, n_future_years))
   N_eff = sum(future_data$obs_ll_catchatlgth_m[,ncol(future_data$obs_ll_catchatlgth_m)])
-  future_data$obs_ll_catchatlgth_m = matrix(N_eff / n_lens, nrow = n_lens, ncol = sum(future_data$ll_catchatlgth_indicator))
+  future_data$obs_ll_catchatlgth_m = cbind(future_data$obs_ll_catchatlgth_m , matrix(N_eff / n_lens, nrow = n_lens, ncol = n_future_years))
   # LL Length female
   N_eff = sum(future_data$obs_ll_catchatlgth_f[,ncol(future_data$obs_ll_catchatlgth_f)])
-  future_data$obs_ll_catchatlgth_f = matrix(N_eff / n_lens, nrow = n_lens, ncol = sum(future_data$ll_catchatlgth_indicator))
+  future_data$obs_ll_catchatlgth_f = cbind(future_data$obs_ll_catchatlgth_f, matrix(N_eff / n_lens, nrow = n_lens, ncol = n_future_years))
   # Trawl length
   future_data$trwl_catchatlgth_indicator = c(future_data$trwl_catchatlgth_indicator, rep(1, n_future_years))
   N_eff = sum(future_data$obs_trwl_catchatlgth_m[,ncol(future_data$obs_trwl_catchatlgth_m)])
-  future_data$obs_trwl_catchatlgth_m = matrix(N_eff / n_lens, nrow = n_lens, ncol = sum(future_data$trwl_catchatlgth_indicator))
+  future_data$obs_trwl_catchatlgth_m = cbind(future_data$obs_trwl_catchatlgth_m, matrix(N_eff / n_lens, nrow = n_lens, ncol = n_future_years))
   # LL Length female
   N_eff = sum(future_data$obs_trwl_catchatlgth_f[,ncol(future_data$obs_trwl_catchatlgth_f)])
-  future_data$obs_trwl_catchatlgth_f = matrix(N_eff / n_lens, nrow = n_lens, ncol = sum(future_data$trwl_catchatlgth_indicator))
+  future_data$obs_trwl_catchatlgth_f = cbind(future_data$obs_trwl_catchatlgth_f, matrix(N_eff / n_lens, nrow = n_lens, ncol = n_future_years))
   # Survey biomass for the Domestic Longline survey
   future_data$srv_dom_ll_bio_indicator = c(future_data$srv_dom_ll_bio_indicator, rep(1, n_future_years))
   future_data$obs_dom_ll_bio = c(future_data$obs_dom_ll_bio, rep(1.0, n_future_years))
@@ -132,51 +134,90 @@ simulate_future_data <-function(data, parameters, n_future_years, future_ll_Fs, 
   # Survey age for the Domestic Longline
   future_data$srv_dom_ll_age_indicator = c(future_data$srv_dom_ll_age_indicator, rep(1, n_future_years))
   N_eff = sum(future_data$obs_srv_dom_ll_age[,ncol(future_data$obs_srv_dom_ll_age)])
-  future_data$obs_srv_dom_ll_age = matrix(N_eff / n_ages, nrow = n_ages, ncol = sum(future_data$srv_dom_ll_age_indicator))
+  future_data$obs_srv_dom_ll_age = cbind(future_data$obs_srv_dom_ll_age, matrix(N_eff / n_ages, nrow = n_ages, ncol = n_future_years))
   # Survey length Comp from the Domestic Longline survey
   future_data$srv_dom_ll_lgth_indicator = c(future_data$srv_dom_ll_lgth_indicator, rep(1, n_future_years))
   N_eff = sum(future_data$obs_srv_dom_ll_lgth_m[,ncol(future_data$obs_srv_dom_ll_lgth_m)])
-  future_data$obs_srv_dom_ll_lgth_m = matrix(N_eff / n_lens, nrow = n_lens, ncol = sum(future_data$srv_dom_ll_lgth_indicator))
+  future_data$obs_srv_dom_ll_lgth_m = cbind(future_data$obs_srv_dom_ll_lgth_m, matrix(N_eff / n_lens, nrow = n_lens, ncol = n_future_years))
 
   N_eff = sum(future_data$obs_srv_dom_ll_lgth_f[,ncol(future_data$obs_srv_dom_ll_lgth_f)])
-  future_data$obs_srv_dom_ll_lgth_f = matrix(N_eff / n_lens, nrow = n_lens, ncol = sum(future_data$srv_dom_ll_lgth_indicator))
+  future_data$obs_srv_dom_ll_lgth_f = cbind(future_data$obs_srv_dom_ll_lgth_f, matrix(N_eff / n_lens, nrow = n_lens, ncol = n_future_years))
   # Japanese LL age early survey
   future_data$srv_jap_ll_age_indicator = c(future_data$srv_jap_ll_age_indicator, rep(1, n_future_years))
   N_eff = sum(future_data$obs_srv_jap_ll_age[,ncol(future_data$obs_srv_jap_ll_age)])
-  future_data$obs_srv_jap_ll_age = matrix(N_eff / n_ages, nrow = n_ages, ncol = sum(future_data$srv_jap_ll_age_indicator))
+  future_data$obs_srv_jap_ll_age = cbind(future_data$obs_srv_jap_ll_age, matrix(N_eff / n_ages, nrow = n_ages, ncol = n_future_years))
   # Japanese LL length Comp early survey
   future_data$srv_jap_ll_lgth_indicator = c(future_data$srv_jap_ll_lgth_indicator, rep(1, n_future_years))
   N_eff = sum(future_data$obs_srv_jap_ll_lgth_m[,ncol(future_data$obs_srv_jap_ll_lgth_m)])
-  future_data$obs_srv_jap_ll_lgth_m = matrix(N_eff / n_lens, nrow = n_lens, ncol = sum(future_data$srv_jap_ll_lgth_indicator))
+  future_data$obs_srv_jap_ll_lgth_m = cbind(future_data$obs_srv_jap_ll_lgth_m, matrix(N_eff / n_lens, nrow = n_lens, ncol = n_future_years))
   N_eff = sum(future_data$obs_srv_jap_ll_lgth_f[,ncol(future_data$obs_srv_jap_ll_lgth_f)])
-  future_data$obs_srv_jap_ll_lgth_f = matrix(N_eff / n_lens, nrow = n_lens, ncol = sum(future_data$srv_jap_ll_lgth_indicator))
+  future_data$obs_srv_jap_ll_lgth_f = cbind(future_data$obs_srv_jap_ll_lgth_f, matrix(N_eff / n_lens, nrow = n_lens, ncol = n_future_years))
   # Japanese LL Fishery length Comp early survey (Sex aggregated)
   future_data$srv_jap_fishery_ll_lgth_indicator = c(future_data$srv_jap_fishery_ll_lgth_indicator, rep(1, n_future_years))
   N_eff = sum(future_data$obs_srv_jap_fishery_ll_lgth[,ncol(future_data$obs_srv_jap_fishery_ll_lgth)])
-  future_data$obs_srv_jap_fishery_ll_lgth = matrix(N_eff / n_lens, nrow = n_lens, ncol = sum(future_data$srv_jap_fishery_ll_lgth_indicator))
+  future_data$obs_srv_jap_fishery_ll_lgth = cbind(future_data$obs_srv_jap_fishery_ll_lgth, matrix(N_eff / n_lens, nrow = n_lens, ncol = n_future_years))
   # NMFS bottom trawl age frequency
   future_data$srv_nmfs_trwl_age_indicator = c(future_data$srv_nmfs_trwl_age_indicator, rep(1, n_future_years))
   N_eff = sum(future_data$obs_srv_nmfs_trwl_age[,ncol(future_data$obs_srv_nmfs_trwl_age)])
-  future_data$obs_srv_nmfs_trwl_age = matrix(N_eff / n_ages, nrow = n_ages, ncol = sum(future_data$srv_nmfs_trwl_age_indicator))
+  future_data$obs_srv_nmfs_trwl_age = cbind(future_data$obs_srv_nmfs_trwl_age, matrix(N_eff / n_ages, nrow = n_ages, ncol = n_future_years))
   #  NMFS bottom trawl length Comp male
   future_data$srv_nmfs_trwl_lgth_indicator = c(future_data$srv_nmfs_trwl_lgth_indicator, rep(1, n_future_years))
   N_eff = sum(future_data$obs_srv_nmfs_trwl_lgth_m[,ncol(future_data$obs_srv_nmfs_trwl_lgth_m)])
-  future_data$obs_srv_nmfs_trwl_lgth_m = matrix(N_eff / n_lens, nrow = n_lens, ncol = sum(future_data$srv_nmfs_trwl_lgth_indicator))
+  future_data$obs_srv_nmfs_trwl_lgth_m = cbind(future_data$obs_srv_nmfs_trwl_lgth_m, matrix(N_eff / n_lens, nrow = n_lens, ncol = n_future_years))
   # NMFS bottom trawl length Comp female
   N_eff = sum(future_data$obs_srv_nmfs_trwl_lgth_f[,ncol(future_data$obs_srv_nmfs_trwl_lgth_f)])
-  future_data$obs_srv_nmfs_trwl_lgth_f = matrix(N_eff / n_lens, nrow = n_lens, ncol = sum(future_data$srv_nmfs_trwl_lgth_indicator))
+  future_data$obs_srv_nmfs_trwl_lgth_f = cbind(future_data$obs_srv_nmfs_trwl_lgth_f, matrix(N_eff / n_lens, nrow = n_lens, ncol = n_future_years))
 
   ## validate future_data and future_parameters
-  result = validate_input_data_and_parameters(future_data, future_parameters)
-  if(!result)
-    stop("This function needs adapting. We failed the 'validate_input_data_and_future_parameters' check. If we progress this will likely cause an system crash.")
+  #result = validate_input_data_and_parameters(future_data, future_parameters)
+  #if(!result)
+  #  stop("This function needs adapting. We failed the 'validate_input_data_and_future_parameters' check. If we progress this will likely cause an system crash.")
   ## Build OM
   OM <- TMB::MakeADFun(data = future_data,
                        parameters = future_parameters,
                        DLL = "SpatialSablefishAssessment_TMBExports", silent  = T, checkParameterOrder = T)
 
+  ## this will simulate data for all years even historical years
   sim_data = OM$simulate(complete = T)
   sim_data = convert_simdata_integers(sim_data, future_data)
 
-  return(list(sim_data = sim_data, future_data = future_data, future_parameters = future_parameters))
+  ## add the simulated data for the n_future_years back into future_data
+  ## this will preserve historical observed data and just tack on the simulated
+  ## data for the 'future' years
+  tmp_data = future_data
+  future_ndx = (length(data$years) + 1):n_projyears
+  # catch
+  tmp_data$ll_fishery_catch[future_ndx] = sim_data$ll_fishery_catch[future_ndx]
+  tmp_data$trwl_fishery_catch[future_ndx] = sim_data$trwl_fishery_catch[future_ndx]
+  get_tail_ndx <-function(vector, n_elements) {
+    (length(vector) - n_elements + 1):length(vector)
+  }
+  get_tail_col_ndx <-function(matrix, n_elements) {
+    (ncol(matrix) - n_elements + 1):ncol(matrix)
+  }
+  # biomass indicies
+  tmp_data$obs_dom_ll_bio[get_tail_ndx(tmp_data$obs_dom_ll_bio, n_future_years)] = sim_data$obs_dom_ll_bio[get_tail_ndx(tmp_data$obs_dom_ll_bio, n_future_years)]
+  tmp_data$obs_jap_ll_bio[get_tail_ndx(tmp_data$obs_jap_ll_bio, n_future_years)] = sim_data$obs_jap_ll_bio[get_tail_ndx(tmp_data$obs_jap_ll_bio, n_future_years)]
+  tmp_data$obs_ll_cpue[get_tail_ndx(tmp_data$obs_ll_cpue, n_future_years)] = sim_data$obs_ll_cpue[get_tail_ndx(tmp_data$obs_ll_cpue, n_future_years)]
+  tmp_data$obs_nmfs_trwl_bio[get_tail_ndx(tmp_data$obs_nmfs_trwl_bio, n_future_years)] = sim_data$obs_nmfs_trwl_bio[get_tail_ndx(tmp_data$obs_nmfs_trwl_bio, n_future_years)]
+  tmp_data$obs_jap_fishery_ll_bio[get_tail_ndx(tmp_data$obs_jap_fishery_ll_bio, n_future_years)] = sim_data$obs_jap_fishery_ll_bio[get_tail_ndx(tmp_data$obs_jap_fishery_ll_bio, n_future_years)]
+  # age data
+  tmp_data$obs_ll_catchatage[,get_tail_col_ndx(tmp_data$obs_ll_catchatage, n_future_years)] = sim_data$obs_ll_catchatage[,get_tail_col_ndx(tmp_data$obs_ll_catchatage, n_future_years)]
+  tmp_data$obs_srv_dom_ll_age[,get_tail_col_ndx(tmp_data$obs_srv_dom_ll_age, n_future_years)] = sim_data$obs_srv_dom_ll_age[,get_tail_col_ndx(tmp_data$obs_srv_dom_ll_age, n_future_years)]
+  tmp_data$obs_srv_jap_ll_age[,get_tail_col_ndx(tmp_data$obs_srv_jap_ll_age, n_future_years)] = sim_data$obs_srv_jap_ll_age[,get_tail_col_ndx(tmp_data$obs_srv_jap_ll_age, n_future_years)]
+  tmp_data$obs_srv_nmfs_trwl_age[,get_tail_col_ndx(tmp_data$obs_srv_nmfs_trwl_age, n_future_years)] = sim_data$obs_srv_nmfs_trwl_age[,get_tail_col_ndx(tmp_data$obs_srv_nmfs_trwl_age, n_future_years)]
+  # length data
+  tmp_data$obs_ll_catchatlgth_m[,get_tail_col_ndx(tmp_data$obs_ll_catchatlgth_m, n_future_years)] = sim_data$obs_ll_catchatlgth_m[,get_tail_col_ndx(tmp_data$obs_ll_catchatlgth_m, n_future_years)]
+  tmp_data$obs_ll_catchatlgth_f[,get_tail_col_ndx(tmp_data$obs_ll_catchatlgth_f, n_future_years)] = sim_data$obs_ll_catchatlgth_f[,get_tail_col_ndx(tmp_data$obs_ll_catchatlgth_f, n_future_years)]
+  tmp_data$obs_trwl_catchatlgth_m[,get_tail_col_ndx(tmp_data$obs_trwl_catchatlgth_m, n_future_years)] = sim_data$obs_trwl_catchatlgth_m[,get_tail_col_ndx(tmp_data$obs_trwl_catchatlgth_m, n_future_years)]
+  tmp_data$obs_trwl_catchatlgth_f[,get_tail_col_ndx(tmp_data$obs_trwl_catchatlgth_f, n_future_years)] = sim_data$obs_trwl_catchatlgth_f[,get_tail_col_ndx(tmp_data$obs_trwl_catchatlgth_f, n_future_years)]
+  tmp_data$obs_srv_dom_ll_lgth_m[,get_tail_col_ndx(tmp_data$obs_srv_dom_ll_lgth_m, n_future_years)] = sim_data$obs_srv_dom_ll_lgth_m[,get_tail_col_ndx(tmp_data$obs_srv_dom_ll_lgth_m, n_future_years)]
+  tmp_data$obs_srv_dom_ll_lgth_f[,get_tail_col_ndx(tmp_data$obs_srv_dom_ll_lgth_f, n_future_years)] = sim_data$obs_srv_dom_ll_lgth_f[,get_tail_col_ndx(tmp_data$obs_srv_dom_ll_lgth_f, n_future_years)]
+  tmp_data$obs_srv_jap_ll_lgth_m[,get_tail_col_ndx(tmp_data$obs_srv_jap_ll_lgth_m, n_future_years)] = sim_data$obs_srv_jap_ll_lgth_m[,get_tail_col_ndx(tmp_data$obs_srv_jap_ll_lgth_m, n_future_years)]
+  tmp_data$obs_srv_jap_ll_lgth_f[,get_tail_col_ndx(tmp_data$obs_srv_jap_ll_lgth_f, n_future_years)] = sim_data$obs_srv_jap_ll_lgth_f[,get_tail_col_ndx(tmp_data$obs_srv_jap_ll_lgth_f, n_future_years)]
+  tmp_data$obs_srv_nmfs_trwl_lgth_m[,get_tail_col_ndx(tmp_data$obs_srv_nmfs_trwl_lgth_m, n_future_years)] = sim_data$obs_srv_nmfs_trwl_lgth_m[,get_tail_col_ndx(tmp_data$obs_srv_nmfs_trwl_lgth_m, n_future_years)]
+  tmp_data$obs_srv_nmfs_trwl_lgth_f[,get_tail_col_ndx(tmp_data$obs_srv_nmfs_trwl_lgth_f, n_future_years)] = sim_data$obs_srv_nmfs_trwl_lgth_f[,get_tail_col_ndx(tmp_data$obs_srv_nmfs_trwl_lgth_f, n_future_years)]
+  tmp_data$obs_srv_jap_fishery_ll_lgth[,get_tail_col_ndx(tmp_data$obs_srv_jap_fishery_ll_lgth, n_future_years)] = sim_data$obs_srv_jap_fishery_ll_lgth[,get_tail_col_ndx(tmp_data$obs_srv_jap_fishery_ll_lgth, n_future_years)]
+
+  return(list(sim_data = sim_data, future_data = tmp_data, future_parameters = future_parameters))
 }

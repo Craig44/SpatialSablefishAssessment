@@ -343,8 +343,8 @@ convert_simdata_integers <-function(sim_data, OM_data) {
     sim_data$ll_catchatlgth_comp_likelihood = OM_data$ll_catchatlgth_comp_likelihood
     sim_data$trwl_catchatlgth_covar_structure = OM_data$trwl_catchatlgth_covar_structure
     sim_data$trwl_catchatlgth_comp_likelihood = OM_data$trwl_catchatlgth_comp_likelihood
-    sim_data$dom_ll_bio_likelihood = OM_data$dom_ll_bio_likelihood
-    sim_data$jap_ll_bio_likelihood = OM_data$jap_ll_bio_likelihood
+    sim_data$srv_dom_ll_bio_likelihood = OM_data$srv_dom_ll_bio_likelihood
+    sim_data$srv_jap_ll_bio_likelihood = OM_data$srv_jap_ll_bio_likelihood
     sim_data$ll_cpue_likelihood = OM_data$ll_cpue_likelihood
     sim_data$srv_dom_ll_age_covar_structure = OM_data$srv_dom_ll_age_covar_structure
     sim_data$srv_dom_ll_age_comp_likelihood = OM_data$srv_dom_ll_age_comp_likelihood
@@ -358,8 +358,8 @@ convert_simdata_integers <-function(sim_data, OM_data) {
     sim_data$srv_nmfs_trwl_age_comp_likelihood = OM_data$srv_nmfs_trwl_age_comp_likelihood
     sim_data$srv_nmfs_trwl_lgth_covar_structure = OM_data$srv_nmfs_trwl_lgth_covar_structure
     sim_data$srv_nmfs_trwl_lgth_comp_likelihood = OM_data$srv_nmfs_trwl_lgth_comp_likelihood
-    sim_data$nmfs_trwl_bio_likelihood = OM_data$nmfs_trwl_bio_likelihood
-    sim_data$jap_fishery_ll_bio_likelihood = OM_data$jap_fishery_ll_bio_likelihood
+    sim_data$srv_nmfs_trwl_bio_likelihood = OM_data$srv_nmfs_trwl_bio_likelihood
+    sim_data$srv_jap_fishery_ll_bio_likelihood = OM_data$srv_jap_fishery_ll_bio_likelihood
     sim_data$srv_jap_fishery_ll_lgth_covar_structure = OM_data$srv_jap_fishery_ll_lgth_covar_structure
     sim_data$srv_jap_fishery_ll_lgth_comp_likelihood = OM_data$srv_jap_fishery_ll_lgth_comp_likelihood
     sim_data$catch_likelihood = OM_data$catch_likelihood

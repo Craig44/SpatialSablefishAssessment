@@ -771,7 +771,7 @@ get_index = function(MLE_report, region_key = NULL, survey_labels = NULL) {
       ## convert the SE of an estimator to a standard deviation that is the
       ## right scale for the lognormal distribution
       ## first calculate CV = sigma/mean then pass this to the log_sigma function
-      if(MLE_report$jap_fishery_ll_bio_likelihood == 0)
+      if(MLE_report$srv_jap_fishery_ll_bio_likelihood == 0)
         jap_fishery_cpue$SE = log_sigma(jap_fishery_cpue$SE / jap_fishery_cpue$Observed)
       full_df = rbind(full_df, jap_fishery_cpue)
     }
@@ -783,19 +783,19 @@ get_index = function(MLE_report, region_key = NULL, survey_labels = NULL) {
     }
     if(sum(MLE_report$srv_jap_ll_bio_indicator) > 0) {
       jap_srv_ll = data.frame(Year = MLE_report$years[MLE_report$srv_jap_ll_bio_indicator == 1],SE = MLE_report$se_jap_ll_bio, Observed = MLE_report$obs_jap_ll_bio, Predicted = MLE_report$pred_jap_ll_bio, observation = "Japanese LL survey")
-      if(MLE_report$jap_ll_bio_likelihood == 0)
+      if(MLE_report$srv_jap_ll_bio_likelihood == 0)
         jap_srv_ll$SE = log_sigma(jap_srv_ll$SE / jap_srv_ll$Observed)
       full_df = rbind(full_df, jap_srv_ll)
     }
     if(sum(MLE_report$srv_nmfs_trwl_bio_indicator) > 0) {
       srv_nmfs_trwl = data.frame(Year = MLE_report$years[MLE_report$srv_nmfs_trwl_bio_indicator == 1],SE = MLE_report$se_nmfs_trwl_bio, Observed = MLE_report$obs_nmfs_trwl_bio, Predicted = MLE_report$pred_nmfs_trwl_bio, observation = "NMFS trawl survey")
-      if(MLE_report$nmfs_trwl_bio_likelihood == 0)
+      if(MLE_report$srv_nmfs_trwl_bio_likelihood == 0)
         srv_nmfs_trwl$SE = log_sigma(srv_nmfs_trwl$SE / srv_nmfs_trwl$Observed)
       full_df = rbind(full_df, srv_nmfs_trwl)
     }
     if(sum(MLE_report$srv_dom_ll_bio_indicator) > 0) {
       srv_dom_ll = data.frame(Year = MLE_report$years[MLE_report$srv_dom_ll_bio_indicator == 1],SE = MLE_report$se_dom_ll_bio, Observed = MLE_report$obs_dom_ll_bio, Predicted = MLE_report$pred_dom_ll_bio, observation = "Domestic LL survey")
-      if(MLE_report$dom_ll_bio_likelihood == 0)
+      if(MLE_report$srv_dom_ll_bio_likelihood == 0)
         srv_dom_ll$SE = log_sigma(srv_dom_ll$SE / srv_dom_ll$Observed)
       full_df = rbind(full_df, srv_dom_ll)
     }

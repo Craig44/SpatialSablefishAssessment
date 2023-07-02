@@ -13,4 +13,5 @@ region_key = data.frame(area = "Alaska", TMB_ndx = 0)
 
 ## save them, these will be called by unit-tests to validate the model
 ## hasn't changed
+validate_input_data_and_parameters(data, parameters)
 save(data, parameters, region_key, file = file.path("inst", "testdata", "MockAssessmentModel.RData"))
