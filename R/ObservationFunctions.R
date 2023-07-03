@@ -31,7 +31,7 @@ get_negloglike <- function(MLE_report) {
     "Longline_F_penalty",
     "Trawl_F_penalty")
 
-    nll_df = data.frame(negloglike = round(MLE_report$nll,4),
+    nll_df = data.frame(negloglike = round(MLE_report$nll,4), weighted_negloglike = round(MLE_report$nll_weighted, 4),
                         observations = nll_label, distribution = NA)
 
   } else {
