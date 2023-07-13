@@ -76,7 +76,7 @@ jobs:
         uses: actions/upload-artifact@v1
         with:
           name: SpatialSablefishAssessment.tar.gz
-          path: SpatialSablefishAssessment_1.0.1.tar.gz
+          path: SpatialSablefishAssessment_1.1.0.tar.gz
 
 # Need to first create an empty gh-pages branch
 # see https://pkgdown.r-lib.org/reference/deploy_site_github.html
