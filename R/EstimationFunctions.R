@@ -282,7 +282,7 @@ get_TMB_vector_from_array <- function(element, array) {
 #' @param est_fixed_AF_theta bool whether you want to estimate the theta parameter for fixed gear AF
 #' @param est_fixed_LF_theta bool whether you want to estimate the theta parameter for fixed gear LF
 #' @param est_trwl_LF_theta bool whether you want to estimate the theta parameter for trawl gear LF
-#' @param est_AF_theta vector of bool specifying whether you want to estimate the theta parameter for survey AF likelihood. length is n_suveys
+#' @param est_srv_AF_theta vector of bool specifying whether you want to estimate the theta parameter for survey AF likelihood. length is n_suveys
 #' @param est_prop_male_recruit vector of years that indicate time-blocks or one of the following strings
 #' \itemize{
 #'   \item `off`: not estimated
@@ -313,7 +313,7 @@ set_up_parameters <- function(data, parameters,
                               est_fixed_AF_theta = F,
                               est_fixed_LF_theta = F,
                               est_trwl_LF_theta = F,
-                              est_AF_theta = F,
+                              est_srv_AF_theta = F,
                               est_prop_male_recruit = "off",
                               est_SR_pars = F
 
@@ -339,11 +339,11 @@ set_up_parameters <- function(data, parameters,
       stop(paste0("srv_sel_third_param_shared_by_sex needs to be of length ", data$n_surveys))
     }
   }
-  if(length(est_AF_theta) != data$n_surveys) {
-    if(length(est_AF_theta) == 1) {
-      est_AF_theta = rep(est_AF_theta[1], data$n_surveys)
+  if(length(est_srv_AF_theta) != data$n_surveys) {
+    if(length(est_srv_AF_theta) == 1) {
+      est_srv_AF_theta = rep(est_srv_AF_theta[1], data$n_surveys)
     } else {
-      stop(paste0("est_AF_theta needs to be of length ", data$n_surveys))
+      stop(paste0("est_srv_AF_theta needs to be of length ", data$n_surveys))
     }
   }
   if(is.numeric(tag_reporting_rate)) {
@@ -452,7 +452,7 @@ set_up_parameters <- function(data, parameters,
   if(data$trwl_catchatlgth_comp_likelihood == 0)
     est_trwl_LF_theta = F
   if(all(data$srv_catchatage_comp_likelihood == 0))
-    est_AF_theta = rep(F, data$n_surveys)
+    est_srv_AF_theta = rep(F, data$n_surveys)
 
   ## now fix them
   if(!est_fixed_AF_theta)
@@ -461,12 +461,12 @@ set_up_parameters <- function(data, parameters,
     parameters_completely_fixed = c(parameters_completely_fixed, c("trans_fixed_catchatlgth_error"))
   if(!est_trwl_LF_theta)
     parameters_completely_fixed = c(parameters_completely_fixed, c("trans_trwl_catchatlgth_error"))
-  if(!all(est_AF_theta)) {
+  if(!all(est_srv_AF_theta)) {
     parameters_completely_fixed = c(parameters_completely_fixed, c("trans_srv_catchatage_error"))
-  } else if(any(est_AF_theta)) {
+  } else if(any(!est_srv_AF_theta)) {
     thetas_to_turn_off = NULL
     for(srv_ndx in 1:data$n_surveys) {
-      if(est_AF_theta[srv_ndx]) {
+      if(est_srv_AF_theta[srv_ndx]) {
         thetas_to_turn_off = c(thetas_to_turn_off, srv_ndx)
       }
     }

@@ -25,7 +25,7 @@
  Single Area (combined across GOA, BS, AI)
  Split sexes, seperate weight at ages, age-length keys and unsexed
  All fishery catch include  catch and discards
- LL catch is adjusted (increased) for whale depredation (CPUE is not ajusted)
+ LL catch is adjusted (increased) for whale depredation (CPUE is not adjusted)
  DOM LL survey RPN/RPW is adjusted (increased) for whale depredation
  All fisheries and surveys are across entire model domain (GOA, BS, AI)
  */
@@ -402,9 +402,6 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   array<Type> sel_srv_nmfs_trwl_m(n_ages, ln_srv_nmfs_trwl_sel_pars.dim(0));              // Longline selectivity Male. dim: n_ages x n_projyears
   array<Type> sel_srv_jap_fishery_ll(n_ages, ln_srv_jap_fishery_ll_sel_pars.dim(0));              // Longline selectivity Male. dim: n_ages x n_projyears
 
-
-
-
   Type alpha = 0.0;                                       // alpha for the stock recruit relationship
   Type beta = 0.0;                                        // beta for the stock recruit relationship
   Type Bzero = 0.0;
@@ -427,7 +424,7 @@ Type CurrentAssessment(objective_function<Type>* obj) {
    */
   weight_maturity_prod_f = maturity * female_mean_weight_by_age;
   /*
-   * Build selectivity objects - The BuildSelectivity() method can be found in SetupSelectivities.hpp
+   * Build selectivity objects - The BuildSelectivity() method can be found in inst/include/SetupSelectivities.hpp
    */
   BuildSelectivity(ll_sel_pars.col(0), ll_sel_type, ages, sel_ll_m, false);
   BuildSelectivity(ll_sel_pars.col(1), ll_sel_type, ages, sel_ll_f, false);

@@ -4,7 +4,7 @@
 \alias{get_comp_sample_size}
 \title{get_comp_sample_size}
 \usage{
-get_comp_sample_size(MLE_report, data, region_key = NULL)
+get_comp_sample_size(MLE_report, data, region_key = NULL, survey_labels = NULL)
 }
 \arguments{
 \item{MLE_report}{a list that is output from obj$report() usually once an optimsation routine has been done.}
@@ -12,6 +12,8 @@ get_comp_sample_size(MLE_report, data, region_key = NULL)
 \item{data}{list of input data}
 
 \item{region_key}{data.frame with colnames area and TMB_ndx for providing real region names to objects}
+
+\item{survey_labels}{character vector for each of the n_surveys}
 }
 \value{
 data.frame

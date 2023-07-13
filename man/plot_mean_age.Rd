@@ -21,7 +21,7 @@ plot_mean_age(
 \item all
 \item trwl
 \item fixed
-\item srv_dom_ll
+\item srv
 }}
 
 \item{subset_years}{vector of years to plot it for}

@@ -28,7 +28,7 @@ set_up_parameters(
   est_fixed_AF_theta = F,
   est_fixed_LF_theta = F,
   est_trwl_LF_theta = F,
-  est_AF_theta = F,
+  est_srv_AF_theta = F,
   est_prop_male_recruit = "off",
   est_SR_pars = F
 )
@@ -88,7 +88,7 @@ set_up_parameters(
 
 \item{est_trwl_LF_theta}{bool whether you want to estimate the theta parameter for trawl gear LF}
 
-\item{est_AF_theta}{vector of bool specifying whether you want to estimate the theta parameter for survey AF likelihood. length is n_suveys}
+\item{est_srv_AF_theta}{vector of bool specifying whether you want to estimate the theta parameter for survey AF likelihood. length is n_suveys}
 
 \item{est_prop_male_recruit}{vector of years that indicate time-blocks or one of the following strings
 \itemize{

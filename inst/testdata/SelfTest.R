@@ -118,11 +118,12 @@ OM <- TMB::MakeADFun(data = data,
                      parameters = parameters,
                      map = na_map,
                      DLL = "SpatialSablefishAssessment_TMBExports", silent  = T)
-
 ## run simulation
 est_lst = OM_lst = list()
+OM_lst[["OM"]] = OM$report()
 set.seed(123)
-for(j in 1:50) {
+n_sims = 20
+for(j in 1:n_sims) {
   if(j %% 10 ==  0)
     cat("sim iteration = ", j, "\n")
   ## simulate OM_data
@@ -164,24 +165,45 @@ for(j in 1:50) {
   }
 }
 
-## retrieve parameters
+## Look at relative error in derived quantitites
 ssbs = get_multiple_ssbs(est_lst, run_labels = names(est_lst), depletion = F)
-ggplot(ssbs, aes(x = Year, y = SSB, col = label, linetype = label)) +
-  geom_line(linewidth = 1.1) +
+ssbs_OM = get_multiple_ssbs(OM_lst, run_labels = names(OM_lst), depletion = F)
+## merge OM into EM to calcualte relative error
+ssbs = ssbs %>% left_join(ssbs_OM, by = c("Region", "Year")) %>% mutate(RE = (SSB.x - SSB.y)/SSB.y * 100)
+ggplot(ssbs, aes(x = Year, y = RE, group = Year)) +
+  geom_boxplot() +
+  geom_hline(yintercept = 0, col = "red", linewidth = 1.1, linetype = "dashed") +
   theme_bw()
 
 Fs = get_multiple_Fs(est_lst, run_labels = names(est_lst))
+Fs_OM = get_multiple_Fs(OM_lst, run_labels = names(OM_lst))
+## merge OM into EM to calcualte relative error
+Fs = Fs %>% left_join(Fs_OM, by = c("Region", "Year","Fishery")) %>% mutate(RE = (F.x - F.y)/F.y * 100)
+ggplot(Fs, aes(x = Year, y = RE, group = Year)) +
+  geom_boxplot() +
+  geom_hline(yintercept = 0, col = "red", linewidth = 1.1, linetype = "dashed") +
+  theme_bw() +
+  facet_wrap(~Fishery)
 
 catch = get_multiple_catch_fits(est_lst, run_labels = names(est_lst))
+catch_OM = get_multiple_catch_fits(OM_lst, run_labels = names(OM_lst))
+catch = catch %>% left_join(catch_OM, by = c("Region", "Year","Fishery","type")) %>% mutate(RE = (Catch.x - Catch.y)/Catch.y * 100)
+
+ggplot(catch %>% filter(type == "Predicted"), aes(x = Year, y = RE, group = Year)) +
+  geom_boxplot() +
+  geom_hline(yintercept = 0, col = "red", linewidth = 1.1, linetype = "dashed") +
+  theme_bw() +
+  facet_wrap(~Fishery)
+
 ggplot() +
-  geom_point(data = catch %>% filter(type == "Observed"), aes(x = Year, y = Catch, shape = label), size = 1.6) +
-  geom_line(data = catch %>% filter(type == "Predicted"), aes(x = Year, y = Catch, col = label, linetype = label), linewidth = 0.9) +
+  geom_point(data = catch %>% filter(type == "Observed"), aes(x = Year, y = Catch.x), size = 1.6, alpha = 0.3) +
+  geom_line(data = catch %>% filter(type == "Predicted"), aes(x = Year, y = Catch.x), linewidth = 0.9, alpha = 0.3) +
   theme_bw() +
   facet_wrap(~Fishery)
 
 ## relative index fits
 index_df = get_multiple_index_fits(est_lst, run_labels = names(est_lst))
-ggplot(data = index_df, aes(x = Year, y = Pearsons_residuals, col = label, shape = label)) +
+ggplot(data = index_df, aes(x = Year, y = Pearsons_residuals)) +
   geom_point(size= 1.4) +
   facet_wrap(~observation) +
   theme_bw()
