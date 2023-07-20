@@ -356,9 +356,9 @@ knitr::opts_chunk$set(warning = FALSE, message = FALSE)
     write("## Mean age plots", file = model_input_file, append = T)
     write(paste0("```{r ", j,"_mean_age, eval = T, echo = F, results = T, warning = F, out.width =  '100%', fig.height = 4.5}"), file = model_input_file, append = T)
     mean_age = '
-    plot_mean_age(MLE_report = mle_report, region_key = region_key,observation = "srv_dom_ll",sex = "male")+
+    plot_mean_age(MLE_report = mle_report, region_key = region_key,observation = "srv",sex = "male")+
       ggtitle("Male mean age survey")
-    plot_mean_age(MLE_report = mle_report, region_key = region_key,observation = "srv_dom_ll",sex = "female")+
+    plot_mean_age(MLE_report = mle_report, region_key = region_key,observation = "srv",sex = "female")+
       ggtitle("Female mean age survey")
     plot_mean_age(MLE_report = mle_report, region_key = region_key,observation = "fixed",sex = "male")+
       ggtitle("Male mean age fixed")
@@ -425,32 +425,32 @@ knitr::opts_chunk$set(warning = FALSE, message = FALSE)
     age_comp = '
     ## Survey
     first_year_set = c(1981, seq(from = 1985, to = 1993, by = 2), 1996:1999)
-    plot_AF(MLE_report = mle_report, region_key = region_key, observation = "srv_dom_ll", subset_years = first_year_set, sex = "male") +
+    plot_AF(MLE_report = mle_report, region_key = region_key, observation = "srv", subset_years = first_year_set, sex = "male") +
       ggtitle("Male survey AF") +
       guides(shape = "none", linetype = "none")
 
     second_year_set = 2000:2010
-    plot_AF(MLE_report = mle_report, region_key = region_key, observation = "srv_dom_ll", subset_years = second_year_set, sex = "male") +
+    plot_AF(MLE_report = mle_report, region_key = region_key, observation = "srv", subset_years = second_year_set, sex = "male") +
       ggtitle("Male survey AF") +
       guides(shape = "none", linetype = "none")
 
     third_year_set = 2011:2021
-    plot_AF(MLE_report = mle_report, region_key = region_key, observation = "srv_dom_ll", subset_years = third_year_set, sex = "male") +
+    plot_AF(MLE_report = mle_report, region_key = region_key, observation = "srv", subset_years = third_year_set, sex = "male") +
       ggtitle("Male survey AF") +
       guides(shape = "none", linetype = "none")
 
     first_year_set = c(1981, seq(from = 1985, to = 1993, by = 2), 1996:1999)
-    plot_AF(MLE_report = mle_report, region_key = region_key, observation = "srv_dom_ll", subset_years = first_year_set, sex = "female") +
+    plot_AF(MLE_report = mle_report, region_key = region_key, observation = "srv", subset_years = first_year_set, sex = "female") +
       ggtitle("Female survey AF") +
       guides(shape = "none", linetype = "none")
 
     second_year_set = 1999:2010
-    plot_AF(MLE_report = mle_report, region_key = region_key, observation = "srv_dom_ll", subset_years = second_year_set, sex = "female") +
+    plot_AF(MLE_report = mle_report, region_key = region_key, observation = "srv", subset_years = second_year_set, sex = "female") +
       ggtitle("Female survey AF") +
       guides(shape = "none", linetype = "none")
 
     third_year_set = 2011:2021
-    plot_AF(MLE_report = mle_report, region_key = region_key, observation = "srv_dom_ll", subset_years = third_year_set, sex = "female") +
+    plot_AF(MLE_report = mle_report, region_key = region_key, observation = "srv", subset_years = third_year_set, sex = "female") +
       ggtitle("Female survey AF") +
       guides(shape = "none", linetype = "none")
 
@@ -738,7 +738,7 @@ ggplot(data = mean_age_df %>% dplyr::filter(observation == "fixed")) +
 
   plt_srv_age =
     '
-ggplot(data = mean_age_df %>% dplyr::filter(observation == "srv_dom_ll")) +
+ggplot(data = mean_age_df %>% dplyr::filter(observation == "srv")) +
   geom_point(aes(x = Year, y = Oy, col = "Observed"), size = 1.6) +
   geom_errorbar(aes(x = Year, ymin=ObsloAdj, ymax=ObshiAdj, col = "Observed"), width=.2, position=position_dodge(.9)) +
   geom_line(aes(x = Year, y = Ey, col = label, linetype = label)) +

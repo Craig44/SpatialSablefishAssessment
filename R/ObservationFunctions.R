@@ -197,8 +197,9 @@ get_AF <- function(MLE_report, observation = "fixed", subset_years = NULL, sex =
       ## TODO: this will need to be tightened up to deal with multiple surveys
       if(nrow(NA_ndx) > 0) {
         for(i in 1:nrow(NA_ndx)) {
-          obs_df[,NA_ndx[i,1], NA_ndx[i,2],1] = NA
-          pred_df[,NA_ndx[i,1], NA_ndx[i,2],1] = NA
+          ##cat("i = ", i, " ", sum(obs_df[,NA_ndx[i,1], NA_ndx[i,2],NA_ndx[i,3]]), "\n");
+          obs_df[,NA_ndx[i,1], NA_ndx[i,2],NA_ndx[i,3]] = NA
+          pred_df[,NA_ndx[i,1], NA_ndx[i,2],NA_ndx[i,3]] = NA
         }
       }
       molten_obs = reshape2::melt(obs_df)
@@ -217,7 +218,7 @@ get_AF <- function(MLE_report, observation = "fixed", subset_years = NULL, sex =
       molten_obs = reshape2::melt(obs_df)
       molten_pred = reshape2::melt(pred_df)
       colnames(molten_obs) = c("S_Age", "Region", "Year", "Observed")
-      molten_obs$Survey = 1 ## add a dummy variable so the code can be streamlined with suryve AF
+      molten_obs$Survey = factor(1) ## add a dummy variable so the code can be streamlined with suryve AF
     }
     molten_obs$Predicted = molten_pred$value
     if(is.null(region_key)) {
@@ -823,13 +824,10 @@ get_index = function(MLE_report, region_key = NULL, survey_labels = NULL) {
     ## combine all datasets
     full_df$Region = 1
   } else {
-    surveys = paste0("Survey ", 1:MLE_report$n_surveys)
-    if(!is.null(survey_labels))
-      surveys = survey_labels
-
+    surveys = 1:MLE_report$n_surveys
     dimnames(MLE_report$obs_srv_bio) = dimnames(MLE_report$pred_srv_bio) =   dimnames(MLE_report$obs_srv_se) = list(regions, years, surveys)
-    MLE_report$obs_srv_bio[MLE_report$srv_dom_indicator == 0] = NA
-    MLE_report$obs_srv_se[MLE_report$srv_dom_indicator == 0] = NA
+    MLE_report$obs_srv_bio[MLE_report$srv_bio_indicator == 0] = NA
+    MLE_report$obs_srv_se[MLE_report$srv_bio_indicator == 0] = NA
     MLE_report$pred_srv_bio[MLE_report$srv_bio_indicator == 0] = NA
 
     index_obs = reshape2::melt(MLE_report$obs_srv_bio)
@@ -842,8 +840,18 @@ get_index = function(MLE_report, region_key = NULL, survey_labels = NULL) {
     ## convert the SE of an estimator to a standard deviation that is the
     ## right scale for the lognormal distribution
     ## first calculate CV = sigma/mean then pass this to the log_sigma function
-    if(MLE_report$srv_bio_likelihood == 0)
-      index_se$SE = log_sigma(index_se$SE / index_obs$Observed)
+    for(s_ndx in 1:MLE_report$n_surveys) {
+      if(MLE_report$srv_bio_likelihood[s_ndx] == 0) {
+        index_se$SE[which(index_se$Survey == s_ndx & index_se$SE != 0)] = log_sigma(index_se$SE[which(index_se$Survey == s_ndx & index_se$SE != 0)] / index_obs$Observed[which(index_se$Survey == s_ndx & index_se$SE != 0)])
+      }
+    }
+    if(!is.null(survey_labels)) {
+      index_obs$Survey = survey_labels[index_obs$Survey]
+    } else {
+      surveys = paste0("Survey ", 1:MLE_report$n_surveys)
+      index_obs$Survey = surveys[index_obs$Survey]
+    }
+
     index_obs$SE = index_se$SE
     full_df = index_obs
   }
@@ -934,11 +942,11 @@ simulate_observations <- function(obj, n_sims = 200, sd_report = NULL, include_p
   }
   mle_rep = obj$report(all_pars)
   ## get the real observed data and save them in the following datasets
-  obs_index_df = get_index(mle_rep, region_key = region_key, survey_labels)
-  obs_srv_AF_df = get_AF(mle_rep, observation = "srv", region_key = region_key, survey_labels)
-  obs_fixed_AF_df = get_AF(mle_rep, observation = "fixed", region_key = region_key)
-  obs_fixed_LF_df = get_LF(mle_rep, observation = "fixed", region_key = region_key)
-  obs_trwl_LF_df = get_LF(mle_rep, observation = "trwl", region_key = region_key)
+  obs_index_df = get_index(MLE_report = mle_rep, region_key = region_key, survey_labels = survey_labels)
+  obs_srv_AF_df = get_AF(MLE_report = mle_rep, observation = "srv", sex = "both", region_key = region_key, survey_labels = survey_labels)
+  obs_fixed_AF_df = get_AF(MLE_report = mle_rep, observation = "fixed", region_key = region_key)
+  obs_fixed_LF_df = get_LF(MLE_report = mle_rep, observation = "fixed", region_key = region_key)
+  obs_trwl_LF_df = get_LF(MLE_report = mle_rep, observation = "trwl", region_key = region_key)
   if(sum(mle_rep$tag_recovery_indicator_by_year) > 0)
     obs_tag_data_df = get_tag_recovery_obs_fitted_values(MLE_report = mle_rep, region_key = region_key)
 
@@ -956,12 +964,12 @@ simulate_observations <- function(obj, n_sims = 200, sd_report = NULL, include_p
     }
     ## store sim obs
     # survey biomass
-    index_df = get_index(this_sim, region_key = region_key) %>% rename(Simulated = Observed)
+    index_df = get_index(this_sim, region_key = region_key, survey_labels = survey_labels) %>% rename(Simulated = Observed)
     index_df$Observed = obs_index_df$Observed
     index_df$sim = sim_iter
     sim_srv_bio = rbind(sim_srv_bio, index_df)
     # survey AF
-    srv_AF = get_AF(MLE_report = this_sim, observation = "srv", region_key = region_key) %>% rename(Simulated = Observed)
+    srv_AF = get_AF(MLE_report = this_sim, observation = "srv", region_key = region_key, survey_labels = survey_labels) %>% rename(Simulated = Observed)
     srv_AF$Observed = obs_srv_AF_df$Observed
     srv_AF$sim = sim_iter
     sim_srv_AF = rbind(sim_srv_AF, srv_AF)

@@ -4,7 +4,12 @@
 \alias{get_other_derived_quantities}
 \title{get_other_derived_quantities}
 \usage{
-get_other_derived_quantities(MLE_report, data, region_key = NULL)
+get_other_derived_quantities(
+  MLE_report,
+  data,
+  region_key = NULL,
+  survey_labels = NULL
+)
 }
 \arguments{
 \item{MLE_report}{a list that is output from obj$report() usually once an optimsation routine has been done.}

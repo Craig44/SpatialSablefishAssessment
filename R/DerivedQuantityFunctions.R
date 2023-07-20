@@ -165,21 +165,41 @@ get_selectivities = function(MLE_report) {
                         nmfssurveytrwl_male = MLE_report$sel_srv_nmfs_trwl_m, nmfssurveytrwl_female = MLE_report$sel_srv_nmfs_trwl_f,
                         age = MLE_report$ages
     )
-
+    sel_lng_df = sel_df %>% tidyr::pivot_longer(!age)
+    sel_lng_df$gear = Reduce(c, lapply(sel_lng_df$name %>% stringr::str_split(pattern = "_"), function(x){x[1]}))
+    sel_lng_df$sex = Reduce(c, lapply(sel_lng_df$name %>% stringr::str_split(pattern = "_"), function(x){x[2]}))
+    time_block = as.numeric(Reduce(c, lapply(sel_lng_df$sex %>% stringr::str_split(pattern = "\\."), function(x){x[2]})))
+    sel_lng_df$sex = Reduce(c, lapply(sel_lng_df$sex %>% stringr::str_split(pattern = "\\."), function(x){x[1]}))
+    time_block[is.na(time_block)] = 1
+    sel_lng_df$time_block = time_block
   } else {
-    sel_df = data.frame(fixed_male = MLE_report$sel_fixed_m, fixed_female = MLE_report$sel_fixed_f,
-                        trawl_male = MLE_report$sel_trwl_m, trawl_female = MLE_report$sel_trwl_f,
-                        surveyll_male = MLE_report$sel_srv_dom_ll_m, surveyll_female = MLE_report$sel_srv_dom_ll_f,
-                        age = MLE_report$ages
-    )
+    fixed_f = reshape2::melt(MLE_report$sel_fixed_f)
+    fixed_m = reshape2::melt(MLE_report$sel_fixed_m)
+    trwl_f = reshape2::melt(MLE_report$sel_trwl_f)
+    trwl_m = reshape2::melt(MLE_report$sel_trwl_m)
+    colnames(fixed_f) = colnames(fixed_m) = colnames(trwl_f) = colnames(trwl_m) = c("age", "time_block", "value")
+    fixed_f$sex = "Female"
+    trwl_f$sex = "Female"
+    fixed_f$gear = "Fixed"
+    fixed_m$gear = "Fixed"
+
+    fixed_m$sex = "Male"
+    trwl_m$sex = "Male"
+    trwl_m$gear = "Trawl"
+    trwl_f$gear = "Trawl"
+    fixed_f$survey = 1
+    trwl_f$survey = 1
+    fixed_m$survey = 1
+    trwl_m$survey = 1
+    srv_f = reshape2::melt(MLE_report$sel_srv_f)
+    srv_m = reshape2::melt(MLE_report$sel_srv_m)
+    colnames(srv_f) = colnames(srv_m) = c("age", "time_block", "survey","value")
+    srv_m$sex = "Male"
+    srv_f$sex = "Female"
+    srv_f$gear = "Survey"
+    srv_m$gear = "Survey"
+    sel_lng_df = rbind(fixed_f, fixed_m, trwl_f, trwl_m, srv_f[,colnames(trwl_m)], srv_m[,colnames(trwl_m)])
   }
-  sel_lng_df = sel_df %>% tidyr::pivot_longer(!age)
-  sel_lng_df$gear = Reduce(c, lapply(sel_lng_df$name %>% stringr::str_split(pattern = "_"), function(x){x[1]}))
-  sel_lng_df$sex = Reduce(c, lapply(sel_lng_df$name %>% stringr::str_split(pattern = "_"), function(x){x[2]}))
-  time_block = as.numeric(Reduce(c, lapply(sel_lng_df$sex %>% stringr::str_split(pattern = "\\."), function(x){x[2]})))
-  sel_lng_df$sex = Reduce(c, lapply(sel_lng_df$sex %>% stringr::str_split(pattern = "\\."), function(x){x[1]}))
-  time_block[is.na(time_block)] = 1
-  sel_lng_df$time_block = time_block
   return(sel_lng_df)
 }
 
@@ -190,16 +210,29 @@ get_selectivities = function(MLE_report) {
 #' @export
 plot_selectivities = function(MLE_report) {
   sel_lng_df = get_selectivities(MLE_report)
-
-  gplt = ggplot(sel_lng_df, aes(x = age, y = value, col = sex, linetype = sex)) +
-    geom_line(linewidth = 1.1) +
-    facet_wrap(~gear) +
-    theme_bw() +
-    labs(x = "Age", y = "Selectivity", col = "Sex.timeblock", linetype = "Sex.timeblock") +
-    theme(
-      axis.text = element_text(size = 14),
-      axis.title = element_text(size = 14)
-    )
+  gplt = NULL
+  if("survey" %in% colnames(sel_lng_df)) {
+    sel_lng_df$label = paste0(sel_lng_df$gear, ifelse(sel_lng_df$gear == "Survey", paste0("-",sel_lng_df$survey), ""))
+    gplt = ggplot(sel_lng_df, aes(x = age, y = value, col = sex, linetype = sex)) +
+      geom_line(linewidth = 1.1) +
+      facet_grid(time_block~label) +
+      theme_bw() +
+      labs(x = "Age", y = "Selectivity", col = "Sex", linetype = "Sex") +
+      theme(
+        axis.text = element_text(size = 14),
+        axis.title = element_text(size = 14)
+      )
+  } else {
+    gplt = ggplot(sel_lng_df, aes(x = age, y = value, col = sex, linetype = sex)) +
+      geom_line(linewidth = 1.1) +
+      facet_wrap(~gear) +
+      theme_bw() +
+      labs(x = "Age", y = "Selectivity", col = "Sex.timeblock", linetype = "Sex.timeblock") +
+      theme(
+        axis.text = element_text(size = 14),
+        axis.title = element_text(size = 14)
+      )
+  }
   return(gplt)
 }
 
@@ -354,7 +387,7 @@ plot_SSB = function(MLE_report, region_key = NULL, depletion = F) {
 #' @return A list of
 #' @export
 
-get_other_derived_quantities <- function(MLE_report, data, region_key = NULL) {
+get_other_derived_quantities <- function(MLE_report, data, region_key = NULL, survey_labels = NULL) {
   if(MLE_report$model_type == 0) {
     cat("Skipping this function not built for the Current Assessment")
     return(NULL)
@@ -362,11 +395,13 @@ get_other_derived_quantities <- function(MLE_report, data, region_key = NULL) {
   Region_lab = paste0("Region ", 1:MLE_report$n_regions)
   if(!is.null(region_key))
     Region_lab =  region_key$area[region_key$TMB_ndx + 1]
+  if(is.null(survey_labels))
+    survey_labels = paste0("Survey-", 1:MLE_report$n_surveys)
 
-  catchability = MLE_report$srv_dom_ll_q
-  dimnames(catchability) = list(Region_lab, paste0("Block-", 1:ncol(catchability)))
+  catchability = MLE_report$srv_q
+  dimnames(catchability) = list(Region_lab, paste0("Block-", 1:ncol(catchability)),survey_labels)
   molten_catchabilties = reshape2::melt(catchability)
-  colnames(molten_catchabilties) = c("Region", "time-block", "q")
+  colnames(molten_catchabilties) = c("Region", "time-block", "survey" ,"q")
 
   ## Scalar model quantities
   scalar_quants = data.frame(F_init = round(MLE_report$init_F_hist, 3),
@@ -374,7 +409,7 @@ get_other_derived_quantities <- function(MLE_report, data, region_key = NULL) {
                              theta_fixed_catchatlgth = MLE_report$theta_fixed_catchatlgth,
                              theta_fixed_catchatage = MLE_report$theta_fixed_catchatage,
                              theta_trwl_catchatlgth = MLE_report$theta_trwl_catchatlgth,
-                             theta_srv_catchatage = MLE_report$theta_srv_dom_ll_catchatage,
+                             theta_srv_catchatage = MLE_report$theta_srv_catchatage,
                              sigma_R = round(MLE_report$sigma_R,3),
                              sigma_init_age_devs = round(MLE_report$sigma_init_devs,3),
                              catch_sd = round(MLE_report$catch_sd, 3),

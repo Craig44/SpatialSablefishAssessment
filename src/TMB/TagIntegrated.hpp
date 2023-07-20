@@ -604,7 +604,7 @@ Type TagIntegrated(objective_function<Type>* obj) {
 
   /*
    * Initialize the partition (age structure)
-   * by running the "annual cycle" n_ages times and approximating the plus group
+   * by running the "annual cycle" n_ages times and approximating the plus group using an infinite geometric series
    * this "should" account for age accumlation along with movement
    */
   Type plus_c = 0.0;
