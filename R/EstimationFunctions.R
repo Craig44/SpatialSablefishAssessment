@@ -283,6 +283,7 @@ get_TMB_vector_from_array <- function(element, array) {
 #' @param est_fixed_LF_theta bool whether you want to estimate the theta parameter for fixed gear LF
 #' @param est_trwl_LF_theta bool whether you want to estimate the theta parameter for trawl gear LF
 #' @param est_srv_AF_theta vector of bool specifying whether you want to estimate the theta parameter for survey AF likelihood. length is n_suveys
+#' @param common_survey_selex a list each element of the list contains a vector that indicates the survey index that have a common selectivity
 #' @param est_prop_male_recruit vector of years that indicate time-blocks or one of the following strings
 #' \itemize{
 #'   \item `off`: not estimated
@@ -315,7 +316,8 @@ set_up_parameters <- function(data, parameters,
                               est_trwl_LF_theta = F,
                               est_srv_AF_theta = F,
                               est_prop_male_recruit = "off",
-                              est_SR_pars = F
+                              est_SR_pars = F,
+                              common_survey_selex = NULL
 
 ) {
   if(length(srv_sel_first_param_shared_by_sex) != data$n_surveys) {
@@ -695,12 +697,45 @@ set_up_parameters <- function(data, parameters,
       arrays_with_elements_fixed[["trans_rec_dev"]] = ln_rec_dev_elements_to_fix
     }
   }
-  ## are we sharing selectivity parameters
+
+  srv_ndx_to_ignore_in_other_inputs = NULL
   base_srv_sel_param_vals = list()
   copy_srv_sel_param_vals = list()
+  # deal with full shared survey selectivities
+  if(!is.null(common_survey_selex)) {
+    srv_ndx_to_ignore_in_other_inputs = Reduce(c,lapply(common_survey_selex, FUN = function(x){x[1]}))
+    for(k in 1:length(common_survey_selex)) {
+      if(length(common_survey_selex[[k]]) != 2)
+        stop("Can't deal with common_survey_selex if each vector is not == 2. i.e., can only share two survey selectivities")
+      ## turn off the first selectivity get then generate same containers
+      tmp_arrays_with_elements_fixed = list()
+      tmp_mat = as.matrix(expand.grid(1:dim(parameters$ln_srv_sel_pars)[1],1:dim(parameters$ln_srv_sel_pars)[2],1:dim(parameters$ln_srv_sel_pars)[3], common_survey_selex[[k]][[1]]))
+      colnames(tmp_mat) = NULL
+      tmp_arrays_with_elements_fixed[["ln_srv_sel_pars"]] =  tmp_mat
+      tmp_mat = as.matrix(expand.grid(1:dim(parameters$ln_srv_sel_pars)[1],1:dim(parameters$ln_srv_sel_pars)[2],1:dim(parameters$ln_srv_sel_pars)[3], common_survey_selex[[k]][[2]]))
+      colnames(tmp_mat) = NULL
+
+      base_array =  tmp_mat     ## build the same command
+      for(j in 1:nrow(base_array)) {
+        this_cpy_lst = list(ln_srv_sel_pars = get_TMB_vector_from_array(tmp_arrays_with_elements_fixed[["ln_srv_sel_pars"]][j,], parameters$ln_srv_sel_pars))
+        this_bse_lst = list(ln_srv_sel_pars = get_TMB_vector_from_array(base_array[j,], parameters$ln_srv_sel_pars))
+        base_srv_sel_param_vals = append(base_srv_sel_param_vals, this_bse_lst)
+        copy_srv_sel_param_vals = append(copy_srv_sel_param_vals, this_cpy_lst)
+      }
+      if(is.null(arrays_with_elements_fixed[["ln_srv_sel_pars"]])) {
+        arrays_with_elements_fixed[["ln_srv_sel_pars"]] = tmp_arrays_with_elements_fixed$ln_srv_sel_pars
+      } else {
+        arrays_with_elements_fixed[["ln_srv_sel_pars"]] = rbind(arrays_with_elements_fixed[["ln_srv_sel_pars"]], tmp_arrays_with_elements_fixed$ln_srv_sel_pars)
+      }
+    }
+  }
+  ## are we sharing selectivity parameters among sexes
   sel_params_to_turn_off = NULL
   n_srv_sel_time_blocks = dim(parameters$ln_srv_sel_pars)[1]
   for(srv_ndx in 1:data$n_surveys) {
+    ## skip this survey as it is shared with another
+    if(srv_ndx %in% srv_ndx_to_ignore_in_other_inputs)
+      next;
     for(t_blocks in 1:n_srv_sel_time_blocks) {
       if(t_blocks > n_sel_for_srv[srv_ndx]) {
         # turn off these selectivity params
@@ -725,6 +760,9 @@ set_up_parameters <- function(data, parameters,
 
   sel_params_to_turn_off = NULL
   for(srv_ndx in 1:data$n_surveys) {
+    ## skip this survey as it is shared with another
+    if(srv_ndx %in% srv_ndx_to_ignore_in_other_inputs)
+      next;
     for(t_blocks in 1:n_srv_sel_time_blocks) {
       if(t_blocks > n_sel_for_srv[srv_ndx]) {
         # turn off these selectivity params
@@ -752,9 +790,11 @@ set_up_parameters <- function(data, parameters,
     }
   }
 
-
   sel_params_to_turn_off = NULL
   for(srv_ndx in 1:data$n_surveys) {
+    ## skip this survey as it is shared with another
+    if(srv_ndx %in% srv_ndx_to_ignore_in_other_inputs)
+      next;
     for(t_blocks in 1:n_srv_sel_time_blocks) {
       ## skip if not 3 parameter double normal
       if(!any(data$srv_sel_type[t_blocks, srv_ndx] == 5))
@@ -854,7 +894,6 @@ set_up_parameters <- function(data, parameters,
       arrays_with_elements_fixed[["ln_fixed_sel_pars"]] = rbind(arrays_with_elements_fixed[["ln_fixed_sel_pars"]], fixed_sel_param_elements_to_fix)
     }
   }
-
 
   ## trwl gear fishery
   ## are we sharing selectivity parameters

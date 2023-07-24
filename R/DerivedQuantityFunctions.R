@@ -384,6 +384,7 @@ plot_SSB = function(MLE_report, region_key = NULL, depletion = F) {
 #' @param MLE_report a list that is output from obj$report() usually once an optimsation routine has been done.
 #' @param data list that is passed to the MakeADfun for the TMB model
 #' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
+#' @param survey_labels character vector for each of the n_surveys
 #' @return A list of
 #' @export
 
@@ -429,15 +430,15 @@ get_other_derived_quantities <- function(MLE_report, data, region_key = NULL, su
 
 }
 
-
-
 #'
 #' get_qs
 #' @param MLE_report a list that is output from obj$report() usually once an optimsation routine has been done.
+#' @param survey_labels character vector for each of the n_surveys
+#' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
 #' @return A data frame of catchabilities
 #' @export
 
-get_qs <- function(MLE_report) {
+get_qs <- function(MLE_report, region_key= NULL, survey_labels = NULL) {
   molten_catchabilties = NULL
   if(MLE_report$model_type == 0) {
     ## four catchabilities in this model
@@ -452,9 +453,11 @@ get_qs <- function(MLE_report) {
     Region_lab = paste0("Region ", 1:MLE_report$n_regions)
     if(!is.null(region_key))
       Region_lab =  region_key$area[region_key$TMB_ndx + 1]
+    if(is.null(survey_labels))
+      survey_labels = paste0("Survey-", 1:MLE_report$n_surveys)
 
-    catchability = MLE_report$srv_dom_ll_q
-    dimnames(catchability) = list(Region_lab, paste0("Block-", 1:ncol(catchability)))
+    catchability = MLE_report$srv_q
+    dimnames(catchability) = list(Region_lab, paste0("Block-", 1:ncol(catchability)), survey_labels)
     molten_catchabilties = reshape2::melt(catchability)
     colnames(molten_catchabilties) = c("Region", "time-block", "q")
   }

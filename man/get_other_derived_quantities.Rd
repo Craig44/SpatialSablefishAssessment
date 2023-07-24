@@ -17,6 +17,8 @@ get_other_derived_quantities(
 \item{data}{list that is passed to the MakeADfun for the TMB model}
 
 \item{region_key}{data.frame with colnames area and TMB_ndx for providing real region names to objects}
+
+\item{survey_labels}{character vector for each of the n_surveys}
 }
 \value{
 A list of

@@ -30,7 +30,8 @@ set_up_parameters(
   est_trwl_LF_theta = F,
   est_srv_AF_theta = F,
   est_prop_male_recruit = "off",
-  est_SR_pars = F
+  est_SR_pars = F,
+  common_survey_selex = NULL
 )
 }
 \arguments{
@@ -97,6 +98,8 @@ set_up_parameters(
 }}
 
 \item{est_SR_pars}{if data$SrType == 2 you can estimate the steepness parameter or have it fixed}
+
+\item{common_survey_selex}{a list each element of the list contains a vector that indicates the survey index that have a common selectivity}
 }
 \value{
 a named list that can be used by the \code{map} input for the \code{TMB::MakeADFun} function. NAs mean parameters are not estimated and elements with the same factor level mean they will be estimated with a common coefficient i.e., shared parameters

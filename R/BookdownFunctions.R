@@ -1039,10 +1039,10 @@ ggplot(data = mean_length_df %>% dplyr::filter(observation == "trwl")) +
     '
     select_df = get_multiple_selectivities(mle_ls = mle_ls, run_labels = names(mle_ls))
     ggplot() +
-      geom_line(data = select_df, aes(x = age, y = value, col = label, linetype = label), linewidth = 1) +
+      geom_line(data = select_df %>% filter(sex == "Female"), aes(x = age, y = value, col = label, linetype = label), linewidth = 1) +
       labs(x = "Year", y = "", col = "", linetype= "") +
-      facet_wrap(sex~gear) +
-      ggtitle("Selectivities") +
+      facet_grid(time_block~gear) +
+      ggtitle("Female selectivities") +
       theme_bw() +
       theme(legend.position = "bottom",
             axis.text = element_text(size = 14),
@@ -1052,7 +1052,20 @@ ggplot(data = mean_length_df %>% dplyr::filter(observation == "trwl")) +
             legend.text = element_text(size=14)) +
       scale_color_manual(values = obs_pallete[-1]) +
       guides(linetype = "none")
-
+    ggplot() +
+      geom_line(data = select_df %>% filter(sex == "Male"), aes(x = age, y = value, col = label, linetype = label), linewidth = 1) +
+      labs(x = "Year", y = "", col = "", linetype= "") +
+      facet_grid(time_block~gear) +
+      ggtitle("Male selectivities") +
+      theme_bw() +
+      theme(legend.position = "bottom",
+            axis.text = element_text(size = 14),
+            axis.title = element_text(size = 14),
+            strip.text = element_text(size=14),
+            plot.title = element_text(size = 20, face = "bold"),
+            legend.text = element_text(size=14)) +
+      scale_color_manual(values = obs_pallete[-1]) +
+      guides(linetype = "none")
     '
   write(select, file = model_input_file, append = T)
   write("```\n\n", file = model_input_file, append = T)

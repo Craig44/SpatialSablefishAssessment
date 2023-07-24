@@ -4,10 +4,14 @@
 \alias{get_qs}
 \title{get_qs}
 \usage{
-get_qs(MLE_report)
+get_qs(MLE_report, region_key = NULL, survey_labels = NULL)
 }
 \arguments{
 \item{MLE_report}{a list that is output from obj$report() usually once an optimsation routine has been done.}
+
+\item{region_key}{data.frame with colnames area and TMB_ndx for providing real region names to objects}
+
+\item{survey_labels}{character vector for each of the n_surveys}
 }
 \value{
 A data frame of catchabilities
