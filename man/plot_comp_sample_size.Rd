@@ -4,7 +4,13 @@
 \alias{plot_comp_sample_size}
 \title{plot_comp_sample_size}
 \usage{
-plot_comp_sample_size(MLE_report, data, region_key = NULL, plot_n_eff = T)
+plot_comp_sample_size(
+  MLE_report,
+  data,
+  region_key = NULL,
+  survey_labels = NULL,
+  plot_n_eff = T
+)
 }
 \arguments{
 \item{MLE_report}{a list that is output from obj$report() usually once an optimsation routine has been done.}
@@ -12,6 +18,8 @@ plot_comp_sample_size(MLE_report, data, region_key = NULL, plot_n_eff = T)
 \item{data}{list of input data}
 
 \item{region_key}{data.frame with colnames area and TMB_ndx for providing real region names to objects}
+
+\item{survey_labels}{character vector for each of the n_surveys}
 
 \item{plot_n_eff}{boolean if T plot effective sample size else plot input sample size}
 }

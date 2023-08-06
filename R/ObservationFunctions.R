@@ -37,7 +37,7 @@ get_negloglike <- function(MLE_report) {
   } else {
     AF_fixed_like = ifelse(MLE_report$fixed_catchatage_comp_likelihood == 0, "Multinomial", "Dirichlet-Multinomial")
     LF_fixed_like = ifelse(MLE_report$fixed_catchatlgth_comp_likelihood == 0, "Multinomial", "Dirichlet-Multinomial")
-    AF_srv_like = ifelse(MLE_report$srv_catchatage_comp_likelihood == 0, "Multinomial", "Dirichlet-Multinomial")
+    AF_srv_like = paste(ifelse(MLE_report$srv_catchatage_comp_likelihood == 0, "Multinomial", "Dirichlet-Multinomial"), collapse = ", ")
     LF_trwl_like = ifelse(MLE_report$trwl_catchatlgth_comp_likelihood == 0, "Multinomial", "Dirichlet-Multinomial")
     tag_likelihood = switch(MLE_report$tag_likelihood + 1,
                             "Poissson",
@@ -419,17 +419,31 @@ plot_mean_age = function(MLE_report, observation = "fixed", subset_years = NULL,
     stop('sex not one of the expected values. Expected one of the following "both", "male", "female"')
 
   full_df = get_mean_age(MLE_report = MLE_report, observation = observation, subset_years = subset_years, sex = sex, region_key = region_key, survey_labels = survey_labels)
+  gplt = NULL
+  if(observation == "srv") {
+    ## plot
+    gplt = ggplot(full_df, aes(x = Year)) +
+      geom_point(aes(y = Oy, col = "Observed", shape = Sex, group = Sex), size = 1.6) +
+      geom_line(aes(y = Ey, col = "Predicted", linetype = Sex, group = Sex), linewidth= 1.2) +
+      geom_point(aes(y = Ey, col = "Predicted", shape = Sex, group = Sex), size = 1) +
+      geom_errorbar(aes(ymin=ObsloAdj, ymax=ObshiAdj, col = "Observed"), width=.2, position=position_dodge(.9)) +
+      guides( linewidth = "none") +
+      labs(y = "Mean age", col = "", linetype = "") +
+      facet_grid(Survey ~ Region) +
+      theme_bw()
+  } else {
+    ## plot
+    gplt = ggplot(full_df, aes(x = Year)) +
+      geom_point(aes(y = Oy, col = "Observed", shape = Sex, group = Sex), size = 1.6) +
+      geom_line(aes(y = Ey, col = "Predicted", linetype = Sex, group = Sex), linewidth= 1.2) +
+      geom_point(aes(y = Ey, col = "Predicted", shape = Sex, group = Sex), size = 1) +
+      geom_errorbar(aes(ymin=ObsloAdj, ymax=ObshiAdj, col = "Observed"), width=.2, position=position_dodge(.9)) +
+      guides( linewidth = "none") +
+      labs(y = "Mean age", col = "", linetype = "") +
+      facet_grid(observation ~ Region) +
+      theme_bw()
+  }
 
-  ## plot
-  gplt = ggplot(full_df, aes(x = Year)) +
-    geom_point(aes(y = Oy, col = "Observed", shape = Sex, group = Sex), size = 1.6) +
-    geom_line(aes(y = Ey, col = "Predicted", linetype = Sex, group = Sex), linewidth= 1.2) +
-    geom_point(aes(y = Ey, col = "Predicted", shape = Sex, group = Sex), size = 1) +
-    geom_errorbar(aes(ymin=ObsloAdj, ymax=ObshiAdj, col = "Observed"), width=.2, position=position_dodge(.9)) +
-    guides( linewidth = "none") +
-    labs(y = "Mean age", col = "", linetype = "") +
-    facet_grid(observation ~ Region) +
-    theme_bw()
   return(gplt)
 }
 #'
@@ -768,7 +782,7 @@ plot_index_fit = function(MLE_report, region_key = NULL, resid = F) {
       geom_errorbar(aes(ymin=L_CI, ymax=U_CI, col = "Observed"), width=.2, position=position_dodge(.9)) +
       guides( linewidth = "none", linetype = "none") +
       labs(y = "Index", col = "", linetype = "") +
-      facet_wrap(~Region, ncol = 2, scales = "free_y") +
+      facet_wrap(Survey~Region, ncol = 2, scales = "free_y") +
       theme_bw()
   }
 
@@ -1021,17 +1035,20 @@ calculate_simulated_residuals <- function(sim_ob, type = "abundance") {
   full_simualted_resids = NULL
   if(type == "abundance") {
     regions = unique(sim_ob$Region)
+    surveys = unique(sim_ob$Survey)
     for(r in 1:length(regions)) {
-      this_sim_vals = sim_ob %>% filter(Region == regions[r]) %>%
-        pivot_wider(id_cols = Year, names_from = sim, values_from = Simulated) %>%
-        dplyr::select(!Year)
-      this_sim_obs = sim_ob %>% filter(Region == regions[r], sim == 1) %>% dplyr::select(Observed)
-      this_pred = sim_ob %>% filter(Region == regions[r], sim == 1) %>% dplyr::select(Predicted)
-      Years = sim_ob %>% filter(Region == regions[r], sim == 1) %>% dplyr::select(Year)
+      for(s in 1:length(surveys)) {
+        this_sim_vals = sim_ob %>% filter(Region == regions[r], Survey == surveys[s]) %>%
+          pivot_wider(id_cols = Year, names_from = sim, values_from = Simulated) %>%
+          dplyr::select(!Year)
+        this_sim_obs = sim_ob %>% filter(Region == regions[r], sim == 1, Survey == surveys[s]) %>% dplyr::select(Observed)
+        this_pred = sim_ob %>% filter(Region == regions[r], sim == 1, Survey == surveys[s]) %>% dplyr::select(Predicted)
+        Years = sim_ob %>% filter(Region == regions[r], sim == 1, Survey == surveys[s]) %>% dplyr::select(Year)
 
-      this_dharma = suppressMessages(createDHARMa(simulatedResponse = as.matrix(this_sim_vals), observedResponse = this_sim_obs$Observed, fittedPredictedResponse  = this_pred$Predicted))
-      this_scaled_df = data.frame(scaled_resids = this_dharma$scaledResiduals, qnorm_transformed_scaled_resids = qnorm(this_dharma$scaledResiduals), observed = this_dharma$observedResponse, mean_sim_vals = this_dharma$fittedPredictedResponse, Region = regions[r], Year =Years)
-      full_simualted_resids = rbind(full_simualted_resids, this_scaled_df)
+        this_dharma = suppressMessages(createDHARMa(simulatedResponse = as.matrix(this_sim_vals), observedResponse = this_sim_obs$Observed, fittedPredictedResponse  = this_pred$Predicted))
+        this_scaled_df = data.frame(scaled_resids = this_dharma$scaledResiduals, qnorm_transformed_scaled_resids = qnorm(this_dharma$scaledResiduals), observed = this_dharma$observedResponse, mean_sim_vals = this_dharma$fittedPredictedResponse, Region = regions[r], Year =Years, Survey = surveys[s])
+        full_simualted_resids = rbind(full_simualted_resids, this_scaled_df)
+      }
     }
     full_simualted_resids$type = "Abundance"
   } else if (type == "LF") {
@@ -1317,9 +1334,9 @@ get_comp_sample_size <- function(MLE_report, data, region_key = NULL, survey_lab
     molten_srv_catchatage = reshape2::melt(data$obs_srv_catchatage)
     colnames(molten_srv_catchatage) = c("s_age", "Region", "Year", "Survey" ,"value")
     this_sample_size = molten_srv_catchatage %>% group_by(Region, Year, Survey) %>% summarise(N_input = sum(value), N_eff = N_input)
-    if(data$srv_catchatage_comp_likelihood == 1)
+    if(any(data$srv_catchatage_comp_likelihood == 1))
       this_sample_size$N_eff = (1 + this_sample_size$N_input * MLE_report$theta_srv_catchatage ) / (1 + MLE_report$theta_srv_catchatage)
-    this_sample_size$observation = "Survey Catch-at-age"
+    this_sample_size$observation = paste0("Survey Catch-at-age-", this_sample_size$Survey)
     sample_sizes = rbind(sample_sizes, this_sample_size)
   }
   return(sample_sizes)
@@ -1330,11 +1347,12 @@ get_comp_sample_size <- function(MLE_report, data, region_key = NULL, survey_lab
 #' @param MLE_report a list that is output from obj$report() usually once an optimsation routine has been done.
 #' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
 #' @param data list of input data
+#' @param survey_labels character vector for each of the n_surveys
 #' @param plot_n_eff boolean if T plot effective sample size else plot input sample size
 #' @return data.frame
 #' @export
-plot_comp_sample_size <- function(MLE_report, data, region_key = NULL, plot_n_eff = T) {
-  sample_size_df = get_comp_sample_size(MLE_report, data, region_key)
+plot_comp_sample_size <- function(MLE_report, data, region_key = NULL, survey_labels = NULL, plot_n_eff = T) {
+  sample_size_df = get_comp_sample_size(MLE_report, data, region_key, survey_labels)
   sample_size_df = sample_size_df %>% filter(N_input > 0)
   #sample_size_df$N_input =  dplyr::na_if(sample_size_df$N_input, 0)
   #sample_size_df$N_eff =  dplyr::na_if(sample_size_df$N_eff, 0)

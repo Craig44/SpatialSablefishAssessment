@@ -463,16 +463,16 @@ set_up_parameters <- function(data, parameters,
     parameters_completely_fixed = c(parameters_completely_fixed, c("trans_fixed_catchatlgth_error"))
   if(!est_trwl_LF_theta)
     parameters_completely_fixed = c(parameters_completely_fixed, c("trans_trwl_catchatlgth_error"))
-  if(!all(est_srv_AF_theta)) {
-    parameters_completely_fixed = c(parameters_completely_fixed, c("trans_srv_catchatage_error"))
-  } else if(any(!est_srv_AF_theta)) {
+  if(any(est_srv_AF_theta)) {
     thetas_to_turn_off = NULL
     for(srv_ndx in 1:data$n_surveys) {
-      if(est_srv_AF_theta[srv_ndx]) {
+      if(!est_srv_AF_theta[srv_ndx]) {
         thetas_to_turn_off = c(thetas_to_turn_off, srv_ndx)
       }
     }
     vectors_with_elements_fixed[["trans_srv_catchatage_error"]] = thetas_to_turn_off
+  } else {
+    parameters_completely_fixed = c(parameters_completely_fixed, c("trans_srv_catchatage_error"))
   }
 
   ## survey catchability regional and annual
@@ -1142,8 +1142,8 @@ post_optim_sanity_checks <- function(mle_obj, mle_pars, max_abs_gradient = 0.000
             cat("Found survey catchability greater than 0.95. This is an extreme value (possible convergence at bound)and worthy of furthur investigation.\n")
             passed_post_sanity_checks = F
           }
-          if(mle_report$srv_q[r_ndx, t_ndx, s_ndx] < 0.00001){
-            cat("Found survey catchability less than 0.00001. This is an extreme value (possible convergence at bound) and worthy of furthur investigation.\n")
+          if(mle_report$srv_q[r_ndx, t_ndx, s_ndx] < 1e-6){
+            cat("Found survey catchability less than 1e-6. This is an extreme value (possible convergence at bound) and worthy of furthur investigation.\n")
             passed_post_sanity_checks = F
           }
         }
@@ -1151,12 +1151,12 @@ post_optim_sanity_checks <- function(mle_obj, mle_pars, max_abs_gradient = 0.000
     } else {
       for(r_ndx in 1:dim(mle_report$srv_q)[1]) {
         for(t_ndx in 1:dim(mle_report$srv_q)[2]) {
-          if(mle_report$srv_q[r_ndx, t_ndx, s_ndx] > 200){
-            cat("Found survey catchability greater than 0.95. This is an extreme value (possible convergence at bound)and worthy of furthur investigation.\n")
+          if(mle_report$srv_q[r_ndx, t_ndx, s_ndx] > 10000){
+            cat("Found survey catchability greater than 10000 This is an extreme value (possible convergence at bound)and worthy of furthur investigation.\n")
             passed_post_sanity_checks = F
           }
           if(mle_report$srv_q[r_ndx, t_ndx, s_ndx] < 1e-6){
-            cat("Found survey catchability less than 0.00001. This is an extreme value (possible convergence at bound) and worthy of furthur investigation.\n")
+            cat("Found survey catchability less than 1e-6. This is an extreme value (possible convergence at bound) and worthy of furthur investigation.\n")
             passed_post_sanity_checks = F
           }
         }

@@ -306,7 +306,7 @@ knitr::opts_chunk$set(warning = FALSE, message = FALSE)
       geom_hline(yintercept = c(-2,2), col = "red", linetype = "dashed", size = 1, alpha = 0.3) +
       ylim(-6,6) +
       theme_classic() +
-      facet_wrap(~Region, ncol = 2) +
+      facet_wrap(Survey~Region, ncol = 2) +
       theme(legend.position = "bottom",
             axis.text = element_text(size = 14),
             axis.title = element_text(size = 14),
