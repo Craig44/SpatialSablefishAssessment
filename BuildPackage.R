@@ -7,7 +7,16 @@ library(roxygen2)
 library(devtools)
 library(testthat)
 
-#remove.packages("SpatialSablefishAssessment")
+delete_previous_version = F ## sometimes you don't want to delete the previously installed version
+install_using_Rstudio = T ## I prefer to use R-studio inbuilt panel to install.
+## the r-stuido install is located i nthe 'Build' tab which should be next to the 'environment' & 'history' tab.
+
+if(delete_previous_version)
+  remove.packages("SpatialSablefishAssessment")
+## sometimes if the package is in use, it won't delete. In this case sometimes
+## I close all R environments and delete the package folder manually.
+## You can find the location of the package directory using .libPaths()
+
 
 ## build package
 ## Note!! if you change source code (C++) and want to recompile
@@ -15,14 +24,14 @@ library(testthat)
 ## otherwise this compile function wont register a change in source code.
 pkgbuild::compile_dll() # need to compile src first
 devtools::document()
-#devtools::install() ## but I prefer to use R-studios "Build/Install/Button"
-#devtools::check()
-#rcmdcheck::rcmdcheck(args = "--no-manual", error_on = "error")
-## Run unit tests for Package
-result = devtools::test(stop_on_failure = F)
 
-devtools::build()
+if(!install_using_Rstudio)
+  devtools::install() ## but I prefer to use R-studios "Build/Install/Button"
+## If you opt for the R-studios method you need to do this manually at this point
 
-test_active_file(file.path("tests","testthat","test-validate-and-production-compatible.R"))
-## build Gitbook
+## Run unit tests for Package to check everything works as expected.
+## make sure nothing is broken
+devtools::test(stop_on_failure = F)
+
+## Rebuild Gitbook to check you haven't broken anything
 bookdown::render_book(input = 'Gitbook')
