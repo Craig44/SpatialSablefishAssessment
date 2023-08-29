@@ -25,8 +25,14 @@ if(delete_previous_version)
 pkgbuild::compile_dll() # need to compile src first
 devtools::document()
 
-if(!install_using_Rstudio)
+if(!install_using_Rstudio) {
   devtools::install() ## but I prefer to use R-studios "Build/Install/Button"
+} else {
+  cat("-----------\n")
+  cat("This is a prompt to install using Rstudio's inbuild methods\n")
+  cat("-----------\n")
+  browser()
+}
 ## If you opt for the R-studios method you need to do this manually at this point
 
 ## Run unit tests for Package to check everything works as expected.

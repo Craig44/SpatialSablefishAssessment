@@ -336,7 +336,9 @@ get_multiple_AFs <- function(mle_ls, run_labels = NULL, region_key = NULL) {
       cat("report at element ", i, " was null, so skipping\n")
       next;
     }
-    this_AF = get_AF(MLE_report = mle_ls[[i]], observation = "all", sex = "both", subset_years = NULL, region_key = region_key)
+    fixed_AF = get_AF(MLE_report = mle_ls[[i]], observation = "fixed", sex = "both", subset_years = NULL, region_key = region_key)
+    srv_AF = get_AF(MLE_report = mle_ls[[i]], observation = "srv", sex = "both", subset_years = NULL, region_key = region_key)
+    this_AF = rbind(srv_AF, fixed_AF)
     if(!is.null(run_labels)) {
       this_AF$label = run_labels[i]
     } else {
