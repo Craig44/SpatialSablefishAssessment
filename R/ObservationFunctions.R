@@ -29,9 +29,10 @@ get_negloglike <- function(MLE_report) {
     "Trawl fishery catch Sum of squares",
     "Recruitment penalty",
     "Longline_F_penalty",
-    "Trawl_F_penalty")
+    "Trawl_F_penalty",
+    "Q_priors")
 
-    nll_df = data.frame(negloglike = round(MLE_report$nll,4), weighted_negloglike = round(MLE_report$nll_weighted, 4),
+    nll_df = data.frame(negloglike = round(MLE_report$nll,4), weighted_negloglike = round(MLE_report$nll_weighted, 4), weights = round(MLE_report$nll_weighted / MLE_report$nll, 4),
                         observations = nll_label, distribution = NA)
 
   } else {

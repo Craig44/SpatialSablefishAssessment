@@ -443,10 +443,10 @@ get_qs <- function(MLE_report, region_key= NULL, survey_labels = NULL) {
   if(MLE_report$model_type == 0) {
     ## four catchabilities in this model
     ## they are dynamic in terms of number of time-blocks
-    ll_cpue = data.frame(Q = MLE_report$ll_cpue_q, label = "Fixed gear CPUE", time_block = paste0("TimeBlock: ", 1:length(MLE_report$ll_cpue_q)))
-    srv_dom_ll = data.frame(Q = MLE_report$srv_dom_ll_q, label = "Domestic LL survey", time_block = paste0("TimeBlock: ", 1:length(MLE_report$srv_dom_ll_q)))
-    jap_fishery_cpue = data.frame(Q = MLE_report$srv_jap_fishery_ll_q, label = "Japanese CPUE", time_block = paste0("TimeBlock: ", 1:length(MLE_report$srv_jap_fishery_ll_q)))
-    srv_jap_ll = data.frame(Q = MLE_report$srv_jap_ll_q, label = "Japanese LL survey", time_block = paste0("TimeBlock: ", 1:length(MLE_report$srv_jap_ll_q)))
+    ll_cpue = data.frame(Q = MLE_report$ll_cpue_q, observation = "Fixed gear CPUE", time_block = paste0("TimeBlock: ", 1:length(MLE_report$ll_cpue_q)))
+    srv_dom_ll = data.frame(Q = MLE_report$srv_dom_ll_q, observation = "Domestic LL survey", time_block = paste0("TimeBlock: ", 1:length(MLE_report$srv_dom_ll_q)))
+    jap_fishery_cpue = data.frame(Q = MLE_report$srv_jap_fishery_ll_q, observation = "Japanese CPUE", time_block = paste0("TimeBlock: ", 1:length(MLE_report$srv_jap_fishery_ll_q)))
+    srv_jap_ll = data.frame(Q = MLE_report$srv_jap_ll_q, observation = "Japanese LL survey", time_block = paste0("TimeBlock: ", 1:length(MLE_report$srv_jap_ll_q)))
     # combine thiese
     molten_catchabilties = rbind(ll_cpue, srv_dom_ll, jap_fishery_cpue, srv_jap_ll)
   } else {

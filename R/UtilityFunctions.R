@@ -328,7 +328,8 @@ extend_3darray_last_dim <- function(array_3d, n) {
 #' convert_simdata_integers
 #' @param sim_data an array with 3 dimensions
 #' @param OM_data data that was passed to `MakeADFun`
-#' @details this function should be used if you get the following error from `MakeADFun` `Error in getParameterOrder(data, parameters, new.env(), DLL = DLL) : NOT A VECTOR!`
+#' @details this function should be used if you get the following error from `MakeADFun` `Error in getParameterOrder(data, parameters, new.env(), DLL = DLL) : NOT A VECTOR!`.
+#' You have to use it because the TMB models `REPORT` data, the simulate call will change vectors to scalars which can confuse the `MakeADFun`
 #' @return sim_data list with integers converted
 #' @export
 convert_simdata_integers <-function(sim_data, OM_data) {
@@ -363,6 +364,22 @@ convert_simdata_integers <-function(sim_data, OM_data) {
     sim_data$srv_jap_fishery_ll_lgth_covar_structure = OM_data$srv_jap_fishery_ll_lgth_covar_structure
     sim_data$srv_jap_fishery_ll_lgth_comp_likelihood = OM_data$srv_jap_fishery_ll_lgth_comp_likelihood
     sim_data$catch_likelihood = OM_data$catch_likelihood
+    sim_data$cpue_q_prior_type = OM_data$cpue_q_prior_type
+    sim_data$mu_cpue_q = OM_data$mu_cpue_q
+    sim_data$sd_cpue_q = OM_data$sd_cpue_q
+    sim_data$srv_jap_fishery_ll_prior_type = OM_data$srv_jap_fishery_ll_prior_type
+    sim_data$mu_srv_jap_fishery_ll_q = OM_data$mu_srv_jap_fishery_ll_q
+    sim_data$sd_srv_jap_fishery_ll_q = OM_data$sd_srv_jap_fishery_ll_q
+    sim_data$srv_nmfs_trwl_q_prior_type = OM_data$srv_nmfs_trwl_q_prior_type
+    sim_data$mu_srv_nmfs_trwl_q = OM_data$mu_srv_nmfs_trwl_q
+    sim_data$sd_srv_nmfs_trwl_q = OM_data$sd_srv_nmfs_trwl_q
+    sim_data$srv_jap_ll_q_prior_type = OM_data$srv_jap_ll_q_prior_type
+    sim_data$mu_srv_jap_ll_q = OM_data$mu_srv_jap_ll_q
+    sim_data$sd_srv_jap_ll_q = OM_data$sd_srv_jap_ll_q
+    sim_data$srv_dom_ll_q_prior_type = OM_data$srv_dom_ll_q_prior_type
+    sim_data$mu_srv_dom_ll_q = OM_data$mu_srv_dom_ll_q
+    sim_data$sd_srv_dom_ll_q = OM_data$sd_srv_dom_ll_q
+    sim_data$loglik_wgt_q_priors = OM_data$loglik_wgt_q_priors
   }
   return(sim_data)
 }

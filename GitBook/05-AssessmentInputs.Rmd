@@ -22,10 +22,62 @@ Users need to population a named list containing `data` inputs and a named list 
 
 - `ll_fishery_catch` vector of annual catch for the fixed gear fishery. Units are kilo tonnes
 - `trwl_fishery_catch` vector of annual catch for the Trawl gear fishery. Units are kilo tonnes
+- `loglik_wgt_ll_catch` Log-likelihood multiplier
+- `loglik_wgt_trwl_catch` Log-likelihood multiplier
+- `loglik_wgt_Fs`  Log-likelihood multiplier
 
+- `ll_sel_type`  vector of integers (one for each time-block) defining the longline fishery selectivity type for each row of ln_ll_sel_m_pars and ln_ll_sel_f_pars
+- `ll_sel_by_year_indicator`  vector of integers (one for each model year) defining the longline fishery selectivity time-block. First ndx needs to be 0
+- `trwl_sel_type`  vector of integers (one for each time-block) defining the trawl fishery selectivity type for each row of ln_ll_sel_m_pars and ln_ll_sel_f_pars
+- `trwl_sel_by_year_indicator`  vector of integers (one for each model year) defining the trawl fishery  selectivity time-block. First ndx needs to be 0
+
+- `srv_dom_ll_sel_type`  vector of integers (one for each time-block) defining the domestic longline survey selectivity type for each row of ln_ll_sel_m_pars and ln_ll_sel_f_pars
+- `srv_dom_ll_sel_by_year_indicator`  vector of integers (one for each model year) defining the domestic longline survey selectivity time-block. First ndx needs to be 0
+- `srv_dom_ll_q_by_year_indicator`  vector of integers (one for each model year) defining the domestic longline survey catchability time-block. First ndx needs to be 0
+- `srv_jap_ll_sel_type`  vector of integers (one for each time-block) defining the domestic Japanese survey selectivity type for each row of ln_ll_sel_m_pars and ln_ll_sel_f_pars
+- `srv_jap_ll_sel_by_year_indicator`  vector of integers (one for each model year) defining the Japanese longline survey selectivity time-block. First ndx needs to be 0
+- `srv_jap_ll_q_by_year_indicator`  vector of integers (one for each model year) defining the Japanese longline survey catchability time-block. First ndx needs to be 0
+
+
+
+- `cpue_q_prior_type` integer specifying prior type for cpue (ll fishery index) catchability. 0 = none (uniform), 1 = ADMB version. Needs to be one for each time-block.
+- `mu_cpue_q` vector specifying the mean for q prior
+- `sd_cpue_q` vector specifying the standard deviation for q prior
+- `srv_jap_fishery_ll_prior_type` integer specifying prior type for srv_jap_fishery_ll (early japanese fishery index) catchability. 0 = none (uniform), 1 = ADMB version. Needs to be one for each time-block.
+- `mu_srv_jap_fishery_ll_q` vector specifying the mean for q prior
+- `sd_srv_jap_fishery_ll_q` vector specifying the standard deviation for q prior
+- `srv_nmfs_trwl_q_prior_type` integer specifying prior type for trawl catchability. 0 = none (uniform), 1 = ADMB version. Needs to be one for each time-block.
+- `mu_srv_nmfs_trwl_q` vector specifying the mean for q prior
+- `sd_srv_nmfs_trwl_q` vector specifying the standard deviation for q prior
+
+- `srv_jap_ll_q_prior_type` integer specifying prior type for japanese longline catchability. 0 = none (uniform), 1 = ADMB version. Needs to be one for each time-block.
+- `mu_srv_jap_ll_q` vector specifying the mean for q prior
+- `sd_srv_jap_ll_q` vector specifying the standard deviation for q prior
+
+- `srv_dom_ll_q_prior_type` integer specifying prior type for japanese longline catchability. 0 = none (uniform), 1 = ADMB version. Needs to be one for each time-block.
+- `mu_srv_dom_ll_q` vector specifying the mean for q prior
+- `sd_srv_dom_ll_q` vector specifying the standard deviation for q prior
+- `loglik_wgt_q_priors` scalar specifying the log-likelihood weight (multiplier for the priors)
 
 ## `parameters` {-}
 
 
 - `ln_mean_rec` scalar of natural logarithm of mean recruitment (units are log millions). 
+- `ln_rec_dev` vector of recruitment deviations, one for each year in the model. I split the ADMB model up into two parameters
+- `ln_init_rec_dev` Recruitment deviations to apply during initialization they include years before the assessment starts: length = n_init_rec_devs
+- `ln_ll_sel_pars` array of log selectivity parameters dim = time-blocks,  max(sel parameters), n_sex
+- `ln_trwl_sel_pars` array of log selectivity parameters dim = time-blocks,  max(sel parameters), n_sex
+- `ln_ll_F_avg` scalar for average log fishing mortality
+- `ln_ll_F_devs` vector of fishing mortality deviations
+- `ln_trwl_F_avg` scalar for average log fishing mortality
+- `ln_trwl_F_devs` vector of fishing mortality deviations
+- `ln_ll_cpue_q` vector of log catchabilities parameters for cpue observation. length = time-blocks
+- `ln_srv_jap_fishery_ll_q` vector of log catchabilities parameters for srv_dom_ll observation. length = time-blocks
+- `ln_srv_jap_fishery_ll_sel_pars` array of log selectivity parameters dim = time-blocks,  max(sel parameters): NOTE not sex disaggregated!! no sex dimension
+- `ln_srv_nmfs_trwl_q` vector of log catchabilities parameters for NMFS bottom trawl survey observation. length = time-blocks
+- `ln_srv_nmfs_trwl_sel_pars` array of log selectivity parameters dim = time-blocks,  max(sel parameters), n_sex
+- `ln_srv_jap_ll_q` vector of log catchabilities parameters for japanese longline survey observation. length = time-blocks
+- `ln_srv_jap_ll_sel_pars` array of log selectivity parameters dim = time-blocks,  max(sel parameters), n_sex
+- `ln_srv_dom_ll_q` vector of log catchabilities parameters for Domestic longline survey observation. length = time-blocks
+- `ln_srv_dom_ll_sel_pars` array of log selectivity parameters dim = time-blocks,  max(sel parameters), n_sex
 

@@ -38,6 +38,14 @@ my_model = TMB::MakeADFun(data = data,
                                DLL = "SpatialSablefishAssessment_TMBExports", silent  = T)
 ```
 
+During simulations I would sometimes encounter the following error
+
+```r
+Error in getParameterOrder(data, parameters, new.env(), DLL = DLL) : NOT A VECTOR!`.
+```
+
+If you encounter this use the function `?convert_simdata_integers`.
+
 ### Simple sanity checks {-}
 It is possible to configure a model that has zero gradients for parameters, and you want to check this is not the case using the 
 ```r

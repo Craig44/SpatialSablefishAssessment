@@ -169,6 +169,7 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   int n_dom_ll_bio = sum(srv_dom_ll_bio_indicator);
   DATA_VECTOR(obs_dom_ll_bio);                          // Survey Domestic longline biomass obs. length =  n_dom_ll_bio
   DATA_VECTOR(se_dom_ll_bio);                           // Survey Domestic longline biomass standard errors. length =  n_dom_ll_bio
+  DATA_INTEGER(obs_dom_ll_bio_is_numbers);              // 0 = weight (biomass), 1 = numbers (abundance)
   DATA_VECTOR_INDICATOR(keep_obs_dom_ll_bio, obs_dom_ll_bio);
   DATA_INTEGER(srv_dom_ll_bio_likelihood);                  // 0 = ADMB, 1 = lnorm
   vector<Type> pred_dom_ll_bio(n_dom_ll_bio);           // Sex aggregated predicted
@@ -179,6 +180,7 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   int n_jap_ll_bio = sum(srv_jap_ll_bio_indicator);
   DATA_VECTOR(obs_jap_ll_bio);                          // Survey Japanese longline biomass obs. length =  n_jap_ll_bio
   DATA_VECTOR(se_jap_ll_bio);                           // Survey Japanese longline biomass standard errors. length =  n_jap_ll_bio
+  DATA_INTEGER(obs_jap_ll_bio_is_numbers);              // 0 = weight (biomass), 1 = numbers (abundance)
   DATA_VECTOR_INDICATOR(keep_obs_jap_ll_bio, obs_jap_ll_bio);
   DATA_INTEGER(srv_jap_ll_bio_likelihood);                  // 0 = ADMB, 1 = lnorm
   vector<Type> pred_jap_ll_bio(n_jap_ll_bio);           // Sex aggregated predicted
@@ -189,6 +191,7 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   int n_nmfs_trwl_bio = sum(srv_nmfs_trwl_bio_indicator);
   DATA_VECTOR(obs_nmfs_trwl_bio);                          // Survey NMFS GOA trawl biomass obs. length =  n_nmfs_trwl_bio
   DATA_VECTOR(se_nmfs_trwl_bio);                           // Survey NMFS GOA trawl biomass standard errors. length =  n_nmfs_trwl_bio
+  DATA_INTEGER(obs_nmfs_trwl_bio_is_numbers);              // 0 = weight (biomass), 1 = numbers (abundance)
   DATA_VECTOR_INDICATOR(keep_obs_nmfs_trwl_bio, obs_nmfs_trwl_bio);
   DATA_INTEGER(srv_nmfs_trwl_bio_likelihood);                  // 0 = ADMB, 1 = lnorm
   vector<Type> pred_nmfs_trwl_bio(n_nmfs_trwl_bio);        // Sex aggregated predicted
@@ -199,6 +202,7 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   int n_ll_cpue = sum(ll_cpue_indicator);
   DATA_VECTOR(obs_ll_cpue);                              // Fishery longline CPUE obs. length =  n_ll_cpue
   DATA_VECTOR(se_ll_cpue);                               // Fishery longline CPUE standard errors. length =  n_ll_cpue
+  DATA_INTEGER(obs_ll_cpue_is_numbers);                   // 0 = weight (biomass), 1 = numbers (abundance)
   DATA_VECTOR_INDICATOR(keep_obs_ll_cpue, obs_ll_cpue);
   DATA_INTEGER(ll_cpue_likelihood);                      // 0 = ADMB, 1 = lnorm
   vector<Type> pred_ll_cpue(n_ll_cpue);                  // Sex aggregated predicted
@@ -209,6 +213,7 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   int n_jap_fishery_ll_bio = sum(srv_jap_fishery_ll_bio_indicator);
   DATA_VECTOR(obs_jap_fishery_ll_bio);                          // Survey Japanese longline biomass obs. length =  n_jap_fishery_ll_bio
   DATA_VECTOR(se_jap_fishery_ll_bio);                           // Survey Japanese longline biomass standard errors. length =  n_jap_fishery_ll_bio
+  DATA_INTEGER(obs_jap_fishery_ll_bio_is_numbers);              // 0 = weight (biomass), 1 = numbers (abundance)
   DATA_VECTOR_INDICATOR(keep_obs_jap_fishery_ll_bio, obs_jap_fishery_ll_bio);
   DATA_INTEGER(srv_jap_fishery_ll_bio_likelihood);                  // 0 = ADMB, 1 = lnorm
   vector<Type> pred_jap_fishery_ll_bio(n_jap_fishery_ll_bio);           // Sex aggregated predicted
@@ -296,7 +301,28 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   DATA_SCALAR(loglik_wgt_srv_nmfs_trwl_lgth_m);                   // Log-likelihood multiplier (Craig's not a fan of these)
   DATA_SCALAR(loglik_wgt_srv_nmfs_trwl_lgth_f);                   // Log-likelihood multiplier (Craig's not a fan of these)
 
+  //--------------------------
+  // Prior - hyper parameters - You could move these to be parameters at a later date
+  //--------------------------
+  DATA_INTEGER(cpue_q_prior_type);                                // 0 = none (uniform), 1 = ADMB version, (you can add others)
+  DATA_VECTOR(mu_cpue_q);                                         // mean prior for cpue q, one for each time-block in ln_cpue_q
+  DATA_VECTOR(sd_cpue_q);                                         // mean prior for cpue q, one for each time-block in ln_cpue_q
+  DATA_INTEGER(srv_jap_fishery_ll_prior_type);                    // 0 = none (uniform), 1 = ADMB version, (you can add others)
+  DATA_VECTOR(mu_srv_jap_fishery_ll_q);                           // mean prior for cpue q, one for each time-block in ln_srv_jap_fishery_ll_q
+  DATA_VECTOR(sd_srv_jap_fishery_ll_q);                           // mean prior for cpue q, one for each time-block in ln_srv_jap_fishery_ll_q
+  DATA_INTEGER(srv_nmfs_trwl_q_prior_type);                       // 0 = none (uniform), 1 = ADMB version, (you can add others)
+  DATA_VECTOR(mu_srv_nmfs_trwl_q);                                // mean prior for cpue q, one for each time-block in ln_srv_nmfs_trwl_q
+  DATA_VECTOR(sd_srv_nmfs_trwl_q);                                // mean prior for cpue q, one for each time-block in ln_srv_nmfs_trwl_q
+  DATA_INTEGER(srv_jap_ll_q_prior_type);                          // 0 = none (uniform), 1 = ADMB version, (you can add others)
+  DATA_VECTOR(mu_srv_jap_ll_q);                                   // mean prior for cpue q, one for each time-block in ln_srv_jap_ll_q
+  DATA_VECTOR(sd_srv_jap_ll_q);                                   // mean prior for cpue q, one for each time-block in ln_srv_jap_ll_q
+  DATA_INTEGER(srv_dom_ll_q_prior_type);                          // 0 = none (uniform), 1 = ADMB version, (you can add others)
+  DATA_VECTOR(mu_srv_dom_ll_q);                                   // mean prior for cpue q, one for each time-block in ln_srv_dom_ll_q
+  DATA_VECTOR(sd_srv_dom_ll_q);                                   // mean prior for cpue q, one for each time-block in ln_srv_dom_ll_q
+  DATA_SCALAR(loglik_wgt_q_priors);                               // log-likelihood weight for all q priors
+  //--------------------------
   // Estimable parameters
+  //--------------------------
   PARAMETER(ln_mean_rec);                           // Unfish equil recruitment (logged) (estimated)
   PARAMETER_VECTOR(ln_rec_dev);                     // Recruitment deviations they include years before the asssessment starts to final year: length = n_years
   PARAMETER_VECTOR(ln_init_rec_dev);                // Recruitment deviations to apply during initialization they include years before the assessment starts: length = n_init_rec_devs
@@ -456,8 +482,8 @@ Type CurrentAssessment(objective_function<Type>* obj) {
     S_m_mid.col(year_ndx) = exp(-0.5 * Z_m.col(year_ndx));
   }
 
-  vector<Type> nll(25); // slots
-  vector<Type> nll_weighted(25); // slots
+  vector<Type> nll(26); // slots
+  vector<Type> nll_weighted(26); // slots
   nll.setZero();
 
   /* nll components
@@ -486,6 +512,7 @@ Type CurrentAssessment(objective_function<Type>* obj) {
    * 22 - Recruitment penalty/hyper prior if model is hierachical
    * 23 - F_penalty_ll - to make F_devs identifiable and a positive definite hessian
    * 24 - F_penalty_trwl - to make F_devs identifiable and a positive definite hessian
+   * 25 - Q priors
    */
 
   /*
@@ -698,8 +725,13 @@ Type CurrentAssessment(objective_function<Type>* obj) {
 
     // Domestic longline survey biomass
     if(srv_dom_ll_bio_indicator(year_ndx) == 1) {
-      for(age_ndx = 0; age_ndx < n_ages; age_ndx++)
-        pred_dom_ll_bio(srv_dom_ll_bio_ndx) += proportion_male(year_ndx) * natage_m(age_ndx, year_ndx) * S_m_mid(age_ndx, year_ndx) * sel_srv_dom_ll_m(age_ndx, srv_dom_ll_sel_by_year_indicator(year_ndx)) * male_mean_weight_by_age(age_ndx, year_ndx) + (1.0 - proportion_male(year_ndx)) * natage_f(age_ndx, year_ndx) * S_f_mid(age_ndx, year_ndx) * sel_srv_dom_ll_f(age_ndx, srv_dom_ll_sel_by_year_indicator(year_ndx)) * female_mean_weight_by_age(age_ndx, year_ndx);
+      if(obs_dom_ll_bio_is_numbers == 0) {
+        for(age_ndx = 0; age_ndx < n_ages; age_ndx++)
+          pred_dom_ll_bio(srv_dom_ll_bio_ndx) += proportion_male(year_ndx) * natage_m(age_ndx, year_ndx) * S_m_mid(age_ndx, year_ndx) * sel_srv_dom_ll_m(age_ndx, srv_dom_ll_sel_by_year_indicator(year_ndx)) * male_mean_weight_by_age(age_ndx, year_ndx) + (1.0 - proportion_male(year_ndx)) * natage_f(age_ndx, year_ndx) * S_f_mid(age_ndx, year_ndx) * sel_srv_dom_ll_f(age_ndx, srv_dom_ll_sel_by_year_indicator(year_ndx)) * female_mean_weight_by_age(age_ndx, year_ndx);
+      } else {
+        for(age_ndx = 0; age_ndx < n_ages; age_ndx++)
+          pred_dom_ll_bio(srv_dom_ll_bio_ndx) += proportion_male(year_ndx) * natage_m(age_ndx, year_ndx) * S_m_mid(age_ndx, year_ndx) * sel_srv_dom_ll_m(age_ndx, srv_dom_ll_sel_by_year_indicator(year_ndx)) + (1.0 - proportion_male(year_ndx)) * natage_f(age_ndx, year_ndx) * S_f_mid(age_ndx, year_ndx) * sel_srv_dom_ll_f(age_ndx, srv_dom_ll_sel_by_year_indicator(year_ndx));
+      }
       // account for catchability and times 2 ???
       pred_dom_ll_bio(srv_dom_ll_bio_ndx)  *= 2 * srv_dom_ll_q(srv_dom_ll_q_by_year_indicator(year_ndx));
       if(srv_dom_ll_bio_likelihood == 0) {
@@ -720,10 +752,15 @@ Type CurrentAssessment(objective_function<Type>* obj) {
       ++srv_dom_ll_bio_ndx;
     }
 
-    // Japanese longline survey biomass
+    // Japanese longline survey relative index
     if(srv_jap_ll_bio_indicator(year_ndx) == 1) {
-      for(age_ndx = 0; age_ndx < n_ages; age_ndx++)
-        pred_jap_ll_bio(srv_jap_ll_bio_ndx) += proportion_male(year_ndx) * natage_m(age_ndx, year_ndx) * S_m_mid(age_ndx, year_ndx) * sel_srv_jap_ll_m(age_ndx, srv_jap_ll_sel_by_year_indicator(year_ndx)) * male_mean_weight_by_age(age_ndx, year_ndx) + (1.0 - proportion_male(year_ndx)) * natage_f(age_ndx, year_ndx) * S_f_mid(age_ndx, year_ndx) * sel_srv_jap_ll_f(age_ndx, srv_jap_ll_sel_by_year_indicator(year_ndx)) * female_mean_weight_by_age(age_ndx, year_ndx);
+      if(obs_jap_ll_bio_is_numbers == 0) {
+        for(age_ndx = 0; age_ndx < n_ages; age_ndx++)
+          pred_jap_ll_bio(srv_jap_ll_bio_ndx) += proportion_male(year_ndx) * natage_m(age_ndx, year_ndx) * S_m_mid(age_ndx, year_ndx) * sel_srv_jap_ll_m(age_ndx, srv_jap_ll_sel_by_year_indicator(year_ndx)) * male_mean_weight_by_age(age_ndx, year_ndx) + (1.0 - proportion_male(year_ndx)) * natage_f(age_ndx, year_ndx) * S_f_mid(age_ndx, year_ndx) * sel_srv_jap_ll_f(age_ndx, srv_jap_ll_sel_by_year_indicator(year_ndx)) * female_mean_weight_by_age(age_ndx, year_ndx);
+      } else {
+        for(age_ndx = 0; age_ndx < n_ages; age_ndx++)
+          pred_jap_ll_bio(srv_jap_ll_bio_ndx) += proportion_male(year_ndx) * natage_m(age_ndx, year_ndx) * S_m_mid(age_ndx, year_ndx) * sel_srv_jap_ll_m(age_ndx, srv_jap_ll_sel_by_year_indicator(year_ndx)) + (1.0 - proportion_male(year_ndx)) * natage_f(age_ndx, year_ndx) * S_f_mid(age_ndx, year_ndx) * sel_srv_jap_ll_f(age_ndx, srv_jap_ll_sel_by_year_indicator(year_ndx));
+      }
       // account for catchability and times 2 ???
       pred_jap_ll_bio(srv_jap_ll_bio_ndx)  *= 2 * srv_jap_ll_q(srv_jap_ll_q_by_year_indicator(year_ndx));
       nll(4) += square((log(obs_jap_ll_bio(srv_jap_ll_bio_ndx) + 0.0001) - log(pred_jap_ll_bio(srv_jap_ll_bio_ndx) + 0.0001) ))/ (2.0 * square(se_jap_ll_bio(srv_jap_ll_bio_ndx) / obs_jap_ll_bio(srv_jap_ll_bio_ndx)));
@@ -737,8 +774,13 @@ Type CurrentAssessment(objective_function<Type>* obj) {
 
     // longline Fishery CPUE
     if(ll_cpue_indicator(year_ndx) == 1) {
-      for(age_ndx = 0; age_ndx < n_ages; age_ndx++)
-        pred_ll_cpue(ll_cpue_ndx) += natage_m(age_ndx, year_ndx) * S_m_mid(age_ndx, year_ndx) * sel_ll_m(age_ndx, ll_sel_by_year_indicator(year_ndx)) * male_mean_weight_by_age(age_ndx, year_ndx) + natage_f(age_ndx, year_ndx) * S_f_mid(age_ndx, year_ndx) * sel_ll_f(age_ndx, ll_sel_by_year_indicator(year_ndx)) * female_mean_weight_by_age(age_ndx, year_ndx);
+      if(obs_ll_cpue_is_numbers == 0) {
+        for(age_ndx = 0; age_ndx < n_ages; age_ndx++)
+          pred_ll_cpue(ll_cpue_ndx) += natage_m(age_ndx, year_ndx) * S_m_mid(age_ndx, year_ndx) * sel_ll_m(age_ndx, ll_sel_by_year_indicator(year_ndx)) * male_mean_weight_by_age(age_ndx, year_ndx) + natage_f(age_ndx, year_ndx) * S_f_mid(age_ndx, year_ndx) * sel_ll_f(age_ndx, ll_sel_by_year_indicator(year_ndx)) * female_mean_weight_by_age(age_ndx, year_ndx);
+      } else {
+        for(age_ndx = 0; age_ndx < n_ages; age_ndx++)
+          pred_ll_cpue(ll_cpue_ndx) += natage_m(age_ndx, year_ndx) * S_m_mid(age_ndx, year_ndx) * sel_ll_m(age_ndx, ll_sel_by_year_indicator(year_ndx)) + natage_f(age_ndx, year_ndx) * S_f_mid(age_ndx, year_ndx) * sel_ll_f(age_ndx, ll_sel_by_year_indicator(year_ndx));
+      }
       // account for catchability and times 2 ???
       pred_ll_cpue(ll_cpue_ndx)  *= ll_cpue_q(ll_cpue_q_by_year_indicator(year_ndx));
       //nll(5) += square((log(obs_ll_cpue(ll_cpue_ndx) + 0.0001) - log(pred_ll_cpue(ll_cpue_ndx) + 0.0001) ))/ (2.0 * square(se_ll_cpue(ll_cpue_ndx) / obs_ll_cpue(ll_cpue_ndx)));
@@ -965,8 +1007,13 @@ Type CurrentAssessment(objective_function<Type>* obj) {
 
     // NMFS GOA trawl survey biomass
     if(srv_nmfs_trwl_bio_indicator(year_ndx) == 1) {
-      for(age_ndx = 0; age_ndx < n_ages; age_ndx++)
-        pred_nmfs_trwl_bio(srv_nmfs_trwl_bio_ndx) += proportion_male(year_ndx) * natage_m(age_ndx, year_ndx) * S_m_mid(age_ndx, year_ndx) * sel_srv_nmfs_trwl_m(age_ndx, srv_nmfs_trwl_sel_by_year_indicator(year_ndx)) * male_mean_weight_by_age(age_ndx, year_ndx) + (1.0 - proportion_male(year_ndx)) * natage_f(age_ndx, year_ndx) * S_f_mid(age_ndx, year_ndx) * sel_srv_nmfs_trwl_f(age_ndx, srv_nmfs_trwl_sel_by_year_indicator(year_ndx)) * female_mean_weight_by_age(age_ndx, year_ndx);
+      if(obs_nmfs_trwl_bio_is_numbers == 0) {
+        for(age_ndx = 0; age_ndx < n_ages; age_ndx++)
+          pred_nmfs_trwl_bio(srv_nmfs_trwl_bio_ndx) += proportion_male(year_ndx) * natage_m(age_ndx, year_ndx) * S_m_mid(age_ndx, year_ndx) * sel_srv_nmfs_trwl_m(age_ndx, srv_nmfs_trwl_sel_by_year_indicator(year_ndx)) * male_mean_weight_by_age(age_ndx, year_ndx) + (1.0 - proportion_male(year_ndx)) * natage_f(age_ndx, year_ndx) * S_f_mid(age_ndx, year_ndx) * sel_srv_nmfs_trwl_f(age_ndx, srv_nmfs_trwl_sel_by_year_indicator(year_ndx)) * female_mean_weight_by_age(age_ndx, year_ndx);
+      } else {
+        for(age_ndx = 0; age_ndx < n_ages; age_ndx++)
+          pred_nmfs_trwl_bio(srv_nmfs_trwl_bio_ndx) += proportion_male(year_ndx) * natage_m(age_ndx, year_ndx) * S_m_mid(age_ndx, year_ndx) * sel_srv_nmfs_trwl_m(age_ndx, srv_nmfs_trwl_sel_by_year_indicator(year_ndx)) + (1.0 - proportion_male(year_ndx)) * natage_f(age_ndx, year_ndx) * S_f_mid(age_ndx, year_ndx) * sel_srv_nmfs_trwl_f(age_ndx, srv_nmfs_trwl_sel_by_year_indicator(year_ndx));
+      }
       // account for catchability and times 2 ???
       pred_nmfs_trwl_bio(srv_nmfs_trwl_bio_ndx)  *= 2 * srv_nmfs_trwl_q(srv_nmfs_trwl_q_by_year_indicator(year_ndx));
       if(srv_nmfs_trwl_bio_likelihood == 0) {
@@ -987,8 +1034,13 @@ Type CurrentAssessment(objective_function<Type>* obj) {
     }
     // survey for the Japanese longline fishery CPUE
     if(srv_jap_fishery_ll_bio_indicator(year_ndx) == 1) {
-      for(age_ndx = 0; age_ndx < n_ages; age_ndx++)
-        pred_jap_fishery_ll_bio(srv_jap_fishery_ll_bio_ndx) += natage_m(age_ndx, year_ndx) * S_m_mid(age_ndx, year_ndx) * sel_srv_jap_fishery_ll(age_ndx, srv_jap_fishery_ll_sel_by_year_indicator(year_ndx)) * male_mean_weight_by_age(age_ndx, year_ndx) + natage_f(age_ndx, year_ndx) * S_f_mid(age_ndx, year_ndx) * sel_srv_jap_fishery_ll(age_ndx, srv_jap_fishery_ll_sel_by_year_indicator(year_ndx)) * female_mean_weight_by_age(age_ndx, year_ndx);
+      if(obs_jap_fishery_ll_bio_is_numbers == 0) {
+        for(age_ndx = 0; age_ndx < n_ages; age_ndx++)
+          pred_jap_fishery_ll_bio(srv_jap_fishery_ll_bio_ndx) += natage_m(age_ndx, year_ndx) * S_m_mid(age_ndx, year_ndx) * sel_srv_jap_fishery_ll(age_ndx, srv_jap_fishery_ll_sel_by_year_indicator(year_ndx)) * male_mean_weight_by_age(age_ndx, year_ndx) + natage_f(age_ndx, year_ndx) * S_f_mid(age_ndx, year_ndx) * sel_srv_jap_fishery_ll(age_ndx, srv_jap_fishery_ll_sel_by_year_indicator(year_ndx)) * female_mean_weight_by_age(age_ndx, year_ndx);
+      } else {
+        for(age_ndx = 0; age_ndx < n_ages; age_ndx++)
+          pred_jap_fishery_ll_bio(srv_jap_fishery_ll_bio_ndx) += natage_m(age_ndx, year_ndx) * S_m_mid(age_ndx, year_ndx) * sel_srv_jap_fishery_ll(age_ndx, srv_jap_fishery_ll_sel_by_year_indicator(year_ndx)) + natage_f(age_ndx, year_ndx) * S_f_mid(age_ndx, year_ndx) * sel_srv_jap_fishery_ll(age_ndx, srv_jap_fishery_ll_sel_by_year_indicator(year_ndx));
+      }
       // account for catchability and times 2 ???
       pred_jap_fishery_ll_bio(srv_jap_fishery_ll_bio_ndx)  *= srv_jap_fishery_ll_q(srv_jap_fishery_ll_q_by_year_indicator(year_ndx));
       if(srv_jap_fishery_ll_bio_likelihood == 0) {
@@ -1073,6 +1125,30 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   // F-dev penalty
   nll(23) = square(ln_ll_F_devs).sum();
   nll(24) = square(ln_trwl_F_devs).sum();
+
+  //-------------
+  // Formal prior calculations
+  //-------------
+  if(cpue_q_prior_type == 1) {
+    for(int q_ndx = 0; q_ndx < ln_ll_cpue_q.size(); ++q_ndx)
+      nll(25) -= loglik_wgt_q_priors * square(ln_ll_cpue_q(q_ndx) - log(mu_cpue_q(q_ndx)))/(2.0* square(sd_cpue_q(q_ndx)));
+  }
+  if(srv_jap_fishery_ll_prior_type == 1) {
+    for(int q_ndx = 0; q_ndx < ln_srv_jap_fishery_ll_q.size(); ++q_ndx)
+      nll(25) -= loglik_wgt_q_priors * square(ln_srv_jap_fishery_ll_q(q_ndx) - log(mu_srv_jap_fishery_ll_q(q_ndx)))/(2.0* square(sd_srv_jap_fishery_ll_q(q_ndx)));
+  }
+  if(srv_nmfs_trwl_q_prior_type == 1) {
+    for(int q_ndx = 0; q_ndx < ln_srv_nmfs_trwl_q.size(); ++q_ndx)
+      nll(25) -= loglik_wgt_q_priors * square(ln_srv_nmfs_trwl_q(q_ndx) - log(mu_srv_nmfs_trwl_q(q_ndx)))/(2.0* square(sd_srv_nmfs_trwl_q(q_ndx)));
+  }
+  if(srv_jap_ll_q_prior_type == 1) {
+    for(int q_ndx = 0; q_ndx < ln_srv_jap_ll_q.size(); ++q_ndx)
+      nll(25) -= loglik_wgt_q_priors * square(ln_srv_jap_ll_q(q_ndx) - log(mu_srv_jap_ll_q(q_ndx)))/(2.0* square(sd_srv_jap_ll_q(q_ndx)));
+  }
+  if(srv_dom_ll_q_prior_type == 1) {
+    for(int q_ndx = 0; q_ndx < ln_srv_dom_ll_q.size(); ++q_ndx)
+      nll(25) -= loglik_wgt_q_priors * square(ln_srv_dom_ll_q(q_ndx) - log(mu_srv_dom_ll_q(q_ndx)))/(2.0* square(sd_srv_dom_ll_q(q_ndx)));
+  }
 
   // Apply Log likelihood weights Yuck!!
   nll_weighted = nll;
@@ -1229,6 +1305,25 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   REPORT(se_ll_cpue);
   REPORT(se_jap_fishery_ll_bio);
   REPORT(se_nmfs_trwl_bio);
+
+  // Report prior information
+  REPORT(cpue_q_prior_type);
+  REPORT(mu_cpue_q);
+  REPORT(sd_cpue_q);
+  REPORT(srv_jap_fishery_ll_prior_type);
+  REPORT(mu_srv_jap_fishery_ll_q);
+  REPORT(sd_srv_jap_fishery_ll_q);
+  REPORT(srv_nmfs_trwl_q_prior_type);
+  REPORT(mu_srv_nmfs_trwl_q);
+  REPORT(sd_srv_nmfs_trwl_q);
+  REPORT(srv_jap_ll_q_prior_type);
+  REPORT(mu_srv_jap_ll_q);
+  REPORT(sd_srv_jap_ll_q);
+  REPORT(srv_dom_ll_q_prior_type);
+  REPORT(mu_srv_dom_ll_q);
+  REPORT(sd_srv_dom_ll_q);
+
+
   // Report model type to help R functions
   REPORT(model_type);
 
@@ -1285,7 +1380,7 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   REPORT(loglik_wgt_srv_jap_fishery_ll_lgth);
   REPORT(loglik_wgt_ll_catchatlgth_m);
   REPORT(loglik_wgt_ll_catchatlgth_f);
-
+  REPORT(loglik_wgt_q_priors);
   // REMOVE these objects once we have validated
   // I created them for reporting interim calculations
 

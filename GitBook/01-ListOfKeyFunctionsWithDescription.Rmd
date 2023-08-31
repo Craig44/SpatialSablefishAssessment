@@ -60,6 +60,7 @@ region_key
 
 ### Estimation functions {-}
 
+- `estimate_with_phases` Estimate a model where parameters are estimated with phases
 - `profile_param` Run log-likelihood profiles on an estimated parameter
 - `set_up_parameters` Fix parameters, uses `fix_pars` and `set_pars_to_be_the_same` for the `TagIntegrated` model 
 - `pre_optim_sanity_checks` run some checks on a TMB model of type `TagIntegrated` before optimization

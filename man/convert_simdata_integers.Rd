@@ -18,5 +18,6 @@ sim_data list with integers converted
 convert_simdata_integers
 }
 \details{
-this function should be used if you get the following error from \code{MakeADFun} \verb{Error in getParameterOrder(data, parameters, new.env(), DLL = DLL) : NOT A VECTOR!}
+this function should be used if you get the following error from \code{MakeADFun} \verb{Error in getParameterOrder(data, parameters, new.env(), DLL = DLL) : NOT A VECTOR!}.
+You have to use it because the TMB models \code{REPORT} data, the simulate call will change vectors to scalars which can confuse the \code{MakeADFun}
 }

@@ -250,153 +250,213 @@ validate_input_data_and_parameters = function(data, parameters) {
     if(!check$result)
       return(paste0("ll_catchatlgth_indicator: ", check$message))
     ## obs_ll_catchatlgth_m
-    check = check_dim(data$obs_ll_catchatlgth_m, c(n_length_bins, sum(data$ll_catchatlgth_indicator)))
-    if(!check$result)
-      return(paste0("obs_ll_catchatlgth_m: ", check$message))
-    ## obs_ll_catchatlgth_f
-    check = check_dim(data$obs_ll_catchatlgth_f, c(n_length_bins, sum(data$ll_catchatlgth_indicator)))
-    if(!check$result)
-      return(paste0("obs_ll_catchatlgth_f: ", check$message))
+    if(sum(data$ll_catchatlgth_indicator) != 0) { # only check if observations are supplied
+      check = check_dim(data$obs_ll_catchatlgth_m, c(n_length_bins, sum(data$ll_catchatlgth_indicator)))
+      if(!check$result)
+        return(paste0("obs_ll_catchatlgth_m: ", check$message))
+      ## obs_ll_catchatlgth_f
+      check = check_dim(data$obs_ll_catchatlgth_f, c(n_length_bins, sum(data$ll_catchatlgth_indicator)))
+      if(!check$result)
+        return(paste0("obs_ll_catchatlgth_f: ", check$message))
+    }
     ## trwl_catchatlgth_indicator
     check = check_length(data$trwl_catchatlgth_indicator, n_projyears)
     if(!check$result)
       return(paste0("trwl_catchatlgth_indicator: ", check$message))
     ## obs_trwl_catchatlgth_m
-    check = check_dim(data$obs_trwl_catchatlgth_m, c(n_length_bins, sum(data$trwl_catchatlgth_indicator)))
-    if(!check$result)
-      return(paste0("obs_trwl_catchatlgth_m: ", check$message))
-    ## obs_trwl_catchatlgth_f
-    check = check_dim(data$obs_trwl_catchatlgth_f, c(n_length_bins, sum(data$trwl_catchatlgth_indicator)))
-    if(!check$result)
-      return(paste0("obs_trwl_catchatlgth_f: ", check$message))
+    if(sum(data$trwl_catchatlgth_indicator) != 0) { # only check if observations are supplied
+      check = check_dim(data$obs_trwl_catchatlgth_m, c(n_length_bins, sum(data$trwl_catchatlgth_indicator)))
+      if(!check$result)
+        return(paste0("obs_trwl_catchatlgth_m: ", check$message))
+      ## obs_trwl_catchatlgth_f
+      check = check_dim(data$obs_trwl_catchatlgth_f, c(n_length_bins, sum(data$trwl_catchatlgth_indicator)))
+      if(!check$result)
+        return(paste0("obs_trwl_catchatlgth_f: ", check$message))
+    }
     ## srv_dom_ll_bio_indicator
     check = check_length(data$srv_dom_ll_bio_indicator, n_projyears)
     if(!check$result)
       return(paste0("srv_dom_ll_bio_indicator: ", check$message))
     ## obs_dom_ll_bio
-    check = check_length(data$obs_dom_ll_bio, sum(data$srv_dom_ll_bio_indicator))
-    if(!check$result)
-      return(paste0("obs_dom_ll_bio: ", check$message))
-    ## se_dom_ll_bio
-    check = check_length(data$se_dom_ll_bio, sum(data$srv_dom_ll_bio_indicator))
-    if(!check$result)
-      return(paste0("se_dom_ll_bio: ", check$message))
+    if(sum(data$srv_dom_ll_bio_indicator) != 0) { # only check if observations are supplied
+      check = check_length(data$obs_dom_ll_bio, sum(data$srv_dom_ll_bio_indicator))
+      if(!check$result)
+        return(paste0("obs_dom_ll_bio: ", check$message))
+      ## se_dom_ll_bio
+      check = check_length(data$se_dom_ll_bio, sum(data$srv_dom_ll_bio_indicator))
+      if(!check$result)
+        return(paste0("se_dom_ll_bio: ", check$message))
+    }
     ## srv_jap_ll_bio_indicator
     check = check_length(data$srv_jap_ll_bio_indicator, n_projyears)
     if(!check$result)
       return(paste0("srv_jap_ll_bio_indicator: ", check$message))
     ## obs_jap_ll_bio
-    check = check_length(data$obs_jap_ll_bio, sum(data$srv_jap_ll_bio_indicator))
-    if(!check$result)
-      return(paste0("obs_jap_ll_bio: ", check$message))
-    ## se_jap_ll_bio
-    check = check_length(data$se_jap_ll_bio, sum(data$srv_jap_ll_bio_indicator))
-    if(!check$result)
-      return(paste0("se_jap_ll_bio: ", check$message))
+    if(sum(data$srv_jap_ll_bio_indicator) != 0) { # only check if observations are supplied
+      check = check_length(data$obs_jap_ll_bio, sum(data$srv_jap_ll_bio_indicator))
+      if(!check$result)
+        return(paste0("obs_jap_ll_bio: ", check$message))
+      ## se_jap_ll_bio
+      check = check_length(data$se_jap_ll_bio, sum(data$srv_jap_ll_bio_indicator))
+      if(!check$result)
+        return(paste0("se_jap_ll_bio: ", check$message))
+    }
     ## srv_nmfs_trwl_bio_indicator
     check = check_length(data$srv_nmfs_trwl_bio_indicator, n_projyears)
     if(!check$result)
       return(paste0("srv_nmfs_trwl_bio_indicator: ", check$message))
     ## obs_nmfs_trwl_bio
-    check = check_length(data$obs_nmfs_trwl_bio, sum(data$srv_nmfs_trwl_bio_indicator))
-    if(!check$result)
-      return(paste0("obs_nmfs_trwl_bio: ", check$message))
-    ## se_nmfs_trwl_bio
-    check = check_length(data$se_nmfs_trwl_bio, sum(data$srv_nmfs_trwl_bio_indicator))
-    if(!check$result)
-      return(paste0("se_nmfs_trwl_bio: ", check$message))
+    if(sum(data$srv_nmfs_trwl_bio_indicator) != 0) { # only check if observations are supplied
+      check = check_length(data$obs_nmfs_trwl_bio, sum(data$srv_nmfs_trwl_bio_indicator))
+      if(!check$result)
+        return(paste0("obs_nmfs_trwl_bio: ", check$message))
+      ## se_nmfs_trwl_bio
+      check = check_length(data$se_nmfs_trwl_bio, sum(data$srv_nmfs_trwl_bio_indicator))
+      if(!check$result)
+        return(paste0("se_nmfs_trwl_bio: ", check$message))
+    }
     ## ll_cpue_indicator
     check = check_length(data$ll_cpue_indicator, n_projyears)
     if(!check$result)
       return(paste0("ll_cpue_indicator: ", check$message))
     ## obs_ll_cpue
-    check = check_length(data$obs_ll_cpue, sum(data$ll_cpue_indicator))
-    if(!check$result)
-      return(paste0("obs_ll_cpue: ", check$message))
-    ## se_ll_cpue
-    check = check_length(data$se_ll_cpue, sum(data$ll_cpue_indicator))
-    if(!check$result)
-      return(paste0("se_ll_cpue: ", check$message))
+    if(sum(data$ll_cpue_indicator) != 0) { # only check if observations are supplied
+      check = check_length(data$obs_ll_cpue, sum(data$ll_cpue_indicator))
+      if(!check$result)
+        return(paste0("obs_ll_cpue: ", check$message))
+      ## se_ll_cpue
+      check = check_length(data$se_ll_cpue, sum(data$ll_cpue_indicator))
+      if(!check$result)
+        return(paste0("se_ll_cpue: ", check$message))
+    }
     ## srv_jap_fishery_ll_bio_indicator
     check = check_length(data$srv_jap_fishery_ll_bio_indicator, n_projyears)
     if(!check$result)
       return(paste0("srv_jap_fishery_ll_bio_indicator: ", check$message))
     ## obs_jap_fishery_ll_bio
-    check = check_length(data$obs_jap_fishery_ll_bio, sum(data$srv_jap_fishery_ll_bio_indicator))
-    if(!check$result)
-      return(paste0("obs_jap_fishery_ll_bio: ", check$message))
-    ## se_jap_fishery_ll_bio
-    check = check_length(data$se_jap_fishery_ll_bio, sum(data$srv_jap_fishery_ll_bio_indicator))
-    if(!check$result)
-      return(paste0("se_jap_fishery_ll_bio: ", check$message))
+    if(sum(data$srv_jap_fishery_ll_bio_indicator) != 0) { # only check if observations are supplied
+      check = check_length(data$obs_jap_fishery_ll_bio, sum(data$srv_jap_fishery_ll_bio_indicator))
+      if(!check$result)
+        return(paste0("obs_jap_fishery_ll_bio: ", check$message))
+      ## se_jap_fishery_ll_bio
+      check = check_length(data$se_jap_fishery_ll_bio, sum(data$srv_jap_fishery_ll_bio_indicator))
+      if(!check$result)
+        return(paste0("se_jap_fishery_ll_bio: ", check$message))
+    }
     ## srv_dom_ll_age_indicator
     check = check_length(data$srv_dom_ll_age_indicator, n_projyears)
     if(!check$result)
       return(paste0("srv_dom_ll_age_indicator: ", check$message))
     ## obs_srv_dom_ll_age
-    check = check_dim(data$obs_srv_dom_ll_age, c(n_ages, sum(data$srv_dom_ll_age_indicator)))
-    if(!check$result)
-      return(paste0("obs_srv_dom_ll_age: ", check$message))
+    if(sum(data$srv_dom_ll_age_indicator) != 0) { # only check if observations are supplied
+      check = check_dim(data$obs_srv_dom_ll_age, c(n_ages, sum(data$srv_dom_ll_age_indicator)))
+      if(!check$result)
+        return(paste0("obs_srv_dom_ll_age: ", check$message))
+    }
     ## srv_dom_ll_lgth_indicator
     check = check_length(data$srv_dom_ll_lgth_indicator, n_projyears)
     if(!check$result)
       return(paste0("srv_dom_ll_lgth_indicator: ", check$message))
     ## obs_srv_dom_ll_lgth_m
-    check = check_dim(data$obs_srv_dom_ll_lgth_m, c(n_length_bins, sum(data$srv_dom_ll_lgth_indicator)))
-    if(!check$result)
-      return(paste0("obs_srv_dom_ll_lgth_m: ", check$message))
-    ## obs_srv_dom_ll_lgth_f
-    check = check_dim(data$obs_srv_dom_ll_lgth_f, c(n_length_bins, sum(data$srv_dom_ll_lgth_indicator)))
-    if(!check$result)
-      return(paste0("obs_srv_dom_ll_lgth_f: ", check$message))
+    if(sum(data$srv_dom_ll_lgth_indicator) != 0) { # only check if observations are supplied
+      check = check_dim(data$obs_srv_dom_ll_lgth_m, c(n_length_bins, sum(data$srv_dom_ll_lgth_indicator)))
+      if(!check$result)
+        return(paste0("obs_srv_dom_ll_lgth_m: ", check$message))
+      ## obs_srv_dom_ll_lgth_f
+      check = check_dim(data$obs_srv_dom_ll_lgth_f, c(n_length_bins, sum(data$srv_dom_ll_lgth_indicator)))
+      if(!check$result)
+        return(paste0("obs_srv_dom_ll_lgth_f: ", check$message))
+    }
     ## srv_jap_ll_age_indicator
     check = check_length(data$srv_jap_ll_age_indicator, n_projyears)
     if(!check$result)
       return(paste0("srv_jap_ll_age_indicator: ", check$message))
     ## obs_srv_jap_ll_age
-    check = check_dim(data$obs_srv_jap_ll_age, c(n_ages, sum(data$srv_jap_ll_age_indicator)))
-    if(!check$result)
-      return(paste0("obs_srv_jap_ll_age: ", check$message))
+    if(sum(data$srv_jap_ll_age_indicator) != 0) { # only check if observations are supplied
+      check = check_dim(data$obs_srv_jap_ll_age, c(n_ages, sum(data$srv_jap_ll_age_indicator)))
+      if(!check$result)
+        return(paste0("obs_srv_jap_ll_age: ", check$message))
+    }
     ## srv_jap_ll_lgth_indicator
     check = check_length(data$srv_jap_ll_lgth_indicator, n_projyears)
     if(!check$result)
       return(paste0("srv_jap_ll_lgth_indicator: ", check$message))
     ## obs_srv_jap_ll_lgth_m
-    check = check_dim(data$obs_srv_jap_ll_lgth_m, c(n_length_bins, sum(data$srv_jap_ll_lgth_indicator)))
-    if(!check$result)
-      return(paste0("obs_srv_jap_ll_lgth_m: ", check$message))
-    ## obs_srv_jap_ll_lgth_f
-    check = check_dim(data$obs_srv_jap_ll_lgth_f, c(n_length_bins, sum(data$srv_jap_ll_lgth_indicator)))
-    if(!check$result)
-      return(paste0("obs_srv_jap_ll_lgth_f: ", check$message))
+    if(sum(data$srv_jap_ll_lgth_indicator) != 0) { # only check if observations are supplied
+      check = check_dim(data$obs_srv_jap_ll_lgth_m, c(n_length_bins, sum(data$srv_jap_ll_lgth_indicator)))
+      if(!check$result)
+        return(paste0("obs_srv_jap_ll_lgth_m: ", check$message))
+      ## obs_srv_jap_ll_lgth_f
+      check = check_dim(data$obs_srv_jap_ll_lgth_f, c(n_length_bins, sum(data$srv_jap_ll_lgth_indicator)))
+      if(!check$result)
+        return(paste0("obs_srv_jap_ll_lgth_f: ", check$message))
+    }
     ## srv_jap_fishery_ll_lgth_indicator
     check = check_length(data$srv_jap_fishery_ll_lgth_indicator, n_projyears)
     if(!check$result)
       return(paste0("srv_jap_fishery_ll_lgth_indicator: ", check$message))
     ## obs_srv_jap_fishery_ll_lgth
-    check = check_dim(data$obs_srv_jap_fishery_ll_lgth, c(n_length_bins, sum(data$srv_jap_fishery_ll_lgth_indicator)))
-    if(!check$result)
-      return(paste0("obs_srv_jap_fishery_ll_lgth: ", check$message))
+    if(sum(data$srv_jap_fishery_ll_lgth_indicator) != 0) { # only check if observations are supplied
+      check = check_dim(data$obs_srv_jap_fishery_ll_lgth, c(n_length_bins, sum(data$srv_jap_fishery_ll_lgth_indicator)))
+      if(!check$result)
+        return(paste0("obs_srv_jap_fishery_ll_lgth: ", check$message))
+    }
     ## srv_nmfs_trwl_age_indicator
     check = check_length(data$srv_nmfs_trwl_age_indicator, n_projyears)
     if(!check$result)
       return(paste0("srv_nmfs_trwl_age_indicator: ", check$message))
     ## obs_srv_dom_ll_age
-    check = check_dim(data$obs_srv_nmfs_trwl_age, c(n_ages, sum(data$srv_nmfs_trwl_age_indicator)))
-    if(!check$result)
-      return(paste0("obs_srv_nmfs_trwl_age: ", check$message))
+    if(sum(data$srv_nmfs_trwl_age_indicator) != 0) { # only check if observations are supplied
+      check = check_dim(data$obs_srv_nmfs_trwl_age, c(n_ages, sum(data$srv_nmfs_trwl_age_indicator)))
+      if(!check$result)
+        return(paste0("obs_srv_nmfs_trwl_age: ", check$message))
+    }
     ## srv_nmfs_trwl_lgth_indicator
     check = check_length(data$srv_nmfs_trwl_lgth_indicator, n_projyears)
     if(!check$result)
       return(paste0("srv_nmfs_trwl_lgth_indicator: ", check$message))
     ## obs_srv_nmfs_trwl_lgth_m
-    check = check_dim(data$obs_srv_nmfs_trwl_lgth_m, c(n_length_bins, sum(data$srv_nmfs_trwl_lgth_indicator)))
+    if(sum(data$srv_nmfs_trwl_lgth_indicator) != 0) { # only check if observations are supplied
+      check = check_dim(data$obs_srv_nmfs_trwl_lgth_m, c(n_length_bins, sum(data$srv_nmfs_trwl_lgth_indicator)))
+      if(!check$result)
+        return(paste0("obs_srv_nmfs_trwl_lgth_m: ", check$message))
+      ## obs_srv_nmfs_trwl_lgth_f
+      check = check_dim(data$obs_srv_nmfs_trwl_lgth_f, c(n_length_bins, sum(data$srv_nmfs_trwl_lgth_indicator)))
+      if(!check$result)
+        return(paste0("obs_srv_nmfs_trwl_lgth_f: ", check$message))
+    }
+    ## check prior inputs
+    check = check_length(data$mu_cpue_q, length(parameters$ln_ll_cpue_q))
     if(!check$result)
-      return(paste0("obs_srv_nmfs_trwl_lgth_m: ", check$message))
-    ## obs_srv_nmfs_trwl_lgth_f
-    check = check_dim(data$obs_srv_nmfs_trwl_lgth_f, c(n_length_bins, sum(data$srv_nmfs_trwl_lgth_indicator)))
+      return(paste0("mu_cpue_q: ", check$message, ". this is the length of 'ln_ll_cpue_q'"))
+    check = check_length(data$sd_cpue_q, length(parameters$ln_ll_cpue_q))
     if(!check$result)
-      return(paste0("obs_srv_nmfs_trwl_lgth_f: ", check$message))
+      return(paste0("sd_cpue_q: ", check$message, ". this is the length of 'ln_ll_cpue_q'"))
+    check = check_length(data$mu_srv_jap_fishery_ll_q, length(parameters$ln_srv_jap_fishery_ll_q))
+    if(!check$result)
+      return(paste0("mu_srv_jap_fishery_ll_q: ", check$message, ". this is the length of 'ln_srv_jap_fishery_ll_q'"))
+    check = check_length(data$sd_srv_jap_fishery_ll_q, length(parameters$ln_srv_jap_fishery_ll_q))
+    if(!check$result)
+      return(paste0("sd_srv_jap_fishery_ll_q: ", check$message, ". this is the length of 'ln_srv_jap_fishery_ll_q'"))
+    check = check_length(data$mu_srv_nmfs_trwl_q, length(parameters$ln_srv_nmfs_trwl_q))
+    if(!check$result)
+      return(paste0("mu_srv_nmfs_trwl_q: ", check$message, ". this is the length of 'ln_srv_nmfs_trwl_q'"))
+    check = check_length(data$sd_srv_nmfs_trwl_q, length(parameters$ln_srv_nmfs_trwl_q))
+    if(!check$result)
+      return(paste0("sd_srv_nmfs_trwl_q: ", check$message, ". this is the length of 'ln_srv_nmfs_trwl_q'"))
+    check = check_length(data$mu_srv_jap_ll_q, length(parameters$ln_srv_jap_ll_q))
+    if(!check$result)
+      return(paste0("mu_srv_jap_ll_q: ", check$message, ". this is the length of 'ln_srv_jap_ll_q'"))
+    check = check_length(data$sd_srv_jap_ll_q, length(parameters$ln_srv_jap_ll_q))
+    if(!check$result)
+      return(paste0("sd_srv_jap_ll_q: ", check$message, ". this is the length of 'ln_srv_jap_ll_q'"))
+    check = check_length(data$mu_srv_dom_ll_q, length(parameters$ln_srv_dom_ll_q))
+    if(!check$result)
+      return(paste0("mu_srv_dom_ll_q: ", check$message, ". this is the length of 'ln_srv_dom_ll_q'"))
+    check = check_length(data$sd_srv_dom_ll_q, length(parameters$ln_srv_dom_ll_q))
+    if(!check$result)
+      return(paste0("sd_srv_dom_ll_q: ", check$message, ". this is the length of 'ln_srv_dom_ll_q'"))
+
   } else {
     if(data$do_projection == 1) {
       ## check projection variables

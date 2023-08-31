@@ -1395,3 +1395,122 @@ profile_param <- function(parameters, mle_obj, na_map, profile_param_label, elem
   return(list(profile_mle = profile_mle_lst, na_map = na_map, data = data, parameters_ls = parameters_ls, profile_values = profile_values))
 }
 
+#' Estimate a model with phases using phases
+#'
+#' This function runs TMB with ADMB-like phasing of parameter estimation.
+#' Phasing within an optimizer
+#' Function with normal inputs, passed via “...”, plus two additional arguments, “phase” and “optimizer”
+#' Optimizer by default is nlminb
+#' phase is a tagged list where missing elements are populated with a vector of 1s, and non-missing elements are integers, and where the optimizer loops through values of phase while progressively changing map to turn on parameters
+#'
+#' @param  data A list to be passed to TMB
+#' @param  parameters A list of parameters of the model
+#' @param  phases A list of the phases for the parameters of the model (same structure as your parameter list)
+#' @param  model_name A string describing the model name. Must be the name of your .cpp file
+#' @param  optimizer The optimizer to use. Default is nlminb (This is not currently active)
+#' @return A list of parameter estimates and their standard errors
+#' @author Gavin Fay
+#' @details see here https://github.com/kaskr/TMB_contrib_R/tree/master/TMBphase for information, was taken from TMBphase, but adjusted for our case which is fairly edge
+#' @export
+#'
+#' @examples
+#'  setwd("~/Dropbox/ADMB/TMBphase/R")
+#'  Y<-scan('thetalog.dat', skip=3, quiet=TRUE)
+#'  data <- list(Y=Y)
+#'  parameters <- list(
+#'    X=data$Y*0,
+#'    logr0=0,
+#'    logtheta=0,
+#'    logK=6,
+#'    logQ=0,
+#'    logR=0
+#'  )
+#' parameters$logQ <- -3
+#'  random <- "X"
+#'  model_name <- "thetalog"
+#'  phases <- list(
+#'    X=2,
+#'    logr0=1,
+#'    logtheta=1,
+#'    logK=1,
+#'    logQ=2,
+#'    logR=1
+#'  )
+#'  TMBphase(data, parameters, random, model_name, optimizer = "nlminb")
+
+estimate_with_phases <- function(data, parameters, map,  phases, optimizer = "nlminb") {
+
+  DLL_use <- "SpatialSablefishAssessment_TMBExports"
+
+  ## check phases is for all parameters
+  if(!all(names(phases) %in% names(parameters)))
+    stop(paste0("You need to supply a named list element for all parameters. you are missing ", paste(names(phases)[!names(phases) %in% names(parameters)], collapse = ", ")))
+  if(!all(names(parameters) %in% names(phases)))
+    stop(paste0("You need to supply a named list element for all parameters. you are missing ", paste(names(parameters)[!names(parameters) %in% names(phases)], collapse = ", ")))
+
+  obj <- TMB::MakeADFun(data, parameters, map = map, DLL = DLL_use, silent = T)
+  mle_lst = sd_lst = est_pars = list()
+  #loop over phases
+  for (phase_cur in 1:max(unlist(phases))) {
+    #phase_cur <- 1
+
+    #work out the map for this phase
+    # if phases for parameters is less than the current phase
+    # then map will contain a factor filled with NAs
+    map_use <- map
+    n_pars_turned_off = 0;
+    for (i in 1:length(parameters)) {
+      par_label = names(parameters)[i]
+      #cat("parameter ", par_label, "\n")
+      if (phases[[par_label]]>phase_cur) {
+        ## only enter if they aren't already turned off
+        if(!all(is.na(map_use[[par_label]]))) {
+          n_pars_turned_off = n_pars_turned_off + length(min(as.numeric(as.character(map_use[[par_label]])), na.rm = T):max(as.numeric(as.character(map_use[[par_label]])), na.rm = T))
+          ## turn off parameters
+          map_use[[par_label]] <- factor(rep(NA, length(parameters[[par_label]])), levels = NA)
+        }
+      } else if(n_pars_turned_off >  0) {
+        ## skip this parameter if they already turned off
+        if(all(is.na(map_use[[par_label]])))
+          next;
+        ## need to adjust mapping factors if there are estimated elements for this parameter
+        na_ndx = is.na(map_use[[par_label]])
+        ## There are non-NA entries to deal with
+        previous_levels = min(as.numeric(as.character(map_use[[par_label]])), na.rm = T):max(as.numeric(as.character(map_use[[par_label]])), na.rm = T)
+        new_levels = previous_levels - n_pars_turned_off
+        tmp_new_map = rep(NA, length(parameters[[par_label]]))
+        tmp_new_map[!na_ndx] = new_levels
+        map_use[[par_label]] = factor(tmp_new_map, levels = new_levels)
+      }
+    }
+    #map_use
+    # initialize the parameters at values in previous phase
+    params_use <- parameters
+    if (phase_cur > 1)
+      params_use <- obj$env$parList(mle_$par)
+
+    # Create the model
+    obj <- TMB::MakeADFun(data,params_use,DLL=DLL_use,map=map_use, silent = T)
+    # Estimate the model
+    mle_ = nlminb(start = obj$par, objective = obj$fn, gradient  = obj$gr, control = list(iter.max = 10000, eval.max = 10000))
+    ## to do the Newton Raphson iterations
+    try_improve = tryCatch(expr =
+                             for(i in 1:2) {
+                               g = as.numeric(obj$gr(mle_$par))
+                               h = optimHess(mle_$par, fn = obj$fn, gr = obj$gr)
+                               mle_$par = mle_$par - solve(h,g)
+                               mle_$objective = obj$fn(mle_$par)
+                             }
+                           , error = function(e){e})
+
+    # save model output
+    mle_lst[[phase_cur]] = obj$report(mle_$par)
+    sd_rep <- TMB::sdreport(obj)
+    sd_lst[[phase_cur]] =sd_rep
+    est_pars[[phase_cur]] = mle_$par
+  }
+  return(list(mle_report = mle_lst, sd_report = sd_lst, est_pars = est_pars))
+}
+
+
+
