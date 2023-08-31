@@ -6,7 +6,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <title>Assessment data and parameter descriptions | SpatialSablefishAssessment</title>
   <meta name="description" content="This Gitbook describes the spatial sablefish stock assessment R package and how to use it" />
-  <meta name="generator" content="bookdown 0.34 and GitBook 2.6.7" />
+  <meta name="generator" content="bookdown 0.33 and GitBook 2.6.7" />
 
   <meta property="og:title" content="Assessment data and parameter descriptions | SpatialSablefishAssessment" />
   <meta property="og:type" content="book" />
@@ -23,7 +23,7 @@
 <meta name="author" content="C.Marsh" />
 
 
-<meta name="date" content="2023-08-29" />
+<meta name="date" content="2023-08-31" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -119,10 +119,6 @@ code span.vs { color: #4070a0; } /* VerbatimString */
 code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
 </style>
 
-<style type="text/css">
-  
-  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
-</style>
 <style type="text/css">
 /* Used with Pandoc 2.11+ new --citeproc when CSL is used */
 div.csl-bib-body { }
@@ -287,12 +283,58 @@ div.csl-indent {
 <li><p><code>spawning_time_proportion</code> vector of proportions that indicate when during the year spawning occurs. Length = <code>n_projyears</code></p></li>
 <li><p><code>ll_fishery_catch</code> vector of annual catch for the fixed gear fishery. Units are kilo tonnes</p></li>
 <li><p><code>trwl_fishery_catch</code> vector of annual catch for the Trawl gear fishery. Units are kilo tonnes</p></li>
+<li><p><code>loglik_wgt_ll_catch</code> Log-likelihood multiplier</p></li>
+<li><p><code>loglik_wgt_trwl_catch</code> Log-likelihood multiplier</p></li>
+<li><p><code>loglik_wgt_Fs</code> Log-likelihood multiplier</p></li>
+<li><p><code>ll_sel_type</code> vector of integers (one for each time-block) defining the longline fishery selectivity type for each row of ln_ll_sel_m_pars and ln_ll_sel_f_pars</p></li>
+<li><p><code>ll_sel_by_year_indicator</code> vector of integers (one for each model year) defining the longline fishery selectivity time-block. First ndx needs to be 0</p></li>
+<li><p><code>trwl_sel_type</code> vector of integers (one for each time-block) defining the trawl fishery selectivity type for each row of ln_ll_sel_m_pars and ln_ll_sel_f_pars</p></li>
+<li><p><code>trwl_sel_by_year_indicator</code> vector of integers (one for each model year) defining the trawl fishery selectivity time-block. First ndx needs to be 0</p></li>
+<li><p><code>srv_dom_ll_sel_type</code> vector of integers (one for each time-block) defining the domestic longline survey selectivity type for each row of ln_ll_sel_m_pars and ln_ll_sel_f_pars</p></li>
+<li><p><code>srv_dom_ll_sel_by_year_indicator</code> vector of integers (one for each model year) defining the domestic longline survey selectivity time-block. First ndx needs to be 0</p></li>
+<li><p><code>srv_dom_ll_q_by_year_indicator</code> vector of integers (one for each model year) defining the domestic longline survey catchability time-block. First ndx needs to be 0</p></li>
+<li><p><code>srv_jap_ll_sel_type</code> vector of integers (one for each time-block) defining the domestic Japanese survey selectivity type for each row of ln_ll_sel_m_pars and ln_ll_sel_f_pars</p></li>
+<li><p><code>srv_jap_ll_sel_by_year_indicator</code> vector of integers (one for each model year) defining the Japanese longline survey selectivity time-block. First ndx needs to be 0</p></li>
+<li><p><code>srv_jap_ll_q_by_year_indicator</code> vector of integers (one for each model year) defining the Japanese longline survey catchability time-block. First ndx needs to be 0</p></li>
+<li><p><code>cpue_q_prior_type</code> integer specifying prior type for cpue (ll fishery index) catchability. 0 = none (uniform), 1 = ADMB version. Needs to be one for each time-block.</p></li>
+<li><p><code>mu_cpue_q</code> vector specifying the mean for q prior</p></li>
+<li><p><code>sd_cpue_q</code> vector specifying the standard deviation for q prior</p></li>
+<li><p><code>srv_jap_fishery_ll_prior_type</code> integer specifying prior type for srv_jap_fishery_ll (early japanese fishery index) catchability. 0 = none (uniform), 1 = ADMB version. Needs to be one for each time-block.</p></li>
+<li><p><code>mu_srv_jap_fishery_ll_q</code> vector specifying the mean for q prior</p></li>
+<li><p><code>sd_srv_jap_fishery_ll_q</code> vector specifying the standard deviation for q prior</p></li>
+<li><p><code>srv_nmfs_trwl_q_prior_type</code> integer specifying prior type for trawl catchability. 0 = none (uniform), 1 = ADMB version. Needs to be one for each time-block.</p></li>
+<li><p><code>mu_srv_nmfs_trwl_q</code> vector specifying the mean for q prior</p></li>
+<li><p><code>sd_srv_nmfs_trwl_q</code> vector specifying the standard deviation for q prior</p></li>
+<li><p><code>srv_jap_ll_q_prior_type</code> integer specifying prior type for japanese longline catchability. 0 = none (uniform), 1 = ADMB version. Needs to be one for each time-block.</p></li>
+<li><p><code>mu_srv_jap_ll_q</code> vector specifying the mean for q prior</p></li>
+<li><p><code>sd_srv_jap_ll_q</code> vector specifying the standard deviation for q prior</p></li>
+<li><p><code>srv_dom_ll_q_prior_type</code> integer specifying prior type for japanese longline catchability. 0 = none (uniform), 1 = ADMB version. Needs to be one for each time-block.</p></li>
+<li><p><code>mu_srv_dom_ll_q</code> vector specifying the mean for q prior</p></li>
+<li><p><code>sd_srv_dom_ll_q</code> vector specifying the standard deviation for q prior</p></li>
+<li><p><code>loglik_wgt_q_priors</code> scalar specifying the log-likelihood weight (multiplier for the priors)</p></li>
 </ul>
 </div>
 <div id="parameters-1" class="section level2 unnumbered hasAnchor">
 <h2><code>parameters</code><a href="assessment-data-and-parameter-descriptions.html#parameters-1" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <ul>
 <li><code>ln_mean_rec</code> scalar of natural logarithm of mean recruitment (units are log millions).</li>
+<li><code>ln_rec_dev</code> vector of recruitment deviations, one for each year in the model. I split the ADMB model up into two parameters</li>
+<li><code>ln_init_rec_dev</code> Recruitment deviations to apply during initialization they include years before the assessment starts: length = n_init_rec_devs</li>
+<li><code>ln_ll_sel_pars</code> array of log selectivity parameters dim = time-blocks, max(sel parameters), n_sex</li>
+<li><code>ln_trwl_sel_pars</code> array of log selectivity parameters dim = time-blocks, max(sel parameters), n_sex</li>
+<li><code>ln_ll_F_avg</code> scalar for average log fishing mortality</li>
+<li><code>ln_ll_F_devs</code> vector of fishing mortality deviations</li>
+<li><code>ln_trwl_F_avg</code> scalar for average log fishing mortality</li>
+<li><code>ln_trwl_F_devs</code> vector of fishing mortality deviations</li>
+<li><code>ln_ll_cpue_q</code> vector of log catchabilities parameters for cpue observation. length = time-blocks</li>
+<li><code>ln_srv_jap_fishery_ll_q</code> vector of log catchabilities parameters for srv_dom_ll observation. length = time-blocks</li>
+<li><code>ln_srv_jap_fishery_ll_sel_pars</code> array of log selectivity parameters dim = time-blocks, max(sel parameters): NOTE not sex disaggregated!! no sex dimension</li>
+<li><code>ln_srv_nmfs_trwl_q</code> vector of log catchabilities parameters for NMFS bottom trawl survey observation. length = time-blocks</li>
+<li><code>ln_srv_nmfs_trwl_sel_pars</code> array of log selectivity parameters dim = time-blocks, max(sel parameters), n_sex</li>
+<li><code>ln_srv_jap_ll_q</code> vector of log catchabilities parameters for japanese longline survey observation. length = time-blocks</li>
+<li><code>ln_srv_jap_ll_sel_pars</code> array of log selectivity parameters dim = time-blocks, max(sel parameters), n_sex</li>
+<li><code>ln_srv_dom_ll_q</code> vector of log catchabilities parameters for Domestic longline survey observation. length = time-blocks</li>
+<li><code>ln_srv_dom_ll_sel_pars</code> array of log selectivity parameters dim = time-blocks, max(sel parameters), n_sex</li>
 </ul>
 
 </div>
