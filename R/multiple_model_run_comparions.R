@@ -524,7 +524,7 @@ get_multiple_nlls <- function(mle_ls, run_labels = NULL, region_key = NULL) {
     this_nll = get_negloglike(MLE_report = mle_ls[[i]])
     ## add totol
     if(mle_ls[[i]]$model_type == 0) {
-      this_nll = rbind(this_nll, data.frame(negloglike = round(sum(this_nll$negloglike),4), weighted_negloglike = round(sum(this_nll$weighted_negloglike),4), observations = "Total", distribution = NA))
+      this_nll = rbind(this_nll, data.frame(negloglike = round(sum(this_nll$negloglike),4), weighted_negloglike = round(sum(this_nll$weighted_negloglike),4), weights = NA, observations = "Total", distribution = NA))
     } else {
       this_nll = rbind(this_nll, data.frame(negloglike = round(sum(this_nll$negloglike),4), observations = "Total", distribution = NA))
     }

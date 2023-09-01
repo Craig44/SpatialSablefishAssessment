@@ -63,11 +63,10 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   DATA_INTEGER(n_init_rec_devs);                    // Number of initial recruitment devs parameters "init_ln_rec_dev" Note: should cannot be greater than n_ages - 2 (we don't apply it to first age or plus group)
 
   // this will effect the expected size of the parameter 'ln_rec_dev', if global_rec_devs = 1. then ln_rec_dev.size() = n_years + n_ages + 1 else (n_years + n_ages + 1). with the first (n_years + n_ages + 1) corresponding to region 1 and so in block
-  DATA_ARRAY(M);                                    // Natural Mortality: dim = n_ages x n_projyears
   DATA_ARRAY(maturity);                             // Proportion ages mature: dim = n_ages x n_projyears
   DATA_ARRAY(male_mean_weight_by_age);              // male_mean_weight_by_age (tonnes): dim = n_ages x n_projyears
   DATA_ARRAY(female_mean_weight_by_age);            // female_mean_weight_by_age (tonnes): dim = n_ages x n_projyears
-
+  DATA_INTEGER(M_method);                           // 0 = age & time IN-variant, 1 = time-varying, 2 = age-varying,
   DATA_ARRAY(male_age_length_transition);           // Proportion at among length bins for each age for male: dim = n_ages x n_lengths x n_years
   DATA_ARRAY(female_age_length_transition);         // Proportion at among length bins for each age for female: dim = n_ages x n_lengths x n_years
   DATA_MATRIX(historical_jap_fishery_ll_age_length_transition); // age-length transition matrix used for historic Japanese LF observations: dim = n_ages x n_lengths
@@ -174,6 +173,7 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   DATA_INTEGER(srv_dom_ll_bio_likelihood);                  // 0 = ADMB, 1 = lnorm
   vector<Type> pred_dom_ll_bio(n_dom_ll_bio);           // Sex aggregated predicted
   pred_dom_ll_bio.setZero();                            // initialise vector to be filled with zeros
+  DATA_SCALAR(loglik_wgt_srv_dom_ll_bio);               // Log-likelihood multiplier (Craig's not a fan of these)
 
   // Survey biomass for the Japanease Longline survey
   DATA_IVECTOR(srv_jap_ll_bio_indicator);               // length(srv_jap_ll_bio_indicator) = n_years.  1 = calculate catch at age in this year, 0 = don't calculate catch at age
@@ -185,6 +185,7 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   DATA_INTEGER(srv_jap_ll_bio_likelihood);                  // 0 = ADMB, 1 = lnorm
   vector<Type> pred_jap_ll_bio(n_jap_ll_bio);           // Sex aggregated predicted
   pred_jap_ll_bio.setZero();                            // initialise vector to be filled with zeros
+  DATA_SCALAR(loglik_wgt_srv_jap_ll_bio);               // Log-likelihood multiplier (Craig's not a fan of these)
 
   // Survey NMFS GOA trawl survey
   DATA_IVECTOR(srv_nmfs_trwl_bio_indicator);               // length(srv_nmfs_trwl_bio_indicator) = n_years.  1 = calculate catch at age in this year, 0 = don't calculate catch at age
@@ -196,6 +197,7 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   DATA_INTEGER(srv_nmfs_trwl_bio_likelihood);                  // 0 = ADMB, 1 = lnorm
   vector<Type> pred_nmfs_trwl_bio(n_nmfs_trwl_bio);        // Sex aggregated predicted
   pred_nmfs_trwl_bio.setZero();                           // initialise vector to be filled with zeros
+  DATA_SCALAR(loglik_wgt_srv_nmfs_trwl_bio);               // Log-likelihood multiplier (Craig's not a fan of these)
 
   // Longline CPUE
   DATA_IVECTOR(ll_cpue_indicator);                      // length(ll_cpue_indicator) = n_years.  1 = calculate catch at age in this year, 0 = don't calculate catch at age
@@ -207,6 +209,7 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   DATA_INTEGER(ll_cpue_likelihood);                      // 0 = ADMB, 1 = lnorm
   vector<Type> pred_ll_cpue(n_ll_cpue);                  // Sex aggregated predicted
   pred_ll_cpue.setZero();                               // initialise vector to be filled with zeros
+  DATA_SCALAR(loglik_wgt_ll_cpue);                      // Log-likelihood multiplier (Craig's not a fan of these)
 
   // Japanease Longline Fishery NOTE!!!!! this is an index and LF only not an actual fishery? Need to ask Dan why?
   DATA_IVECTOR(srv_jap_fishery_ll_bio_indicator);               // length(srv_jap_fishery_ll_bio_indicator) = n_years.  1 = calculate catch at age in this year, 0 = don't calculate catch at age
@@ -218,6 +221,7 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   DATA_INTEGER(srv_jap_fishery_ll_bio_likelihood);                  // 0 = ADMB, 1 = lnorm
   vector<Type> pred_jap_fishery_ll_bio(n_jap_fishery_ll_bio);           // Sex aggregated predicted
   pred_jap_fishery_ll_bio.setZero();                                    // initialise vector to be filled with zeros
+  DATA_SCALAR(loglik_wgt_jap_fishery_ll_bio);                      // Log-likelihood multiplier (Craig's not a fan of these)
 
   // Survey age for the Domestic Longline
   DATA_IVECTOR(srv_dom_ll_age_indicator);               // length(srv_dom_ll_age_indicator) = n_years.  1 = calculate catch at age in this year, 0 = don't calculate catch at age
@@ -320,6 +324,12 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   DATA_VECTOR(mu_srv_dom_ll_q);                                   // mean prior for cpue q, one for each time-block in ln_srv_dom_ll_q
   DATA_VECTOR(sd_srv_dom_ll_q);                                   // mean prior for cpue q, one for each time-block in ln_srv_dom_ll_q
   DATA_SCALAR(loglik_wgt_q_priors);                               // log-likelihood weight for all q priors
+
+  DATA_INTEGER(M_prior_type);                                     // 0 = none (uniform), 1 = ADMB version, (you can add others)
+  DATA_SCALAR(mu_M);                                              // mean prior for base M
+  DATA_SCALAR(sd_M);                                              // mean prior for base M
+  DATA_SCALAR(loglik_wgt_M_priors);                               // log-likelihood weight for all M priors
+  DATA_SCALAR(loglik_wgt_M_regulations);                          // log-likelihood weight for M regulations for age or year devs
   //--------------------------
   // Estimable parameters
   //--------------------------
@@ -346,6 +356,10 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   PARAMETER_ARRAY(ln_srv_jap_ll_sel_pars);                // log selectivity parameters for Japanese longline survey male, dim = time-blocks,  max(sel parameters), n_sex
   PARAMETER_VECTOR(ln_srv_dom_ll_q);                      // log catchabilities parameters for srv_dom_ll observation
   PARAMETER_ARRAY(ln_srv_dom_ll_sel_pars);                // log selectivity parameters for domestic longline survey male, dim = time-blocks,  max(sel parameters), n_sex
+  // Natural mortality
+  PARAMETER(ln_M);                                       // base log M
+  PARAMETER_VECTOR(ln_M_year_devs);                      // only used if M_method = 1, needs to be one for each year
+  PARAMETER_VECTOR(ln_M_age_devs);                       // only used if M_method = 2, needs to be one for each age
 
 
   // Note: about ln_init_rec_dev - it is the opposite order to how ADMB model is formulated. I am sorry but it was easier to code.
@@ -465,6 +479,23 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   BuildSelectivity(srv_nmfs_trwl_sel_pars.col(1), srv_nmfs_trwl_sel_type, ages, sel_srv_nmfs_trwl_f, true);
   BuildSelectivity(srv_jap_fishery_ll_sel_pars, srv_jap_fishery_ll_sel_type, ages, sel_srv_jap_fishery_ll, false);
 
+  // populate natural mortality
+  array<Type> M(n_ages, n_projyears);
+  Type base_M = exp(ln_M);
+  M.fill(base_M);
+  if(M_method == 1) {
+    for(year_ndx = 0; year_ndx < n_years; ++year_ndx) {
+      for(age_ndx = 0; age_ndx < n_ages; age_ndx++) {
+        M(age_ndx, year_ndx) = exp(ln_M + ln_M_year_devs(year_ndx));
+      }
+    }
+  } else if(M_method == 2) {
+    for(year_ndx = 0; year_ndx < n_years; ++year_ndx) {
+      for(age_ndx = 0; age_ndx < n_ages; age_ndx++) {
+        M(age_ndx, year_ndx) = exp(ln_M + ln_M_age_devs(age_ndx));
+      }
+    }
+  }
 
   // F, Z and survivorship
   annual_F_ll = exp(ln_ll_F_avg + ln_ll_F_devs);
@@ -482,8 +513,8 @@ Type CurrentAssessment(objective_function<Type>* obj) {
     S_m_mid.col(year_ndx) = exp(-0.5 * Z_m.col(year_ndx));
   }
 
-  vector<Type> nll(26); // slots
-  vector<Type> nll_weighted(26); // slots
+  vector<Type> nll(28); // slots
+  vector<Type> nll_weighted(28); // slots
   nll.setZero();
 
   /* nll components
@@ -513,6 +544,8 @@ Type CurrentAssessment(objective_function<Type>* obj) {
    * 23 - F_penalty_ll - to make F_devs identifiable and a positive definite hessian
    * 24 - F_penalty_trwl - to make F_devs identifiable and a positive definite hessian
    * 25 - Q priors
+   * 26 - M priors
+   * 27 - M-regulations penalty
    */
 
   /*
@@ -537,6 +570,8 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   /*
    * Initialise the partition (age structure) with initial F and initial age devs
    */
+  // NOTE: all throughout this code and ADMB we add the bias correction (sigma_R_sq/2.0)
+  // I think this should be subtracted...
   init_natage_m(0) = exp(ln_mean_rec + ln_rec_dev(0) + sigma_R_sq/2.0)/2.0; //mean_rec * exp((sigma_R*sigma_R)/2)/2;
   init_natage_f(0) = init_natage_m(0);
 
@@ -1129,25 +1164,34 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   //-------------
   // Formal prior calculations
   //-------------
+
   if(cpue_q_prior_type == 1) {
     for(int q_ndx = 0; q_ndx < ln_ll_cpue_q.size(); ++q_ndx)
-      nll(25) -= loglik_wgt_q_priors * square(ln_ll_cpue_q(q_ndx) - log(mu_cpue_q(q_ndx)))/(2.0* square(sd_cpue_q(q_ndx)));
+      nll(25) += square(ln_ll_cpue_q(q_ndx) - log(mu_cpue_q(q_ndx)))/(2.0* square(sd_cpue_q(q_ndx)));
   }
   if(srv_jap_fishery_ll_prior_type == 1) {
     for(int q_ndx = 0; q_ndx < ln_srv_jap_fishery_ll_q.size(); ++q_ndx)
-      nll(25) -= loglik_wgt_q_priors * square(ln_srv_jap_fishery_ll_q(q_ndx) - log(mu_srv_jap_fishery_ll_q(q_ndx)))/(2.0* square(sd_srv_jap_fishery_ll_q(q_ndx)));
+      nll(25) += square(ln_srv_jap_fishery_ll_q(q_ndx) - log(mu_srv_jap_fishery_ll_q(q_ndx)))/(2.0* square(sd_srv_jap_fishery_ll_q(q_ndx)));
   }
   if(srv_nmfs_trwl_q_prior_type == 1) {
     for(int q_ndx = 0; q_ndx < ln_srv_nmfs_trwl_q.size(); ++q_ndx)
-      nll(25) -= loglik_wgt_q_priors * square(ln_srv_nmfs_trwl_q(q_ndx) - log(mu_srv_nmfs_trwl_q(q_ndx)))/(2.0* square(sd_srv_nmfs_trwl_q(q_ndx)));
+      nll(25) += square(ln_srv_nmfs_trwl_q(q_ndx) - log(mu_srv_nmfs_trwl_q(q_ndx)))/(2.0* square(sd_srv_nmfs_trwl_q(q_ndx)));
   }
   if(srv_jap_ll_q_prior_type == 1) {
     for(int q_ndx = 0; q_ndx < ln_srv_jap_ll_q.size(); ++q_ndx)
-      nll(25) -= loglik_wgt_q_priors * square(ln_srv_jap_ll_q(q_ndx) - log(mu_srv_jap_ll_q(q_ndx)))/(2.0* square(sd_srv_jap_ll_q(q_ndx)));
+      nll(25) += square(ln_srv_jap_ll_q(q_ndx) - log(mu_srv_jap_ll_q(q_ndx)))/(2.0* square(sd_srv_jap_ll_q(q_ndx)));
   }
   if(srv_dom_ll_q_prior_type == 1) {
     for(int q_ndx = 0; q_ndx < ln_srv_dom_ll_q.size(); ++q_ndx)
-      nll(25) -= loglik_wgt_q_priors * square(ln_srv_dom_ll_q(q_ndx) - log(mu_srv_dom_ll_q(q_ndx)))/(2.0* square(sd_srv_dom_ll_q(q_ndx)));
+      nll(25) += square(ln_srv_dom_ll_q(q_ndx) - log(mu_srv_dom_ll_q(q_ndx)))/(2.0* square(sd_srv_dom_ll_q(q_ndx)));
+  }
+  if(M_prior_type == 1) {
+    nll(26) +=  square(ln_M - log(mu_M))/(2.0* square(sd_M));
+  }
+  if(M_method == 1) {
+    nll(27) = square(ln_M_year_devs).sum();
+  } else if(M_method == 2) {
+    nll(27) = square(ln_M_age_devs).sum();
   }
 
   // Apply Log likelihood weights Yuck!!
@@ -1155,9 +1199,9 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   nll_weighted(0) *= loglik_wgt_ll_catchatage;            // 0 - ll- fishery age comp
   nll_weighted(1) *= loglik_wgt_trwl_catchatlgth_m;       // 1 - trwl-fishery length male comp
   nll_weighted(2) *= loglik_wgt_trwl_catchatlgth_f;       // 2 - trwl-fishery length female comp
-  nll_weighted(3) *= 1.0;                                 // 3 - srv Domestic ll Biomass
-  nll_weighted(4) *= 1.0;                                 // 4 - srv Japanese ll Biomass
-  nll_weighted(5) *= 1.0;                                 // 5 - LL Fishery CPUE
+  nll_weighted(3) *= loglik_wgt_srv_dom_ll_bio;           // 3 - srv Domestic ll Biomass
+  nll_weighted(4) *= loglik_wgt_srv_jap_ll_bio;           // 4 - srv Japanese ll Biomass
+  nll_weighted(5) *= loglik_wgt_ll_cpue;                  // 5 - LL Fishery CPUE
   nll_weighted(6) *= loglik_wgt_srv_dom_ll_age;           // 6 - srv Domestic ll Age
   nll_weighted(7) *= loglik_wgt_srv_dom_ll_lgth_m;        // 7 - srv Domestic ll Length male
   nll_weighted(8) *= loglik_wgt_srv_dom_ll_lgth_f;        // 8 - srv Domestic ll Length female
@@ -1169,14 +1213,17 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   nll_weighted(14) *= loglik_wgt_srv_nmfs_trwl_lgth_f;    // 14 - srv GOA trwl  Length female
   nll_weighted(15) *= loglik_wgt_ll_catchatlgth_m;        // 15 - ll-fishery length male comp
   nll_weighted(16) *= loglik_wgt_ll_catchatlgth_f;        // 16 - ll-fishery length female comp
-  nll_weighted(17) *= 1.0;                                // 17 - srv GOA trwl biomass index
-  nll_weighted(18) *= 1.0;                                // 18 - srv Japanese Fishery longline biomass index
+  nll_weighted(17) *= loglik_wgt_srv_nmfs_trwl_bio;       // 17 - srv GOA trwl biomass index
+  nll_weighted(18) *= loglik_wgt_jap_fishery_ll_bio;      // 18 - srv Japanese Fishery longline biomass index
   nll_weighted(19) *= loglik_wgt_srv_jap_fishery_ll_lgth; // 19 - srv Japanese Fishery longline Length Frequency
   nll_weighted(20) *= loglik_wgt_ll_catch;                // 20 - Longline fishery catch Sum of squares
   nll_weighted(21) *= loglik_wgt_trwl_catch;              // 21 - Trawl fishery catch Sum of squares
   nll_weighted(22) *= 1.0;                                // 22 - Recruitment penalty/hyper prior if model is hierachical
   nll_weighted(23) *= loglik_wgt_Fs;                      // 23 - Longline F penalty
   nll_weighted(24) *= loglik_wgt_Fs;                      // 24 - Trawl F penalty
+  nll_weighted(25) *= loglik_wgt_q_priors;                // 25 - Q priors
+  nll_weighted(26) *= loglik_wgt_M_priors;                // 26 - M priors
+  nll_weighted(27) *= loglik_wgt_M_regulations;           // 27 - M age and or year regulations penalty constraints
 
   vector<Type> depletion = SSB / Bzero * 100;
   /*
@@ -1202,6 +1249,8 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   REPORT(annual_recruitment);
   REPORT( ln_rec_dev );
   REPORT( sigma_R );
+  REPORT( M );
+  REPORT( base_M );
   REPORT(S_f);
   REPORT(S_m);
   REPORT(Z_f);
@@ -1381,6 +1430,13 @@ Type CurrentAssessment(objective_function<Type>* obj) {
   REPORT(loglik_wgt_ll_catchatlgth_m);
   REPORT(loglik_wgt_ll_catchatlgth_f);
   REPORT(loglik_wgt_q_priors);
+  REPORT(loglik_wgt_M_priors);
+  REPORT(loglik_wgt_M_regulations);
+  REPORT(loglik_wgt_srv_jap_ll_bio);
+  REPORT(loglik_wgt_srv_dom_ll_bio);
+  REPORT(loglik_wgt_srv_nmfs_trwl_bio);
+  REPORT(loglik_wgt_jap_fishery_ll_bio);
+  REPORT(loglik_wgt_ll_cpue);
   // REMOVE these objects once we have validated
   // I created them for reporting interim calculations
 

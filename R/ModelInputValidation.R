@@ -457,6 +457,16 @@ validate_input_data_and_parameters = function(data, parameters) {
     if(!check$result)
       return(paste0("sd_srv_dom_ll_q: ", check$message, ". this is the length of 'ln_srv_dom_ll_q'"))
 
+    if(data$M_method == 1) {
+      check = check_length(parameters$ln_M_year_devs, n_years)
+      if(!check$result)
+        return(paste0("parameter - ln_M_year_devs: ", check$message))
+    } else if(data$M_method == 2) {
+      check = check_length(parameters$ln_M_age_devs, n_ages)
+      if(!check$result)
+        return(paste0("parameter - ln_M_age_devs: ", check$message))
+
+    }
   } else {
     if(data$do_projection == 1) {
       ## check projection variables

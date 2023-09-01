@@ -220,7 +220,7 @@ plot_input_observations = function(data, region_key = NULL, survey_labels = NULL
   if(data$model == "Assessment") {
     full_df$temp_label = paste0(full_df$source, "-", full_df$obs_type)
     gplt = ggplot(full_df) +
-      geom_point(aes(x = Year, y = temp_label, col = label, size = indicator)) +
+      geom_point(aes(x = Year, y = temp_label, col = temp_label, size = indicator)) +
       guides(colour = "none", size = "none") +
       labs(y = "") +
       facet_wrap(~type, ncol = 1) +
