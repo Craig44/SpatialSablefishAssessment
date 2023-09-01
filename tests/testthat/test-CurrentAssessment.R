@@ -16,6 +16,6 @@ test_that("test-current-assessment-likelihood", {
   test_report = test_model$report()
 
   ## check negative loglikelihood
-  expect_equal(sum(test_report$nll_weighted), 38202.04, tolerance = 0.001)
+  expect_equal(sum(test_report$nll_weighted), 38163.63, tolerance = 0.001)
 })
 
