@@ -30,31 +30,6 @@ phase is a tagged list where missing elements are populated with a vector of 1s,
 \details{
 see here https://github.com/kaskr/TMB_contrib_R/tree/master/TMBphase for information, was taken from TMBphase, but adjusted for our case which is fairly edge
 }
-\examples{
- setwd("~/Dropbox/ADMB/TMBphase/R")
- Y<-scan('thetalog.dat', skip=3, quiet=TRUE)
- data <- list(Y=Y)
- parameters <- list(
-   X=data$Y*0,
-   logr0=0,
-   logtheta=0,
-   logK=6,
-   logQ=0,
-   logR=0
- )
-parameters$logQ <- -3
- random <- "X"
- model_name <- "thetalog"
- phases <- list(
-   X=2,
-   logr0=1,
-   logtheta=1,
-   logK=1,
-   logQ=2,
-   logR=1
- )
- TMBphase(data, parameters, random, model_name, optimizer = "nlminb")
-}
 \author{
 Gavin Fay
 }
