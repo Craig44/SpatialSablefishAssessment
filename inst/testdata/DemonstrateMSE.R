@@ -3,7 +3,8 @@
 #'
 library(ggplot2)
 library(SpatialSablefishAssessment)
-library(tidyverse)
+library(dplyr)
+library(tidyr)
 ## The code line below will import three objects
 ## 'data', 'parameters' and 'region_key' These are
 ## objects that were based on the Sablefish 2021 assessment

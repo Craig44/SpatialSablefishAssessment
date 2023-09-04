@@ -1,0 +1,5 @@
+# Adding Unit Tests {-}
+
+When adding a new feature or fixing a bug, it is important to update/add unit-tests. All the unit-tests exist in the `test` directory and utilize `testthat` library for testing. Almost all unit-tests will import mock model to build test-models to test specific functionality is working as expected. 
+
+Mock models are RDS object that can be found in `inst/testdata/`, they contain `data` and `parameter` objects that can be used to build models. You will see in R scripts in `inst/testdata/` which will build/modify these model models. It is important that when you add a new input switch, that you update these R-scripts otherwise you may break many unit-test purely because of a test-data model incompatibility rather than any real error.

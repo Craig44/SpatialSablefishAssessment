@@ -25,6 +25,7 @@ library(TMB)
 library(SpatialSablefishAssessment) #devtools::install_github("Craig44/SpatialSablefishAssessment")
 library(ggplot2)
 library(dplyr)
+library(tidyr)
 ```
 
 
