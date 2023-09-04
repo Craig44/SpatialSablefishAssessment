@@ -3,7 +3,7 @@
 Using the current Sablefish assessment model, but with simplified observations, we demonstrate some R code that can be used to run an MSE. The following R-code manually steps through a few assessment cycles which could be wrapped in a loop.
 
 
-```{r install_packages, echo = T, eval = T, message=FALSE, warning=FALSE}
+```{r MSE, echo = T, eval = T, message=FALSE, warning=FALSE}
 #'
 #' Demonstrate MSE functionality
 #'
