@@ -4,18 +4,18 @@
 
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <title>References | SpatialSablefishAssessment</title>
+  <title>Adding Unit Tests | SpatialSablefishAssessment</title>
   <meta name="description" content="This Gitbook describes the spatial sablefish stock assessment R package and how to use it" />
   <meta name="generator" content="bookdown 0.33 and GitBook 2.6.7" />
 
-  <meta property="og:title" content="References | SpatialSablefishAssessment" />
+  <meta property="og:title" content="Adding Unit Tests | SpatialSablefishAssessment" />
   <meta property="og:type" content="book" />
   
   <meta property="og:description" content="This Gitbook describes the spatial sablefish stock assessment R package and how to use it" />
   <meta name="github-repo" content="https://github.com/Craig44/SpatialSablefishAssessment" />
 
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="References | SpatialSablefishAssessment" />
+  <meta name="twitter:title" content="Adding Unit Tests | SpatialSablefishAssessment" />
   
   <meta name="twitter:description" content="This Gitbook describes the spatial sablefish stock assessment R package and how to use it" />
   
@@ -30,8 +30,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   
   
-<link rel="prev" href="contributing-to-spatialsablefishassessment.html"/>
-
+<link rel="prev" href="how-to-use-spatialsablefishassessment-in-a-mse.html"/>
+<link rel="next" href="contributing-to-spatialsablefishassessment.html"/>
 <script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.min.js"></script>
 <link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
@@ -262,31 +262,19 @@ div.csl-indent {
           <div class="page-inner">
 
             <section class="normal" id="section-">
-<div id="references" class="section level1 unnumbered hasAnchor">
-<h1>References<a href="references.html#references" class="anchor-section" aria-label="Anchor link to header"></a></h1>
+<div id="adding-unit-tests" class="section level1 unnumbered hasAnchor">
+<h1>Adding Unit Tests<a href="adding-unit-tests.html#adding-unit-tests" class="anchor-section" aria-label="Anchor link to header"></a></h1>
+<p>When adding a new feature or fixing a bug, it is important to update/add unit-tests. All the unit-tests exist in the <code>test</code> directory and utilize <code>testthat</code> library for testing. Almost all unit-tests will import mock model to build test-models to test specific functionality is working as expected.</p>
+<p>Mock models are RDS object that can be found in <code>inst/testdata/</code>, they contain <code>data</code> and <code>parameter</code> objects that can be used to build models. You will see in R scripts in <code>inst/testdata/</code> which will build/modify these model models. It is important that when you add a new input switch, that you update these R-scripts otherwise you may break many unit-test purely because of a test-data model incompatibility rather than any real error.</p>
 
-<div id="refs" class="references csl-bib-body hanging-indent">
-<div class="csl-entry">
-Goethel, Daniel R, Christopher M Legault, and Steven X Cadrin. 2014. <span>“Demonstration of a Spatially Explicit, Tag-Integrated Stock Assessment Model with Application to Three Interconnected Stocks of Yellowtail Flounder Off of New England.”</span> <em>ICES Journal of Marine Science</em> 72 (1): 164–77.
-</div>
-<div class="csl-entry">
-McGarvey, Richard, and John E Feenstra. 2002. <span>“Estimating Rates of Fish Movement from Tag Recoveries: Conditioning by Recapture.”</span> <em>Canadian Journal of Fisheries and Aquatic Sciences</em> 59 (6): 1054–64.
-</div>
-<div class="csl-entry">
-Thorson, James T, Kelli F Johnson, Richard D Methot, and Ian G Taylor. 2017. <span>“Model-Based Estimates of Effective Sample Size in Stock Assessment Models Using the Dirichlet-Multinomial Distribution.”</span> <em>Fisheries Research</em> 192: 84–93.
-</div>
-<div class="csl-entry">
-Vincent, Matthew T, Travis O Brenden, and James R Bence. 2020. <span>“Parameter Estimation Performance of a Recapture-Conditioned Integrated Tagging Catch-at-Age Analysis Model.”</span> <em>Fisheries Research</em> 224: 105451.
-</div>
-</div>
 </div>
             </section>
 
           </div>
         </div>
       </div>
-<a href="contributing-to-spatialsablefishassessment.html" class="navigation navigation-prev navigation-unique" aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
-
+<a href="how-to-use-spatialsablefishassessment-in-a-mse.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="contributing-to-spatialsablefishassessment.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
     </div>
   </div>
 <script src="libs/gitbook-2.6.7/js/app.min.js"></script>
@@ -317,7 +305,7 @@ gitbook.start({
 "size": 2
 },
 "edit": {
-"link": "https://github.com/Craig44/SpatialSablefishAssessment/edit/main/10-references.Rmd",
+"link": "https://github.com/Craig44/SpatialSablefishAssessment/edit/main/08-UnitTests.Rmd",
 "text": "Edit"
 },
 "history": {
