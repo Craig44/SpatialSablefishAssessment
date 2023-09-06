@@ -586,7 +586,7 @@ Type TagIntegrated(objective_function<Type>* obj) {
   Type z_adjustment;
   Type number_of_tag_releases;
 
-  vector<Type> nll(11); // slots
+  vector<Type> nll(12); // slots
   nll.setZero();
   /* nll components
    * 0 - fixed - fishery age comp
@@ -600,6 +600,7 @@ Type TagIntegrated(objective_function<Type>* obj) {
    * 8 - Recruitment penalty/hyper prior if model is hierachical
    * 9 - init dev penalty/hyper prior if model is hierachical
    * 10 - Posfun penalty for values that must be > 0 but aren't
+   * 11 - F-penalty so F's are estimable
    */
 
   /*
@@ -1163,7 +1164,7 @@ Type TagIntegrated(objective_function<Type>* obj) {
           nll(1) -= ddirichletmulti(temp_observed_lgth_and_sex, temp_numbers_at_lgth_and_sex, N_input, theta_trwl_catchatlgth, 1);
           SIMULATE {
             temp_observed_lgth_and_sex = rdirichletmulti(temp_numbers_at_lgth_and_sex, N_input, theta_trwl_catchatlgth);
-            obs_trwl_catchatlgth.col(year_ndx).col(region_ndx) = temp_observed_lgth_and_sex * N_input;
+            obs_trwl_catchatlgth.col(year_ndx).col(region_ndx) = temp_observed_lgth_and_sex;
           }
         }
       }
@@ -1199,7 +1200,7 @@ Type TagIntegrated(objective_function<Type>* obj) {
           nll(2) -= ddirichletmulti(temp_observed_lgth_and_sex, temp_numbers_at_lgth_and_sex, N_input, theta_fixed_catchatlgth, 1);
           SIMULATE {
             temp_observed_lgth_and_sex = rdirichletmulti(temp_numbers_at_lgth_and_sex, N_input, theta_fixed_catchatlgth);
-            obs_fixed_catchatlgth.col(year_ndx).col(region_ndx) = temp_observed_lgth_and_sex * N_input;
+            obs_fixed_catchatlgth.col(year_ndx).col(region_ndx) = temp_observed_lgth_and_sex;
           }
         }
       }
@@ -1591,7 +1592,14 @@ Type TagIntegrated(objective_function<Type>* obj) {
     } //     for(proj_year_ndx = n_years; proj_year_ndx < (n_years + n_projections_years); ++proj_year_ndx) {
   } //if(do_projection == 1) {
 
-
+  if(F_method == 0) {
+    for(year_ndx = 0; year_ndx < n_years; ++year_ndx) {
+      for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
+        nll(11) += ln_fixed_F_devs(region_ndx, year_ndx) * ln_fixed_F_devs(region_ndx, year_ndx);
+        nll(11) += ln_trwl_F_devs(region_ndx, year_ndx) * ln_trwl_F_devs(region_ndx, year_ndx);
+      }
+    }
+  }
 
 
 

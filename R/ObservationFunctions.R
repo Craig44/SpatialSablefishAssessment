@@ -49,8 +49,8 @@ get_negloglike <- function(MLE_report) {
                             "Multinomial")
 
     nll_df = data.frame(negloglike = round(MLE_report$nll,4),
-                        observations = c("Fixed AF", "Trawl LF", "Fixed LF","Survey AF","Survey abund","Fixed catch","Trawl catch","Tag recovery", "Recruitment", "Initialisation devs", "posfun penalty"),
-                        distribution = c(AF_fixed_like, LF_trwl_like, LF_fixed_like, AF_srv_like, "lognormal", "lognormal", "lognormal", tag_likelihood, "lognormal", "lognormal", ""))
+                        observations = c("Fixed AF", "Trawl LF", "Fixed LF","Survey AF","Survey abund","Fixed catch","Trawl catch","Tag recovery", "Recruitment", "Initialisation devs", "posfun penalty", "F-penalty"),
+                        distribution = c(AF_fixed_like, LF_trwl_like, LF_fixed_like, AF_srv_like, "lognormal", "lognormal", "lognormal", tag_likelihood, "lognormal", "lognormal", "", "SSE"))
   }
   return(nll_df)
 }

@@ -4,12 +4,17 @@
 \name{SpatialSablefishAssessment-package}
 \alias{SpatialSablefishAssessment}
 \alias{SpatialSablefishAssessment-package}
-\title{SpatialSablefishAssessment: Sablefish stock assessment research package}
+\title{SpatialSablefishAssessment: Sablefish stock assessment package}
 \description{
-This package contains TMB models and utility functions used in spatial sablefish research, aswell as a version that mimics the 2021 stock assessment model.
+This package contains TMB models and utility functions used in spatial sablefish research, as well as a version that mimics the 2022 stock assessment model.
 }
 \author{
 \strong{Maintainer}: Craig Marsh \email{Craig.Marsh10@gmail.com}
+
+Authors:
+\itemize{
+  \item Daniel Goethel
+}
 
 }
 \keyword{internal}
