@@ -59,7 +59,6 @@ Type CurrentAssessment(objective_function<Type>* obj) {
 
 
   // Biology parameters
-  DATA_INTEGER(global_rec_devs);                    // Are there recruit devs parameters for each region (= 0), or do all regions have the same rec devs (=1)
   DATA_INTEGER(n_init_rec_devs);                    // Number of initial recruitment devs parameters "init_ln_rec_dev" Note: should cannot be greater than n_ages - 2 (we don't apply it to first age or plus group)
 
   // this will effect the expected size of the parameter 'ln_rec_dev', if global_rec_devs = 1. then ln_rec_dev.size() = n_years + n_ages + 1 else (n_years + n_ages + 1). with the first (n_years + n_ages + 1) corresponding to region 1 and so in block
@@ -73,7 +72,6 @@ Type CurrentAssessment(objective_function<Type>* obj) {
 
   // This needs to change in future assessments, this should be dealt with by selectivities
   DATA_VECTOR(proportion_male);                     // YUCK!!!! proportion of males in RPN. A value for each year.
-  DATA_VECTOR(proportion_male2);                    // YUCK!!!! proportion of males in RPN. A value for each year.
 
   DATA_SCALAR(sigma_R);                             // standard deviation for recruitment;
   DATA_INTEGER(SrType);                             // Stock recruitment type 3=average, 2=Bholt, 1=Ricker
