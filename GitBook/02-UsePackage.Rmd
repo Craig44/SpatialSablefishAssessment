@@ -170,3 +170,51 @@ gplt = ggplot(tag_fits %>% filter(release_event %in% unique_release_events[1:16]
   scale_x_discrete(breaks = every_nth(n = 5))
 
 ```
+
+
+## MCMC inference {-}
+
+Previously ADMB had both frequentist and Bayesian inference available, given this package is embedded in TMB it can only do frequentist inference. However, it is very easy use the `tmbstan` package allows TMB models to plug into the Stan back-end for MCMC inference. This will mean you will need to install this package following.
+
+```r
+devtools::install_github("kaskr/tmbstan/tmbstan")
+```
+
+Once you have done MLE you can use the following R code to run MCMC and assess posteriors/convergence
+
+```r
+library(tmbstan)
+## Run a single chain in serial with defaults
+fit <- tmbstan(my_model, chains=4)
+
+## Can also get ESS and Rhat from rstan::monitor
+mon <- monitor(fit)
+max(mon$Rhat)
+min(mon$Tail_ESS)
+
+## Other methods provided by 'rstan'
+class(fit)
+methods(class="stanfit")
+## Pairs plot of the fixed effects
+pairs(fit, pars=names(obj$par))
+## Trace plot
+traceplot(fit, pars=names(obj$par), inc_warmup=TRUE)
+
+## Can extract marginal posteriors easily
+post <- as.matrix(fit)
+
+hist(post[,'ln_mean_rec'])
+
+## What if you want a posterior for derived quantities in the report? Just
+## loop through each posterior sample (row) and call the report function
+## which returns a list. The last column is the log-posterior density (lp__)
+## and needs to be dropped
+obj$report(post[1,-ncol(post)])         # sd0 is only element
+Bzero <- rep(NA, len=nrow(post))
+for(i in 1:nrow(post)){
+  r <- obj$report(post[i,-ncol(post)])
+  Bzero[i] <- r$Bzero
+}
+hist(Bzero)
+```
+
