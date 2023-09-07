@@ -6,7 +6,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <title>TagIntegrated data and parameter descriptions | SpatialSablefishAssessment</title>
   <meta name="description" content="This Gitbook describes the spatial sablefish stock assessment R package and how to use it" />
-  <meta name="generator" content="bookdown 0.33 and GitBook 2.6.7" />
+  <meta name="generator" content="bookdown 0.34 and GitBook 2.6.7" />
 
   <meta property="og:title" content="TagIntegrated data and parameter descriptions | SpatialSablefishAssessment" />
   <meta property="og:type" content="book" />
@@ -23,7 +23,7 @@
 <meta name="author" content="C.Marsh" />
 
 
-<meta name="date" content="2023-09-04" />
+<meta name="date" content="2023-09-07" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -120,6 +120,10 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </style>
 
 <style type="text/css">
+  
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+</style>
+<style type="text/css">
 /* Used with Pandoc 2.11+ new --citeproc when CSL is used */
 div.csl-bib-body { }
 div.csl-entry {
@@ -185,6 +189,7 @@ div.csl-indent {
 <li class="chapter" data-level="" data-path="how-to-use-spatialsablefishassessment.html"><a href="how-to-use-spatialsablefishassessment.html#sharing-parameter-estimates-among-estimable-variables-i.e.-male-and-female-having-a-common-selectivity"><i class="fa fa-check"></i>Sharing parameter estimates among estimable variables i.e., male and female having a common selectivity</a></li>
 </ul></li>
 <li class="chapter" data-level="" data-path="how-to-use-spatialsablefishassessment.html"><a href="how-to-use-spatialsablefishassessment.html#model-summary"><i class="fa fa-check"></i>Model Summary</a></li>
+<li class="chapter" data-level="" data-path="how-to-use-spatialsablefishassessment.html"><a href="how-to-use-spatialsablefishassessment.html#mcmc-inference"><i class="fa fa-check"></i>MCMC inference</a></li>
 </ul></li>
 <li class="chapter" data-level="" data-path="tagintegrated-model-equations.html"><a href="tagintegrated-model-equations.html"><i class="fa fa-check"></i><code>TagIntegrated</code> model equations</a>
 <ul>
@@ -275,6 +280,7 @@ div.csl-indent {
 <li><p><code>do_projection</code> integer 0 means don’t do projection 1 does a stochastic projection (<strong>should be turned off during estimation</strong>)</p></li>
 <li><p><code>n_regions</code> integer needs to be greater than or equal to 1</p></li>
 <li><p><code>n_surveys</code> integer needs to be greater than or equal to 1. This defines the outer dimension for all survey objects</p></li>
+<li><p><code>n_movement_time_blocks</code> integer needs to be greater than or equal to 1. Specifies the number of movement blocks. You can have a value for each year if you want.</p></li>
 <li><p><code>global_rec_devs</code> integer 1 means all regions share the same annual recruitment deviations. 0 means they have separate annual recruitment deviations. This will effect the dimensions of the parameter <code>trans_rec_dev</code></p></li>
 <li><p><code>rec_devs_sum_to_zero</code> Should the recruit devs in each region sum to zero? yes = 1, no = 0. I yes then this the parameter <code>trans_rec_dev</code> has one less parameter</p></li>
 <li><p><code>n_init_rec_devs</code> number of initial n_age_deviations (<code>parameter$ln_init_rec_dev</code>) to multiply against the initial numbers at age to have non equilibrium initial age-structure. A value of zero will <strong>not</strong> apply these initial devs and expects <code>parameter$ln_init_rec_dev</code> to have length 1. These deviations are applied equally to both male and female.</p></li>
@@ -288,7 +294,8 @@ div.csl-indent {
 <li><p><code>spawning_time_proportion</code> vector of proportions that indicate when during the year spawning occurs. Length = <code>n_projyears</code></p></li>
 <li><p><code>apply_fixed_movement</code> integer whether to apply the input <code>fixed_movement_matrix</code> or estimated movement matrix. This was added because the transformation on estimated movement parameters does not allow values to be zero or one so cannot truly apply no movement. That is when I have used this fixed movement</p></li>
 <li><p><code>do_recruits_move</code> integer specifying whether recruits are applied in the movement dynamic. 1 = yes, 0 = no.</p></li>
-<li><p><code>fixed_movement_matrix</code> movement matrix with dimensions <code>n_regions</code> <span class="math inline">\(\times\)</span><code>n_regions</code>. Rows sum equal to one.</p></li>
+<li><p><code>movement_time_block_indicator</code> a vector of integers (C++ indices) that indicate which movement matrix time-block to apply. The model is initialised with the first movement matrix, and uses the last movement matrix in the projection period. <code>n_movement_time_blocks = length(unique(movement_time_block_indicator))</code></p></li>
+<li><p><code>fixed_movement_matrix</code> movement matrix array with dimensions <code>n_regions</code> <span class="math inline">\(\times\)</span><code>n_regions</code><span class="math inline">\(\times\)</span><code>n_movement_time_blocks</code> . Rows sum equal to one and the third dimension relates to the time-bloc</p></li>
 <li><p><code>prop_F_hist</code> scalar proportion of longline average F that is applied during initialization.</p></li>
 <li><p><code>F_method</code> integer, if = 0 then we estimate mean and deviation F free parameters, otherwise if equal 1, use newton raphson iterations and solve F</p></li>
 <li><p><code>F_max</code> scalar Maxium F when using the <code>F_method = 1</code></p></li>
@@ -360,7 +367,7 @@ div.csl-indent {
 <li><p><code>ln_init_rec_dev</code> vector of initial devs to multiple to initial numbers at age for non-equilibrium age-structure. Must have length equal to <code>data$n_init_rec_devs</code>. The first dev, corresponds to the second age we the last value gets applied to all successive ages i.e., if <code>length(ln_init_rec_dev) = 10</code>, the first value <code>numbers_at_age[2] * exp(ln_init_rec_dev[1])</code>, and <code>numbers_at_age[11:n_ages] * exp(ln_init_rec_dev[10])</code></p></li>
 <li><p><code>ln_fixed_sel_pars</code> array of log selectivity parameters for fixed gear fishery with dimension <code>n_time_blocks</code><span class="math inline">\(\times\)</span> <code>max(sel parameters)</code><span class="math inline">\(\times\)</span> <code>2</code> (for each sex) male parameters first followed by female. The number of time-blocks is defined by the data parameter <code>data$fixed_sel_by_year_indicator</code> and max selectivity parameters controlled by <code>data$fixed_sel_type</code> which defines the selectivity shape and thus number of parameters.</p></li>
 <li><p><code>ln_trwl_sel_pars</code> array of log selectivity parameters for trawl gear fishery with dimension <code>n_time_blocks</code><span class="math inline">\(\times\)</span> <code>max(sel parameters)</code><span class="math inline">\(\times\)</span> <code>2</code> (for each sex) male parameters first followed by female. The number of time-blocks is defined by the data parameter <code>data$trwl_sel_by_year_indicator</code> and max selectivity parameters controlled by <code>data$trwl_sel_type</code> which defines the selectivity shape and thus number of parameters.</p></li>
-<li><p><code>transformed_movement_pars</code> array of movement parameters that are transformed in the simplex space. It has dimension <code>n_regions - 1</code> <span class="math inline">\(\times\)</span> <code>n_regions</code>. Use the packages inbuilt <code>simplex()</code> and <code>restoresimplex()</code> functions to change a vector that sums to one to a simplex with n-1 parameters.</p></li>
+<li><p><code>transformed_movement_pars</code> array of movement parameters that are transformed in the simplex space. It has dimension <code>n_regions - 1</code> <span class="math inline">\(\times\)</span> <code>n_regions</code><span class="math inline">\(\times\)</span> <code>n_movement_time_blocks</code>. Use the packages inbuilt <code>simplex()</code> and <code>restoresimplex()</code> functions to change a vector that sums to one to a simplex with n-1 parameters.</p></li>
 <li><p><code>ln_fixed_F_avg</code> scalar for the log average fishing mortality of the fixed gear fishery. Should be not estimated if <code>data$F_method = 1</code></p></li>
 <li><p><code>ln_fixed_F_devs</code> annual fishing mortality deviations from <code>ln_fixed_F_avg</code>. Expected dimensions are <code>n_regions</code> <span class="math inline">\(\times\)</span> <code>n_years</code>. Should be not estimated if <code>data$F_method = 1</code></p></li>
 <li><p><code>ln_trwl_F_avg</code> scalar for the log average fishing mortality of the fixed gear fishery. Should be not estimated if <code>data$F_method = 1</code></p></li>

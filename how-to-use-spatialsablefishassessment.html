@@ -6,7 +6,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <title>How to use SpatialSablefishAssessment | SpatialSablefishAssessment</title>
   <meta name="description" content="This Gitbook describes the spatial sablefish stock assessment R package and how to use it" />
-  <meta name="generator" content="bookdown 0.33 and GitBook 2.6.7" />
+  <meta name="generator" content="bookdown 0.34 and GitBook 2.6.7" />
 
   <meta property="og:title" content="How to use SpatialSablefishAssessment | SpatialSablefishAssessment" />
   <meta property="og:type" content="book" />
@@ -23,7 +23,7 @@
 <meta name="author" content="C.Marsh" />
 
 
-<meta name="date" content="2023-09-04" />
+<meta name="date" content="2023-09-07" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -120,6 +120,10 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </style>
 
 <style type="text/css">
+  
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+</style>
+<style type="text/css">
 /* Used with Pandoc 2.11+ new --citeproc when CSL is used */
 div.csl-bib-body { }
 div.csl-entry {
@@ -185,6 +189,7 @@ div.csl-indent {
 <li class="chapter" data-level="" data-path="how-to-use-spatialsablefishassessment.html"><a href="how-to-use-spatialsablefishassessment.html#sharing-parameter-estimates-among-estimable-variables-i.e.-male-and-female-having-a-common-selectivity"><i class="fa fa-check"></i>Sharing parameter estimates among estimable variables i.e., male and female having a common selectivity</a></li>
 </ul></li>
 <li class="chapter" data-level="" data-path="how-to-use-spatialsablefishassessment.html"><a href="how-to-use-spatialsablefishassessment.html#model-summary"><i class="fa fa-check"></i>Model Summary</a></li>
+<li class="chapter" data-level="" data-path="how-to-use-spatialsablefishassessment.html"><a href="how-to-use-spatialsablefishassessment.html#mcmc-inference"><i class="fa fa-check"></i>MCMC inference</a></li>
 </ul></li>
 <li class="chapter" data-level="" data-path="tagintegrated-model-equations.html"><a href="tagintegrated-model-equations.html"><i class="fa fa-check"></i><code>TagIntegrated</code> model equations</a>
 <ul>
@@ -399,6 +404,45 @@ div.csl-indent {
 <span id="cb17-65"><a href="how-to-use-spatialsablefishassessment.html#cb17-65" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_size_area</span>() <span class="sc">+</span></span>
 <span id="cb17-66"><a href="how-to-use-spatialsablefishassessment.html#cb17-66" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span>release_event) <span class="sc">+</span></span>
 <span id="cb17-67"><a href="how-to-use-spatialsablefishassessment.html#cb17-67" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_discrete</span>(<span class="at">breaks =</span> <span class="fu">every_nth</span>(<span class="at">n =</span> <span class="dv">5</span>))</span></code></pre></div>
+</div>
+<div id="mcmc-inference" class="section level2 unnumbered hasAnchor">
+<h2>MCMC inference<a href="how-to-use-spatialsablefishassessment.html#mcmc-inference" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>Previously ADMB had both frequentist and Bayesian inference available, given this package is embedded in TMB it can only do frequentist inference. However, it is very easy use the <code>tmbstan</code> package allows TMB models to plug into the Stan back-end for MCMC inference. This will mean you will need to install this package following.</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="how-to-use-spatialsablefishassessment.html#cb18-1" aria-hidden="true" tabindex="-1"></a>devtools<span class="sc">::</span><span class="fu">install_github</span>(<span class="st">&quot;kaskr/tmbstan/tmbstan&quot;</span>)</span></code></pre></div>
+<p>Once you have done MLE you can use the following R code to run MCMC and assess posteriors/convergence</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="how-to-use-spatialsablefishassessment.html#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tmbstan)</span>
+<span id="cb19-2"><a href="how-to-use-spatialsablefishassessment.html#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="do">## Run a single chain in serial with defaults</span></span>
+<span id="cb19-3"><a href="how-to-use-spatialsablefishassessment.html#cb19-3" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">tmbstan</span>(my_model, <span class="at">chains=</span><span class="dv">4</span>)</span>
+<span id="cb19-4"><a href="how-to-use-spatialsablefishassessment.html#cb19-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-5"><a href="how-to-use-spatialsablefishassessment.html#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="do">## Can also get ESS and Rhat from rstan::monitor</span></span>
+<span id="cb19-6"><a href="how-to-use-spatialsablefishassessment.html#cb19-6" aria-hidden="true" tabindex="-1"></a>mon <span class="ot">&lt;-</span> <span class="fu">monitor</span>(fit)</span>
+<span id="cb19-7"><a href="how-to-use-spatialsablefishassessment.html#cb19-7" aria-hidden="true" tabindex="-1"></a><span class="fu">max</span>(mon<span class="sc">$</span>Rhat)</span>
+<span id="cb19-8"><a href="how-to-use-spatialsablefishassessment.html#cb19-8" aria-hidden="true" tabindex="-1"></a><span class="fu">min</span>(mon<span class="sc">$</span>Tail_ESS)</span>
+<span id="cb19-9"><a href="how-to-use-spatialsablefishassessment.html#cb19-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-10"><a href="how-to-use-spatialsablefishassessment.html#cb19-10" aria-hidden="true" tabindex="-1"></a><span class="do">## Other methods provided by &#39;rstan&#39;</span></span>
+<span id="cb19-11"><a href="how-to-use-spatialsablefishassessment.html#cb19-11" aria-hidden="true" tabindex="-1"></a><span class="fu">class</span>(fit)</span>
+<span id="cb19-12"><a href="how-to-use-spatialsablefishassessment.html#cb19-12" aria-hidden="true" tabindex="-1"></a><span class="fu">methods</span>(<span class="at">class=</span><span class="st">&quot;stanfit&quot;</span>)</span>
+<span id="cb19-13"><a href="how-to-use-spatialsablefishassessment.html#cb19-13" aria-hidden="true" tabindex="-1"></a><span class="do">## Pairs plot of the fixed effects</span></span>
+<span id="cb19-14"><a href="how-to-use-spatialsablefishassessment.html#cb19-14" aria-hidden="true" tabindex="-1"></a><span class="fu">pairs</span>(fit, <span class="at">pars=</span><span class="fu">names</span>(obj<span class="sc">$</span>par))</span>
+<span id="cb19-15"><a href="how-to-use-spatialsablefishassessment.html#cb19-15" aria-hidden="true" tabindex="-1"></a><span class="do">## Trace plot</span></span>
+<span id="cb19-16"><a href="how-to-use-spatialsablefishassessment.html#cb19-16" aria-hidden="true" tabindex="-1"></a><span class="fu">traceplot</span>(fit, <span class="at">pars=</span><span class="fu">names</span>(obj<span class="sc">$</span>par), <span class="at">inc_warmup=</span><span class="cn">TRUE</span>)</span>
+<span id="cb19-17"><a href="how-to-use-spatialsablefishassessment.html#cb19-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-18"><a href="how-to-use-spatialsablefishassessment.html#cb19-18" aria-hidden="true" tabindex="-1"></a><span class="do">## Can extract marginal posteriors easily</span></span>
+<span id="cb19-19"><a href="how-to-use-spatialsablefishassessment.html#cb19-19" aria-hidden="true" tabindex="-1"></a>post <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(fit)</span>
+<span id="cb19-20"><a href="how-to-use-spatialsablefishassessment.html#cb19-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-21"><a href="how-to-use-spatialsablefishassessment.html#cb19-21" aria-hidden="true" tabindex="-1"></a><span class="fu">hist</span>(post[,<span class="st">&#39;ln_mean_rec&#39;</span>])</span>
+<span id="cb19-22"><a href="how-to-use-spatialsablefishassessment.html#cb19-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-23"><a href="how-to-use-spatialsablefishassessment.html#cb19-23" aria-hidden="true" tabindex="-1"></a><span class="do">## What if you want a posterior for derived quantities in the report? Just</span></span>
+<span id="cb19-24"><a href="how-to-use-spatialsablefishassessment.html#cb19-24" aria-hidden="true" tabindex="-1"></a><span class="do">## loop through each posterior sample (row) and call the report function</span></span>
+<span id="cb19-25"><a href="how-to-use-spatialsablefishassessment.html#cb19-25" aria-hidden="true" tabindex="-1"></a><span class="do">## which returns a list. The last column is the log-posterior density (lp__)</span></span>
+<span id="cb19-26"><a href="how-to-use-spatialsablefishassessment.html#cb19-26" aria-hidden="true" tabindex="-1"></a><span class="do">## and needs to be dropped</span></span>
+<span id="cb19-27"><a href="how-to-use-spatialsablefishassessment.html#cb19-27" aria-hidden="true" tabindex="-1"></a>obj<span class="sc">$</span><span class="fu">report</span>(post[<span class="dv">1</span>,<span class="sc">-</span><span class="fu">ncol</span>(post)])         <span class="co"># sd0 is only element</span></span>
+<span id="cb19-28"><a href="how-to-use-spatialsablefishassessment.html#cb19-28" aria-hidden="true" tabindex="-1"></a>Bzero <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="cn">NA</span>, <span class="at">len=</span><span class="fu">nrow</span>(post))</span>
+<span id="cb19-29"><a href="how-to-use-spatialsablefishassessment.html#cb19-29" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(post)){</span>
+<span id="cb19-30"><a href="how-to-use-spatialsablefishassessment.html#cb19-30" aria-hidden="true" tabindex="-1"></a>  r <span class="ot">&lt;-</span> obj<span class="sc">$</span><span class="fu">report</span>(post[i,<span class="sc">-</span><span class="fu">ncol</span>(post)])</span>
+<span id="cb19-31"><a href="how-to-use-spatialsablefishassessment.html#cb19-31" aria-hidden="true" tabindex="-1"></a>  Bzero[i] <span class="ot">&lt;-</span> r<span class="sc">$</span>Bzero</span>
+<span id="cb19-32"><a href="how-to-use-spatialsablefishassessment.html#cb19-32" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb19-33"><a href="how-to-use-spatialsablefishassessment.html#cb19-33" aria-hidden="true" tabindex="-1"></a><span class="fu">hist</span>(Bzero)</span></code></pre></div>
 
 </div>
 </div>

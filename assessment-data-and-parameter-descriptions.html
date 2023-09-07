@@ -6,7 +6,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <title>Assessment data and parameter descriptions | SpatialSablefishAssessment</title>
   <meta name="description" content="This Gitbook describes the spatial sablefish stock assessment R package and how to use it" />
-  <meta name="generator" content="bookdown 0.33 and GitBook 2.6.7" />
+  <meta name="generator" content="bookdown 0.34 and GitBook 2.6.7" />
 
   <meta property="og:title" content="Assessment data and parameter descriptions | SpatialSablefishAssessment" />
   <meta property="og:type" content="book" />
@@ -23,7 +23,7 @@
 <meta name="author" content="C.Marsh" />
 
 
-<meta name="date" content="2023-09-04" />
+<meta name="date" content="2023-09-07" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -120,6 +120,10 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </style>
 
 <style type="text/css">
+  
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+</style>
+<style type="text/css">
 /* Used with Pandoc 2.11+ new --citeproc when CSL is used */
 div.csl-bib-body { }
 div.csl-entry {
@@ -185,6 +189,7 @@ div.csl-indent {
 <li class="chapter" data-level="" data-path="how-to-use-spatialsablefishassessment.html"><a href="how-to-use-spatialsablefishassessment.html#sharing-parameter-estimates-among-estimable-variables-i.e.-male-and-female-having-a-common-selectivity"><i class="fa fa-check"></i>Sharing parameter estimates among estimable variables i.e., male and female having a common selectivity</a></li>
 </ul></li>
 <li class="chapter" data-level="" data-path="how-to-use-spatialsablefishassessment.html"><a href="how-to-use-spatialsablefishassessment.html#model-summary"><i class="fa fa-check"></i>Model Summary</a></li>
+<li class="chapter" data-level="" data-path="how-to-use-spatialsablefishassessment.html"><a href="how-to-use-spatialsablefishassessment.html#mcmc-inference"><i class="fa fa-check"></i>MCMC inference</a></li>
 </ul></li>
 <li class="chapter" data-level="" data-path="tagintegrated-model-equations.html"><a href="tagintegrated-model-equations.html"><i class="fa fa-check"></i><code>TagIntegrated</code> model equations</a>
 <ul>
@@ -272,16 +277,23 @@ div.csl-indent {
 <li><p><code>years</code> vector of years from start year to current year. length <code>n_years</code></p></li>
 <li><p><code>length_bins</code> vector of length bin midpoints. length. <code>n_length_bins</code></p></li>
 <li><p><code>n_projections_years</code> integer of future years to project the model <code>n_projyears = n_years + n_projections_years</code></p></li>
-<li><p><code>do_projection</code> integer 0 means don’t do projection 1 does a stochastic projection (<strong>should be turned off during estimation</strong>)</p></li>
+<li><p><code>do_projection</code> Not implemented</p></li>
 <li><p><code>n_init_rec_devs</code> number of initial n_age_deviations (<code>parameter$ln_init_rec_dev</code>) to multiply against the initial numbers at age to have non equilibrium initial age-structure. A value of zero will <strong>not</strong> apply these initial devs and expects <code>parameter$ln_init_rec_dev</code> to have length 1. These deviations are applied equally to both male and female.</p></li>
-<li><p><code>M</code> Natural mortality array with dimensions <code>n_ages</code> <span class="math inline">\(\times\)</span> <code>n_projyears</code></p></li>
 <li><p><code>maturity</code> proportion mature array with dimensions <code>n_ages</code> <span class="math inline">\(\times\)</span> <code>n_projyears</code></p></li>
 <li><p><code>male_mean_weight_by_age</code> male mean weight at age array with dimensions <code>n_ages</code> <span class="math inline">\(\times\)</span> <code>n_projyears</code>. Units are in kgs, this is because we track millions of fish in the partition, so any weight calculation is in kilo tonnes</p></li>
 <li><p><code>female_mean_weight_by_age</code> female mean weight at age array with dimensions <code>n_ages</code> <span class="math inline">\(\times\)</span> <code>n_projyears</code>. Units are in kgs, this is because we track millions of fish in the partition, so any weight calculation is in kilo tonnes</p></li>
+<li><p><code>M_method</code> 0 = age &amp; time In-variant, 1 = time-varying, 2 = age-varying,</p></li>
 <li><p><code>male_age_length_transition</code> male age-length transtion matrix for each year. An array with dimensions <code>n_ages</code> <span class="math inline">\(\times\)</span><code>n_length_bins</code> <span class="math inline">\(\times\)</span> <code>n_projyears</code></p></li>
 <li><p><code>female_age_length_transition</code> female age-length transtion matrix for each year. An array with dimensions <code>n_ages</code> <span class="math inline">\(\times\)</span><code>n_length_bins</code> <span class="math inline">\(\times\)</span> <code>n_projyears</code></p></li>
-<li><p><code>SrType</code> Stock recruitment type 2 = Beverton holt, 3 = average (NO SR)</p></li>
+<li><p><code>SrType</code> Not implemented</p></li>
+<li><p><code>historical_jap_fishery_ll_age_length_transition</code> age-length transition for both male and female for early japanese LFs. An array with dimensions <code>n_ages</code> <span class="math inline">\(\times\)</span><code>n_length_bins</code> <span class="math inline">\(\times\)</span> <code>n_projyears</code></p></li>
+<li><p><code>proportion_male</code> proportion of males in domestic long-line survey. A value for each year.</p></li>
+<li><p><code>sigma_R</code> recruitment standard deviation</p></li>
+<li><p><code>SrType</code> Not implemented</p></li>
 <li><p><code>spawning_time_proportion</code> vector of proportions that indicate when during the year spawning occurs. Length = <code>n_projyears</code></p></li>
+<li><p><code>catch_likelihood</code> 0 is the ADMB formulation, 1 == normal with catch_sd</p></li>
+<li><p><code>catch_sd</code> catch standard deviation</p></li>
+<li><p><code>prop_F_hist</code> proportion of fixed gear F to apply during initialisation</p></li>
 <li><p><code>ll_fishery_catch</code> vector of annual catch for the fixed gear fishery. Units are kilo tonnes</p></li>
 <li><p><code>trwl_fishery_catch</code> vector of annual catch for the Trawl gear fishery. Units are kilo tonnes</p></li>
 <li><p><code>loglik_wgt_ll_catch</code> Log-likelihood multiplier</p></li>
@@ -297,6 +309,104 @@ div.csl-indent {
 <li><p><code>srv_jap_ll_sel_type</code> vector of integers (one for each time-block) defining the domestic Japanese survey selectivity type for each row of ln_ll_sel_m_pars and ln_ll_sel_f_pars</p></li>
 <li><p><code>srv_jap_ll_sel_by_year_indicator</code> vector of integers (one for each model year) defining the Japanese longline survey selectivity time-block. First ndx needs to be 0</p></li>
 <li><p><code>srv_jap_ll_q_by_year_indicator</code> vector of integers (one for each model year) defining the Japanese longline survey catchability time-block. First ndx needs to be 0</p></li>
+<li><p><code>srv_nmfs_trwl_sel_type</code> vector of integers (one for each time-block) defining the NMFS trawl survey selectivity type for each row of ln_ll_sel_m_pars and ln_ll_sel_f_pars</p></li>
+<li><p><code>srv_nmfs_trwl_sel_by_year_indicator</code> vector of integers (one for each model year) defining the NMFS trawl survey selectivity time-block. First ndx needs to be 0</p></li>
+<li><p><code>srv_nmfs_trwl_q_by_year_indicator</code> vector of integers (one for each model year) defining the NMFS trawl survey catchability time-block. First ndx needs to be 0</p></li>
+<li><p><code>srv_jap_fishery_ll_sel_type</code> vector of integers (one for each time-block) defining the early japanese fishery selectivity type for each row of ln_ll_sel_m_pars and ln_ll_sel_f_pars</p></li>
+<li><p><code>srv_jap_fishery_ll_sel_by_year_indicator</code> vector of integers (one for each model year) defining the early japanese fishery selectivity time-block. First ndx needs to be 0</p></li>
+<li><p><code>srv_jap_fishery_ll_q_by_year_indicator</code> vector of integers (one for each model year) defining the early japanese fishery catchability time-block. First ndx needs to be 0</p></li>
+<li><p><code>ll_cpue_q_by_year_indicator</code> vector of integers (one for each model year) defining the longline fishery catchability time-block. First ndx needs to be 0</p></li>
+<li><p><code>ageing_error_matrix</code> ageing error classifications <span class="math inline">\(n_{ages} \times n_{ages}\)</span></p></li>
+<li><p><code>ll_catchatage_indicator</code> length(ll_catchatage_indicator) = n_years. 1 = calculate catch at age in this year, 0 = don’t calculate catch at age</p></li>
+<li><p><code>obs_ll_catchatage</code> Longline fishery composition observations dim = n_ages x ll_catchatage_comp</p></li>
+<li><p><code>ll_catchatage_covar_structure</code> 0 = iid, 5 = AR(1), 2 = Unstructured.</p></li>
+<li><p><code>ll_catchatage_comp_likelihood</code> 0 = old multinomial, 1 = TMB’s Multinomial, 2 = dirichlet-multinomial (not implemented)</p></li>
+<li><p><code>loglik_wgt_ll_catchatage</code> scalar log-likelihood multiplier</p></li>
+<li><p><code>ll_catchatlgth_indicator</code> length(ll_catchatlgth_indicator) = n_years. 1 = calculate catch at length in this year, 0 = don’t calculate catch at age</p></li>
+<li><p><code>obs_ll_catchatlgth_m</code> Longline fishery length composition observations dim = n_lengths x length(ll_catchatlgth_indicator)</p></li>
+<li><p><code>obs_ll_catchatlgth_f</code> Longline fishery length composition observations dim = n_lengths x length(ll_catchatlgth_indicator)</p></li>
+<li><p><code>ll_catchatlgth_covar_structure</code> 0 = iid, 5 = AR(1), 2 = Unstructured.</p></li>
+<li><p><code>ll_catchatlgth_comp_likelihood</code> 0 = old multinomial, 1 = TMB’s Multinomial, 2 = dirichlet-multinomial (not implemented)</p></li>
+<li><p><code>loglik_wgt_ll_catchatlgth_f</code> scalar log-likelihood multiplier female longline LF</p></li>
+<li><p><code>loglik_wgt_ll_catchatlgth_m</code> scalar log-likelihood multiplier male longline LF</p></li>
+<li><p><code>trwl_catchatlgth_indicator</code> length(trwl_catchatlgth_indicator) = n_years. 1 = calculate catch at length in this year, 0 = don’t calculate catch at age</p></li>
+<li><p><code>obs_trwl_catchatlgth_m</code> Trawl fishery length composition observations dim = n_lengths x length(trwl_catchatlgth_indicator)</p></li>
+<li><p><code>obs_trwl_catchatlgth_f</code> Trawl fishery length composition observations dim = n_lengths x length(trwl_catchatlgth_indicator)</p></li>
+<li><p><code>trwl_catchatlgth_covar_structure</code> 0 = iid, 5 = AR(1), 2 = Unstructured.</p></li>
+<li><p><code>trwl_catchatlgth_comp_likelihood</code> 0 = old multinomial, 1 = TMB’s Multinomial, 2 = dirichlet-multinomial (not implemented)</p></li>
+<li><p><code>loglik_wgt_trwl_catchatlgth_m</code> scalar log-likelihood multiplier female trawl LF</p></li>
+<li><p><code>loglik_wgt_trwl_catchatlgth_f</code> scalar log-likelihood multiplier male trawl LF</p></li>
+<li><p><code>srv_dom_ll_bio_indicator</code> length(srv_dom_ll_bio_indicator) = n_years. 1 = calculate catch at survey index in this year, 0 = don’t calculate catch at age</p></li>
+<li><p><code>obs_dom_ll_bio</code> domestic longline survey index observation length = length(srv_dom_ll_bio_indicator)</p></li>
+<li><p><code>se_dom_ll_bio</code> domestic longline survey index standard errors length = length(srv_dom_ll_bio_indicator)</p></li>
+<li><p><code>obs_dom_ll_bio_is_numbers</code> integer 0 = weight (biomass), 1 = numbers (abundance)</p></li>
+<li><p><code>srv_dom_ll_bio_likelihood</code> 0 = ADMB, 1 = lnorm</p></li>
+<li><p><code>loglik_wgt_srv_dom_ll_bio</code> scalar log-likelihood multiplier survey biomass</p></li>
+<li><p><code>srv_jap_ll_bio_indicator</code> length(srv_jap_ll_bio_indicator) = n_years. 1 = calculate catch at survey index in this year, 0 = don’t calculate catch at age</p></li>
+<li><p><code>obs_jap_ll_bio</code> survey Japanese &amp; coopoerative survey index observation length = length(srv_dom_ll_bio_indicator)</p></li>
+<li><p><code>se_jap_ll_bio</code> survey Japanese &amp; coopoerative survey index standard errors length = length(srv_dom_ll_bio_indicator)</p></li>
+<li><p><code>obs_jap_ll_bio_is_numbers</code> integer 0 = weight (biomass), 1 = numbers (abundance)</p></li>
+<li><p><code>srv_jap_ll_bio_likelihood</code> 0 = ADMB, 1 = lnorm</p></li>
+<li><p><code>loglik_wgt_srv_jap_ll_bio</code> scalar log-likelihood multiplier survey biomass</p></li>
+<li><p><code>srv_nmfs_trwl_bio_indicator</code> length(srv_nmfs_trwl_bio_indicator) = n_years. 1 = calculate catch at survey index in this year, 0 = don’t calculate catch at age</p></li>
+<li><p><code>obs_nmfs_trwl_bio</code> NMFS GOA trawl index observation length = length(srv_nmfs_trwl_bio_indicator)</p></li>
+<li><p><code>se_nmfs_trwl_bio</code> NMFS GOA trawl index standard errors length = length(srv_dom_ll_bio_indicator)</p></li>
+<li><p><code>obs_nmfs_trwl_bio_is_numbers</code> integer 0 = weight (biomass), 1 = numbers (abundance)</p></li>
+<li><p><code>srv_nmfs_trwl_bio_likelihood</code> 0 = ADMB, 1 = lnorm</p></li>
+<li><p><code>loglik_wgt_srv_nmfs_trwl_bio</code> scalar log-likelihood multiplier survey biomass</p></li>
+<li><p><code>ll_cpue_indicator</code> length(ll_cpue_indicator) = n_years. 1 = calculate catch at survey index in this year, 0 = don’t calculate catch at age</p></li>
+<li><p><code>obs_ll_cpue</code> NMFS GOA trawl index observation length = length(ll_cpue_indicator)</p></li>
+<li><p><code>se_ll_cpue</code> NMFS GOA trawl index standard errors length = length(srv_dom_ll_bio_indicator)</p></li>
+<li><p><code>obs_ll_cpue_is_numbers</code> integer 0 = weight (biomass), 1 = numbers (abundance)</p></li>
+<li><p><code>ll_cpue_likelihood</code> 0 = ADMB, 1 = lnorm</p></li>
+<li><p><code>loglik_wgt_ll_cpue</code> scalar log-likelihood multiplier survey biomass</p></li>
+<li><p><code>srv_jap_fishery_ll_bio_indicator</code> length(srv_jap_fishery_ll_bio_indicator) = n_years. 1 = calculate catch at survey index in this year, 0 = don’t calculate catch at age</p></li>
+<li><p><code>obs_jap_fishery_ll_bio</code>early japanese fishery index observation length = length(srv_jap_fishery_ll_bio_indicator)</p></li>
+<li><p><code>se_jap_fishery_ll_bio</code> early japanese fishery index standard errors length = length(srv_jap_fishery_ll_bio_indicator)</p></li>
+<li><p><code>obs_jap_fishery_ll_bio_is_numbers</code> integer 0 = weight (biomass), 1 = numbers (abundance)</p></li>
+<li><p><code>srv_jap_fishery_ll_bio_likelihood</code> 0 = ADMB, 1 = lnorm</p></li>
+<li><p><code>loglik_wgt_jap_fishery_ll_bio</code> scalar log-likelihood multiplier survey biomass</p></li>
+<li><p><code>srv_dom_ll_age_indicator</code> length(srv_dom_ll_age_indicator) = n_years. 1 = calculate catch at age in this year, 0 = don’t calculate catch at age</p></li>
+<li><p><code>obs_srv_dom_ll_age</code> Domestic Longline survey composition observations dim = n_ages x ll_catchatage_comp</p></li>
+<li><p><code>srv_dom_ll_age_covar_structure</code> 0 = iid, 5 = AR(1), 2 = Unstructured.</p></li>
+<li><p><code>srv_dom_ll_age_comp_likelihood</code> 0 = old multinomial, 1 = TMB’s Multinomial, 2 = dirichlet-multinomial (not implemented)</p></li>
+<li><p><code>loglik_wgt_srv_dom_ll_age</code> scalar log-likelihood multiplier</p></li>
+<li><p><code>srv_dom_ll_lgth_indicator</code> length(srv_dom_ll_lgth_indicator) = n_years. 1 = calculate catch at length in this year, 0 = don’t calculate catch at age</p></li>
+<li><p><code>obs_srv_dom_ll_lgth_m</code> Domestic Longline survey length composition observations dim = n_lengths x length(srv_dom_ll_lgth_indicator)</p></li>
+<li><p><code>obs_srv_dom_ll_lgth_f</code> Domestic Longline survey length composition observations dim = n_lengths x length(srv_dom_ll_lgth_indicator)</p></li>
+<li><p><code>srv_dom_ll_lgth_covar_structure</code> 0 = iid, 5 = AR(1), 2 = Unstructured.</p></li>
+<li><p><code>srv_dom_ll_lgth_comp_likelihood</code> 0 = old multinomial, 1 = TMB’s Multinomial, 2 = dirichlet-multinomial (not implemented)</p></li>
+<li><p><code>loglik_wgt_srv_dom_ll_lgth_m</code> scalar log-likelihood multiplier female survey longline LF</p></li>
+<li><p><code>loglik_wgt_srv_dom_ll_lgth_f</code> scalar log-likelihood multiplier male survey longline LF</p></li>
+<li><p><code>srv_jap_ll_age_indicator</code> length(srv_jap_ll_age_indicator) = n_years. 1 = calculate catch at age in this year, 0 = don’t calculate catch at age</p></li>
+<li><p><code>obs_srv_jap_ll_age</code> Domestic Longline survey composition observations dim = n_ages x ll_catchatage_comp</p></li>
+<li><p><code>srv_jap_ll_age_covar_structure</code> 0 = iid, 5 = AR(1), 2 = Unstructured.</p></li>
+<li><p><code>srv_jap_ll_age_comp_likelihood</code> 0 = old multinomial, 1 = TMB’s Multinomial, 2 = dirichlet-multinomial (not implemented)</p></li>
+<li><p><code>loglik_wgt_srv_jap_ll_age</code> scalar log-likelihood multiplier</p></li>
+<li><p><code>srv_jap_ll_lgth_indicator</code> length(srv_jap_ll_lgth_indicator) = n_years. 1 = calculate catch at length in this year, 0 = don’t calculate catch at age</p></li>
+<li><p><code>obs_srv_jap_ll_lgth_m</code> Japanese &amp; Co-operative Longline survey length composition observations dim = n_lengths x length(srv_jap_ll_lgth_indicator)</p></li>
+<li><p><code>obs_srv_jap_ll_lgth_f</code> Japanese &amp; Co-operative Longline survey length composition observations dim = n_lengths x length(srv_jap_ll_lgth_indicator)</p></li>
+<li><p><code>srv_jap_ll_lgth_covar_structure</code> 0 = iid, 5 = AR(1), 2 = Unstructured.</p></li>
+<li><p><code>srv_jap_ll_lgth_comp_likelihood</code> 0 = old multinomial, 1 = TMB’s Multinomial, 2 = dirichlet-multinomial (not implemented)</p></li>
+<li><p><code>loglik_wgt_srv_jap_ll_lgth_m</code> scalar log-likelihood multiplier female survey longline LF</p></li>
+<li><p><code>loglik_wgt_srv_jap_ll_lgth_f</code> scalar log-likelihood multiplier male survey longline LF</p></li>
+<li><p><code>srv_jap_fishery_ll_lgth_indicator</code> length(srv_jap_fishery_ll_lgth_indicator) = n_years. 1 = calculate catch at length in this year, 0 = don’t calculate catch at age</p></li>
+<li><p><code>obs_srv_jap_fishery_ll_lgth</code> Early Japanese fishery length composition observations dim = n_lengths x length(srv_jap_fishery_ll_lgth_indicator)</p></li>
+<li><p><code>srv_jap_fishery_ll_lgth_covar_structure</code> 0 = iid, 5 = AR(1), 2 = Unstructured.</p></li>
+<li><p><code>srv_jap_fishery_ll_lgth_comp_likelihood</code> 0 = old multinomial, 1 = TMB’s Multinomial, 2 = dirichlet-multinomial (not implemented)</p></li>
+<li><p><code>loglik_wgt_srv_jap_fishery_ll_lgth</code> scalar log-likelihood multiplier female survey longline LF</p></li>
+<li><p><code>srv_nmfs_trwl_age_indicator</code> length(srv_nmfs_trwl_age_indicator) = n_years. 1 = calculate catch at age in this year, 0 = don’t calculate catch at age</p></li>
+<li><p><code>obs_srv_nmfs_trwl_age</code> NMFS GOA trawl survey composition observations dim = n_ages x ll_catchatage_comp</p></li>
+<li><p><code>srv_nmfs_trwl_age_covar_structure</code> 0 = iid, 5 = AR(1), 2 = Unstructured.</p></li>
+<li><p><code>srv_nmfs_trwl_age_comp_likelihood</code> 0 = old multinomial, 1 = TMB’s Multinomial, 2 = dirichlet-multinomial (not implemented)</p></li>
+<li><p><code>loglik_wgt_srv_nmfs_trwl_age</code> scalar log-likelihood multiplier</p></li>
+<li><p><code>srv_nmfs_trwl_lgth_indicator</code> length(srv_nmfs_trwl_lgth_indicator) = n_years. 1 = calculate catch at length in this year, 0 = don’t calculate catch at age</p></li>
+<li><p><code>obs_srv_nmfs_trwl_lgth_m</code> NMFS GOA trawl survey length composition observations dim = n_lengths x length(srv_nmfs_trwl_lgth_indicator)</p></li>
+<li><p><code>obs_srv_nmfs_trwl_lgth_f</code> NMFS GOA trawl survey length composition observations dim = n_lengths x length(srv_nmfs_trwl_lgth_indicator)</p></li>
+<li><p><code>srv_nmfs_trwl_lgth_covar_structure</code> 0 = iid, 5 = AR(1), 2 = Unstructured.</p></li>
+<li><p><code>srv_nmfs_trwl_lgth_comp_likelihood</code> 0 = old multinomial, 1 = TMB’s Multinomial, 2 = dirichlet-multinomial (not implemented)</p></li>
+<li><p><code>loglik_wgt_srv_nmfs_trwl_lgth_m</code> scalar log-likelihood multiplier female survey NMFS GOA trawl LF</p></li>
+<li><p><code>loglik_wgt_srv_nmfs_trwl_lgth_f</code> scalar log-likelihood multiplier male survey NMFS GOA trawl LF</p></li>
 <li><p><code>cpue_q_prior_type</code> integer specifying prior type for cpue (ll fishery index) catchability. 0 = none (uniform), 1 = ADMB version. Needs to be one for each time-block.</p></li>
 <li><p><code>mu_cpue_q</code> vector specifying the mean for q prior</p></li>
 <li><p><code>sd_cpue_q</code> vector specifying the standard deviation for q prior</p></li>
@@ -313,6 +423,11 @@ div.csl-indent {
 <li><p><code>mu_srv_dom_ll_q</code> vector specifying the mean for q prior</p></li>
 <li><p><code>sd_srv_dom_ll_q</code> vector specifying the standard deviation for q prior</p></li>
 <li><p><code>loglik_wgt_q_priors</code> scalar specifying the log-likelihood weight (multiplier for the priors)</p></li>
+<li><p><code>M_prior_type</code> integer specifying prior type for japanese longline catchability. 0 = none (uniform), 1 = ADMB version. Needs to be one for each time-block.</p></li>
+<li><p><code>mu_M</code> vector specifying the mean for q prior</p></li>
+<li><p><code>sd_M</code> vector specifying the standard deviation for q prior</p></li>
+<li><p><code>loglik_wgt_M_priors</code> scalar specifying the log-likelihood weight (multiplier for the priors)</p></li>
+<li><p><code>loglik_wgt_M_regulations</code> scalar specifying the log-likelihood weight for F-devs (multiplier for the priors)</p></li>
 </ul>
 </div>
 <div id="parameters-1" class="section level2 unnumbered hasAnchor">
@@ -336,6 +451,9 @@ div.csl-indent {
 <li><code>ln_srv_jap_ll_sel_pars</code> array of log selectivity parameters dim = time-blocks, max(sel parameters), n_sex</li>
 <li><code>ln_srv_dom_ll_q</code> vector of log catchabilities parameters for Domestic longline survey observation. length = time-blocks</li>
 <li><code>ln_srv_dom_ll_sel_pars</code> array of log selectivity parameters dim = time-blocks, max(sel parameters), n_sex</li>
+<li><code>ln_M</code> scalar log of parameter</li>
+<li><code>ln_M_year_devs</code> vector of log year deviations</li>
+<li><code>ln_M_age_devs</code> vector of log age deviations</li>
 </ul>
 
 </div>
