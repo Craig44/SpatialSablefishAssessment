@@ -27,6 +27,7 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   DATA_INTEGER(do_projection);                      // Should we project the model to last_projection_year. 1 = yes, 0 = no
   DATA_INTEGER(n_regions);                          // number of regions in the model
   DATA_INTEGER(n_surveys);                          // number of surveys
+  DATA_INTEGER(n_movement_time_blocks);             // number of movement time-blocks
 
   int n_years = years.size();
   int n_projyears = n_years + n_projections_years;
@@ -63,8 +64,9 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   // matrix. This parameterisation will cause NaNs or Inf when there is a value = 1 and the rest zeros i.e., no movement. For this scenario you
   // you should use this input functionality.
   DATA_INTEGER(apply_fixed_movement);               // 0 means will use estimated movement matrix, 1 means will use input movement matrix.
-  DATA_MATRIX(fixed_movement_matrix);               // n_regions x n_regions. only used if apply_fixed_movement = 1
+  DATA_ARRAY(fixed_movement_matrix);               //  n_regions x n_regions x n_movement_time_blocks. only used if apply_fixed_movement = 1
   DATA_INTEGER(do_recruits_move);                   // if = 1 then recruitment will be applied after movement, if = 0 then recruitment will be applied after recruitment so there won't be movement
+  DATA_IVECTOR(movement_time_block_indicator);      // length(n_years), 0 indicates use the first movement matrix, 1 = use the second movement matrix
 
   // Fishing stuff
   DATA_SCALAR(prop_F_hist);                         // Proportion of fixed_F_avg that is applied during initialization
@@ -192,7 +194,7 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   PARAMETER_ARRAY(ln_trwl_sel_pars);                        // log selectivity parameters for Trawl gear, dim: time-blocks:  max(sel parameters): sex
 
 
-  PARAMETER_ARRAY(transformed_movement_pars);               // transformed parameters for movmenet (consider both simplex and logistic? or what ever it is). dimension:  (n_regions - 1) x n_regions
+  PARAMETER_ARRAY(transformed_movement_pars);               // transformed parameters for movmenet (consider both simplex and logistic? or what ever it is). dimension:  (n_regions - 1) x n_regions x n_movement_time_blocks
 
 
   // Estimated if F_method == 0, otherwise these are derived.
@@ -381,21 +383,25 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   }
 
   // deal with movement
-  array<Type> movement_matrix(n_regions,n_regions);                  // n_regions x n_regions. Rows sum = 1 (aka source)
+  array<Type> movement_matrix(n_regions, n_regions, n_movement_time_blocks);                  // n_regions x n_regions x n_movement_time_blocks. Rows sum = 1 (aka source)
   movement_matrix.fill(1.0);
+
   if(n_regions > 1) {
     vector<Type> cache_log_k_value(n_regions - 1);
-    for(int k = 0; k < (n_regions - 1); k++)
-      cache_log_k_value[k] = log(n_regions - 1 - k);
+    for(int move_ndx = 0; move_ndx < n_movement_time_blocks; ++move_ndx) {
+      //vector<Type> cache_log_k_value(n_regions - 1);
+      for(int k = 0; k < (n_regions - 1); k++)
+        cache_log_k_value[k] = log(n_regions - 1 - k);
 
-    for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
-      Type stick_length = 1.0;
-      for (int k = 0; k < (n_regions - 1); ++k) {
-        movement_matrix(region_ndx, k) = stick_length * invlogit(transformed_movement_pars(k, region_ndx) - cache_log_k_value(k));
-        stick_length -= movement_matrix(region_ndx, k);
+      for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
+        Type stick_length = 1.0;
+        for (int k = 0; k < (n_regions - 1); ++k) {
+          movement_matrix(region_ndx, k, move_ndx) = stick_length * invlogit(transformed_movement_pars(k, region_ndx, move_ndx) - cache_log_k_value(k));
+          stick_length -= movement_matrix(region_ndx, k, move_ndx);
+        }
+        // plus group
+        movement_matrix(region_ndx, n_regions - 1, move_ndx) = stick_length;
       }
-      // plus group
-      movement_matrix(region_ndx, n_regions - 1) = stick_length;
     }
   }
 
@@ -584,7 +590,7 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   Type z_adjustment;
   Type number_of_tag_releases;
 
-  vector<Type> nll(11); // slots
+  vector<Type> nll(12); // slots
   nll.setZero();
   /* nll components
    * 0 - fixed - fishery age comp
@@ -598,6 +604,7 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
    * 8 - Recruitment penalty/hyper prior if model is hierachical
    * 9 - init dev penalty/hyper prior if model is hierachical
    * 10 - Posfun penalty for values that must be > 0 but aren't
+   * 11 - F-penalty so F's are estimable
    */
 
 
@@ -606,6 +613,7 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
    * by running the "annual cycle" n_ages times and approximating the plus group
    * this "should" account for age accumlation along with movement
    */
+
   Type plus_c = 0.0;
   for(int init_iter = 0; init_iter < n_ages; ++init_iter) {
     // Equilibrium Age-structure
@@ -639,16 +647,16 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
     }
     // Movement
     if(apply_fixed_movement) {
-      init_natage_f = (init_natage_f.matrix() * fixed_movement_matrix).array();
-      init_natage_m = (init_natage_m.matrix() * fixed_movement_matrix).array();
-      equilibrium_natage_f = (equilibrium_natage_f.matrix() * fixed_movement_matrix).array();
-      equilibrium_natage_m = (equilibrium_natage_m.matrix() * fixed_movement_matrix).array();
+      init_natage_f = (init_natage_f.matrix() * fixed_movement_matrix.col(0).matrix()).array();
+      init_natage_m = (init_natage_m.matrix() * fixed_movement_matrix.col(0).matrix()).array();
+      equilibrium_natage_f = (equilibrium_natage_f.matrix() * fixed_movement_matrix.col(0).matrix()).array();
+      equilibrium_natage_m = (equilibrium_natage_m.matrix() * fixed_movement_matrix.col(0).matrix()).array();
 
     } else {
-      init_natage_f = (init_natage_f.matrix() * movement_matrix.matrix()).array();
-      init_natage_m = (init_natage_m.matrix() * movement_matrix.matrix()).array();
-      equilibrium_natage_f = (equilibrium_natage_f.matrix() * movement_matrix.matrix()).array();
-      equilibrium_natage_m = (equilibrium_natage_m.matrix() * movement_matrix.matrix()).array();
+      init_natage_f = (init_natage_f.matrix() * movement_matrix.col(0).matrix()).array();
+      init_natage_m = (init_natage_m.matrix() * movement_matrix.col(0).matrix()).array();
+      equilibrium_natage_f = (equilibrium_natage_f.matrix() * movement_matrix.col(0).matrix()).array();
+      equilibrium_natage_m = (equilibrium_natage_m.matrix() * movement_matrix.col(0).matrix()).array();
     }
   }
   // Cache age-structure
@@ -682,16 +690,16 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   }
   // Movement
   if(apply_fixed_movement) {
-    init_natage_f = (init_natage_f.matrix() * fixed_movement_matrix).array();
-    init_natage_m = (init_natage_m.matrix() * fixed_movement_matrix).array();
-    equilibrium_natage_f = (equilibrium_natage_f.matrix() * fixed_movement_matrix).array();
-    equilibrium_natage_m = (equilibrium_natage_m.matrix() * fixed_movement_matrix).array();
+    init_natage_f = (init_natage_f.matrix() * fixed_movement_matrix.col(0).matrix()).array();
+    init_natage_m = (init_natage_m.matrix() * fixed_movement_matrix.col(0).matrix()).array();
+    equilibrium_natage_f = (equilibrium_natage_f.matrix() * fixed_movement_matrix.col(0).matrix()).array();
+    equilibrium_natage_m = (equilibrium_natage_m.matrix() * fixed_movement_matrix.col(0).matrix()).array();
 
   } else {
-    init_natage_f = (init_natage_f.matrix() * movement_matrix.matrix()).array();
-    init_natage_m = (init_natage_m.matrix() * movement_matrix.matrix()).array();
-    equilibrium_natage_f = (equilibrium_natage_f.matrix() * movement_matrix.matrix()).array();
-    equilibrium_natage_m = (equilibrium_natage_m.matrix() * movement_matrix.matrix()).array();
+    init_natage_f = (init_natage_f.matrix() * movement_matrix.col(0).matrix()).array();
+    init_natage_m = (init_natage_m.matrix() * movement_matrix.col(0).matrix()).array();
+    equilibrium_natage_f = (equilibrium_natage_f.matrix() * movement_matrix.col(0).matrix()).array();
+    equilibrium_natage_m = (equilibrium_natage_m.matrix() * movement_matrix.col(0).matrix()).array();
   }
   // Approximate plus group
   for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
@@ -734,6 +742,8 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
 
   natage_m.col(0) = init_natage_m;
   natage_f.col(0) = init_natage_f;
+
+
   /*
    *
    *
@@ -743,6 +753,7 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
    *
    *
    */
+
   int tag_year_counter = 0;
   int tag_recovery_counter = 0;
   for(year_ndx = 0; year_ndx < n_years; ++year_ndx) {
@@ -1027,12 +1038,7 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
           // clear the partition then populate with temp container- this is to remove lingering early ages that need to get wiped as tagged fish move along the age dimension
           tagged_natage_m.col(tag_release_event_ndx).col(region_ndx).fill(0.0);
           tagged_natage_f.col(tag_release_event_ndx).col(region_ndx).fill(0.0);
-          /*
-           for(int j = 0; j < n_ages; ++j)
-           std::cout << temp_numbers_at_age_m(j)<< " ";
 
-           std::cout << "next tag-cohort coming into plus group\n";
-           */
           for(age_ndx = 0; age_ndx < (n_ages - 2); age_ndx++) {
             if(apply_Z_on_tagged_fish) {
               tagged_natage_m(age_ndx + 1, region_ndx, tag_release_event_ndx) = temp_numbers_at_age_m(age_ndx) * S_m(age_ndx, region_ndx, year_ndx);
@@ -1111,11 +1117,11 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
         for(release_region_ndx = 0; release_region_ndx < n_regions; ++release_region_ndx) {
           tag_release_event_ndx = get_tag_release_event_ndx(release_region_ndx, tag_ndx, n_regions);
           if(apply_fixed_movement) {
-            tagged_natage_m.col(tag_release_event_ndx) = (tagged_natage_m.col(tag_release_event_ndx).matrix() * fixed_movement_matrix).array();
-            tagged_natage_f.col(tag_release_event_ndx) = (tagged_natage_f.col(tag_release_event_ndx).matrix() * fixed_movement_matrix).array();
+            tagged_natage_m.col(tag_release_event_ndx) = (tagged_natage_m.col(tag_release_event_ndx).matrix() * fixed_movement_matrix.col(movement_time_block_indicator(year_ndx)).matrix()).array();
+            tagged_natage_f.col(tag_release_event_ndx) = (tagged_natage_f.col(tag_release_event_ndx).matrix() * fixed_movement_matrix.col(movement_time_block_indicator(year_ndx)).matrix()).array();
           } else {
-            tagged_natage_m.col(tag_release_event_ndx) = (tagged_natage_m.col(tag_release_event_ndx).matrix() * movement_matrix.matrix()).array();
-            tagged_natage_f.col(tag_release_event_ndx) = (tagged_natage_f.col(tag_release_event_ndx).matrix() * movement_matrix.matrix()).array();
+            tagged_natage_m.col(tag_release_event_ndx) = (tagged_natage_m.col(tag_release_event_ndx).matrix() * movement_matrix.col(movement_time_block_indicator(year_ndx)).matrix()).array();
+            tagged_natage_f.col(tag_release_event_ndx) = (tagged_natage_f.col(tag_release_event_ndx).matrix() * movement_matrix.col(movement_time_block_indicator(year_ndx)).matrix()).array();
           }
           // Apply tag shedding at the end of the year which is just a mortality process
           tagged_natage_m.col(tag_release_event_ndx) *= exp(-annual_tag_shedding_rate);
@@ -1126,13 +1132,12 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
 
     // movement
     if(apply_fixed_movement) {
-      natage_m.col(year_ndx + 1) = (natage_m.col(year_ndx + 1).matrix() * fixed_movement_matrix).array();
-      natage_f.col(year_ndx + 1) = (natage_f.col(year_ndx + 1).matrix() * fixed_movement_matrix).array();
+      natage_m.col(year_ndx + 1) = (natage_m.col(year_ndx + 1).matrix() * fixed_movement_matrix.col(movement_time_block_indicator(year_ndx)).matrix()).array();
+      natage_f.col(year_ndx + 1) = (natage_f.col(year_ndx + 1).matrix() * fixed_movement_matrix.col(movement_time_block_indicator(year_ndx)).matrix()).array();
     } else {
-      natage_m.col(year_ndx + 1) = (natage_m.col(year_ndx + 1).matrix() * movement_matrix.matrix()).array();
-      natage_f.col(year_ndx + 1) = (natage_f.col(year_ndx + 1).matrix() * movement_matrix.matrix()).array();
+      natage_m.col(year_ndx + 1) = (natage_m.col(year_ndx + 1).matrix() * movement_matrix.col(movement_time_block_indicator(year_ndx)).matrix()).array();
+      natage_f.col(year_ndx + 1) = (natage_f.col(year_ndx + 1).matrix() * movement_matrix.col(movement_time_block_indicator(year_ndx)).matrix()).array();
     }
-
     // If we aren't moving recruits during the movement process then we will just reset the recruited year class to
     // the original recruited ratios. This will offset any movement that occured
     if(do_recruits_move == 0) {
@@ -1147,6 +1152,7 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
       ++tag_recovery_counter;
 
   } // for(year_ndx = 0; year_ndx < n_years; ++year_ndx) {
+
   /*
    * Calculate predicted values and evaluate log-likelihoods.
    */
@@ -1429,7 +1435,15 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
   }
   // pos fun penalty for
   nll(10) = pen_posfun;
-
+  // F penalty
+  if(F_method == 0) {
+    for(year_ndx = 0; year_ndx < n_years; ++year_ndx) {
+      for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
+        nll(11) += ln_fixed_F_devs(region_ndx, year_ndx) * ln_fixed_F_devs(region_ndx, year_ndx);
+        nll(11) += ln_trwl_F_devs(region_ndx, year_ndx) * ln_trwl_F_devs(region_ndx, year_ndx);
+      }
+    }
+  }
   /*
    *  Projection component of the model should never do this during estimation
    *  Strictly a post optimization section of code
@@ -1510,7 +1524,7 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
 
     /*
      * Run projection annual cycle
-     */
+    */
     for(proj_year_ndx = n_years; proj_year_ndx < n_projyears; ++proj_year_ndx) {
       //std::cerr << "proj year ndx = " << proj_year_ndx <<"\n";
       // in each region we want to calculate recruitment, Ageing and total mortality
@@ -1632,13 +1646,14 @@ Type TagIntegratedValidate(objective_function<Type>* obj) {
         }
       } // for(region_ndx = 0; region_ndx < n_regions; ++region_ndx)
 
+
       // movement
-      if(apply_fixed_movement) {
-        natage_m.col(proj_year_ndx + 1) = (natage_m.col(proj_year_ndx + 1).matrix() * fixed_movement_matrix).array();
-        natage_f.col(proj_year_ndx + 1) = (natage_f.col(proj_year_ndx + 1).matrix() * fixed_movement_matrix).array();
+      if(apply_fixed_movement == 1) {
+        natage_m.col(proj_year_ndx + 1) = (natage_m.col(proj_year_ndx + 1).matrix() * fixed_movement_matrix.col(movement_time_block_indicator(n_years - 1)).matrix()).array();
+        natage_f.col(proj_year_ndx + 1) = (natage_f.col(proj_year_ndx + 1).matrix() * fixed_movement_matrix.col(movement_time_block_indicator(n_years - 1)).matrix()).array();
       } else {
-        natage_m.col(proj_year_ndx + 1) = (natage_m.col(proj_year_ndx + 1).matrix() * movement_matrix.matrix()).array();
-        natage_f.col(proj_year_ndx + 1) = (natage_f.col(proj_year_ndx + 1).matrix() * movement_matrix.matrix()).array();
+        natage_m.col(proj_year_ndx + 1) = (natage_m.col(proj_year_ndx + 1).matrix() * movement_matrix.col(movement_time_block_indicator(n_years - 1)).matrix()).array();
+        natage_f.col(proj_year_ndx + 1) = (natage_f.col(proj_year_ndx + 1).matrix() * movement_matrix.col(movement_time_block_indicator(n_years - 1)).matrix()).array();
       }
 
     } //     for(proj_year_ndx = n_years; proj_year_ndx < (n_years + n_projections_years); ++proj_year_ndx) {

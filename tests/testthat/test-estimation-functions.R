@@ -433,7 +433,7 @@ test_that("test-get_negloglike", {
   mle_report = test_model$report()
   ## when we change the neg log likelihood check this utility function doesn't break
   nll = get_negloglike(mle_report)
-  expect_true(nrow(nll) == 11) ## 11 slots
+  expect_true(nrow(nll) == 12) ## 11 slots
 })
 
 

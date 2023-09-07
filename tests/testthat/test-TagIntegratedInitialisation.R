@@ -65,7 +65,7 @@ test_that("test-TagIntegratedInitialisation-movement", {
     # plus group
     update_N_age[,plus_group_age] = update_N_age[,plus_group_age] + N_age[,plus_group_age] * exp(-M)
     # movement
-    N_age = t(test_report$movement_matrix) %*% update_N_age
+    N_age = t(test_report$movement_matrix[,,1]) %*% update_N_age
   }
   ## calculate one more annual cycle
   # recruitment
@@ -76,7 +76,7 @@ test_that("test-TagIntegratedInitialisation-movement", {
   update_N_age[,plus_group_age] = update_N_age[,plus_group_age] + N_age[,plus_group_age] * exp(-M)
 
   # movement
-  update_N_age = t(test_report$movement_matrix) %*% update_N_age
+  update_N_age = t(test_report$movement_matrix[,,1]) %*% update_N_age
   ## approximate!
   c = update_N_age[,plus_group_age] / N_age[,plus_group_age] - 1
   update_N_age[,plus_group_age] = N_age[,plus_group_age] * 1 / (1 - c)

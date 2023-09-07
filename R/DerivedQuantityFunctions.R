@@ -127,7 +127,7 @@ get_movement = function(MLE_report, region_key = NULL) {
     dimnames(MLE_report$movement_matrix) = list(regions, regions)
     move_est_df = reshape2::melt(MLE_report$movement_matrix)
   }
-  colnames(move_est_df) = c("From","To", "Proportion")
+  colnames(move_est_df) = c("From","To", "time_block" , "Proportion")
   move_est_df$From = factor(move_est_df$From, levels = rev(regions), ordered = T)
   move_est_df$To = factor(move_est_df$To, levels = rev(regions), ordered = T)
   return(move_est_df)

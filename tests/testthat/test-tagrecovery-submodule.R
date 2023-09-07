@@ -13,8 +13,10 @@ test_that("single-release-test-recovery-reporting-rate", {
   data$apply_Z_on_tagged_fish = 0
   data$apply_fixed_movement = 1
   ## this assumes no movement
-  data$fixed_movement_matrix = matrix(0, nrow = data$n_regions, ncol = data$n_regions);
-  diag(data$fixed_movement_matrix) = 1
+  fixed_movement_matrix = matrix(0, nrow = data$n_regions, ncol = data$n_regions);
+  diag(fixed_movement_matrix) = 1
+  data$fixed_movement_matrix = array(0, dim = c(data$n_regions,data$n_regions,1))
+  data$fixed_movement_matrix[,,1] = fixed_movement_matrix
   data$apply_fishery_tag_reporting = 0 ## all tagged fish will be recovered not a function of F
   ## turn off tag shedding and initial mortality
   data$initial_tag_induced_mortality = rep(0.0, sum(data$tag_release_event_this_year))
@@ -124,8 +126,10 @@ test_that("single-release-F-reporting", {
   data$apply_Z_on_tagged_fish = 0
   data$apply_fixed_movement = 1
   ## this assumes no movement
-  data$fixed_movement_matrix = matrix(0, nrow = data$n_regions, ncol = data$n_regions);
-  diag(data$fixed_movement_matrix) = 1
+  fixed_movement_matrix = matrix(0, nrow = data$n_regions, ncol = data$n_regions);
+  diag(fixed_movement_matrix) = 1
+  data$fixed_movement_matrix = array(0, dim = c(data$n_regions,data$n_regions,1))
+  data$fixed_movement_matrix[,,1] = fixed_movement_matrix
   data$apply_fishery_tag_reporting = 1 ## all tagged fish will be recovered by fixed gear fishery
   ## turn off tag shedding and initial mortality
   data$initial_tag_induced_mortality = rep(0.0, sum(data$tag_release_event_this_year))
@@ -186,8 +190,10 @@ test_that("single-release-test-multinomial-likelihood-no-movement", {
   data$apply_Z_on_tagged_fish = 1
   data$apply_fixed_movement = 1
   ## this assumes no movement
-  data$fixed_movement_matrix = matrix(0, nrow = data$n_regions, ncol = data$n_regions);
-  diag(data$fixed_movement_matrix) = 1
+  fixed_movement_matrix = matrix(0, nrow = data$n_regions, ncol = data$n_regions);
+  diag(fixed_movement_matrix) = 1
+  data$fixed_movement_matrix = array(0, dim = c(data$n_regions,data$n_regions,1))
+  data$fixed_movement_matrix[,,1] = fixed_movement_matrix
   data$apply_fishery_tag_reporting = 1 ## all tagged fish will be recovered not a function of F
   ## turn off tag shedding and initial mortality
   data$initial_tag_induced_mortality = rep(0.0, sum(data$tag_release_event_this_year))
@@ -341,8 +347,8 @@ test_that("single-release-test-multinomial-likelihood-movement", {
         init_f_age[r,ncol(init_f_age)] = temp_f_tag_partition[r,ncol(init_f_age) - 1] * test_report$S_f[ncol(init_m_age) - 1, 1, i] +  temp_f_tag_partition[r,ncol(init_f_age)] * test_report$S_m[ncol(init_m_age),1,i]
       }
       ## movement
-      init_m_age = test_report$movement_matrix %*%  init_m_age
-      init_f_age = test_report$movement_matrix %*%  init_f_age
+      init_m_age = test_report$movement_matrix[,,1] %*%  init_m_age
+      init_f_age = test_report$movement_matrix[,,1] %*%  init_f_age
     }
     ## divide by released fish
     expected_recaptures = expected_recaptures / released_fish

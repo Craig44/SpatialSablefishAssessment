@@ -18,8 +18,7 @@ test_that("single-release-no-movement-and-Z", {
   data$apply_Z_on_tagged_fish = 0
   data$apply_fixed_movement = 1
   ## this assumes no movement
-  data$fixed_movement_matrix = matrix(0, nrow = data$n_regions, ncol = data$n_regions);
-  diag(data$fixed_movement_matrix) = 1
+
   data$apply_fishery_tag_reporting = 0 ## all tagged fish will be recovered not a function of F
   ## turn off tag shedding and initial mortality
   data$initial_tag_induced_mortality = rep(0.0, sum(data$tag_release_event_this_year))
@@ -100,8 +99,10 @@ test_that("single-release-no-movement-with-Z", {
   ## still no movement
   data$apply_fixed_movement = 1
   ## this assumes no movement
-  data$fixed_movement_matrix = matrix(0, nrow = data$n_regions, ncol = data$n_regions);
-  diag(data$fixed_movement_matrix) = 1
+  fixed_movement_matrix = matrix(0, nrow = data$n_regions, ncol = data$n_regions);
+  diag(fixed_movement_matrix) = 1
+  data$fixed_movement_matrix = array(0, dim = c(data$n_regions,data$n_regions,1))
+  data$fixed_movement_matrix[,,1] = fixed_movement_matrix
   data$apply_fishery_tag_reporting = 0 ## all tagged fish will be recovered not a function of F
   ## turn off tag shedding and initial mortality
   data$initial_tag_induced_mortality = rep(0.0, sum(data$tag_release_event_this_year))
@@ -214,7 +215,7 @@ test_that("single-release-with-movement-no-Z", {
 
     }
     ## now movement
-    numbers_by_age_and_region = numbers_by_age_and_region %*% data$movement_matrix
+    numbers_by_age_and_region = numbers_by_age_and_region %*% data$movement_matrix[,,1]
   }
   ## check the ageing and Z are being applied correctly
   for(reg_ndx in 1:data$n_regions) {
@@ -240,7 +241,7 @@ test_that("single-release-with-movement-no-Z", {
       numbers_by_age_and_region[n_ages, reg_ndx] = temp_tag_partition[n_ages - 1] +  temp_tag_partition[n_ages]
     }
     ## now movement
-    numbers_by_age_and_region = numbers_by_age_and_region %*% data$movement_matrix
+    numbers_by_age_and_region = numbers_by_age_and_region %*% data$movement_matrix[,,1]
   }
   ## check the ageing and Z are being applied correctly
   for(reg_ndx in 1:data$n_regions) {
@@ -299,7 +300,7 @@ test_that("single-release-with-movement-and-Z", {
 
     }
     ## now movement
-    numbers_by_age_and_region = numbers_by_age_and_region %*% data$movement_matrix
+    numbers_by_age_and_region = numbers_by_age_and_region %*% data$movement_matrix[,,1]
   }
   ## check the ageing and Z are being applied correctly
   for(reg_ndx in 1:data$n_regions) {
@@ -325,7 +326,7 @@ test_that("single-release-with-movement-and-Z", {
       numbers_by_age_and_region[n_ages, reg_ndx] = temp_tag_partition[n_ages - 1] * test_report$S_f[n_ages - 1,reg_ndx,i] +  temp_tag_partition[n_ages] *  test_report$S_f[n_ages,reg_ndx,i]
     }
     ## now movement
-    numbers_by_age_and_region = numbers_by_age_and_region %*% data$movement_matrix
+    numbers_by_age_and_region = numbers_by_age_and_region %*% data$movement_matrix[,,1]
   }
   ## check the ageing and Z are being applied correctly
   for(reg_ndx in 1:data$n_regions) {
@@ -348,8 +349,6 @@ test_that("single-release-initial-mortality", {
   data$apply_Z_on_tagged_fish = 0
   data$apply_fixed_movement = 1
   ## this assumes no movement
-  data$fixed_movement_matrix = matrix(0, nrow = data$n_regions, ncol = data$n_regions);
-  diag(data$fixed_movement_matrix) = 1
   data$apply_fishery_tag_reporting = 0 ## all tagged fish will be recovered not a function of F
   ## turn off tag shedding and initial mortality
   data$initial_tag_induced_mortality = rep(0.1, sum(data$tag_release_event_this_year))
@@ -381,8 +380,6 @@ test_that("single-release-tag-shedding", {
   data$apply_Z_on_tagged_fish = 0
   data$apply_fixed_movement = 1
   ## this assumes no movement
-  data$fixed_movement_matrix = matrix(0, nrow = data$n_regions, ncol = data$n_regions);
-  diag(data$fixed_movement_matrix) = 1
   data$apply_fishery_tag_reporting = 0 ## all tagged fish will be recovered not a function of F
   ## turn off tag shedding and initial mortality
   data$initial_tag_induced_mortality = rep(0.0, sum(data$tag_release_event_this_year))

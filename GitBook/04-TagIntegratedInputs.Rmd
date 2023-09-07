@@ -12,6 +12,7 @@ Users need to population a named list containing `data` inputs and a named list 
 - `do_projection` integer 0 means don't do projection 1 does a stochastic projection (**should be turned off during estimation**)
 - `n_regions` integer needs to be greater than or equal to 1
 - `n_surveys` integer needs to be greater than or equal to 1. This defines the outer dimension for all survey objects
+- `n_movement_time_blocks` integer needs to be greater than or equal to 1. Specifies the number of movement blocks. You can have a value for each year if you want.
 - `global_rec_devs` integer 1 means all regions share the same annual recruitment deviations. 0 means they have separate annual recruitment deviations. This will effect the dimensions of the parameter `trans_rec_dev`
 - `rec_devs_sum_to_zero` Should the recruit devs in each region sum to zero? yes = 1, no = 0. I yes then this the parameter `trans_rec_dev` has one less parameter
 
@@ -27,8 +28,9 @@ Users need to population a named list containing `data` inputs and a named list 
 - `spawning_time_proportion` vector of proportions that indicate when during the year spawning occurs. Length = `n_projyears`
 - `apply_fixed_movement` integer whether to apply the input `fixed_movement_matrix` or estimated movement matrix. This was added because the transformation on estimated movement parameters does not allow values to be zero or one so cannot truly apply no movement. That is when I have used this fixed movement
 - `do_recruits_move` integer specifying whether recruits are applied in the movement dynamic. 1 = yes, 0 = no.
+- `movement_time_block_indicator` a vector of integers (C++ indices) that indicate which movement matrix time-block to apply. The model is initialised with the first movement matrix, and uses the last movement matrix in the projection period. `n_movement_time_blocks = length(unique(movement_time_block_indicator))`
 
-- `fixed_movement_matrix` movement matrix with dimensions `n_regions` \(\times\)`n_regions`. Rows sum equal to one.
+- `fixed_movement_matrix` movement matrix array with dimensions `n_regions` \(\times\)`n_regions`\(\times\)`n_movement_time_blocks` . Rows sum equal to one and the third dimension relates to the time-bloc
 - `prop_F_hist` scalar proportion of longline average F that is applied during initialization.
 - `F_method` integer, if = 0 then we estimate mean and deviation F free parameters, otherwise if equal 1, use newton raphson iterations and solve F
 - `F_max` scalar Maxium F when using the `F_method = 1` 
@@ -109,7 +111,7 @@ Users need to population a named list containing `data` inputs and a named list 
 - `ln_fixed_sel_pars` array of log selectivity parameters for fixed gear fishery with dimension `n_time_blocks`\(\times\)  `max(sel parameters)`\(\times\)  `2` (for each sex) male parameters first followed by female. The number of time-blocks is defined by the data parameter `data$fixed_sel_by_year_indicator` and max selectivity parameters controlled by `data$fixed_sel_type` which defines the selectivity shape and thus number of parameters.
 
 - `ln_trwl_sel_pars` array of log selectivity parameters for trawl gear fishery with dimension `n_time_blocks`\(\times\)  `max(sel parameters)`\(\times\)  `2` (for each sex) male parameters first followed by female. The number of time-blocks is defined by the data parameter `data$trwl_sel_by_year_indicator` and max selectivity parameters controlled by `data$trwl_sel_type` which defines the selectivity shape and thus number of parameters.
-- `transformed_movement_pars` array of movement parameters that are transformed in the simplex space. It has dimension `n_regions - 1` \(\times\)  `n_regions`. Use the packages inbuilt `simplex()` and `restoresimplex()` functions to change a vector that sums to one to a simplex with n-1 parameters.
+- `transformed_movement_pars` array of movement parameters that are transformed in the simplex space. It has dimension `n_regions - 1` \(\times\)  `n_regions`\(\times\) `n_movement_time_blocks`. Use the packages inbuilt `simplex()` and `restoresimplex()` functions to change a vector that sums to one to a simplex with n-1 parameters.
 - `ln_fixed_F_avg` scalar for the log average fishing mortality of the fixed gear fishery. Should be not estimated if `data$F_method = 1`
 - `ln_fixed_F_devs` annual fishing mortality deviations from `ln_fixed_F_avg`. Expected dimensions are `n_regions` \(\times\)  `n_years`. Should be not estimated if `data$F_method = 1`
 - `ln_trwl_F_avg` scalar for the log average fishing mortality of the fixed gear fishery. Should be not estimated if `data$F_method = 1`

@@ -36,7 +36,7 @@ data$do_projection = 0
 n_projyears = length(data$years) +  data$n_projections_years
 n_years = length(data$years)
 projyears = min(data$years):(max(data$years) + data$n_projections_years)
-
+data$n_movement_time_blocks = 1
 data$global_rec_devs = 1
 data$rec_devs_sum_to_zero = 0
 #' used for sum to zero constraint
@@ -78,12 +78,17 @@ data$male_age_length_transition[,,] = m_ALK
 data$female_age_length_transition[,,] = f_ALK
 
 ## Movement - this is used to calculate the simplex for parameters. Cannot have a 1 and 0s
-data$movement_matrix = data$fixed_movement_matrix = matrix(0, nrow = n_regions, ncol = n_regions);
-diag(data$fixed_movement_matrix) = 1
-diag(data$movement_matrix) = 0.9
-data$movement_matrix = data$movement_matrix + rlnorm(n = n_regions * n_regions, log(0.01), 0.1)
+data$fixed_movement_matrix = array(0, dim = c(n_regions, n_regions, 1));
+data$movement_matrix = array(0, dim = c(n_regions, n_regions, 1));
+data$movement_time_block_indicator = rep(0, n_years)
+movement_matrix = fixed_movement_matrix = matrix(0, nrow = n_regions, ncol = n_regions);
+diag(fixed_movement_matrix) = 1
+diag(movement_matrix) = 0.9
+data$fixed_movement_matrix[,,1] = fixed_movement_matrix
+movement_matrix = movement_matrix + rlnorm(n = n_regions * n_regions, log(0.01), 0.1)
 # renormalise
-data$movement_matrix = sweep(data$movement_matrix, 1, STATS = rowSums(data$movement_matrix), "/")
+movement_matrix = sweep(movement_matrix, 1, STATS = rowSums(movement_matrix), "/")
+data$movement_matrix[,,1] = movement_matrix
 
 data$spawning_time_proportion = rep(0, n_projyears)
 data$sigma_R = 1.2
@@ -277,9 +282,9 @@ parameters$ln_srv_sel_pars[1,1,2, 1] = 1.576
 parameters$ln_srv_sel_pars[1,2,2, 1] = -0.7118
 
 ## movement pars
-parameters$transformed_movement_pars = matrix(NA, nrow = n_regions - 1, ncol = n_regions)
+parameters$transformed_movement_pars = array(NA, dim = c(n_regions - 1, n_regions, 1))
 for(i in 1:n_regions)
-  parameters$transformed_movement_pars[,i] = simplex(data$movement_matrix[i,])
+  parameters$transformed_movement_pars[,i,1] = simplex(movement_matrix[i,])
 
 parameters$ln_fixed_F_avg = -2.965016
 parameters$ln_fixed_F_devs = array(0, dim = c(n_regions, n_projyears))

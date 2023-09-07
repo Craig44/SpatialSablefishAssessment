@@ -296,7 +296,7 @@ plot_input_timeblocks = function(data, survey_labels = NULL) {
   } else {
     ## Spatial tag-integrated model
     projyears = min(data$years):(max(data$years) + data$n_projections_years)
-    full_df = data.frame(Year = projyears, fixed_sel = data$fixed_sel_by_year_indicator +1, trwl_sel = data$trwl_sel_by_year_indicator +1)
+    full_df = data.frame(Year = projyears, fixed_sel = data$fixed_sel_by_year_indicator +1, trwl_sel = data$trwl_sel_by_year_indicator +1, Movement = data$movement_time_block_indicator +1)
 
     surveys = paste0("Survey ", 1:data$n_surveys)
     if(!is.null(survey_labels))

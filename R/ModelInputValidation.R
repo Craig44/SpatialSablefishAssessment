@@ -494,8 +494,9 @@ validate_input_data_and_parameters = function(data, parameters) {
         return(paste0("fixed_movement_matrix_young: ", check$message))
 
     } else {
+      n_move_time_blocks = length(unique(data$movement_time_block_indicator))
       ## fixed_movement_matrix
-      check = check_dim(data$fixed_movement_matrix, c(n_regions, n_regions))
+      check = check_dim(data$fixed_movement_matrix, c(n_regions, n_regions, n_move_time_blocks))
       if(!check$result)
         return(paste0("fixed_movement_matrix: ", check$message))
     }
@@ -773,13 +774,14 @@ validate_input_data_and_parameters = function(data, parameters) {
           return(paste0("transformed_movement_pars_young: ", check$message))
       }
     } else {
+      n_move_time_blocks = length(unique(data$movement_time_block_indicator))
       if(n_regions > 1) {
-        check = check_dim(parameters$transformed_movement_pars, c(n_regions - 1, n_regions))
+        check = check_dim(parameters$transformed_movement_pars, c(n_regions - 1, n_regions, n_move_time_blocks))
         if(!check$result)
           return(paste0("transformed_movement_pars: ", check$message))
       } else {
         if(n_regions > 1) {
-          check = check_dim(parameters$transformed_movement_pars, c(1, 1))
+          check = check_dim(parameters$transformed_movement_pars, c(1, 1, n_move_time_blocks))
           if(!check$result)
             return(paste0("transformed_movement_pars: ", check$message))
         }
