@@ -1,14 +1,14 @@
-/* @file TagIntegrated.hpp
+/* @file TagIntegratedAgeBasedMovement.hpp
  * Statistical, separable space, sex and age-structured population model for sablefish
  * Alaska Fisheries Science Center, October 2022
  * Written by C Marsh craig.marsh10@gmail.com
  * This follows on from the current assessment that was originally written by
- * D. Hanselman:dana.hanselman@noaa.gov
+ * D. Hanselman:dana.hanselman@noaa.gov (Blame him for kicking off this legacy code)
  * UPDATED (and commented)  by D. Goethel: daniel.goethel@noaa.gov   (10/15/20)
  * Tips
  * - TMB indicies start at 0 (i.e., like C++) where as ADMB starts at 1 (i.e., like R)
- * - parameter labels should start with the transformation that is assumed for example natural log of F for fixed should follow ln_F_fixed
- *   and for logistic proportion something like logistic_prop. This is to aid readability and keep syntax consistent
+ * - parameter labels should start with the transformation that is assumed for example natural log of F for longline should follow ln_F_fixed
+ *   and for logistic proportion something like logis_prop. This is to aid readability and keep syntax consistent
  *
  * - Key when reading object names
  *      - dom = domestic
@@ -39,12 +39,17 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
   DATA_INTEGER(n_projections_years);                // number of years to project the model beyond max(years)
   DATA_INTEGER(do_projection);                      // Should we project the model to last_projection_year. 1 = yes, 0 = no
   DATA_INTEGER(n_regions);                          // number of regions in the model
+  DATA_INTEGER(n_surveys);                          // number of surveys
+  DATA_INTEGER(n_movement_time_blocks);             // number of movement time-blocks
 
   int n_years = years.size();
   int n_projyears = n_years + n_projections_years;
   int n_ages = ages.size();
   int n_length_bins = length_bins.size();
-
+  int min_age = 0;
+  while(min_age < ages(0)){
+    min_age++;
+  }
 
   // Biology parameters
   DATA_INTEGER(global_rec_devs);                    // Are there recruit devs parameters for each region (= 0), or do all regions have the same rec devs (=1)
@@ -63,18 +68,18 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
   DATA_ARRAY(female_age_length_transition);         // Proportion at among length bins for each age for female: dim = n_ages x n_lengths x n_years
 
 
-  DATA_INTEGER(SrType);                             // Stock recruitment type 3=average, 2=Bholt, 1=Ricker
+  DATA_INTEGER(SrType);                             // Stock recruitment type 3=average, 2=Bholt
   DATA_VECTOR(spawning_time_proportion);            // proportion of time within a year that spawning occurs needed for each year length = n_projyears, bound between 0 and 1
 
   // the reason I added this fixed fixed movement switch is because we use the simplex to transform parameters for the estimated movement
   // matrix. This parameterisation will cause NaNs or Inf when there is a value = 1 and the rest zeros i.e., no movement. For this scenario you
   // you should use this input functionality.
   DATA_INTEGER(apply_fixed_movement);               // 0 means will use estimated movement matrix, 1 means will use input movement matrix.
-  DATA_MATRIX(fixed_movement_matrix_young);         // n_regions x n_regions. only used if apply_fixed_movement = 1
-  DATA_MATRIX(fixed_movement_matrix_old);           // n_regions x n_regions. only used if apply_fixed_movement = 1
+  DATA_ARRAY(fixed_movement_matrix_young);         // n_regions x n_regions. only used if apply_fixed_movement = 1
+  DATA_ARRAY(fixed_movement_matrix_old);           // n_regions x n_regions. only used if apply_fixed_movement = 1
   DATA_INTEGER(age_based_movement);                 // integer, whether there are two movement matricies one for young and one for older
-  // when this = 0 only the younger movement matrix is used. this is important when trying to estimate movement parameters.
   DATA_INTEGER(do_recruits_move);                   // if = 1 then recruitment will be applied after movement, if = 0 then recruitment will be applied after recruitment so there won't be movement
+  DATA_IVECTOR(movement_time_block_indicator);      // length(n_years), 0 indicates use the first movement matrix, 1 = use the second movement matrix
 
   // Fishing stuff
   DATA_SCALAR(prop_F_hist);                         // Proportion of fixed_F_avg that is applied during initialization
@@ -92,8 +97,8 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
   DATA_IVECTOR(trwl_sel_by_year_indicator);         // Selectivity time-block to apply in each model year
 
   // Survey stuff
-  DATA_IVECTOR(srv_dom_ll_sel_type);                // Selectivity type for each row of ln_fixed_sel_m_pars and ln_fixed_sel_f_pars
-  DATA_IVECTOR(srv_dom_ll_sel_by_year_indicator);   // Selectivity time-block to apply in each model year
+  DATA_IARRAY(srv_sel_type);                       // Selectivity type dim: n_time_blocks x n_surveys
+  DATA_IARRAY(srv_sel_by_year_indicator);          // Selectivity time-block to apply in each model year. dim: n_years x n_surveys
 
 
   // Tag-release information
@@ -132,26 +137,26 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
   DATA_INTEGER(fixed_catchatlgth_comp_likelihood);             // 0 = old multinomial, 1 = TMB's multinomial. //0 = MVN (can be applied to both comp_type), 1 = Multinomial, 2 = dirichlet-multinomial
   array<Type> pred_fixed_catchatlgth(obs_fixed_catchatlgth.dim); // Sex disaggregated predicted catch at age
 
-  // Longline survey catch at age
-  DATA_IARRAY(srv_dom_ll_catchatage_indicator);            // dim: n_regions x n_years.  1 = calculate catch at age in this year and region, 0 = don't calculate catch at age
-  DATA_ARRAY(obs_srv_dom_ll_catchatage);                   // Longline domestic survey composition observations dim = 2*n_ages x n_regions x n_years. NOTE: male first then female
-  DATA_ARRAY_INDICATOR(keep_srv_dom_ll_catchatage_comp, obs_srv_dom_ll_catchatage); // Used for OSA residuals, when not using the multinomial likelihood
-  DATA_INTEGER(srv_dom_ll_catchatage_covar_structure);             // 0 = iid, 5 = AR(1), 2 = Unstructured.
-  DATA_INTEGER(srv_dom_ll_catchatage_comp_likelihood);             // 0 = old multinomial, 1 = TMB's multinomial. //0 = MVN (can be applied to both comp_type), 1 = Multinomial, 2 = dirichlet-multinomial
-  array<Type> pred_srv_dom_ll_catchatage(obs_srv_dom_ll_catchatage.dim); // Sex disaggregated predicted catch at age
+  // survey catch at age
+  DATA_IARRAY(srv_catchatage_indicator);                   // dim: n_regions x n_years x n_surveys.  1 = calculate catch at age in this year and region, 0 = don't calculate catch at age
+  DATA_ARRAY(obs_srv_catchatage);                   // Longline domestic survey composition observations dim = 2*n_ages x n_regions x n_years x n_surveys. NOTE: male first then female
+  DATA_ARRAY_INDICATOR(keep_srv_catchatage_comp, obs_srv_catchatage); // Used for OSA residuals, when not using the multinomial likelihood
+  DATA_INTEGER(srv_catchatage_covar_structure);             // 0 = iid, 5 = AR(1), 2 = Unstructured.
+  DATA_IVECTOR(srv_catchatage_comp_likelihood);             // 0 = old multinomial, 1 = TMB's multinomial. //0 = MVN (can be applied to both comp_type), 1 = Multinomial, 2 = dirichlet-multinomial
+  array<Type> pred_srv_catchatage(obs_srv_catchatage.dim); // Sex disaggregated predicted catch at age
 
-  // Longline survey biomass
-  DATA_IARRAY(srv_dom_ll_bio_indicator);                      // dim: n_regions x n_years.  1 = calculate catch at age in this year and region, 0 = don't calculate observation
-  DATA_ARRAY(obs_srv_dom_ll_bio);                             // Longline domestic survey biomass observations dim = n_regions x n_years.
-  DATA_ARRAY(obs_srv_dom_ll_se);                              // Longline domestic survey biomass standard errors
-  DATA_ARRAY_INDICATOR(keep_srv_dom_ll_bio_comp, obs_srv_dom_ll_bio); // Used for OSA residuals, when not using the multinomial likelihood
-  DATA_INTEGER(srv_dom_ll_bio_likelihood);               // 0 is old lognormal, 1 = dlnorm call
-  DATA_INTEGER(srv_dom_ll_obs_is_abundance);                     // 1 = Abundance (Numbers), 0 = Biomass (Weight)
-  array<Type> pred_srv_dom_ll_bio(obs_srv_dom_ll_bio.dim);    // Sex disaggregated predicted catch at age
-  DATA_IVECTOR(srv_dom_ll_q_by_year_indicator);               // Catchability time-block to apply when deriving model predictions each year
-  DATA_INTEGER(srv_dom_ll_q_transformation);                  // 0 = log, 1 = logistic (bound between 0-1)
-  DATA_INTEGER(q_is_nuisance);                                // 0 means we estimate the q parameter (trans_srv_dom_ll_q) as a free parameter. 1 means we calculate the nuisance q based on the MLE value given the set of parameters. When 1 then the free parameter needs to be turned off during estimation
-
+  // survey biomass or abundance
+  DATA_IARRAY(srv_bio_indicator);                             // dim: n_regions x n_years x n_surveys.  1 = calculate catch at age in this year and region, 0 = don't calculate observation
+  DATA_ARRAY(obs_srv_bio);                             // Survey biomass observations dim = n_regions x n_years x n_surveys.
+  DATA_ARRAY(obs_srv_se);                              // Survey biomass standard errors dim = n_regions x n_years x n_surveys.
+  DATA_ARRAY_INDICATOR(keep_srv_bio, obs_srv_bio); // Used for OSA residuals, when not using the multinomial likelihood
+  DATA_IVECTOR(srv_bio_likelihood);                     // 0 is old lognormal, 1 = dlnorm call
+  DATA_IVECTOR(srv_obs_is_abundance);                     // 1 = Abundance (Numbers), 0 = Biomass (Weight). length n_surveys
+  array<Type> pred_srv_bio(obs_srv_bio.dim);    // Sex disaggregated predicted catch at age
+  pred_srv_bio.fill(0.0);
+  DATA_IARRAY(srv_q_by_year_indicator);               // Catchability time-block to apply when deriving model predictions dim: year x n_surveys
+  DATA_IVECTOR(srv_q_transformation);                  // 0 = log, 1 = logistic (bound between 0-1) length n_surveys
+  DATA_IVECTOR(q_is_nuisance);                                // 0 means we estimate the q parameter (trans_srv_q) as a free parameter. 1 means we calculate the nuisance q based on the MLE value given the set of parameters. When 1 then the free parameter needs to be turned off during estimation length n_surveys
 
   // Tag recovery observations Sexually disaggregated?
   // Note: All tag recoveries are assumed from the fixed fishery!!!
@@ -159,9 +164,6 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
 
   int n_tag_recovery_years = tag_recovery_indicator_by_year.sum();
   DATA_IARRAY(tag_recovery_indicator);
-  // if tag_likelihood %in% c(0,1)
-  // dim: n_tag_release_events x n_regions x n_tag_recovery_years.  1 = calculate fitted values for tag-recoveries this year and region, 0 = don't calculate tag recovery observation for this year and region
-
   DATA_ARRAY(obs_tag_recovery);
   // if tag_likelihood %in% c(0,1)
   // dim: n_ages x n_tag_release_events x n_regions x n_tag_recovery_years.
@@ -212,22 +214,27 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
   PARAMETER(ln_init_F_avg);                                 // log average initial Fishing mortality used when F_method == 1, else should not be estimated
   PARAMETER(ln_catch_sd);                                   // Shared across all gears
   //
-  PARAMETER_ARRAY(trans_srv_dom_ll_q);                   // logistic catchabilities parameters for srv_dom_ll n_regions x n_q_time-blocks
-  PARAMETER_ARRAY(ln_srv_dom_ll_sel_pars);                  // log selectivity parameters for domestic longline surveyr, dim: time-blocks:  max(sel parameters): sex
+  PARAMETER_ARRAY(trans_srv_q);                             // logistic catchabilities parameters for srv n_regions x n_q_time-blocks x n_surveys
+  PARAMETER_ARRAY(ln_srv_sel_pars);                         // log selectivity parameters for domestic longline surveyr, dim: time-blocks:  max(sel parameters): sex x n_surveys
   PARAMETER_ARRAY(logistic_tag_reporting_rate);             // logistic tag-reporting dim: n_regions x n_tag_recovery_years
   // nuisance parameters
   PARAMETER(ln_tag_phi);                                    // log variance for tag data likelihood- currently only used if tag_likelihood = 1 (Negative binomial)
   PARAMETER(ln_sigma_R);                                    // standard deviation for recruitment;
   PARAMETER(ln_sigma_init_devs);                            // standard deviation for recruitment;
 
+  // trans_SR_pars
+  // SrType == 1 vector of length = 2 its log(a) & log(b)
+  // SrType == 2 vector of length = 1 its logistic(steepness) bound between [0,1]
+  // SrType == 3 vector of length = 1 its SHOULD BE IGNORED
+  PARAMETER_VECTOR(trans_SR_pars);
+
   // composition parameters
   PARAMETER_VECTOR(trans_trwl_catchatlgth_error);     //
   PARAMETER_VECTOR(trans_fixed_catchatlgth_error);     //
   PARAMETER_VECTOR(trans_fixed_catchatage_error);     //
-  PARAMETER_VECTOR(trans_srv_dom_ll_catchatage_error);    //
+  PARAMETER_VECTOR(trans_srv_catchatage_error);    //
 
   PARAMETER_VECTOR(logistic_prop_recruit_male);             //  logistic_prop_recruit_male. length: n_years
-
   // Age-based ogive parameters
   PARAMETER(ln_a50_movement);                               // a50 parameter for age based selectivity movement
   PARAMETER(ln_ato95_movement);                             // ato95 parameter for age based selectivity movement
@@ -236,6 +243,7 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
   int year_ndx;
   int proj_year_ndx;
   int age_ndx;
+  int srv_ndx; // survey index
   //int len_ndx;
   int region_ndx;
   int release_region_ndx;
@@ -251,11 +259,11 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
   Type m_plus_group_equilibrium = 0.0;
   Type f_plus_group_equilibrium = 0.0;
   Type effective_sample_size = 0.0;
-  Type aggregated_predicted_tags;
-  Type aggregated_observed_tags;
-
+  Type predicted_tags;
   Type pen_posfun = 0; // this is passed to the utility posfun function and added to the likelihood as apenalty
   Type eps_for_posfun = 0.00001; // used for the posfun object to scale values above zero
+  Type aggregated_predicted_tags;
+  Type aggregated_observed_tags;
 
   Type s1; // used in the negative binomial likelihood
   Type s2; // used in the negative binomial likelihood
@@ -265,13 +273,14 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
   // Untransform parameters
   vector<Type> mean_rec = exp(ln_mean_rec);
   Type sigma_R = exp(ln_sigma_R);
+  vector<Type> SR_pars = exp(trans_SR_pars);
+  // If Beverton-holt formulation we actually assume a logistic transformation on steepness
+  if(SrType == 2) {
+    SR_pars(0) = invlogit(trans_SR_pars(0));
+  }
   Type sigma_init_devs = exp(ln_sigma_init_devs);
   Type sigma_init_devs_sq = sigma_init_devs * sigma_init_devs;
   Type sigma_R_sq = sigma_R * sigma_R;
-
-  Type ato95_movement = exp(ln_ato95_movement);
-  Type a50_movement = exp(ln_a50_movement);
-
   vector<Type> init_rec_dev = exp(ln_init_rec_dev);
   array<Type> recruitment_multipliers(n_regions, n_projyears);
   recruitment_multipliers.fill(1.0);
@@ -359,62 +368,76 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
   array<Type> trwl_sel_pars(ln_trwl_sel_pars.dim);
   trwl_sel_pars = exp(ln_trwl_sel_pars);
 
-  array<Type> srv_dom_ll_sel_pars(ln_srv_dom_ll_sel_pars.dim);
-  srv_dom_ll_sel_pars = exp(ln_srv_dom_ll_sel_pars);
+  array<Type> srv_sel_pars(ln_srv_sel_pars.dim);
+  srv_sel_pars = exp(ln_srv_sel_pars);
 
-  array<Type> srv_dom_ll_q(trans_srv_dom_ll_q.dim);
-  srv_dom_ll_q.fill(1.0); // if nuisance expected values will be initially calculated assuming q = 1
+  array<Type> srv_q(trans_srv_q.dim);
+  srv_q.fill(1.0); // if nuisance expected values will be initially calculated assuming q = 1
   // Are we estimating q as a free parameter of deriving it as a nuisance parameter
-  if(q_is_nuisance == 0) {
-    if(srv_dom_ll_q_transformation == 0) {
-      for(int i = 0; i < srv_dom_ll_q.dim(0); ++i) { // region
-        for(int j = 0; j < srv_dom_ll_q.dim(1); ++j) // time-blocks
-          srv_dom_ll_q(i,j) = exp(trans_srv_dom_ll_q(i,j));
-      }
-    } else if(srv_dom_ll_q_transformation == 1) {
-      for(int i = 0; i < srv_dom_ll_q.dim(0); ++i) { // region
-        for(int j = 0; j < srv_dom_ll_q.dim(1); ++j) // time-blocks
-          srv_dom_ll_q(i,j) = invlogit(trans_srv_dom_ll_q(i,j));
+  for(srv_ndx = 0; srv_ndx < n_surveys; ++srv_ndx) {
+    if(q_is_nuisance(srv_ndx) == 0) {
+      if(srv_q_transformation(srv_ndx) == 0) {
+        for(int i = 0; i < srv_q.dim(0); ++i) { // region
+          for(int j = 0; j < srv_q.dim(1); ++j) // time-blocks
+            srv_q(i,j,srv_ndx) = exp(trans_srv_q(i,j, srv_ndx));
+        }
+      } else if(srv_q_transformation(srv_ndx) == 1) {
+        for(int i = 0; i < srv_q.dim(0); ++i) { // region
+          for(int j = 0; j < srv_q.dim(1); ++j) // time-blocks
+            srv_q(i,j, srv_ndx) = invlogit(trans_srv_q(i,j,srv_ndx));
+        }
       }
     }
   }
-
 
   // deal with movement
-  // we estimate n-1 parameters for each region based on the simplex transformation
-  // see TODO find link to Stan manual
-  matrix<Type> movement_matrix_young(n_regions,n_regions);                  // n_regions x n_regions. Rows sum = 1 (aka source)
-  matrix<Type> movement_matrix_old(n_regions,n_regions);                  // n_regions x n_regions. Rows sum = 1 (aka source)
-  vector<Type> cache_log_k_value(n_regions - 1);
-  for(int k = 0; k < (n_regions - 1); k++)
-    cache_log_k_value[k] = log(n_regions - 1 - k);
+  array<Type> movement_matrix_young(n_regions,n_regions,n_movement_time_blocks);                  // n_regions x n_regions. Rows sum = 1 (aka source)
+  array<Type> movement_matrix_old(n_regions,n_regions,n_movement_time_blocks);                  // n_regions x n_regions. Rows sum = 1 (aka source)
+  movement_matrix_young.fill(1.0);
+  movement_matrix_old.fill(1.0);
 
-  for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
-    Type stick_length = 1.0;
-    for (int k = 0; k < (n_regions - 1); ++k) {
-      movement_matrix_young(region_ndx, k) = stick_length * invlogit(transformed_movement_pars_young(k, region_ndx) - cache_log_k_value(k));
-      stick_length -= movement_matrix_young(region_ndx, k);
+  if(n_regions > 1) {
+    vector<Type> cache_log_k_value(n_regions - 1);
+    for(int move_ndx = 0; move_ndx < n_movement_time_blocks; ++move_ndx) {
+      //vector<Type> cache_log_k_value(n_regions - 1);
+      for(int k = 0; k < (n_regions - 1); k++)
+        cache_log_k_value[k] = log(n_regions - 1 - k);
+
+      for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
+        Type stick_length = 1.0;
+        for (int k = 0; k < (n_regions - 1); ++k) {
+          movement_matrix_young(region_ndx, k, move_ndx) = stick_length * invlogit(transformed_movement_pars_young(k, region_ndx, move_ndx) - cache_log_k_value(k));
+          stick_length -= movement_matrix_young(region_ndx, k, move_ndx);
+        }
+        // plus group
+        movement_matrix_young(region_ndx, n_regions - 1, move_ndx) = stick_length;
+      }
     }
-    // plus group
-    movement_matrix_young(region_ndx, n_regions - 1) = stick_length;
-  }
-  for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
-    Type stick_length = 1.0;
-    for (int k = 0; k < (n_regions - 1); ++k) {
-      movement_matrix_old(region_ndx, k) = stick_length * invlogit(transformed_movement_pars_old(k, region_ndx) - cache_log_k_value(k));
-      stick_length -= movement_matrix_old(region_ndx, k);
+    for(int move_ndx = 0; move_ndx < n_movement_time_blocks; ++move_ndx) {
+      //vector<Type> cache_log_k_value(n_regions - 1);
+      for(int k = 0; k < (n_regions - 1); k++)
+        cache_log_k_value[k] = log(n_regions - 1 - k);
+
+      for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
+        Type stick_length = 1.0;
+        for (int k = 0; k < (n_regions - 1); ++k) {
+          movement_matrix_old(region_ndx, k, move_ndx) = stick_length * invlogit(transformed_movement_pars_old(k, region_ndx, move_ndx) - cache_log_k_value(k));
+          stick_length -= movement_matrix_old(region_ndx, k, move_ndx);
+        }
+        // plus group
+        movement_matrix_old(region_ndx, n_regions - 1, move_ndx) = stick_length;
+      }
     }
-    // plus group
-    movement_matrix_old(region_ndx, n_regions - 1) = stick_length;
   }
-  // Dispersion parameter for tag-likelihood negative binomial
   Type tag_phi = exp(ln_tag_phi);
 
   // Parameters for dirichlet-multinomial composition
   Type theta_fixed_catchatage = 1;
   Type theta_fixed_catchatlgth = 1;
   Type theta_trwl_catchatlgth = 1;
-  Type theta_srv_dom_ll_catchatage = 1;
+  vector<Type> theta_srv_catchatage(n_surveys);
+  Type ato95_movement = exp(ln_ato95_movement);
+  Type a50_movement = exp(ln_a50_movement);
 
   if(fixed_catchatage_comp_likelihood == 1)
     theta_fixed_catchatage = exp(trans_fixed_catchatage_error(0));
@@ -425,8 +448,13 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
   if(trwl_catchatlgth_comp_likelihood == 1)
     theta_trwl_catchatlgth = exp(trans_trwl_catchatlgth_error(0));
 
-  if(srv_dom_ll_catchatage_comp_likelihood == 1)
-    theta_srv_dom_ll_catchatage = exp(trans_srv_dom_ll_catchatage_error(0));
+  for(srv_ndx = 0; srv_ndx < n_surveys; ++srv_ndx) {
+    if(srv_catchatage_comp_likelihood(srv_ndx) == 1) {
+      theta_srv_catchatage(srv_ndx) = exp(trans_srv_catchatage_error(srv_ndx));
+    } else {
+      theta_srv_catchatage(srv_ndx) = 1.0;
+    }
+  }
 
   // Declare Derived quantities
   array<Type>  SSB_yr(n_projyears, n_regions);
@@ -436,6 +464,7 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
   array<Type> init_natage_f(n_ages, n_regions);                     // Initial numbers at age Females
   array<Type> equilibrium_natage_m(n_ages, n_regions);                     // Initial numbers at age Males
   array<Type> equilibrium_natage_f(n_ages, n_regions);                     // Initial numbers at age Females
+
   matrix<Type> young_natage_for_movement_m(n_ages, n_regions);        // temp used during movement to account for age-based movement
   matrix<Type> young_natage_for_movement_f(n_ages, n_regions);        // temp used during movement to account for age-based movement
   matrix<Type> old_natage_for_movement_m(n_ages, n_regions);        // temp used during movement to account for age-based movement
@@ -483,12 +512,12 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
 
   vector<Type> numbers_at_age_and_sex(n_ages * 2);                   // used when calculating predicted proportions for AF observations.
   vector<Type> temp_numbers_at_age(n_ages);                          // used during interim calculations for observations
-  vector<Type> temp_tag_obs_numbers_at_age(n_ages);
   vector<Type> temp_numbers_at_age_after_ageing_error(n_ages);       // used during interim calculations for observations
   vector<Type> temp_observed_age_and_sex(n_ages * 2);                // used to pull out observations
   vector<Type> temp_numbers_at_lgth(n_length_bins);       // used during interim calculations for observations
   vector<Type> temp_numbers_at_lgth_and_sex(n_length_bins * 2);       // used during interim calculations for observations
   vector<Type> temp_observed_lgth_and_sex(n_length_bins * 2);       // used during interim calculations for observations
+  vector<Type> temp_tag_obs_numbers_at_age(n_ages);
 
   array<Type> Z_m(n_ages, n_regions, n_projyears);                   // Male total mortality at age from start year to end year
   array<Type> Z_f(n_ages, n_regions, n_projyears);                   // Female total mortality at age from start year to end year
@@ -516,14 +545,20 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
 
   array<Type> sel_fixed_f(n_ages, ln_fixed_sel_pars.dim(0));                  // Longline selectivity Female. dim: n_ages x n_time_blocks
   array<Type> sel_fixed_m(n_ages, ln_fixed_sel_pars.dim(0));                  // Longline selectivity Male. dim: n_age x n_time_blocks
-  array<Type> sel_trwl_f(n_ages, ln_trwl_sel_pars.dim(0));                    // Trawl selectivity Female. dim: n_ages x n_projyears
-  array<Type> sel_trwl_m(n_ages, ln_trwl_sel_pars.dim(0));                    // Trawl selectivity Male. dim: n_ages x n_projyears
-  array<Type> sel_srv_dom_ll_f(n_ages, ln_srv_dom_ll_sel_pars.dim(0));        // Longline survey selectivity Female. dim: n_ages x n_projyears
-  array<Type> sel_srv_dom_ll_m(n_ages, ln_srv_dom_ll_sel_pars.dim(0));        // Longline survey selectivity Male. dim: n_ages x n_projyears
+  array<Type> sel_trwl_f(n_ages, ln_trwl_sel_pars.dim(0));                    // Trawl selectivity Female. dim: n_ages x n_time_blocks
+  array<Type> sel_trwl_m(n_ages, ln_trwl_sel_pars.dim(0));                    // Trawl selectivity Male. dim: n_ages x n_time_blocks
+  array<Type> sel_srv_f(n_ages, ln_srv_sel_pars.dim(0), n_surveys);         // survey selectivities Female. dim: n_ages x n_time_blocks x n_surveys
+  array<Type> sel_srv_m(n_ages, ln_srv_sel_pars.dim(0), n_surveys);         // survey selectivities Male. dim: n_ages x n_time_blocks x n_surveys
+  array<Type> tmp_sel_srv_f(n_ages, ln_srv_sel_pars.dim(0));                // Temporary survey selectivities Female. dim: n_ages x n_time_blocks x n_surveys
+  array<Type> tmp_sel_srv_m(n_ages, ln_srv_sel_pars.dim(0));                // Temporary survey selectivities Male. dim: n_ages x n_time_blocks x n_surveys
+
+  vector<Type> pred_recoveries_multinomial_release(n_regions * n_years_to_retain_tagged_cohorts_for + 1);
+  vector<Type> obs_recoveries_multinomial_release(n_regions * n_years_to_retain_tagged_cohorts_for + 1);
+
 
   Type alpha = 0.0;                                       // alpha for the stock recruit relationship
   Type beta = 0.0;                                        // beta for the stock recruit relationship
-  Type N_eff = 0.0;
+  Type N_input = 0.0;
 
   vector<Type> Bzero(n_regions); // just M and R0
   vector<Type> Bzero_w_recent_growth(n_regions); // just M and R0
@@ -539,14 +574,18 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
   /*
    * Build selectivity objects
    */
-  // TODO: Change BuildFisherySelectivity() to be like BuildSelectivity(). This will collapse
   // the number of years needed for the sel_ll_f container.
   BuildSelectivity(fixed_sel_pars.col(0), fixed_sel_type, ages, sel_fixed_m, false);
   BuildSelectivity(fixed_sel_pars.col(1), fixed_sel_type, ages, sel_fixed_f, false);
   BuildSelectivity(trwl_sel_pars.col(0), trwl_sel_type, ages, sel_trwl_m, false);
   BuildSelectivity(trwl_sel_pars.col(1), trwl_sel_type, ages, sel_trwl_f, false);
-  BuildSelectivity(srv_dom_ll_sel_pars.col(0), srv_dom_ll_sel_type, ages, sel_srv_dom_ll_m, false);
-  BuildSelectivity(srv_dom_ll_sel_pars.col(1), srv_dom_ll_sel_type, ages, sel_srv_dom_ll_f, false);
+  for(srv_ndx = 0; srv_ndx < n_surveys; ++srv_ndx) {
+    BuildSelectivity(srv_sel_pars.col(srv_ndx).col(0), srv_sel_type.col(srv_ndx), ages, tmp_sel_srv_m, false);
+    BuildSelectivity(srv_sel_pars.col(srv_ndx).col(1), srv_sel_type.col(srv_ndx), ages, tmp_sel_srv_f, false);
+    sel_srv_m.col(srv_ndx) = tmp_sel_srv_m;
+    sel_srv_f.col(srv_ndx) = tmp_sel_srv_f;
+
+  }
 
   // Pre-calculate F, Z and survivorship only if F_method == 0
 
@@ -589,7 +628,7 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
   Type z_adjustment;
   Type number_of_tag_releases;
 
-  vector<Type> nll(11); // slots
+  vector<Type> nll(12); // slots
   nll.setZero();
   /* nll components
    * 0 - fixed - fishery age comp
@@ -599,15 +638,16 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
    * 4 - LL domestic survey biomass
    * 5 - fixed fishery catch contribution
    * 6 - Trawl fishery catch contribution
-   * 7 - tag-recovery observations
+   * 7 - Tag-recovery
    * 8 - Recruitment penalty/hyper prior if model is hierachical
    * 9 - init dev penalty/hyper prior if model is hierachical
    * 10 - Posfun penalty for values that must be > 0 but aren't
+   * 11 - F-penalty so F's are estimable
    */
 
   /*
    * Initialize the partition (age structure)
-   * by running the "annual cycle" n_ages times and approximating the plus group
+   * by running the "annual cycle" n_ages times and approximating the plus group using an infinite geometric series
    * this "should" account for age accumlation along with movement
    */
   Type plus_c = 0.0;
@@ -650,8 +690,8 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
           young_natage_for_movement_f.col(region_ndx) = init_natage_f.col(region_ndx).vec() * young_age_based_movement_ogive;
           old_natage_for_movement_f.col(region_ndx) = init_natage_f.col(region_ndx).vec() * old_age_based_movement_ogive;
         }
-        init_natage_m = young_natage_for_movement_m * fixed_movement_matrix_young + old_natage_for_movement_m * fixed_movement_matrix_old;
-        init_natage_f = young_natage_for_movement_f * fixed_movement_matrix_young + old_natage_for_movement_f * fixed_movement_matrix_old;
+        init_natage_m = young_natage_for_movement_m * fixed_movement_matrix_young.col(0).matrix() + old_natage_for_movement_m * fixed_movement_matrix_old.col(0).matrix();
+        init_natage_f = young_natage_for_movement_f * fixed_movement_matrix_young.col(0).matrix() + old_natage_for_movement_f * fixed_movement_matrix_old.col(0).matrix();
 
         for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
           young_natage_for_movement_m.col(region_ndx) = equilibrium_natage_m.col(region_ndx).vec() * young_age_based_movement_ogive;
@@ -659,13 +699,13 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
           young_natage_for_movement_f.col(region_ndx) = equilibrium_natage_f.col(region_ndx).vec() * young_age_based_movement_ogive;
           old_natage_for_movement_f.col(region_ndx) = equilibrium_natage_f.col(region_ndx).vec() * old_age_based_movement_ogive;
         }
-        equilibrium_natage_m = young_natage_for_movement_m * fixed_movement_matrix_young + old_natage_for_movement_m * fixed_movement_matrix_old;
-        equilibrium_natage_f = young_natage_for_movement_f * fixed_movement_matrix_young + old_natage_for_movement_f * fixed_movement_matrix_old;
+        equilibrium_natage_m = young_natage_for_movement_m * fixed_movement_matrix_young.col(0).matrix() + old_natage_for_movement_m * fixed_movement_matrix_old.col(0).matrix();
+        equilibrium_natage_f = young_natage_for_movement_f * fixed_movement_matrix_young.col(0).matrix() + old_natage_for_movement_f * fixed_movement_matrix_old.col(0).matrix();
       } else {
-        init_natage_f = (init_natage_f.matrix() * fixed_movement_matrix_young).array();
-        init_natage_m = (init_natage_m.matrix() * fixed_movement_matrix_young).array();
-        equilibrium_natage_f = (equilibrium_natage_f.matrix() * fixed_movement_matrix_young).array();
-        equilibrium_natage_m = (equilibrium_natage_m.matrix() * fixed_movement_matrix_young).array();
+        init_natage_f = (init_natage_f.matrix() * fixed_movement_matrix_young.col(0).matrix()).array();
+        init_natage_m = (init_natage_m.matrix() * fixed_movement_matrix_young.col(0).matrix()).array();
+        equilibrium_natage_f = (equilibrium_natage_f.matrix() * fixed_movement_matrix_young.col(0).matrix()).array();
+        equilibrium_natage_m = (equilibrium_natage_m.matrix() * fixed_movement_matrix_young.col(0).matrix()).array();
       }
     } else {
       // using estimated moveement matricies
@@ -676,8 +716,8 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
           young_natage_for_movement_f.col(region_ndx) = init_natage_f.col(region_ndx).vec() * young_age_based_movement_ogive;
           old_natage_for_movement_f.col(region_ndx) = init_natage_f.col(region_ndx).vec() * old_age_based_movement_ogive;
         }
-        init_natage_m = young_natage_for_movement_m * movement_matrix_young + old_natage_for_movement_m * movement_matrix_old;
-        init_natage_f = young_natage_for_movement_f * movement_matrix_young + old_natage_for_movement_f * movement_matrix_old;
+        init_natage_m = young_natage_for_movement_m * movement_matrix_young.col(0).matrix() + old_natage_for_movement_m * movement_matrix_old.col(0).matrix();
+        init_natage_f = young_natage_for_movement_f * movement_matrix_young.col(0).matrix() + old_natage_for_movement_f * movement_matrix_old.col(0).matrix();
 
         for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
           young_natage_for_movement_m.col(region_ndx) = equilibrium_natage_m.col(region_ndx).vec() * young_age_based_movement_ogive;
@@ -685,13 +725,13 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
           young_natage_for_movement_f.col(region_ndx) = equilibrium_natage_f.col(region_ndx).vec() * young_age_based_movement_ogive;
           old_natage_for_movement_f.col(region_ndx) = equilibrium_natage_f.col(region_ndx).vec() * old_age_based_movement_ogive;
         }
-        equilibrium_natage_m = young_natage_for_movement_m * movement_matrix_young + old_natage_for_movement_m * movement_matrix_old;
-        equilibrium_natage_f = young_natage_for_movement_f * movement_matrix_young + old_natage_for_movement_f * movement_matrix_old;
+        equilibrium_natage_m = young_natage_for_movement_m * movement_matrix_young.col(0).matrix() + old_natage_for_movement_m * movement_matrix_old.col(0).matrix();
+        equilibrium_natage_f = young_natage_for_movement_f * movement_matrix_young.col(0).matrix() + old_natage_for_movement_f * movement_matrix_old.col(0).matrix();
       } else {
-        init_natage_f = (init_natage_f.matrix() * movement_matrix_young).array();
-        init_natage_m = (init_natage_m.matrix() * movement_matrix_young).array();
-        equilibrium_natage_f = (equilibrium_natage_f.matrix() * movement_matrix_young).array();
-        equilibrium_natage_m = (equilibrium_natage_m.matrix() * movement_matrix_young).array();
+        init_natage_f = (init_natage_f.matrix() * movement_matrix_young.col(0).matrix()).array();
+        init_natage_m = (init_natage_m.matrix() * movement_matrix_young.col(0).matrix()).array();
+        equilibrium_natage_f = (equilibrium_natage_f.matrix() * movement_matrix_young.col(0).matrix()).array();
+        equilibrium_natage_m = (equilibrium_natage_m.matrix() * movement_matrix_young.col(0).matrix()).array();
       }
     }
   }
@@ -733,8 +773,8 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
         young_natage_for_movement_f.col(region_ndx) = init_natage_f.col(region_ndx).vec() * young_age_based_movement_ogive;
         old_natage_for_movement_f.col(region_ndx) = init_natage_f.col(region_ndx).vec() * old_age_based_movement_ogive;
       }
-      init_natage_m = young_natage_for_movement_m * fixed_movement_matrix_young + old_natage_for_movement_m * fixed_movement_matrix_old;
-      init_natage_f = young_natage_for_movement_f * fixed_movement_matrix_young + old_natage_for_movement_f * fixed_movement_matrix_old;
+      init_natage_m = young_natage_for_movement_m * fixed_movement_matrix_young.col(0).matrix() + old_natage_for_movement_m * fixed_movement_matrix_old.col(0).matrix();
+      init_natage_f = young_natage_for_movement_f * fixed_movement_matrix_young.col(0).matrix() + old_natage_for_movement_f * fixed_movement_matrix_old.col(0).matrix();
 
       for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
         young_natage_for_movement_m.col(region_ndx) = equilibrium_natage_m.col(region_ndx).vec() * young_age_based_movement_ogive;
@@ -742,13 +782,13 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
         young_natage_for_movement_f.col(region_ndx) = equilibrium_natage_f.col(region_ndx).vec() * young_age_based_movement_ogive;
         old_natage_for_movement_f.col(region_ndx) = equilibrium_natage_f.col(region_ndx).vec() * old_age_based_movement_ogive;
       }
-      equilibrium_natage_m = young_natage_for_movement_m * fixed_movement_matrix_young + old_natage_for_movement_m * fixed_movement_matrix_old;
-      equilibrium_natage_f = young_natage_for_movement_f * fixed_movement_matrix_young + old_natage_for_movement_f * fixed_movement_matrix_old;
+      equilibrium_natage_m = young_natage_for_movement_m * fixed_movement_matrix_young.col(0).matrix() + old_natage_for_movement_m * fixed_movement_matrix_old.col(0).matrix();
+      equilibrium_natage_f = young_natage_for_movement_f * fixed_movement_matrix_young.col(0).matrix() + old_natage_for_movement_f * fixed_movement_matrix_old.col(0).matrix();
     } else {
-      init_natage_f = (init_natage_f.matrix() * fixed_movement_matrix_young).array();
-      init_natage_m = (init_natage_m.matrix() * fixed_movement_matrix_young).array();
-      equilibrium_natage_f = (equilibrium_natage_f.matrix() * fixed_movement_matrix_young).array();
-      equilibrium_natage_m = (equilibrium_natage_m.matrix() * fixed_movement_matrix_young).array();
+      init_natage_f = (init_natage_f.matrix() * fixed_movement_matrix_young.col(0).matrix()).array();
+      init_natage_m = (init_natage_m.matrix() * fixed_movement_matrix_young.col(0).matrix()).array();
+      equilibrium_natage_f = (equilibrium_natage_f.matrix() * fixed_movement_matrix_young.col(0).matrix()).array();
+      equilibrium_natage_m = (equilibrium_natage_m.matrix() * fixed_movement_matrix_young.col(0).matrix()).array();
     }
   } else {
     // using estimated moveement matricies
@@ -759,8 +799,8 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
         young_natage_for_movement_f.col(region_ndx) = init_natage_f.col(region_ndx).vec() * young_age_based_movement_ogive;
         old_natage_for_movement_f.col(region_ndx) = init_natage_f.col(region_ndx).vec() * old_age_based_movement_ogive;
       }
-      init_natage_m = young_natage_for_movement_m * movement_matrix_young + old_natage_for_movement_m * movement_matrix_old;
-      init_natage_f = young_natage_for_movement_f * movement_matrix_young + old_natage_for_movement_f * movement_matrix_old;
+      init_natage_m = young_natage_for_movement_m * movement_matrix_young.col(0).matrix() + old_natage_for_movement_m * movement_matrix_old.col(0).matrix();
+      init_natage_f = young_natage_for_movement_f * movement_matrix_young.col(0).matrix() + old_natage_for_movement_f * movement_matrix_old.col(0).matrix();
 
       for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
         young_natage_for_movement_m.col(region_ndx) = equilibrium_natage_m.col(region_ndx).vec() * young_age_based_movement_ogive;
@@ -768,13 +808,13 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
         young_natage_for_movement_f.col(region_ndx) = equilibrium_natage_f.col(region_ndx).vec() * young_age_based_movement_ogive;
         old_natage_for_movement_f.col(region_ndx) = equilibrium_natage_f.col(region_ndx).vec() * old_age_based_movement_ogive;
       }
-      equilibrium_natage_m = young_natage_for_movement_m * movement_matrix_young + old_natage_for_movement_m * movement_matrix_old;
-      equilibrium_natage_f = young_natage_for_movement_f * movement_matrix_young + old_natage_for_movement_f * movement_matrix_old;
+      equilibrium_natage_m = young_natage_for_movement_m * movement_matrix_young.col(0).matrix() + old_natage_for_movement_m * movement_matrix_old.col(0).matrix();
+      equilibrium_natage_f = young_natage_for_movement_f * movement_matrix_young.col(0).matrix() + old_natage_for_movement_f * movement_matrix_old.col(0).matrix();
     } else {
-      init_natage_f = (init_natage_f.matrix() * movement_matrix_young).array();
-      init_natage_m = (init_natage_m.matrix() * movement_matrix_young).array();
-      equilibrium_natage_f = (equilibrium_natage_f.matrix() * movement_matrix_young).array();
-      equilibrium_natage_m = (equilibrium_natage_m.matrix() * movement_matrix_young).array();
+      init_natage_f = (init_natage_f.matrix() * movement_matrix_young.col(0).matrix()).array();
+      init_natage_m = (init_natage_m.matrix() * movement_matrix_young.col(0).matrix()).array();
+      equilibrium_natage_f = (equilibrium_natage_f.matrix() * movement_matrix_young.col(0).matrix()).array();
+      equilibrium_natage_m = (equilibrium_natage_m.matrix() * movement_matrix_young.col(0).matrix()).array();
     }
   }
   // Approximate plus group
@@ -847,8 +887,21 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
       // fill in recruitment that occurred this year
       // This will be repeated after movement if do_recruits_move == 0,
       // to mitigate any movement of this first year classs
-      natage_m(0, region_ndx, year_ndx) = (mean_rec(region_ndx) * recruitment_multipliers(region_ndx, year_ndx)) * prop_recruit_male(year_ndx);
-      natage_f(0, region_ndx, year_ndx) = (mean_rec(region_ndx) * recruitment_multipliers(region_ndx, year_ndx)) * prop_recruit_female(year_ndx);
+
+      if(SrType == 2) { // Regional Beverton-Holt SR with steepness
+        if(year_ndx < min_age) {
+          // SSB = Binit
+          natage_m(0, region_ndx, year_ndx) = (mean_rec(region_ndx) * BevertonHolt(Binit(region_ndx), Bzero(region_ndx),SR_pars(0)) * recruitment_multipliers(region_ndx, year_ndx)) * prop_recruit_male(year_ndx);
+          natage_f(0, region_ndx, year_ndx) = (mean_rec(region_ndx) * BevertonHolt(Binit(region_ndx), Bzero(region_ndx),SR_pars(0)) * recruitment_multipliers(region_ndx, year_ndx)) * prop_recruit_female(year_ndx);
+        } else {
+          // SSB has min-age lag
+          natage_m(0, region_ndx, year_ndx) = (mean_rec(region_ndx) * BevertonHolt(SSB_yr(year_ndx - min_age, region_ndx), Bzero(region_ndx),SR_pars(0)) * recruitment_multipliers(region_ndx, year_ndx)) * prop_recruit_male(year_ndx);
+          natage_f(0, region_ndx, year_ndx) = (mean_rec(region_ndx) * BevertonHolt(SSB_yr(year_ndx - min_age, region_ndx), Bzero(region_ndx),SR_pars(0)) * recruitment_multipliers(region_ndx, year_ndx)) * prop_recruit_female(year_ndx);
+        }
+      } else if (SrType == 3) { // average recruitment
+        natage_m(0, region_ndx, year_ndx) = (mean_rec(region_ndx) * recruitment_multipliers(region_ndx, year_ndx)) * prop_recruit_male(year_ndx);
+        natage_f(0, region_ndx, year_ndx) = (mean_rec(region_ndx) * recruitment_multipliers(region_ndx, year_ndx)) * prop_recruit_female(year_ndx);
+      }
       recruitment_yr(year_ndx, region_ndx) = natage_m(0, region_ndx, year_ndx) + natage_f(0, region_ndx, year_ndx);
 
 
@@ -1081,10 +1134,10 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
 
                     SIMULATE{
 
-                       s1 = aggregated_predicted_tags;
-                       s2 = aggregated_predicted_tags * (1.0 + tag_phi);  // (1+phi) guarantees that var >= mu
-                       aggregated_observed_tags = rnbinom2(s1, s2);
-                       obs_tag_recovery.col(tag_recovery_counter).col(region_ndx).col(tag_release_event_ndx) = aggregated_observed_tags * (temp_numbers_at_age / temp_numbers_at_age.sum());
+                      s1 = aggregated_predicted_tags;
+                      s2 = aggregated_predicted_tags * (1.0 + tag_phi);  // (1+phi) guarantees that var >= mu
+                      aggregated_observed_tags = rnbinom2(s1, s2);
+                      obs_tag_recovery.col(tag_recovery_counter).col(region_ndx).col(tag_release_event_ndx) = aggregated_observed_tags * (temp_numbers_at_age / temp_numbers_at_age.sum());
 
 
                     }
@@ -1115,6 +1168,7 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
             }
           }
         } // if(tag_recovery_indicator_by_year(year_ndx) == 1) {
+
 
         // now do Z, ageing for the tagged partition
         // Sorry for anyone trying to wrap their head around this. It is complicated because
@@ -1189,11 +1243,11 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
                 young_natage_for_movement_f.col(region_ndx) = tagged_natage_f.col(tag_release_event_ndx).vec() * young_age_based_movement_ogive;
                 old_natage_for_movement_f.col(region_ndx) = tagged_natage_f.col(tag_release_event_ndx).vec() * old_age_based_movement_ogive;
               }
-              tagged_natage_m.col(tag_release_event_ndx) = young_natage_for_movement_m * fixed_movement_matrix_young + old_natage_for_movement_m * fixed_movement_matrix_old;
-              tagged_natage_f.col(tag_release_event_ndx) = young_natage_for_movement_f * fixed_movement_matrix_young + old_natage_for_movement_f * fixed_movement_matrix_old;
+              tagged_natage_m.col(tag_release_event_ndx) = young_natage_for_movement_m * fixed_movement_matrix_young.col(movement_time_block_indicator(year_ndx)).matrix() + old_natage_for_movement_m * fixed_movement_matrix_old.col(movement_time_block_indicator(year_ndx)).matrix();
+              tagged_natage_f.col(tag_release_event_ndx) = young_natage_for_movement_f * fixed_movement_matrix_young.col(movement_time_block_indicator(year_ndx)).matrix() + old_natage_for_movement_f * fixed_movement_matrix_old.col(movement_time_block_indicator(year_ndx)).matrix();
             } else {
-              tagged_natage_m.col(tag_release_event_ndx) = (tagged_natage_m.col(tag_release_event_ndx).matrix() * fixed_movement_matrix_young).array();
-              tagged_natage_f.col(tag_release_event_ndx) = (tagged_natage_f.col(tag_release_event_ndx).matrix() * fixed_movement_matrix_young).array();
+              tagged_natage_m.col(tag_release_event_ndx) = (tagged_natage_m.col(tag_release_event_ndx).matrix() * fixed_movement_matrix_young.col(movement_time_block_indicator(year_ndx)).matrix()).array();
+              tagged_natage_f.col(tag_release_event_ndx) = (tagged_natage_f.col(tag_release_event_ndx).matrix() * fixed_movement_matrix_young.col(movement_time_block_indicator(year_ndx)).matrix()).array();
             }
           } else {
             if(age_based_movement) {
@@ -1203,11 +1257,11 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
                 young_natage_for_movement_f.col(region_ndx) = tagged_natage_f.col(tag_release_event_ndx).vec() * young_age_based_movement_ogive;
                 old_natage_for_movement_f.col(region_ndx) = tagged_natage_f.col(tag_release_event_ndx).vec() * old_age_based_movement_ogive;
               }
-              tagged_natage_m.col(tag_release_event_ndx) = young_natage_for_movement_m * movement_matrix_young + old_natage_for_movement_m * movement_matrix_old;
-              tagged_natage_f.col(tag_release_event_ndx) = young_natage_for_movement_f * movement_matrix_young + old_natage_for_movement_f * movement_matrix_old;
+              tagged_natage_m.col(tag_release_event_ndx) = young_natage_for_movement_m * movement_matrix_young.col(movement_time_block_indicator(year_ndx)).matrix() + old_natage_for_movement_m * movement_matrix_old.col(movement_time_block_indicator(year_ndx)).matrix();
+              tagged_natage_f.col(tag_release_event_ndx) = young_natage_for_movement_f * movement_matrix_young.col(movement_time_block_indicator(year_ndx)).matrix() + old_natage_for_movement_f * movement_matrix_old.col(movement_time_block_indicator(year_ndx)).matrix();
             } else {
-              tagged_natage_m.col(tag_release_event_ndx) = (tagged_natage_m.col(tag_release_event_ndx).matrix() * movement_matrix_young).array();
-              tagged_natage_f.col(tag_release_event_ndx) = (tagged_natage_f.col(tag_release_event_ndx).matrix() * movement_matrix_young).array();
+              tagged_natage_m.col(tag_release_event_ndx) = (tagged_natage_m.col(tag_release_event_ndx).matrix() * movement_matrix_young.col(movement_time_block_indicator(year_ndx)).matrix()).array();
+              tagged_natage_f.col(tag_release_event_ndx) = (tagged_natage_f.col(tag_release_event_ndx).matrix() * movement_matrix_young.col(movement_time_block_indicator(year_ndx)).matrix()).array();
             }
           }
           // Apply tag shedding at the end of the year which is just a mortality process
@@ -1216,7 +1270,6 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
         }
       }
     }
-
     // Movement
     if(apply_fixed_movement) {
       if(age_based_movement) {
@@ -1226,11 +1279,11 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
           young_natage_for_movement_f.col(region_ndx) = natage_f.col(year_ndx + 1).vec() * young_age_based_movement_ogive;
           old_natage_for_movement_f.col(region_ndx) = natage_f.col(year_ndx + 1).vec() * old_age_based_movement_ogive;
         }
-        natage_m.col(year_ndx + 1) = young_natage_for_movement_m * fixed_movement_matrix_young + old_natage_for_movement_m * fixed_movement_matrix_old;
-        natage_f.col(year_ndx + 1) = young_natage_for_movement_f * fixed_movement_matrix_young + old_natage_for_movement_f * fixed_movement_matrix_old;
+        natage_m.col(year_ndx + 1) = young_natage_for_movement_m * fixed_movement_matrix_young.col(movement_time_block_indicator(year_ndx)).matrix() + old_natage_for_movement_m * fixed_movement_matrix_old.col(movement_time_block_indicator(year_ndx)).matrix();
+        natage_f.col(year_ndx + 1) = young_natage_for_movement_f * fixed_movement_matrix_young.col(movement_time_block_indicator(year_ndx)).matrix() + old_natage_for_movement_f * fixed_movement_matrix_old.col(movement_time_block_indicator(year_ndx)).matrix();
       } else {
-        natage_m.col(year_ndx + 1) = (natage_m.col(year_ndx + 1).matrix() * fixed_movement_matrix_young).array();
-        natage_f.col(year_ndx + 1) = (natage_f.col(year_ndx + 1).matrix() * fixed_movement_matrix_young).array();
+        natage_m.col(year_ndx + 1) = (natage_m.col(year_ndx + 1).matrix() * fixed_movement_matrix_young.col(movement_time_block_indicator(year_ndx)).matrix()).array();
+        natage_f.col(year_ndx + 1) = (natage_f.col(year_ndx + 1).matrix() * fixed_movement_matrix_young.col(movement_time_block_indicator(year_ndx)).matrix()).array();
       }
     } else {
       // using estimated moveement matricies
@@ -1241,13 +1294,14 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
           young_natage_for_movement_f.col(region_ndx) = natage_f.col(year_ndx + 1).vec() * young_age_based_movement_ogive;
           old_natage_for_movement_f.col(region_ndx) = natage_f.col(year_ndx + 1).vec() * old_age_based_movement_ogive;
         }
-        natage_m.col(year_ndx + 1) = young_natage_for_movement_m * movement_matrix_young + old_natage_for_movement_m * movement_matrix_old;
-        natage_f.col(year_ndx + 1) = young_natage_for_movement_f * movement_matrix_young + old_natage_for_movement_f * movement_matrix_old;
+        natage_m.col(year_ndx + 1) = young_natage_for_movement_m * movement_matrix_young.col(movement_time_block_indicator(year_ndx)).matrix() + old_natage_for_movement_m * movement_matrix_old.col(movement_time_block_indicator(year_ndx)).matrix();
+        natage_f.col(year_ndx + 1) = young_natage_for_movement_f * movement_matrix_young.col(movement_time_block_indicator(year_ndx)).matrix() + old_natage_for_movement_f * movement_matrix_old.col(movement_time_block_indicator(year_ndx)).matrix();
       } else {
-        natage_m.col(year_ndx + 1) = (natage_m.col(year_ndx + 1).matrix() * movement_matrix_young).array();
-        natage_f.col(year_ndx + 1) = (natage_f.col(year_ndx + 1).matrix() * movement_matrix_young).array();
+        natage_m.col(year_ndx + 1) = (natage_m.col(year_ndx + 1).matrix() * movement_matrix_young.col(movement_time_block_indicator(year_ndx)).matrix()).array();
+        natage_f.col(year_ndx + 1) = (natage_f.col(year_ndx + 1).matrix() * movement_matrix_young.col(movement_time_block_indicator(year_ndx)).matrix()).array();
       }
     }
+
     // If we aren't moving recruits during the movement process then we will just reset the recruited year class to
     // the original recruited ratios. This will offset any movement that occured
     if(do_recruits_move == 0) {
@@ -1295,17 +1349,11 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
             obs_fixed_catchatage.col(year_ndx).col(region_ndx) = temp_observed_age_and_sex;
           }
         } else if (fixed_catchatage_comp_likelihood == 1) {
-          N_eff = sum(temp_observed_age_and_sex);
-          temp_observed_age_and_sex /= N_eff;
-          s1 = 0.0;
-          s2 = 0.0;
-          for(int ndx = 0; ndx < temp_observed_age_and_sex.size(); ndx++){
-            s1 += lgamma(N_eff * temp_observed_age_and_sex(ndx) + 1);
-            s2 += lgamma(N_eff * temp_observed_age_and_sex(ndx) + theta_fixed_catchatage * N_eff * numbers_at_age_and_sex(ndx)) - lgamma(theta_fixed_catchatage * N_eff * numbers_at_age_and_sex(ndx));
-          }
-          nll(0) -= lgamma(N_eff + 1) - s1 + lgamma(theta_fixed_catchatage * N_eff) - lgamma(N_eff + theta_fixed_catchatage * N_eff) + s2;
+          N_input = sum(temp_observed_age_and_sex);
+          temp_observed_age_and_sex /= N_input;
+          nll(0) -= ddirichletmulti(temp_observed_age_and_sex, numbers_at_age_and_sex, N_input, theta_fixed_catchatage, 1);
           SIMULATE {
-            temp_observed_age_and_sex = rdirichletmulti(numbers_at_age_and_sex, N_eff, theta_fixed_catchatage);
+            temp_observed_age_and_sex = rdirichletmulti(numbers_at_age_and_sex, N_input, theta_fixed_catchatage);
             obs_fixed_catchatage.col(year_ndx).col(region_ndx) = temp_observed_age_and_sex;
           }
         }
@@ -1336,18 +1384,12 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
             obs_trwl_catchatlgth.col(year_ndx).col(region_ndx) = temp_observed_lgth_and_sex;
           }
         } else if (trwl_catchatlgth_comp_likelihood == 1) {
-          N_eff = sum(temp_observed_lgth_and_sex);
-          temp_observed_lgth_and_sex /= N_eff;
-          s1 = 0.0;
-          s2 = 0.0;
-          for(int ndx = 0; ndx < temp_observed_lgth_and_sex.size(); ndx++){
-            s1 += lgamma(N_eff * temp_observed_lgth_and_sex(ndx) + 1);
-            s2 += lgamma(N_eff * temp_observed_lgth_and_sex(ndx) + theta_trwl_catchatlgth * N_eff * temp_numbers_at_lgth_and_sex(ndx)) - lgamma(theta_trwl_catchatlgth * N_eff * temp_numbers_at_lgth_and_sex(ndx));
-          }
-          nll(1) -= lgamma(N_eff + 1) - s1 + lgamma(theta_trwl_catchatlgth * N_eff) - lgamma(N_eff + theta_trwl_catchatlgth * N_eff) + s2;
+          N_input = sum(temp_observed_lgth_and_sex);
+          temp_observed_lgth_and_sex /= N_input;
+          nll(1) -= ddirichletmulti(temp_observed_lgth_and_sex, temp_numbers_at_lgth_and_sex, N_input, theta_trwl_catchatlgth, 1);
           SIMULATE {
-            temp_observed_lgth_and_sex = rdirichletmulti(temp_numbers_at_lgth_and_sex, N_eff, theta_trwl_catchatlgth);
-            obs_trwl_catchatlgth.col(year_ndx).col(region_ndx) = temp_observed_lgth_and_sex * N_eff;
+            temp_observed_lgth_and_sex = rdirichletmulti(temp_numbers_at_lgth_and_sex, N_input, theta_trwl_catchatlgth);
+            obs_trwl_catchatlgth.col(year_ndx).col(region_ndx) = temp_observed_lgth_and_sex;
           }
         }
       }
@@ -1378,77 +1420,92 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
             obs_fixed_catchatlgth.col(year_ndx).col(region_ndx) = temp_observed_lgth_and_sex;
           }
         } else if (fixed_catchatlgth_comp_likelihood == 1) {
-          N_eff = sum(temp_observed_lgth_and_sex);
-          temp_observed_lgth_and_sex /= N_eff;
-          s1 = 0.0;
-          s2 = 0.0;
-          for(int ndx = 0; ndx < temp_observed_lgth_and_sex.size(); ndx++){
-            s1 += lgamma(N_eff * temp_observed_lgth_and_sex(ndx) + 1);
-            s2 += lgamma(N_eff * temp_observed_lgth_and_sex(ndx) + theta_fixed_catchatlgth * N_eff * temp_numbers_at_lgth_and_sex(ndx)) - lgamma(theta_fixed_catchatlgth * N_eff * temp_numbers_at_lgth_and_sex(ndx));
-          }
-          nll(2) -= lgamma(N_eff + 1) - s1 + lgamma(theta_fixed_catchatlgth * N_eff) - lgamma(N_eff + theta_fixed_catchatlgth * N_eff) + s2;
+          N_input = sum(temp_observed_lgth_and_sex);
+          temp_observed_lgth_and_sex /= N_input;
+          nll(2) -= ddirichletmulti(temp_observed_lgth_and_sex, temp_numbers_at_lgth_and_sex, N_input, theta_fixed_catchatlgth, 1);
           SIMULATE {
-            temp_observed_lgth_and_sex = rdirichletmulti(temp_numbers_at_lgth_and_sex, N_eff, theta_fixed_catchatlgth);
-            obs_fixed_catchatlgth.col(year_ndx).col(region_ndx) = temp_observed_lgth_and_sex * N_eff;
+            temp_observed_lgth_and_sex = rdirichletmulti(temp_numbers_at_lgth_and_sex, N_input, theta_fixed_catchatlgth);
+            obs_fixed_catchatlgth.col(year_ndx).col(region_ndx) = temp_observed_lgth_and_sex;
           }
         }
       }
-      // Check if we have Survey Longline age composition in this region and year
-      if(srv_dom_ll_catchatage_indicator(region_ndx, year_ndx) == 1) {
-        // Get catch at age for males and account for ageing error
-        temp_numbers_at_age = natage_m.col(year_ndx).col(region_ndx).vec() * sel_srv_dom_ll_m.col(srv_dom_ll_sel_by_year_indicator(year_ndx)).vec() * S_m_mid.col(year_ndx).col(region_ndx).vec();
-        temp_numbers_at_age_after_ageing_error = (temp_numbers_at_age.matrix().transpose()) * ageing_error_matrix;
-        numbers_at_age_and_sex.segment(0,n_ages) = temp_numbers_at_age_after_ageing_error;
-        // Now Get catch at age for females and account for ageing error
-        temp_numbers_at_age = natage_f.col(year_ndx).col(region_ndx).vec() * sel_srv_dom_ll_f.col(srv_dom_ll_sel_by_year_indicator(year_ndx)).vec() * S_f_mid.col(year_ndx).col(region_ndx).vec();
-        temp_numbers_at_age_after_ageing_error = (temp_numbers_at_age.matrix().transpose()) * ageing_error_matrix;
-        numbers_at_age_and_sex.segment(n_ages,n_ages) = temp_numbers_at_age_after_ageing_error;
-        // do posfun so no zero proportions
-        for(int i = 0; i < numbers_at_age_and_sex.size(); ++i)
-          numbers_at_age_and_sex(i) = posfun(numbers_at_age_and_sex(i), eps_for_posfun, pen_posfun);
-        // normalise to sum = 1 across both sexes
-        numbers_at_age_and_sex /= numbers_at_age_and_sex.sum();
-        // Store in predicted container
-        pred_srv_dom_ll_catchatage.col(year_ndx).col(region_ndx) = numbers_at_age_and_sex;
-        // Get observaiton for LL evaluation
-        temp_observed_age_and_sex = obs_srv_dom_ll_catchatage.col(year_ndx).col(region_ndx);
-        // evaluate the likelihood
-        if(srv_dom_ll_catchatage_comp_likelihood == 0) {
-          nll(3) -= dmultinom(temp_observed_age_and_sex, numbers_at_age_and_sex, true);
-          SIMULATE {
-            effective_sample_size = temp_observed_age_and_sex.sum();
-            temp_observed_age_and_sex = rmultinom(numbers_at_age_and_sex, effective_sample_size);
-            obs_srv_dom_ll_catchatage.col(year_ndx).col(region_ndx) = temp_observed_age_and_sex;
+      // Check if we have Survey age composition in this region and year
+      for(srv_ndx = 0; srv_ndx < n_surveys; ++srv_ndx) {
+        if(srv_catchatage_indicator(region_ndx, year_ndx, srv_ndx) == 1) {
+          // Get catch at age for males and account for ageing error
+          temp_numbers_at_age = natage_m.col(year_ndx).col(region_ndx).vec() * sel_srv_m.col(srv_ndx).col(srv_sel_by_year_indicator(year_ndx, srv_ndx)).vec() * S_m_mid.col(year_ndx).col(region_ndx).vec();
+          temp_numbers_at_age_after_ageing_error = (temp_numbers_at_age.matrix().transpose()) * ageing_error_matrix;
+          numbers_at_age_and_sex.segment(0,n_ages) = temp_numbers_at_age_after_ageing_error;
+          // Now Get catch at age for females and account for ageing error
+          temp_numbers_at_age = natage_f.col(year_ndx).col(region_ndx).vec() * sel_srv_f.col(srv_ndx).col(srv_sel_by_year_indicator(year_ndx, srv_ndx)).vec() * S_f_mid.col(year_ndx).col(region_ndx).vec();
+          temp_numbers_at_age_after_ageing_error = (temp_numbers_at_age.matrix().transpose()) * ageing_error_matrix;
+          numbers_at_age_and_sex.segment(n_ages,n_ages) = temp_numbers_at_age_after_ageing_error;
+          // do posfun so no zero proportions
+          for(int i = 0; i < numbers_at_age_and_sex.size(); ++i)
+            numbers_at_age_and_sex(i) = posfun(numbers_at_age_and_sex(i), eps_for_posfun, pen_posfun);
+          // normalise to sum = 1 across both sexes
+          numbers_at_age_and_sex /= numbers_at_age_and_sex.sum();
+          // Store in predicted container
+          pred_srv_catchatage.col(srv_ndx).col(year_ndx).col(region_ndx) = numbers_at_age_and_sex;
+          // Get observaiton for LL evaluation
+          temp_observed_age_and_sex = obs_srv_catchatage.col(srv_ndx).col(year_ndx).col(region_ndx);
+          // evaluate the likelihood
+          if(srv_catchatage_comp_likelihood(srv_ndx) == 0) {
+            nll(3) -= dmultinom(temp_observed_age_and_sex, numbers_at_age_and_sex, true);
+            SIMULATE {
+              effective_sample_size = temp_observed_age_and_sex.sum();
+              temp_observed_age_and_sex = rmultinom(numbers_at_age_and_sex, effective_sample_size);
+              obs_srv_catchatage.col(srv_ndx).col(year_ndx).col(region_ndx) = temp_observed_age_and_sex;
+            }
+          } else if (srv_catchatage_comp_likelihood(srv_ndx) == 1) {
+            N_input = sum(temp_observed_age_and_sex);
+            temp_observed_age_and_sex /= N_input;
+            nll(3) -= ddirichletmulti(temp_observed_age_and_sex, numbers_at_age_and_sex, N_input, theta_srv_catchatage(srv_ndx), 1);
+            SIMULATE {
+              temp_observed_age_and_sex = rdirichletmulti(numbers_at_age_and_sex, N_input, theta_srv_catchatage(srv_ndx));
+              obs_srv_catchatage.col(srv_ndx).col(year_ndx).col(region_ndx) = temp_observed_age_and_sex;
+            }
           }
-        } else if (srv_dom_ll_catchatage_comp_likelihood == 1) {
-          N_eff = sum(temp_observed_age_and_sex);
-          temp_observed_age_and_sex /= N_eff;
-          s1 = 0.0;
-          s2 = 0.0;
-          for(int ndx = 0; ndx < temp_observed_age_and_sex.size(); ndx++){
-            s1 += lgamma(N_eff * temp_observed_age_and_sex(ndx) + 1);
-            s2 += lgamma(N_eff * temp_observed_age_and_sex(ndx) + theta_srv_dom_ll_catchatage * N_eff * numbers_at_age_and_sex(ndx)) - lgamma(theta_srv_dom_ll_catchatage * N_eff * numbers_at_age_and_sex(ndx));
+        }
+
+        // Check if we have Survey Longline biomass obsevation in this region and year
+        if(srv_bio_indicator(region_ndx, year_ndx, srv_ndx) == 1) {
+          if(srv_obs_is_abundance(srv_ndx) == 1) {
+            // numbers calculation
+            for(age_ndx = 0; age_ndx < n_ages; age_ndx++)
+              pred_srv_bio(region_ndx, year_ndx, srv_ndx) += natage_m(age_ndx, region_ndx, year_ndx) * sel_srv_m(age_ndx, srv_sel_by_year_indicator(year_ndx, srv_ndx), srv_ndx) * S_m_mid(age_ndx, region_ndx, year_ndx) + natage_f(age_ndx, region_ndx, year_ndx) * sel_srv_f(age_ndx, srv_sel_by_year_indicator(year_ndx, srv_ndx), srv_ndx) * S_f_mid(age_ndx, region_ndx, year_ndx) ;
+          } else if (srv_obs_is_abundance(srv_ndx) == 0) {
+            // Weight calculation
+            for(age_ndx = 0; age_ndx < n_ages; age_ndx++)
+              pred_srv_bio(region_ndx, year_ndx, srv_ndx) += natage_m(age_ndx, region_ndx, year_ndx) * sel_srv_m(age_ndx, srv_sel_by_year_indicator(year_ndx, srv_ndx), srv_ndx) * male_mean_weight_by_age(age_ndx, year_ndx) * S_m_mid(age_ndx, region_ndx, year_ndx) + natage_f(age_ndx, region_ndx, year_ndx) * sel_srv_f(age_ndx, srv_sel_by_year_indicator(year_ndx, srv_ndx), srv_ndx) * female_mean_weight_by_age(age_ndx, year_ndx) * S_f_mid(age_ndx, region_ndx, year_ndx) ;
           }
-          nll(3) -= lgamma(N_eff + 1) - s1 + lgamma(theta_srv_dom_ll_catchatage * N_eff) - lgamma(N_eff + theta_srv_dom_ll_catchatage * N_eff) + s2;
-          SIMULATE {
-            temp_observed_age_and_sex = rdirichletmulti(numbers_at_age_and_sex, N_eff, theta_srv_dom_ll_catchatage);
-            obs_srv_dom_ll_catchatage.col(year_ndx).col(region_ndx) = temp_observed_age_and_sex;
-          }
+          pred_srv_bio(region_ndx, year_ndx, srv_ndx) *= srv_q(region_ndx, srv_q_by_year_indicator(year_ndx, srv_ndx), srv_ndx);
         }
       }
 
-      // Check if we have Survey Longline biomass obsevation in this region and year
-      if(srv_dom_ll_bio_indicator(region_ndx, year_ndx) == 1) {
-        if(srv_dom_ll_obs_is_abundance == 1) {
-          // numbers calculation
-          for(age_ndx = 0; age_ndx < n_ages; age_ndx++)
-            pred_srv_dom_ll_bio(region_ndx, year_ndx) += natage_m(age_ndx, region_ndx, year_ndx) * sel_srv_dom_ll_m(age_ndx, srv_dom_ll_sel_by_year_indicator(year_ndx)) * S_m_mid(age_ndx, region_ndx, year_ndx) + natage_f(age_ndx, region_ndx, year_ndx) * sel_srv_dom_ll_f(age_ndx, srv_dom_ll_sel_by_year_indicator(year_ndx)) * S_f_mid(age_ndx, region_ndx, year_ndx) ;
-        } else if (srv_dom_ll_obs_is_abundance == 0) {
-          // Weight calculation
-          for(age_ndx = 0; age_ndx < n_ages; age_ndx++)
-            pred_srv_dom_ll_bio(region_ndx, year_ndx) += natage_m(age_ndx, region_ndx, year_ndx) * sel_srv_dom_ll_m(age_ndx, srv_dom_ll_sel_by_year_indicator(year_ndx)) * male_mean_weight_by_age(age_ndx, year_ndx) * S_m_mid(age_ndx, region_ndx, year_ndx) + natage_f(age_ndx, region_ndx, year_ndx) * sel_srv_dom_ll_f(age_ndx, srv_dom_ll_sel_by_year_indicator(year_ndx)) * female_mean_weight_by_age(age_ndx, year_ndx) * S_f_mid(age_ndx, region_ndx, year_ndx) ;
+      // Calculate the Not captured group if tag-likelihood is multinomial release conditioned
+      if(tag_likelihood == 2) {
+        if(tag_recovery_indicator(year_ndx, region_ndx) == 1) {
+          pred_recoveries_multinomial_release.setZero();
+          obs_recoveries_multinomial_release = obs_tag_recovery.col(year_ndx).col(region_ndx);
+          number_of_tag_releases = obs_recoveries_multinomial_release.sum();
+          pred_recoveries_multinomial_release = pred_tag_recovery.col(year_ndx).col(region_ndx).vec();
+          // Calculate predicted proportions
+          pred_recoveries_multinomial_release /= number_of_tag_releases;
+          // calculate the Not recovered group
+          pred_recoveries_multinomial_release(pred_recoveries_multinomial_release.size() - 1) = 1 - sum(pred_recoveries_multinomial_release);
+          // Save proportions into container
+          pred_tag_recovery.col(year_ndx).col(region_ndx) = pred_recoveries_multinomial_release;
+          if(evaluate_tag_likelihood == 1) {
+            // Evaluate likelihood
+            nll(7) -= dmultinom(obs_recoveries_multinomial_release, pred_recoveries_multinomial_release, true);
+
+            SIMULATE {
+              obs_recoveries_multinomial_release = rmultinom(pred_recoveries_multinomial_release, number_of_tag_releases);
+              obs_tag_recovery.col(year_ndx).col(region_ndx) = obs_recoveries_multinomial_release;
+            }
+          }
         }
-        pred_srv_dom_ll_bio(region_ndx, year_ndx) *= srv_dom_ll_q(region_ndx, srv_dom_ll_q_by_year_indicator(year_ndx));
       }
     }
   }
@@ -1456,49 +1513,52 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
   /*
    *  Evaluate the survey abundance index here, this way we can calculate nuisance q's if the user asks for it
    */
-  if(q_is_nuisance == 1) {
-    // calculate nuisance q
-    Type S3 = 0.0;
-    Type S4 = 0.0;
-    Type n_obs = 0.0;
-    for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
-      S3 = 0.0;
-      S4 = 0.0;
-      n_obs = 0.0;
-      for(year_ndx = 0; year_ndx < n_years; ++year_ndx) {
-        if(srv_dom_ll_bio_indicator(region_ndx, year_ndx) == 1) {
-          n_obs += 1.0;
-          if(srv_dom_ll_bio_likelihood == 0) {
-            S3 += log(obs_srv_dom_ll_bio(region_ndx, year_ndx) / pred_srv_dom_ll_bio(region_ndx, year_ndx))/square(obs_srv_dom_ll_se(region_ndx, year_ndx) / obs_srv_dom_ll_bio(region_ndx, year_ndx));
-            S4 += 1.0 / square(obs_srv_dom_ll_se(region_ndx, year_ndx) / obs_srv_dom_ll_bio(region_ndx, year_ndx));
-          } else if(srv_dom_ll_bio_likelihood == 1) {
-            S3 += log(obs_srv_dom_ll_bio(region_ndx, year_ndx) / pred_srv_dom_ll_bio(region_ndx, year_ndx))/square(obs_srv_dom_ll_se(region_ndx, year_ndx));
-            S4 += 1.0 / square(obs_srv_dom_ll_se(region_ndx, year_ndx));
+  // calculate nuisance q
+  Type S3 = 0.0;
+  Type S4 = 0.0;
+  Type n_obs = 0.0;
+  for(srv_ndx = 0; srv_ndx < n_surveys; ++srv_ndx) {
+    if(q_is_nuisance(srv_ndx) == 1) {
+      for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
+        S3 = 0.0;
+        S4 = 0.0;
+        n_obs = 0.0;
+        for(year_ndx = 0; year_ndx < n_years; ++year_ndx) {
+          if(srv_bio_indicator(region_ndx, year_ndx, srv_ndx) == 1) {
+            n_obs += 1.0;
+            if(srv_bio_likelihood(srv_ndx) == 0) {
+              S3 += log(obs_srv_bio(region_ndx, year_ndx, srv_ndx) / pred_srv_bio(region_ndx, year_ndx, srv_ndx))/square(obs_srv_se(region_ndx, year_ndx, srv_ndx) / obs_srv_bio(region_ndx, year_ndx, srv_ndx));
+              S4 += 1.0 / square(obs_srv_se(region_ndx, year_ndx, srv_ndx) / obs_srv_bio(region_ndx, year_ndx, srv_ndx));
+            } else if(srv_bio_likelihood(srv_ndx) == 1) {
+              S3 += log(obs_srv_bio(region_ndx, year_ndx, srv_ndx) / pred_srv_bio(region_ndx, year_ndx, srv_ndx))/square(obs_srv_se(region_ndx, year_ndx, srv_ndx));
+              S4 += 1.0 / square(obs_srv_se(region_ndx, year_ndx, srv_ndx));
+            }
           }
         }
+        // the final calculation
+        srv_q(region_ndx, 0, srv_ndx) = exp((0.5*n_obs + S3) / S4);
       }
-      // the final calculation
-      srv_dom_ll_q(region_ndx, 0) = exp((0.5*n_obs + S3) / S4);
     }
   }
-  // Calculate survey biomass or abundance now
-  // was moved from the above observation calculations becuase of the nuisance/analytical catchabilities
-  for(year_ndx = 0; year_ndx < n_years; ++year_ndx) {
-    for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
-      if(srv_dom_ll_bio_indicator(region_ndx, year_ndx) == 1) {
-        if(q_is_nuisance == 1)
-          pred_srv_dom_ll_bio(region_ndx, year_ndx) *= srv_dom_ll_q(region_ndx, 0);
+  for(srv_ndx = 0; srv_ndx < n_surveys; ++srv_ndx) {
 
-        if(srv_dom_ll_bio_likelihood == 0) {
-          nll(4) += square((log(obs_srv_dom_ll_bio(region_ndx, year_ndx) + 0.0001) - log(pred_srv_dom_ll_bio(region_ndx, year_ndx) + 0.0001) ))/ (2.0 * square(obs_srv_dom_ll_se(region_ndx, year_ndx) / obs_srv_dom_ll_bio(region_ndx, year_ndx)));
-          // not sure how best to simulate from this likelihood. I think this is right but worth having another look
-          SIMULATE {
-            obs_srv_dom_ll_bio(region_ndx, year_ndx) = exp(rnorm(log(pred_srv_dom_ll_bio(region_ndx, year_ndx) + 0.0001), obs_srv_dom_ll_se(region_ndx, year_ndx) / obs_srv_dom_ll_bio(region_ndx, year_ndx)));
-          }
-        } else if(srv_dom_ll_bio_likelihood == 1) {
-          nll(4) -= dlnorm(obs_srv_dom_ll_bio(region_ndx, year_ndx), log(pred_srv_dom_ll_bio(region_ndx, year_ndx)) - 0.5 * obs_srv_dom_ll_se(region_ndx, year_ndx) * obs_srv_dom_ll_se(region_ndx, year_ndx), obs_srv_dom_ll_se(region_ndx, year_ndx), true);
-          SIMULATE {
-            obs_srv_dom_ll_bio(region_ndx, year_ndx) = exp(rnorm(log(pred_srv_dom_ll_bio(region_ndx, year_ndx)) - 0.5 * obs_srv_dom_ll_se(region_ndx, year_ndx) * obs_srv_dom_ll_se(region_ndx, year_ndx), obs_srv_dom_ll_se(region_ndx, year_ndx)));
+    for(year_ndx = 0; year_ndx < n_years; ++year_ndx) {
+      for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
+        if(srv_bio_indicator(region_ndx, year_ndx, srv_ndx) == 1) {
+          if(q_is_nuisance(srv_ndx) == 1)
+            pred_srv_bio(region_ndx, year_ndx, srv_ndx) *= srv_q(region_ndx, 0, srv_ndx);
+
+          if(srv_bio_likelihood(srv_ndx) == 0) {
+            nll(4) += square((log(obs_srv_bio(region_ndx, year_ndx, srv_ndx) + 0.0001) - log(pred_srv_bio(region_ndx, year_ndx, srv_ndx) + 0.0001) ))/ (2.0 * square(obs_srv_se(region_ndx, year_ndx, srv_ndx) / obs_srv_bio(region_ndx, year_ndx, srv_ndx)));
+            // not sure how best to simulate from this likelihood. I think this is right but worth having another look
+            SIMULATE {
+              obs_srv_bio(region_ndx, year_ndx, srv_ndx) = exp(rnorm(log(pred_srv_bio(region_ndx, year_ndx, srv_ndx) + 0.0001), obs_srv_se(region_ndx, year_ndx, srv_ndx) / obs_srv_bio(region_ndx, year_ndx, srv_ndx)));
+            }
+          } else if(srv_bio_likelihood(srv_ndx) == 1) {
+            nll(4) -= dlnorm(obs_srv_bio(region_ndx, year_ndx, srv_ndx), log(pred_srv_bio(region_ndx, year_ndx, srv_ndx)) - 0.5 * obs_srv_se(region_ndx, year_ndx, srv_ndx) * obs_srv_se(region_ndx, year_ndx, srv_ndx), obs_srv_se(region_ndx, year_ndx, srv_ndx), true);
+            SIMULATE {
+              obs_srv_bio(region_ndx, year_ndx, srv_ndx) = exp(rnorm(log(pred_srv_bio(region_ndx, year_ndx, srv_ndx)) - 0.5 * obs_srv_se(region_ndx, year_ndx, srv_ndx) * obs_srv_se(region_ndx, year_ndx, srv_ndx), obs_srv_se(region_ndx, year_ndx, srv_ndx)));
+            }
           }
         }
       }
@@ -1520,24 +1580,22 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
     }
   }
 
-  // Recruitment Penalty
-  Type n_rec_devs = 0.0;
+  // Recruitment Prior/Penalty
   for(region_ndx = 0; region_ndx < trans_rec_dev.dim(0); ++region_ndx) {
     for(year_ndx = 0; year_ndx < trans_rec_dev.dim(1); ++year_ndx) {
-      nll(8) += square(trans_rec_dev(region_ndx, year_ndx) - sigma_R_sq / 2.0)/(2.0* sigma_R_sq);
-      n_rec_devs += 1.0;
+      // Previous code
+      // nll(8) += square(trans_rec_dev(region_ndx, year_ndx) - sigma_R_sq / 2.0)/(2.0* sigma_R_sq);
+      // New Code cleaner
+      nll(8) -= dnorm(recruitment_devs(region_ndx, year_ndx), Type(0.0), sigma_R, 1);
+      // Note the 0.5sigma^2 has been adjustment for when transforming recruit devs -> recruit multipliers i.e. Year class strengths (YCS)
     }
   }
-  nll(8) += (n_rec_devs) * ln_sigma_R;
-
   // Init-dev Penalty
   if(n_init_rec_devs > 0) {
-    n_rec_devs = 0.0;
     for(int i = 0; i < ln_init_rec_dev.size(); ++i) {
-      nll(9) += square(ln_init_rec_dev(i) - sigma_init_devs_sq / 2.0)/(2.0* sigma_init_devs_sq);
-      n_rec_devs += 1.0;
+      //nll(9) += square(ln_init_rec_dev(i) - sigma_init_devs_sq / 2.0)/(2.0* sigma_init_devs_sq);
+      nll(9) -= dnorm(ln_init_rec_dev(i), Type(0.0), sigma_init_devs, 1);
     }
-    nll(9) += (n_rec_devs) * ln_sigma_init_devs;
   }
   // pos fun penalty for
   nll(10) = pen_posfun;
@@ -1755,11 +1813,11 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
             young_natage_for_movement_f.col(region_ndx) = natage_f.col(proj_year_ndx + 1).vec() * young_age_based_movement_ogive;
             old_natage_for_movement_f.col(region_ndx) = natage_f.col(proj_year_ndx + 1).vec() * old_age_based_movement_ogive;
           }
-          natage_m.col(proj_year_ndx + 1) = young_natage_for_movement_m * fixed_movement_matrix_young + old_natage_for_movement_m * fixed_movement_matrix_old;
-          natage_f.col(proj_year_ndx + 1) = young_natage_for_movement_f * fixed_movement_matrix_young + old_natage_for_movement_f * fixed_movement_matrix_old;
+          natage_m.col(proj_year_ndx + 1) = young_natage_for_movement_m * fixed_movement_matrix_young.col(movement_time_block_indicator(n_years - 1)).matrix() + old_natage_for_movement_m * fixed_movement_matrix_old.col(movement_time_block_indicator(n_years - 1)).matrix();
+          natage_f.col(proj_year_ndx + 1) = young_natage_for_movement_f * fixed_movement_matrix_young.col(movement_time_block_indicator(n_years - 1)).matrix() + old_natage_for_movement_f * fixed_movement_matrix_old.col(movement_time_block_indicator(n_years - 1)).matrix();
         } else {
-          natage_m.col(proj_year_ndx + 1) = (natage_m.col(proj_year_ndx + 1).matrix() * fixed_movement_matrix_young).array();
-          natage_f.col(proj_year_ndx + 1) = (natage_f.col(proj_year_ndx + 1).matrix() * fixed_movement_matrix_young).array();
+          natage_m.col(proj_year_ndx + 1) = (natage_m.col(proj_year_ndx + 1).matrix() * fixed_movement_matrix_young.col(movement_time_block_indicator(n_years - 1)).matrix()).array();
+          natage_f.col(proj_year_ndx + 1) = (natage_f.col(proj_year_ndx + 1).matrix() * fixed_movement_matrix_young.col(movement_time_block_indicator(n_years - 1)).matrix()).array();
         }
       } else {
         // using estimated moveement matricies
@@ -1770,15 +1828,27 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
             young_natage_for_movement_f.col(region_ndx) = natage_f.col(proj_year_ndx + 1).vec() * young_age_based_movement_ogive;
             old_natage_for_movement_f.col(region_ndx) = natage_f.col(proj_year_ndx + 1).vec() * old_age_based_movement_ogive;
           }
-          natage_m.col(proj_year_ndx + 1) = young_natage_for_movement_m * movement_matrix_young + old_natage_for_movement_m * movement_matrix_old;
-          natage_f.col(proj_year_ndx + 1) = young_natage_for_movement_f * movement_matrix_young + old_natage_for_movement_f * movement_matrix_old;
+          natage_m.col(proj_year_ndx + 1) = young_natage_for_movement_m * movement_matrix_young.col(movement_time_block_indicator(n_years - 1)).matrix() + old_natage_for_movement_m * movement_matrix_old.col(movement_time_block_indicator(n_years - 1)).matrix();
+          natage_f.col(proj_year_ndx + 1) = young_natage_for_movement_f * movement_matrix_young.col(movement_time_block_indicator(n_years - 1)).matrix() + old_natage_for_movement_f * movement_matrix_old.col(movement_time_block_indicator(n_years - 1)).matrix();
         } else {
-          natage_m.col(proj_year_ndx + 1) = (natage_m.col(proj_year_ndx + 1).matrix() * movement_matrix_young).array();
-          natage_f.col(proj_year_ndx + 1) = (natage_f.col(proj_year_ndx + 1).matrix() * movement_matrix_young).array();
+          natage_m.col(proj_year_ndx + 1) = (natage_m.col(proj_year_ndx + 1).matrix() * movement_matrix_young.col(movement_time_block_indicator(n_years - 1)).matrix()).array();
+          natage_f.col(proj_year_ndx + 1) = (natage_f.col(proj_year_ndx + 1).matrix() * movement_matrix_young.col(movement_time_block_indicator(n_years - 1)).matrix()).array();
         }
       }
+
+
     } //     for(proj_year_ndx = n_years; proj_year_ndx < (n_years + n_projections_years); ++proj_year_ndx) {
   } //if(do_projection == 1) {
+
+  if(F_method == 0) {
+    for(year_ndx = 0; year_ndx < n_years; ++year_ndx) {
+      for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
+        nll(11) += ln_fixed_F_devs(region_ndx, year_ndx) * ln_fixed_F_devs(region_ndx, year_ndx);
+        nll(11) += ln_trwl_F_devs(region_ndx, year_ndx) * ln_trwl_F_devs(region_ndx, year_ndx);
+      }
+    }
+  }
+
 
 
 
@@ -1788,6 +1858,8 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
   REPORT(nll);
   REPORT(mean_rec);
   REPORT(recruitment_multipliers);
+  REPORT( SR_pars );
+  REPORT( SrType );
   REPORT( recruitment_devs );
   REPORT(init_rec_dev);
   REPORT(Bzero);
@@ -1813,7 +1885,6 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
   REPORT(annual_trwl_catch_pred);
   REPORT(annual_fixed_catch_pred);
 
-  // movement info
   REPORT(movement_matrix_young);
   REPORT(movement_matrix_old);
   REPORT(fixed_movement_matrix_young);
@@ -1823,6 +1894,7 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
   REPORT(ato95_movement);
   REPORT(a50_movement );
 
+
   REPORT(fixed_sel_pars);
   REPORT(trwl_sel_pars);
 
@@ -1830,12 +1902,12 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
   REPORT(sel_fixed_f);
   REPORT(sel_trwl_f);
   REPORT(sel_trwl_m);
-  REPORT(sel_srv_dom_ll_f);
-  REPORT(sel_srv_dom_ll_m);
+  REPORT(sel_srv_f);
+  REPORT(sel_srv_m);
 
 
-  REPORT(srv_dom_ll_sel_pars);
-  REPORT(srv_dom_ll_q);
+  REPORT(srv_sel_pars);
+  REPORT(srv_q);
   // estimated variances
   REPORT(sigma_R);
   REPORT(sigma_init_devs);
@@ -1868,20 +1940,21 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
   REPORT(pred_fixed_catchatage);
   REPORT(pred_trwl_catchatlgth);
   REPORT(pred_fixed_catchatlgth);
-  REPORT(pred_srv_dom_ll_catchatage);
-  REPORT(pred_srv_dom_ll_bio);
-  REPORT(pred_aggregated_tag_recovery);
+  REPORT(pred_srv_catchatage);
+  REPORT(pred_srv_bio);
   REPORT(pred_tag_recovery);
 
   // Composition parameters
   REPORT( theta_fixed_catchatage);
   REPORT( theta_fixed_catchatlgth);
   REPORT( theta_trwl_catchatlgth);
-  REPORT( theta_srv_dom_ll_catchatage);
+  REPORT( theta_srv_catchatage);
 
   // REPORT dimensions so accesor functions and plotting functions only need the $report() object
   REPORT(n_regions);
+  REPORT(n_surveys);
   REPORT(ages);
+  REPORT( min_age );
   REPORT(years);
   REPORT(length_bins);
   REPORT(n_projections_years);
@@ -1890,43 +1963,37 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
   REPORT( fixed_catchatage_indicator );
   REPORT( trwl_catchatlgth_indicator );
   REPORT( fixed_catchatlgth_indicator );
-  REPORT( srv_dom_ll_catchatage_indicator );
-  REPORT( srv_dom_ll_bio_indicator );
+  REPORT( srv_catchatage_indicator );
+  REPORT( srv_bio_indicator );
   REPORT( tag_recovery_indicator_by_year );
   REPORT( tag_recovery_indicator );
   REPORT( tag_release_event_this_year );
-  REPORT( srv_dom_ll_q_transformation );
+  REPORT( srv_q_transformation );
   REPORT( apply_fixed_movement );
-  REPORT( age_based_movement );
-
-  REPORT(model_type);
 
   // likelihood types
   REPORT( tag_likelihood );
   REPORT( fixed_catchatage_comp_likelihood );
   REPORT( trwl_catchatlgth_comp_likelihood );
   REPORT( fixed_catchatlgth_comp_likelihood );
-  REPORT( srv_dom_ll_catchatage_comp_likelihood );
-  REPORT( srv_dom_ll_bio_likelihood );
+  REPORT( srv_catchatage_comp_likelihood );
+  REPORT( srv_bio_likelihood );
   // Report observations
-  REPORT( obs_srv_dom_ll_bio );
-  REPORT( obs_srv_dom_ll_se );
-  REPORT( obs_srv_dom_ll_catchatage );
+  REPORT( obs_srv_bio );
+  REPORT( obs_srv_se );
+  REPORT( obs_srv_catchatage );
   REPORT( obs_trwl_catchatlgth );
   REPORT( obs_fixed_catchatage );
   REPORT( obs_fixed_catchatlgth );
   REPORT( fixed_fishery_catch );
   REPORT( trwl_fishery_catch );
   REPORT( obs_tag_recovery );
-  REPORT( obs_aggregated_tag_recovery );
 
   // AD reports this will report standard errors for these quantities
   // using TMB::sdreport() method
   ADREPORT(tag_reporting_rate);
   ADREPORT(SSB_yr);
   ADREPORT(SSB_all_areas);
-  ADREPORT(movement_matrix_young);
-  ADREPORT(movement_matrix_old);
   ADREPORT(recruitment_yr);
   ADREPORT(annual_F_fixed);
   ADREPORT(annual_F_trwl);
@@ -1939,12 +2006,13 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
   ADREPORT(sel_fixed_f);
   ADREPORT(sel_trwl_f);
   ADREPORT(sel_trwl_m);
-  ADREPORT(sel_srv_dom_ll_f);
-  ADREPORT(sel_srv_dom_ll_m);
+  ADREPORT(sel_srv_f);
+  ADREPORT(sel_srv_m);
 
   ADREPORT(sigma_R);
   ADREPORT(sigma_init_devs);
   ADREPORT( catch_sd );
+  REPORT(model_type);
 
   // REMOVE objects after this comment.
   // I created them for reporting interim calculations debugging etc

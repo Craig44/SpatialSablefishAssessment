@@ -325,9 +325,9 @@ find_regional_Fspr <- function(data, MLE_report, n_years_for_fleet_ratio = 5, pe
   ## get terminal selectivity by gear
   female_trwl_sel = MLE_report$sel_trwl_f[,ncol(MLE_report$sel_trwl_f)]
   female_fixed_sel = MLE_report$sel_fixed_f[,ncol(MLE_report$sel_fixed_f)]
-  move_matrix = MLE_report$movement_matrix
+  move_matrix = MLE_report$movement_matrix[,,1]
   if(data$apply_fixed_movement == 1)
-    move_matrix =  MLE_report$fixed_movement_matrix
+    move_matrix =  MLE_report$fixed_movement_matrix[,,1]
 
   ## get terminal M matrix
   natural_M = data$M[,n_years]

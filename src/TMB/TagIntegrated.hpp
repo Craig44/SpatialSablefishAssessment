@@ -433,6 +433,9 @@ Type TagIntegrated(objective_function<Type>* obj) {
 
   // Declare Derived quantities
   array<Type>  SSB_yr(n_projyears, n_regions);
+  array<Type>  total_biomass_yr(n_projyears, n_regions);
+  SSB_yr.setZero();
+  total_biomass_yr.setZero();
   vector<Type>  SSB_all_areas(n_projyears);
   array<Type>  recruitment_yr(n_projyears, n_regions);
   array<Type> init_natage_m(n_ages, n_regions);                     // Initial numbers at age Males
@@ -876,6 +879,7 @@ Type TagIntegrated(objective_function<Type>* obj) {
         natage_m(age_ndx + 1, region_ndx, year_ndx + 1) =  natage_m(age_ndx, region_ndx, year_ndx) * S_m(age_ndx, region_ndx, year_ndx);
         natage_f(age_ndx + 1, region_ndx, year_ndx + 1) =  natage_f(age_ndx, region_ndx, year_ndx) * S_f(age_ndx, region_ndx, year_ndx);
         SSB_yr(year_ndx, region_ndx) += natage_f(age_ndx, region_ndx, year_ndx) * pow(S_f(age_ndx, region_ndx, year_ndx), spawning_time_proportion(year_ndx)) * weight_maturity_prod_f(age_ndx, year_ndx);
+        total_biomass_yr(year_ndx, region_ndx) += natage_f(age_ndx, region_ndx, year_ndx) * female_mean_weight_by_age(age_ndx, year_ndx) + natage_m(age_ndx, region_ndx, year_ndx) * male_mean_weight_by_age(age_ndx, year_ndx);
         SSB_all_areas(year_ndx) += SSB_yr(year_ndx, region_ndx);
       }
       // SSB for the plus group
@@ -1627,6 +1631,7 @@ Type TagIntegrated(objective_function<Type>* obj) {
   REPORT( equilibrium_natage_m );
   REPORT( equilibrium_natage_f );
   REPORT(SSB_yr);
+  REPORT(total_biomass_yr);
   REPORT(natage_f);
   REPORT(natage_m);
   REPORT(init_F_hist);

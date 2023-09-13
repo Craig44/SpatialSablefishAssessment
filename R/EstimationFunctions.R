@@ -1124,7 +1124,7 @@ post_optim_sanity_checks <- function(mle_obj, mle_pars, max_abs_gradient = 0.000
       passed_post_sanity_checks = F
     }
     ## just a message not sure how to flag this one. TODO add a threshold
-    cat("parameter ", names(mle_obj$par)[which.min(hess_eigen_vals$values)], " had the smallest eigen value of ", hess_eigen_vals$values[which.min(hess_eigen_vals$values)], "\n\n")
+    cat("the smallest eigen value found = ", hess_eigen_vals$values[which.min(hess_eigen_vals$values)], "\n")
   }
 
   ## check parameters are not at bounds

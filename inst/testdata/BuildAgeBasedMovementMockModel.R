@@ -26,6 +26,8 @@ data$ages = ages
 data$years = years
 data$length_bins = length_bins
 data$n_regions = nrow(region_key)
+n_surveys = 1
+data$n_surveys = n_surveys
 n_regions = data$n_regions
 n_ages = length(data$ages)
 n_length_bins = length(data$length_bins) # the last length bin value is the minimum for a length plus group
@@ -34,6 +36,7 @@ data$do_projection = 0
 n_projyears = length(data$years) +  data$n_projections_years
 n_years = length(data$years)
 projyears = min(data$years):(max(data$years) + data$n_projections_years)
+data$n_movement_time_blocks = 1
 
 data$global_rec_devs = 1
 data$rec_devs_sum_to_zero = 0
@@ -76,12 +79,17 @@ data$male_age_length_transition[,,] = m_ALK
 data$female_age_length_transition[,,] = f_ALK
 
 ## Movement - this is used to calculate the simplex for parameters. Cannot have a 1 and 0s
-data$movement_matrix = data$fixed_movement_matrix = matrix(0, nrow = n_regions, ncol = n_regions);
-diag(data$fixed_movement_matrix) = 1
-diag(data$movement_matrix) = 0.9
-data$movement_matrix = data$movement_matrix + rlnorm(n = n_regions * n_regions, log(0.01), 0.1)
+data$fixed_movement_matrix = array(0, dim = c(n_regions, n_regions, 1));
+data$movement_matrix = array(0, dim = c(n_regions, n_regions, 1));
+data$movement_time_block_indicator = rep(0, n_years)
+movement_matrix = fixed_movement_matrix = matrix(0, nrow = n_regions, ncol = n_regions);
+diag(fixed_movement_matrix) = 1
+diag(movement_matrix) = 0.9
+data$fixed_movement_matrix[,,1] = fixed_movement_matrix
+movement_matrix = movement_matrix + rlnorm(n = n_regions * n_regions, log(0.01), 0.1)
 # renormalise
-data$movement_matrix = sweep(data$movement_matrix, 1, STATS = rowSums(data$movement_matrix), "/")
+movement_matrix = sweep(movement_matrix, 1, STATS = rowSums(movement_matrix), "/")
+data$movement_matrix[,,1] = movement_matrix
 
 data$spawning_time_proportion = rep(0, n_projyears)
 data$sigma_R = 1.2
@@ -109,8 +117,8 @@ data$fixed_sel_by_year_indicator = as.vector(rep(0, n_projyears), mode = "intege
 data$trwl_sel_type = as.vector(rep(1, 1), mode = "integer")
 data$trwl_sel_by_year_indicator = as.vector(rep(0, n_projyears), mode = "integer")
 
-data$srv_dom_ll_sel_type = as.vector(rep(0, 1), mode = "integer")
-data$srv_dom_ll_sel_by_year_indicator = as.vector(rep(0, n_projyears), mode = "integer")
+data$srv_sel_type = matrix(rep(0, 1), ncol = data$n_surveys)
+data$srv_sel_by_year_indicator = matrix(rep(0, n_projyears), ncol = data$n_surveys)
 
 #'
 #' Tag release stuff
@@ -161,22 +169,22 @@ data$fixed_catchatlgth_comp_likelihood = 0
 
 
 ### Survey LL proportions at age
-data$srv_dom_ll_catchatage_indicator = matrix(0, nrow = n_regions, ncol = n_years)
-data$obs_srv_dom_ll_catchatage = array(5, dim = c(n_ages * 2, n_regions, n_years))
+data$srv_catchatage_indicator = array(0, dim = c(n_regions, n_years, n_surveys))
+data$obs_srv_catchatage = array(5, dim = c(n_ages * 2, n_regions, n_years, n_surveys))
 
-data$srv_dom_ll_catchatage_covar_structure = 0
-data$srv_dom_ll_catchatage_comp_likelihood = 0
+data$srv_catchatage_covar_structure = rep(1, n_surveys)
+data$srv_catchatage_comp_likelihood = rep(0, n_surveys)
 
 ### Survey LL index
-data$srv_dom_ll_bio_indicator = matrix(0, nrow = n_regions, ncol = n_years)
-data$obs_srv_dom_ll_bio = array(1, dim = c(n_regions, n_years))
-data$obs_srv_dom_ll_se = array(0.2, dim = c(n_regions, n_years))
+data$srv_bio_indicator = array(0, dim = c(n_regions, n_years, n_surveys))
+data$obs_srv_bio = array(1, dim = c(n_regions, n_years,n_surveys))
+data$obs_srv_se = array(0.2, dim = c(n_regions, n_years, n_surveys))
 
-data$srv_dom_ll_bio_likelihood = 1
-data$srv_dom_ll_obs_is_abundance = 1
-data$srv_dom_ll_q_by_year_indicator = rep(0, n_years)
-data$srv_dom_ll_q_transformation = 1 ## logistic
-data$q_is_nuisance = 0
+data$srv_bio_likelihood = rep(1, n_surveys)
+data$srv_obs_is_abundance = rep(1, n_surveys)
+data$srv_q_by_year_indicator = matrix(0, nrow = n_years, ncol = n_surveys)
+data$srv_q_transformation = rep(1, n_surveys) ## logistic
+data$q_is_nuisance = rep(0, n_surveys)
 
 tag_recovery_years = 2011:2020
 # drop any recovery years before release years
@@ -275,9 +283,9 @@ parameters$ln_srv_dom_ll_sel_pars[1,1,2] = 1.576
 parameters$ln_srv_dom_ll_sel_pars[1,2,2] = -0.7118
 
 ## movement pars
-parameters$transformed_movement_pars = matrix(NA, nrow = n_regions - 1, ncol = n_regions)
+parameters$transformed_movement_pars = array(NA, dim = c(n_regions - 1, n_regions, 1))
 for(i in 1:n_regions)
-  parameters$transformed_movement_pars[,i] = simplex(data$movement_matrix[i,])
+  parameters$transformed_movement_pars[,i,1] = simplex(movement_matrix[i,])
 
 parameters$ln_fixed_F_avg = -2.965016
 parameters$ln_fixed_F_devs = array(0, dim = c(n_regions, n_projyears))
