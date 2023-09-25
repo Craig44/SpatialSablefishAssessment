@@ -863,6 +863,8 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
    * Run the annual cycle - main process dynmaic code
    *
    */
+
+
   int tag_year_counter = 0;
   int tag_recovery_counter = 0;
   for(year_ndx = 0; year_ndx < n_years; ++year_ndx) {
@@ -1316,9 +1318,10 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
       ++tag_recovery_counter;
 
   } // for(year_ndx = 0; year_ndx < n_years; ++year_ndx) {
-  /*
-   * Calculate predicted values and evaluate log-likelihoods.
-   */
+
+  //
+  //   Calculate predicted values and evaluate log-likelihoods.
+  //
   for(year_ndx = 0; year_ndx < n_years; ++year_ndx) {
     for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
       // Check if we do Longline catch at age in this region and year
@@ -1482,37 +1485,9 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
           pred_srv_bio(region_ndx, year_ndx, srv_ndx) *= srv_q(region_ndx, srv_q_by_year_indicator(year_ndx, srv_ndx), srv_ndx);
         }
       }
-
-      // Calculate the Not captured group if tag-likelihood is multinomial release conditioned
-      if(tag_likelihood == 2) {
-        if(tag_recovery_indicator(year_ndx, region_ndx) == 1) {
-          pred_recoveries_multinomial_release.setZero();
-          obs_recoveries_multinomial_release = obs_tag_recovery.col(year_ndx).col(region_ndx);
-          number_of_tag_releases = obs_recoveries_multinomial_release.sum();
-          pred_recoveries_multinomial_release = pred_tag_recovery.col(year_ndx).col(region_ndx).vec();
-          // Calculate predicted proportions
-          pred_recoveries_multinomial_release /= number_of_tag_releases;
-          // calculate the Not recovered group
-          pred_recoveries_multinomial_release(pred_recoveries_multinomial_release.size() - 1) = 1 - sum(pred_recoveries_multinomial_release);
-          // Save proportions into container
-          pred_tag_recovery.col(year_ndx).col(region_ndx) = pred_recoveries_multinomial_release;
-          if(evaluate_tag_likelihood == 1) {
-            // Evaluate likelihood
-            nll(7) -= dmultinom(obs_recoveries_multinomial_release, pred_recoveries_multinomial_release, true);
-
-            SIMULATE {
-              obs_recoveries_multinomial_release = rmultinom(pred_recoveries_multinomial_release, number_of_tag_releases);
-              obs_tag_recovery.col(year_ndx).col(region_ndx) = obs_recoveries_multinomial_release;
-            }
-          }
-        }
-      }
     }
   }
 
-  /*
-   *  Evaluate the survey abundance index here, this way we can calculate nuisance q's if the user asks for it
-   */
   // calculate nuisance q
   Type S3 = 0.0;
   Type S4 = 0.0;
@@ -1565,9 +1540,6 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
     }
   }
 
-  /*
-   * Additional objective function components that are not observations
-   */
   // catch assumed to be lognormally distributed
   for(year_ndx = 0; year_ndx < n_years; ++year_ndx) {
     for(region_ndx = 0; region_ndx < n_regions; ++region_ndx) {
@@ -1679,9 +1651,9 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
     } // for(proj_year_ndx = n_years; proj_year_ndx < n_projyears; ++proj_year_ndx)
 
 
-    /*
-     * Run projection annual cycle
-     */
+    //
+    // Run projection annual cycle
+    //
     for(proj_year_ndx = n_years; proj_year_ndx < n_projyears; ++proj_year_ndx) {
       //std::cerr << "proj year ndx = " << proj_year_ndx <<"\n";
       // in each region we want to calculate recruitment, Ageing and total mortality
@@ -1943,7 +1915,8 @@ Type TagIntegratedAgeBasedMovement(objective_function<Type>* obj) {
   REPORT(pred_srv_catchatage);
   REPORT(pred_srv_bio);
   REPORT(pred_tag_recovery);
-
+  REPORT(pred_aggregated_tag_recovery);
+  REPORT(obs_aggregated_tag_recovery);
   // Composition parameters
   REPORT( theta_fixed_catchatage);
   REPORT( theta_fixed_catchatlgth);

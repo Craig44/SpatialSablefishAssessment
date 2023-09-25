@@ -10,12 +10,12 @@ test_that("AgeBasedMovementTagIntegratedModel", {
   load(system.file("testdata", "MockAgeBasedMovementModel.RData",package="SpatialSablefishAssessment"))
   data$model = "TagIntegratedAgeBasedMovement"
   ## no Z or movement
-  data$apply_fixed_movement = 1
+  data$apply_fixed_movement = 0
   data$age_based_movement = 1
   data$fixed_movement_matrix_young = data$fixed_movement_matrix
   data$fixed_movement_matrix_old = data$fixed_movement_matrix
   data$tag_likelihood = 2
-  data$obs_tag_recovery = array(10, dim = c(length(data$ages), dim(data$obs_tag_recovery)))
+  #data$obs_tag_recovery = array(10, dim = c(length(data$ages), dim(data$obs_tag_recovery)))
   parameters$transformed_movement_pars_young = parameters$transformed_movement_pars
   parameters$transformed_movement_pars_old = parameters$transformed_movement_pars
   parameters$ln_a50_movement = log(6)

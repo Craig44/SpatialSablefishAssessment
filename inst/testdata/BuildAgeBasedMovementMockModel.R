@@ -79,8 +79,8 @@ data$male_age_length_transition[,,] = m_ALK
 data$female_age_length_transition[,,] = f_ALK
 
 ## Movement - this is used to calculate the simplex for parameters. Cannot have a 1 and 0s
-data$fixed_movement_matrix = array(0, dim = c(n_regions, n_regions, 1));
-data$movement_matrix = array(0, dim = c(n_regions, n_regions, 1));
+data$fixed_movement_matrix = array(0, dim = c(n_regions, n_regions, data$n_surveys));
+data$movement_matrix = array(0, dim = c(n_regions, n_regions, data$n_surveys));
 data$movement_time_block_indicator = rep(0, n_years)
 movement_matrix = fixed_movement_matrix = matrix(0, nrow = n_regions, ncol = n_regions);
 diag(fixed_movement_matrix) = 1
@@ -90,6 +90,7 @@ movement_matrix = movement_matrix + rlnorm(n = n_regions * n_regions, log(0.01),
 # renormalise
 movement_matrix = sweep(movement_matrix, 1, STATS = rowSums(movement_matrix), "/")
 data$movement_matrix[,,1] = movement_matrix
+data$fixed_movement_matrix[,,1] = fixed_movement_matrix
 
 data$spawning_time_proportion = rep(0, n_projyears)
 data$sigma_R = 1.2
@@ -263,7 +264,7 @@ parameters$ln_mean_rec = rnorm(data$n_regions, log(14), 0.3)
 ## Fishery selectivity
 parameters$ln_fixed_sel_pars = array(0, dim = c(1, 2, 2))
 parameters$ln_trwl_sel_pars = array(0, dim = c(1, 2, 2))
-parameters$ln_srv_dom_ll_sel_pars = array(0, dim = c(1, 2, 2))
+parameters$ln_srv_sel_pars = array(0, dim = c(1, 2, 2, 1))
 
 ## populate parameters Note some of the male delta values are set to the female values. Line 1800 tem.tpl
 parameters$ln_fixed_sel_pars[1,1,1] = 2.111
@@ -277,10 +278,10 @@ parameters$ln_trwl_sel_pars[1,1,2] = 2.011
 parameters$ln_trwl_sel_pars[1,2,2] = 2.2150
 
 ## NOTE: all delta parameters for all survey selectivities are fixed based on srv_dom_ll_1
-parameters$ln_srv_dom_ll_sel_pars[1,1,1] = 2.111
-parameters$ln_srv_dom_ll_sel_pars[1,2,1] = -0.711
-parameters$ln_srv_dom_ll_sel_pars[1,1,2] = 1.576
-parameters$ln_srv_dom_ll_sel_pars[1,2,2] = -0.7118
+parameters$ln_srv_sel_pars[1,1,1,1:data$n_surveys] = 2.111
+parameters$ln_srv_sel_pars[1,2,1,1:data$n_surveys] = -0.711
+parameters$ln_srv_sel_pars[1,1,2,1:data$n_surveys] = 1.576
+parameters$ln_srv_sel_pars[1,2,2,1:data$n_surveys] = -0.7118
 
 ## movement pars
 parameters$transformed_movement_pars = array(NA, dim = c(n_regions - 1, n_regions, 1))
@@ -294,7 +295,7 @@ parameters$ln_trwl_F_avg = -2.965016
 parameters$ln_trwl_F_devs = array(0, dim = c(n_regions, n_projyears))
 
 parameters$ln_init_F_avg = parameters$ln_fixed_F_avg
-parameters$trans_srv_dom_ll_q = array(logit(0.2), dim = c(data$n_regions, length(unique(data$srv_dom_ll_q_by_year_indicator))))
+parameters$trans_srv_q = array(logit(0.2), dim = c(data$n_regions, length(unique(data$srv_q_by_year_indicator[,1])), n_surveys))
 parameters$trans_rec_dev = array(0, dim = c(1, n_years))
 parameters$ln_init_rec_dev = 0
 parameters$ln_catch_sd = log(0.02)
@@ -304,7 +305,7 @@ parameters$trans_SR_pars = log(0.8)
 parameters$trans_trwl_catchatlgth_error = log(1)
 parameters$trans_fixed_catchatlgth_error = log(1)
 parameters$trans_fixed_catchatage_error = log(1)
-parameters$trans_srv_dom_ll_catchatage_error = log(1)
+parameters$trans_srv_catchatage_error = rep(log(1), data$n_surveys)
 parameters$logistic_prop_recruit_male = rep(0, length(data$years))
 
 ## reporting rate
