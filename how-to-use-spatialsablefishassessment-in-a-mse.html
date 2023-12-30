@@ -23,7 +23,7 @@
 <meta name="author" content="C.Marsh" />
 
 
-<meta name="date" content="2023-09-25" />
+<meta name="date" content="2023-12-30" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -423,7 +423,7 @@ div.csl-indent {
 <span id="cb36-2"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb36-2" aria-hidden="true" tabindex="-1"></a>first_MLE <span class="ot">=</span> <span class="fu">nlminb</span>(<span class="at">start =</span> EM<span class="sc">$</span>par, <span class="at">objective =</span> EM<span class="sc">$</span>fn, <span class="at">gradient  =</span> EM<span class="sc">$</span>gr, <span class="at">control =</span> <span class="fu">list</span>(<span class="at">eval.max =</span> <span class="dv">1000</span>, <span class="at">iter.max =</span> <span class="dv">1000</span>))</span>
 <span id="cb36-3"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb36-3" aria-hidden="true" tabindex="-1"></a><span class="co"># check parameter with largest gradient after initial optimization</span></span>
 <span id="cb36-4"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb36-4" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot; par &quot;</span>, <span class="fu">names</span>(EM<span class="sc">$</span>par)[<span class="fu">which.max</span>(EM<span class="sc">$</span><span class="fu">gr</span>())], <span class="st">&quot; had largest gradient = &quot;</span>, EM<span class="sc">$</span><span class="fu">gr</span>()[<span class="fu">which.max</span>(EM<span class="sc">$</span><span class="fu">gr</span>())], <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span></code></pre></div>
-<pre><code>##  par  ln_srv_dom_ll_sel_pars  had largest gradient =  0.02123696</code></pre>
+<pre><code>##  par  ln_mean_rec  had largest gradient =  0.01585097</code></pre>
 <div class="sourceCode" id="cb38"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb38-1"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="do">## do an additional two Newton Raphson iterations to try and improve the fit.</span></span>
 <span id="cb38-2"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb38-2" aria-hidden="true" tabindex="-1"></a><span class="do">## this will also check that the Hessian is well defined because it is needed</span></span>
 <span id="cb38-3"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb38-3" aria-hidden="true" tabindex="-1"></a><span class="do">## to do the Newton Raphson iterations</span></span>
@@ -454,32 +454,32 @@ div.csl-indent {
 <span id="cb38-28"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb38-28" aria-hidden="true" tabindex="-1"></a>nll_wider <span class="ot">=</span> nlls <span class="sc">%&gt;%</span> <span class="fu">pivot_wider</span>(<span class="at">id_cols =</span> observations, <span class="at">names_from =</span> label, <span class="at">values_from =</span> negloglike) <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">diff =</span> <span class="fu">abs</span>(OM <span class="sc">-</span> EM))</span>
 <span id="cb38-29"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb38-29" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(nll_wider, <span class="at">n =</span> <span class="dv">24</span>)</span></code></pre></div>
 <pre><code>## # A tibble: 29 x 4
-##    observations                               OM         EM   diff
-##    &lt;chr&gt;                                   &lt;dbl&gt;      &lt;dbl&gt;  &lt;dbl&gt;
-##  1 fishery-ll-age_comp                   14952.  14946.     5.52  
-##  2 fishery-trwl-male_length_comp         13587.  13585.     2.26  
-##  3 fishery-trwl-female_length_comp       15176.  15175.     0.532 
-##  4 srv-Domestic-ll_index                   223.    220.     3.39  
-##  5 srv-Japanese-ll_index                     0       0      0     
-##  6 fishery-ll_index                          0       0      0     
-##  7 srv-Domestic-ll-age_comp              20055.  20047.     8.21  
-##  8 srv-Domestic-ll-male_length_comp      17866.  17865.     0.591 
-##  9 srv-Domestic-ll-female_length_comp    20328.  20326.     1.96  
-## 10 srv-Japanese-ll-age_comp                  0       0      0     
-## 11 srv-Japanese-ll-male_length_comp          0       0      0     
-## 12 srv-Japanese-ll-female_length_comp        0       0      0     
-## 13 srv-GOA-trwl-age_comp                     0       0      0     
-## 14 srv-GOA-trwl-male_length_comp             0       0      0     
-## 15 srv-GOA-trwl-female_length_comp           0       0      0     
-## 16 fishery-ll-male_length_comp           13184.  13183.     0.805 
-## 17 fishery-ll-female_length_comp         15017.  15016.     0.891 
-## 18 srv-GOA-trwl-index                        0       0      0     
-## 19 Historic-Japanese-Fishery-index           0       0      0     
-## 20 Historic-Japanese-Fishery-length_comp     0       0      0     
-## 21 fishery-ll-catch_Sum_of_squares           0       0.0009 0.0009
-## 22 fishery-trwlcatch_Sum_of_squares          0       0.0117 0.0117
-## 23 Recruitment-penalty                      27.6    28.2    0.530 
-## 24 Longline_F_penalty                       35.9    36.5    0.604 
+##    observations                               OM         EM    diff
+##    &lt;chr&gt;                                   &lt;dbl&gt;      &lt;dbl&gt;   &lt;dbl&gt;
+##  1 fishery-ll-age_comp                   14917.  14911.      6.35  
+##  2 fishery-trwl-male_length_comp         13551.  13549.      2.43  
+##  3 fishery-trwl-female_length_comp       15183.  15179.      3.76  
+##  4 srv-Domestic-ll_index                   214.    214.      0.437 
+##  5 srv-Japanese-ll_index                     0       0       0     
+##  6 fishery-ll_index                          0       0       0     
+##  7 srv-Domestic-ll-age_comp              19864.  19848.     16.0   
+##  8 srv-Domestic-ll-male_length_comp      17912.  17913.      0.818 
+##  9 srv-Domestic-ll-female_length_comp    20164.  20160.      4.86  
+## 10 srv-Japanese-ll-age_comp                  0       0       0     
+## 11 srv-Japanese-ll-male_length_comp          0       0       0     
+## 12 srv-Japanese-ll-female_length_comp        0       0       0     
+## 13 srv-GOA-trwl-age_comp                     0       0       0     
+## 14 srv-GOA-trwl-male_length_comp             0       0       0     
+## 15 srv-GOA-trwl-female_length_comp           0       0       0     
+## 16 fishery-ll-male_length_comp           13085.  13083.      1.50  
+## 17 fishery-ll-female_length_comp         14916.  14915.      0.997 
+## 18 srv-GOA-trwl-index                        0       0       0     
+## 19 Historic-Japanese-Fishery-index           0       0       0     
+## 20 Historic-Japanese-Fishery-length_comp     0       0       0     
+## 21 fishery-ll-catch_Sum_of_squares           0       0.0095  0.0095
+## 22 fishery-trwlcatch_Sum_of_squares          0       0.0118  0.0118
+## 23 Recruitment-penalty                      27.6    29.0     1.34  
+## 24 Longline_F_penalty                       35.9    36.8     0.838 
 ## # i 5 more rows</code></pre>
 <div class="sourceCode" id="cb40"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb40-1"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="do">## plot initial age</span></span>
 <span id="cb40-2"><a href="how-to-use-spatialsablefishassessment-in-a-mse.html#cb40-2" aria-hidden="true" tabindex="-1"></a>init_age <span class="ot">=</span> <span class="fu">get_multiple_init_nage</span>(<span class="at">mle_ls =</span> mod_lst, <span class="at">run_labels =</span> <span class="fu">names</span>(mod_lst))</span>
