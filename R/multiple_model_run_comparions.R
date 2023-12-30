@@ -571,3 +571,35 @@ get_multiple_input_datasets <- function(data_ls, run_labels = NULL, region_key =
   full_nll_df$label = factor(full_nll_df$label)
   return(full_nll_df)
 }
+
+#' get_multiple_tag_recovery_obs accessors to get multiple tag fitted values
+#'
+#' @param mle_ls list with multiple data lists
+#' @param run_labels vector of strings that are labels for each element in mle_ls
+#' @param region_key data.frame with colnames area and TMB_ndx for providing real region names to objects
+#' @return data frame with multiple tag-recovery observations
+#' @export
+get_multiple_tag_recovery_obs <- function(mle_ls, run_labels = NULL, region_key = NULL) {
+  if(!is.null(run_labels)) {
+    if(length(run_labels) != length(mle_ls))
+      stop(paste0("Number of models provided ", length(mle_ls), ", number of run labels ", length(run_labels), " these need to be the same"))
+  }
+  full_tag_fit_df = NULL
+  for(i in 1:length(mle_ls)) {
+    if(is.null(mle_ls[[i]])) {
+      cat("report at element ", i, " was null, so skipping\n")
+      next;
+    }
+    this_fit = get_tag_recovery_obs_fitted_values(MLE_report = mle_ls[[i]], region_key = region_key)
+    ## add totol
+    ## addd label
+    if(!is.null(run_labels)) {
+      this_fit$label = run_labels[i]
+    } else {
+      this_fit$label = i
+    }
+    full_tag_fit_df = rbind(full_tag_fit_df, this_fit)
+  }
+  full_tag_fit_df$label = factor(full_tag_fit_df$label)
+  return(full_tag_fit_df)
+}
