@@ -6,6 +6,7 @@
 set.seed(234)
 
 data = readRDS(file = file.path("inst", "testdata", "SimdataADMB.RDS"))
+
 parameters = readRDS(file = file.path("inst", "testdata", "SimparsADMB.RDS"))
 region_key = data.frame(area = "Alaska", TMB_ndx = 0)
 ## change these as the model changes

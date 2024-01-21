@@ -696,12 +696,12 @@ validate_input_data_and_parameters = function(data, parameters) {
       }
     } else {
       if(data$global_rec_devs == 1){
-        check = check_dim(parameters$trans_rec_dev, c(1,n_years - 1))
+        check = check_dim(parameters$trans_rec_dev, c(1,length(data$map_simplex_ycs_estimated) - 1))
         if(!check$result)
           return(paste0("trans_rec_dev: ", check$message))
 
       } else if(data$global_rec_devs == 0) {
-        check = check_dim(parameters$trans_rec_dev, c(n_regions,n_years - 1))
+        check = check_dim(parameters$trans_rec_dev, c(n_regions, length(data$map_simplex_ycs_estimated) - 1))
         if(!check$result)
           return(paste0("trans_rec_dev: ", check$message))
       } else {

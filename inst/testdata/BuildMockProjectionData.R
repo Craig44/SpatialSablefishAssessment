@@ -165,7 +165,8 @@ data$fixed_catchatlgth_covar_structure = 0
 data$fixed_catchatlgth_comp_likelihood = 0
 
 
-
+data$map_simplex_ycs_estimated = rep(0:(length(data$years) - 1))
+data$standardise_ycs = 0
 
 ### Survey LL proportions at age
 ### Survey LL proportions at age

@@ -96,6 +96,8 @@ data$SrType = 3
 data$apply_fixed_movement = 1
 data$do_recruits_move = 0
 
+data$map_simplex_ycs_estimated = rep(0:(length(data$years) - 1))
+data$standardise_ycs = 0
 #'
 #' Fishing inputs
 #'
